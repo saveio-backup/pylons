@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package messages;
+
+import "gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.equal_all) = true;
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.stringer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+
+message PaymentProxy{
+    bytes initiator= 1;
+    bytes target = 2;
+    uint64 amount = 3;
+    uint64 paymentID = 4;
+    bytes publickey =5;
+    bytes signature = 6;
+}
+
+// bootstrap command to register the ip address to address mapping
+// NOTE: this cannot be replaced even when the endpoint contract is available
+// since the ip address is the connection for paymentproxy message, not the one for nimbus
+message BootStrap{
+    bytes sender = 1;
+    bool isClient = 2;
+    bytes publickey =3;
+    bytes signature = 4;
+}
+
+message BootStrapResponse{
+    bytes sender = 1;
+    bool isClient = 2;
+    bytes publickey =3;
+    bytes signature = 4;
+}

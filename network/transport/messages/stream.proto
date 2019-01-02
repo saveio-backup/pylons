@@ -1,0 +1,168 @@
+syntax = "proto3";
+
+package messages;
+
+import "gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.equal_all) = true;
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.stringer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+
+// basic types definition
+message ChainID {
+   uint64 chain_id = 1; 
+}
+
+message TokenAmount{
+    uint64 token_amount = 1;
+}
+
+message Locksroot{
+    bytes locksroot = 1;
+}
+
+message ChannelID{
+    uint64 channel_id = 1;
+}
+
+message TokenNetworkAddress{
+    bytes token_network_address = 1;
+}
+
+message MessageID{
+    uint64 message_id = 1;
+}
+
+message PaymentID{
+    uint64 payment_id = 1;
+}
+
+message PaymentAmount{
+    uint64 payment_amount = 1;
+}
+
+message SecretHash{
+    bytes secret_hash = 1;
+}
+
+message BlockExpiration{
+    uint64 block_expiration = 1;
+}
+
+message SecretType{
+    bytes secret = 1;
+}
+
+message Address{
+    bytes address = 1;
+}
+
+message HashTimeLock{
+    PaymentAmount amount = 1;
+    BlockExpiration expiration = 2;
+    SecretHash secrethash = 3;
+}
+
+// messages definition for Nimbus
+// SignedMessage(Message)
+message SignedMessage{
+    bytes signature = 1;
+    Address sender = 2;
+    bytes publickey = 3;
+}
+
+// EnvelopeMessage(SignedMessage)
+//!!! check data to sign
+message EnvelopeMessage{
+    ChainID chain_id = 1;
+    uint64 nonce = 2;
+    TokenAmount transferred_amount = 3;
+    TokenAmount locked_amount = 4;
+    Locksroot locksroot = 5;
+    ChannelID channel_identifier = 6;
+    TokenNetworkAddress token_network_address = 7;
+    SignedMessage signature = 8;
+}
+
+//Processed(SignedMessage)
+message Processed{
+    MessageID message_identifier = 1;
+    SignedMessage signature = 2;
+}
+
+//Delivered(SignedMessage)
+message Delivered{
+    MessageID delivered_message_identifier = 1;
+    SignedMessage signature = 2;
+}
+
+//SecretRequest(SignedMessage)
+message SecretRequest{
+    MessageID message_identifier = 1;
+    PaymentID payment_identifier = 2;
+    SecretHash secrethash = 3;
+    TokenAmount amount = 4;
+    BlockExpiration expiration = 5;
+    SignedMessage signature = 6;
+}
+
+// Secret(EnvelopeMessage)
+message Secret{
+    EnvelopeMessage envelope_message = 1;
+    MessageID message_identifier = 2;
+    PaymentID payment_identifier = 3;
+    SecretType secret = 4;
+}
+
+// RevealSecret(SignedMessage)
+message RevealSecret{
+    MessageID message_identifier = 1;
+    SecretType secret = 2;
+    SignedMessage signature = 6;
+}
+
+// DirectTransfer(EnvelopeMessage)
+message DirectTransfer{
+    EnvelopeMessage envelope_message = 1;
+    MessageID message_identifier = 2;
+    PaymentID payment_identifier = 3;
+    Address token = 4;
+    Address recipient = 5;
+}
+
+// LockedTransferBase(EnvelopeMessage)
+message LockedTransferBase{
+    EnvelopeMessage envelope_message = 1;
+    MessageID message_identifier = 2;
+    PaymentID payment_identifier = 3;
+    Address token = 4;
+    Address recipient = 5;
+    HashTimeLock lock = 6;
+}
+
+// LockedTransfer(LockedTransferBase)
+message LockedTransfer{
+    LockedTransferBase base_message = 1;
+    Address target = 2;
+    Address initiator = 3;
+    uint32 fee = 4;
+}
+
+// RefundTransfer(LockedTransfer)
+message RefundTransfer {
+    LockedTransfer refund = 1;
+}
+
+// LockExpired(EnvelopeMessage)
+message LockExpired{
+    EnvelopeMessage envelope_message = 1;
+    MessageID message_identifier = 2;
+    Address recipient = 3;
+    SecretHash secrethash = 4;
+}
+
