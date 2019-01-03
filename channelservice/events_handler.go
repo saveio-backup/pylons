@@ -17,7 +17,7 @@ func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 	participant1 := event["participant1"].(typing.Address)
 	participant2 := event["participant2"].(typing.Address)
 	channelIdentifier := event["channelID"].(typing.ChannelID)
-	blockNumber := event["blockHeight"].(typing.BlockNumber)
+	blockNumber := event["blockHeight"].(typing.BlockHeight)
 
 	if typing.AddressEqual(self.address, participant1) || self.address == participant2 {
 		isParticipant = true
@@ -28,8 +28,8 @@ func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 
 		channelProxy := self.chain.PaymentChannel(typing.Address(tokenNetworkIdentifier), channelIdentifier, event)
 
-		//[TODO] get revealTime from nimbus.config[reveal_timeout]
-		var revealTimeout typing.BlockNumber
+		//[TODO] get revealTime from channel.config[reveal_timeout]
+		var revealTimeout typing.BlockHeight
 
 		tokenAddress := typing.TokenAddress{}
 		defaultRegister := typing.PaymentNetworkID{}
@@ -60,13 +60,13 @@ func (self ChannelService) HandleChannelNewBalance(event map[string]interface{})
 
 	participantAddress := event["participant"].(typing.Address)
 	channelIdentifier := event["channelID"].(typing.ChannelID)
-	depositBlockNumber := event["blockHeight"].(typing.BlockNumber)
+	depositBlockHeight := event["blockHeight"].(typing.BlockHeight)
 	totalDeposit := event["totalDeposit"].(typing.TokenAmount)
 
 	tokenNetworkIdentifier := typing.TokenNetworkID{}
 
 	previousChannelState := transfer.GetChannelStateByTokenNetworkIdentifier(
-		self.StateFromNimbus(), tokenNetworkIdentifier, channelIdentifier)
+		self.StateFromChannel(), tokenNetworkIdentifier, channelIdentifier)
 
 	if previousChannelState != nil {
 		isParticipant = true
@@ -76,10 +76,10 @@ func (self ChannelService) HandleChannelNewBalance(event map[string]interface{})
 		previousBalance := previousChannelState.OurState.ContractBalance
 
 		depositTransaction := transfer.TransactionChannelNewBalance{
-			participantAddress, totalDeposit, depositBlockNumber}
+			participantAddress, totalDeposit, depositBlockHeight}
 
 		newBalanceStateChange := &transfer.ContractReceiveChannelNewBalance{
-			transfer.ContractReceiveStateChange{transactionHash, depositBlockNumber},
+			transfer.ContractReceiveStateChange{transactionHash, depositBlockHeight},
 			tokenNetworkIdentifier, channelIdentifier, depositTransaction}
 
 		self.HandleStateChange(newBalanceStateChange)
@@ -87,7 +87,7 @@ func (self ChannelService) HandleChannelNewBalance(event map[string]interface{})
 		if previousBalance == 0 && participantAddress != self.address {
 			// if our deposit transaction is not confirmed and participant desopit event received ,
 			// we should not deposite again, check the DepositTransactionQueue if we have deposit before
-			chainState := self.StateFromNimbus()
+			chainState := self.StateFromChannel()
 			channelState := transfer.GetChannelStateByTokenNetworkIdentifier(chainState,
 				tokenNetworkIdentifier, channelIdentifier)
 
@@ -117,14 +117,14 @@ func (self ChannelService) HandleChannelClose(event map[string]interface{}) {
 
 	var channelIdentifier typing.ChannelID
 	var transactionHash typing.TransactionHash
-	var blockNumber typing.BlockNumber
+	var blockNumber typing.BlockHeight
 	var closingParticipant typing.Address
 
 	closingParticipant = event["closingParticipant"].(typing.Address)
 	channelIdentifier = event["channelID"].(typing.ChannelID)
-	blockNumber = event["blockHeight"].(typing.BlockNumber)
+	blockNumber = event["blockHeight"].(typing.BlockHeight)
 
-	chainState := self.StateFromNimbus()
+	chainState := self.StateFromChannel()
 	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(chainState,
 		tokenNetworkIdentifier, channelIdentifier)
 
@@ -144,10 +144,10 @@ func (self ChannelService) HandleChannelUpdateTransfer(event map[string]interfac
 	var transactionHash typing.TransactionHash
 
 	channelIdentifier := event["channelID"].(typing.ChannelID)
-	blockNumber := event["blockHeight"].(typing.BlockNumber)
+	blockNumber := event["blockHeight"].(typing.BlockHeight)
 	nonce := event["nonce"].(typing.Nonce)
 
-	chainState := self.StateFromNimbus()
+	chainState := self.StateFromChannel()
 	tokenNetworkIdentifier := typing.TokenNetworkID{}
 	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(chainState,
 		tokenNetworkIdentifier, channelIdentifier)
@@ -169,9 +169,9 @@ func (self ChannelService) HandleChannelSettled(event map[string]interface{}) {
 	var transactionHash typing.TransactionHash
 
 	channelIdentifier := event["channelID"].(typing.ChannelID)
-	blockNumber := event["blockHeight"].(typing.BlockNumber)
+	blockNumber := event["blockHeight"].(typing.BlockHeight)
 
-	chainState := self.StateFromNimbus()
+	chainState := self.StateFromChannel()
 	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(chainState,
 		tokenNetworkIdentifier, channelIdentifier)
 
@@ -194,7 +194,7 @@ func (self ChannelService) HandleSecretRevealed(event map[string]interface{}) {
 	return
 }
 
-func OnBlockchainEvent(nimbus *ChannelService, event map[string]interface{}) {
+func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 	var eventName string
 
 	if _, ok := event["eventName"].(string); ok == false {
@@ -206,15 +206,15 @@ func OnBlockchainEvent(nimbus *ChannelService, event map[string]interface{}) {
 	events := ParseEvent(event)
 
 	if eventName == "chanOpened" {
-		nimbus.HandleChannelNew(events)
+		channel.HandleChannelNew(events)
 	} else if eventName == "ChannelClose" {
-		nimbus.HandleChannelClose(events)
+		channel.HandleChannelClose(events)
 	} else if eventName == "SetTotalDeposit" {
-		nimbus.HandleChannelNewBalance(events)
+		channel.HandleChannelNewBalance(events)
 	} else if eventName == "chanSettled" {
-		nimbus.HandleChannelSettled(events)
+		channel.HandleChannelSettled(events)
 	} else if eventName == "NonClosingBPFUpdate" {
-		nimbus.HandleChannelUpdateTransfer(events)
+		channel.HandleChannelUpdateTransfer(events)
 	}
 
 	return
@@ -245,7 +245,7 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 		case "blockHeight":
 			fallthrough
 		case "settleTimeout":
-			events[item] = typing.BlockNumber(value.(float64))
+			events[item] = typing.BlockHeight(value.(float64))
 		case "totalDeposit":
 			events[item] = typing.TokenAmount(value.(float64))
 		case "nonce":

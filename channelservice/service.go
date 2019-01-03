@@ -28,10 +28,10 @@ const SnapshotStateChangesCount int = 500
 
 type ChannelService struct {
 	chain           *network.BlockchainService
-	queryStartBlock typing.BlockNumber
+	queryStartBlock typing.BlockHeight
 
 	Account                       *account.Account
-	nimbusEventHandler            *NimbusEventHandler
+	channelEventHandler           *ChannelEventHandler
 	messageHandler                *MessageHandler
 	config                        map[string]string
 	discovery                     *network.ContractDiscovery
@@ -53,7 +53,7 @@ type ChannelService struct {
 	snapshotGroup int
 
 	tokennetworkidsToConnectionmanagers map[typing.TokenNetworkID]*ConnectionManager
-	lastFilterBlock                     typing.BlockNumber
+	lastFilterBlock                     typing.BlockHeight
 }
 
 type PaymentType int
@@ -80,11 +80,11 @@ func (self *PaymentStatus) Match(paymentType PaymentType, tokenNetworkIdentifier
 }
 
 func NewChannelService(chain *network.BlockchainService,
-	queryStartBlock typing.BlockNumber,
+	queryStartBlock typing.BlockHeight,
 	transport *transport.Transport,
 	//defaultSecretRegistry SecretRegistry,
 	account *account.Account,
-	nimbus_event_handler *NimbusEventHandler,
+	channel_event_handler *ChannelEventHandler,
 	messageHandler *MessageHandler,
 	config map[string]string,
 	discovery *network.ContractDiscovery) *ChannelService {
@@ -105,7 +105,7 @@ func NewChannelService(chain *network.BlockchainService,
 	self.discovery = discovery
 
 	self.blockchainEvents = new(blockchain.BlockchainEvents)
-	self.nimbusEventHandler = new(NimbusEventHandler)
+	selfEventHandler = new(ChannelEventHandler)
 	self.messageHandler = messageHandler
 
 	if _, exist := config["database_path"]; exist == false {
@@ -143,7 +143,7 @@ func (self *ChannelService) Start() {
 	port, _ := strconv.Atoi(self.config["port"])
 	go self.discovery.Register(self.address, self.config["host"], port)
 
-	var lastLogBlockNumber typing.BlockNumber
+	var lastLogBlockHeight typing.BlockHeight
 
 	sqliteStorage := storage.NewSQLiteStorage(self.databasePath)
 	self.Wal = storage.RestoreToStateChange(transfer.StateTransition, sqliteStorage, "latest")
@@ -154,22 +154,22 @@ func (self *ChannelService) Start() {
 		rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 		stateChange = &transfer.ActionInitChain{
 			PseudoRandomGenerator: rand,
-			BlockNumber:           lastLogBlockNumber,
+			BlockHeight:           lastLogBlockHeight,
 			OurAddress:            typing.Address{},
 			ChainId:               0}
 		self.HandleStateChange(stateChange)
 
 		paymentNetwork := transfer.NewPaymentNetworkState()
 		stateChange = &transfer.ContractReceiveNewPaymentNetwork{
-			transfer.ContractReceiveStateChange{typing.TransactionHash{}, lastLogBlockNumber}, paymentNetwork}
+			transfer.ContractReceiveStateChange{typing.TransactionHash{}, lastLogBlockHeight}, paymentNetwork}
 		self.HandleStateChange(stateChange)
 
 		self.InitializeTokenNetwork()
 
-		lastLogBlockNumber = 0
+		lastLogBlockHeight = 0
 	} else {
 
-		lastLogBlockNumber = transfer.GetBlockNumber(self.StateFromNimbus())
+		lastLogBlockHeight = transfer.GetBlockHeight(self.StateFromChannel())
 
 	}
 
@@ -177,15 +177,15 @@ func (self *ChannelService) Start() {
 	self.snapshotGroup = stateChangeQty / SnapshotStateChangesCount
 
 	//set filter start block number
-	self.lastFilterBlock = lastLogBlockNumber
+	self.lastFilterBlock = lastLogBlockHeight
 
 	self.alarm.RegisterCallback(self.CallbackNewBlock)
 	self.alarm.FirstRun()
 
-	// start the transport layer, pass nimbus service for message hanlding and signing
+	// start the transport layer, pass channel service for message hanlding and signing
 	self.transport.Start(self)
 
-	chainState := self.StateFromNimbus()
+	chainState := self.StateFromChannel()
 
 	self.InitializeTransactionsQueues(chainState)
 
@@ -211,7 +211,7 @@ func (self *ChannelService) AddPendingRoutine() {
 
 }
 
-func (self *ChannelService) GetBlockNumber() int {
+func (self *ChannelService) GetBlockHeight() int {
 	return 0
 }
 
@@ -221,7 +221,7 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 	for e := eventList.Front(); e != nil; e = e.Next() {
 		temp := e.Value
 
-		self.nimbusEventHandler.OnNimbusEvent(self, temp.(transfer.Event))
+		selfEventHandler.OnChannelEvent(self, temp.(transfer.Event))
 	}
 
 	return eventList
@@ -239,7 +239,7 @@ func (self *ChannelService) StartHealthCheckFor(nodeAddress typing.Address) {
 }
 
 func (self *ChannelService) StartNeighboursHealthcheck() {
-	neighbours := transfer.AllNeighbourNodes(self.StateFromNimbus())
+	neighbours := transfer.AllNeighbourNodes(self.StateFromChannel())
 
 	for k := range neighbours {
 		self.StartHealthCheckFor(k)
@@ -252,7 +252,7 @@ func (self *ChannelService) InitializeTransactionsQueues(chainState *transfer.Ch
 	pendingTransactions := transfer.GetPendingTransactions(chainState)
 
 	for _, transaction := range pendingTransactions {
-		self.nimbusEventHandler.OnNimbusEvent(self, transaction)
+		selfEventHandler.OnChannelEvent(self, transaction)
 	}
 }
 
@@ -324,7 +324,7 @@ func (self *ChannelService) InitializeMessagesQueues(chainState *transfer.ChainS
 	}
 }
 
-func (self *ChannelService) CallbackNewBlock(latestBlock typing.BlockNumber, blockHash typing.BlockHash) {
+func (self *ChannelService) CallbackNewBlock(latestBlock typing.BlockHeight, blockHash typing.BlockHash) {
 	var events []map[string]interface{}
 
 	fromBlock := self.lastFilterBlock + 1
@@ -341,7 +341,7 @@ func (self *ChannelService) CallbackNewBlock(latestBlock typing.BlockNumber, blo
 	}
 
 	block := new(transfer.Block)
-	block.BlockNumber = toBlock
+	block.BlockHeight = toBlock
 	block.BlockHash = blockHash
 
 	self.HandleStateChange(block)
@@ -447,7 +447,7 @@ func CreateDefaultIdentifier() typing.PaymentID {
 	return typing.PaymentID(num)
 }
 
-func (self *ChannelService) StateFromNimbus() *transfer.ChainState {
+func (self *ChannelService) StateFromChannel() *transfer.ChainState {
 	var result *transfer.ChainState
 
 	state := self.Wal.StateManager.CurrentState
@@ -471,16 +471,16 @@ func (self *ChannelService) InitializeTokenNetwork() {
 }
 
 func (self *ChannelService) GetPaymentChannelArgs(tokenNetworkId typing.TokenNetworkID, channelId typing.ChannelID) map[string]interface{} {
-	chainState := self.StateFromNimbus()
+	chainState := self.StateFromChannel()
 	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(chainState, tokenNetworkId, channelId)
 	if channelState == nil {
 		return nil
 	}
 
-	return self.GetPaymentChannelArgsWithChannelState(channelState)
+	return self.GetPaymentArgs(channelState)
 }
 
-func (self *ChannelService) GetPaymentChannelArgsWithChannelState(channelState *transfer.NettingChannelState) map[string]interface{} {
+func (self *ChannelService) GetPaymentArgs(channelState *transfer.NettingChannelState) map[string]interface{} {
 	if channelState == nil {
 		return nil
 	}
@@ -495,7 +495,7 @@ func (self *ChannelService) GetPaymentChannelArgsWithChannelState(channelState *
 	args := map[string]interface{}{
 		"participant1":  ourState.GetAddress(),
 		"participant2":  partnerState.GetAddress(),
-		"blockHeight":   channelState.OpenTransaction.FinishedBlockNumber,
+		"blockHeight":   channelState.OpenTransaction.FinishedBlockHeight,
 		"settleTimeout": channelState.SettleTimeout,
 	}
 
@@ -518,5 +518,5 @@ func GetFullDatabasePath() (string, error) {
 	if i < 0 {
 		return "", errors.New(`error: Can't find "/" or "\".`)
 	}
-	return string(path[0:i+1]) + "nimbus.db", nil
+	return string(path[0:i+1]) + "channel.db", nil
 }

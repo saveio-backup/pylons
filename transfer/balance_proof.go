@@ -8,7 +8,7 @@ import (
 	mpay "github.com/ontio/ontology/smartcontract/service/native/micropayment"
 )
 
-//[TODO] import from nimbus_contracts.constants import MessageTypeId
+//[TODO] import from channel_contracts.constants import MessageTypeId
 func PackBalanceProof(nonce typing.Nonce, balanceHash typing.BalanceHash, addtionalHash typing.AdditionalHash,
 	channelId typing.ChannelID, tokenNetworkAddr typing.TokenNetworkAddress, chainId typing.ChainID,
 	msgtype int) []byte {

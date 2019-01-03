@@ -12,7 +12,7 @@ import (
 	"github.com/oniio/oniChannel/utils/jsonext"
 )
 
-const NimbusDbVersion int = 6
+const ChannelDbVersion int = 6
 
 type EventRecord struct {
 	EventRecordIdentifier int
@@ -72,7 +72,7 @@ func (self *SQLiteStorage) runUpdates() (bool, error) {
 		return false, err
 	}
 
-	_, err = stmt.Exec("version", NimbusDbVersion)
+	_, err = stmt.Exec("version", ChannelDbVersion)
 	if err != nil {
 		return false, err
 	}
@@ -84,17 +84,17 @@ func (self *SQLiteStorage) runUpdates() (bool, error) {
 func (self *SQLiteStorage) getVersion() int {
 	var version int
 
-	version = NimbusDbVersion
+	version = ChannelDbVersion
 
 	stmt, err := self.conn.Prepare("SELECT value FROM settings WHERE name=?")
 	if err != nil {
-		return NimbusDbVersion
+		return ChannelDbVersion
 	}
 	defer stmt.Close()
 
 	rows, err := stmt.Query("version")
 	if err != nil {
-		return NimbusDbVersion
+		return ChannelDbVersion
 	}
 	defer rows.Close()
 
@@ -102,7 +102,7 @@ func (self *SQLiteStorage) getVersion() int {
 	for rows.Next() {
 		err = rows.Scan(&versionStr)
 		if err != nil {
-			return NimbusDbVersion
+			return ChannelDbVersion
 		}
 		version, err = strconv.Atoi(versionStr)
 		break

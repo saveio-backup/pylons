@@ -12,19 +12,19 @@ type AlarmTask struct {
 	callbacks       []AlarmTaskCallback
 	chain           *network.BlockchainService
 	chainId         int
-	lastBlockNumber typing.BlockNumber
+	lastBlockHeight typing.BlockHeight
 	stopEvent       chan int
 	sleepTime       int
 }
 
-type AlarmTaskCallback func(blockNumber typing.BlockNumber, blockHash typing.BlockHash)
+type AlarmTaskCallback func(blockNumber typing.BlockHeight, blockHash typing.BlockHash)
 
 func NewAlarmTask(chain *network.BlockchainService) *AlarmTask {
 	self := new(AlarmTask)
 
 	self.chain = chain
 	self.chainId = 0
-	self.lastBlockNumber = 0
+	self.lastBlockHeight = 0
 	self.sleepTime = 500
 	self.stopEvent = make(chan int)
 
@@ -44,7 +44,7 @@ func (self *AlarmTask) RemoveCallback(callback AlarmTaskCallback) {
 }
 
 func (self *AlarmTask) LoopUntilStop() {
-	var lastBlockNumber, latestBlockNumber typing.BlockNumber
+	var lastBlockHeight, latestBlockHeight typing.BlockHeight
 	var blockHash typing.BlockHash
 	var err error
 	sleepTime := self.sleepTime
@@ -54,43 +54,43 @@ func (self *AlarmTask) LoopUntilStop() {
 		case <-self.stopEvent:
 			break
 		case <-time.After(time.Duration(sleepTime) * time.Millisecond):
-			lastBlockNumber = self.lastBlockNumber
-			//[TODO] use BlockchainService.GetBlock to get latestBlockNumber
+			lastBlockHeight = self.lastBlockHeight
+			//[TODO] use BlockchainService.GetBlock to get latestBlockHeight
 			//and blockHash
-			latestBlockNumber, blockHash, err = self.GetLatestBlock()
+			latestBlockHeight, blockHash, err = self.GetLatestBlock()
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
 
-			if latestBlockNumber != lastBlockNumber {
-				if latestBlockNumber > lastBlockNumber+1 {
-					fmt.Printf("Missing block(s), latest Block number %d, last Block number %d\n", latestBlockNumber, lastBlockNumber)
+			if latestBlockHeight != lastBlockHeight {
+				if latestBlockHeight > lastBlockHeight+1 {
+					fmt.Printf("Missing block(s), latest Block number %d, last Block number %d\n", latestBlockHeight, lastBlockHeight)
 				}
-				self.runCallbacks(latestBlockNumber, blockHash)
+				self.runCallbacks(latestBlockHeight, blockHash)
 			}
 		}
 	}
 }
 
-func (self *AlarmTask) GetLatestBlock() (typing.BlockNumber, typing.BlockHash, error) {
-	blockNumber, err := self.chain.BlockNumber()
-	latestBlockNumber := typing.BlockNumber(blockNumber)
+func (self *AlarmTask) GetLatestBlock() (typing.BlockHeight, typing.BlockHash, error) {
+	blockNumber, err := self.chain.BlockHeight()
+	latestBlockHeight := typing.BlockHeight(blockNumber)
 	if err != nil {
-		return 0, nil, fmt.Errorf("GetBlockNumber error")
+		return 0, nil, fmt.Errorf("GetBlockHeight error")
 	}
 
 	header, _ := self.chain.GetBlock(blockNumber)
 	blockHash := header.Hash()
 
-	return latestBlockNumber, blockHash[:], nil
+	return latestBlockHeight, blockHash[:], nil
 }
 
 func (self *AlarmTask) FirstRun() {
-	var latestBlock typing.BlockNumber
+	var latestBlock typing.BlockHeight
 	var blockHash typing.BlockHash
 
-	//[TODO] use BlockchainService.GetBlock to get latestBlockNumber
+	//[TODO] use BlockchainService.GetBlock to get latestBlockHeight
 	//and blockHash
 	latestBlock, blockHash, _ = self.GetLatestBlock()
 
@@ -98,15 +98,15 @@ func (self *AlarmTask) FirstRun() {
 	return
 }
 
-func (self *AlarmTask) runCallbacks(latestBlockNumber typing.BlockNumber, blockHash typing.BlockHash) {
+func (self *AlarmTask) runCallbacks(latestBlockHeight typing.BlockHeight, blockHash typing.BlockHash) {
 
-	fmt.Printf("RunCallbacks for Block %d\n", latestBlockNumber)
+	fmt.Printf("RunCallbacks for Block %d\n", latestBlockHeight)
 
 	for _, f := range self.callbacks {
-		f(latestBlockNumber, blockHash)
+		f(latestBlockHeight, blockHash)
 	}
 
-	self.lastBlockNumber = latestBlockNumber
+	self.lastBlockHeight = latestBlockHeight
 }
 
 func (self *AlarmTask) Stop() {

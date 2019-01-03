@@ -21,8 +21,8 @@ func AllNeighbourNodes(chainState *ChainState) map[typing.Address]int {
 	return addresses
 }
 
-func GetBlockNumber(chainState *ChainState) typing.BlockNumber {
-	return chainState.BlockNumber
+func GetBlockHeight(chainState *ChainState) typing.BlockHeight {
+	return chainState.BlockHeight
 }
 
 func CountTokenNetworkChannels(chainState *ChainState,
@@ -82,7 +82,7 @@ func GetParticipantsAddresses(chainState *ChainState,
 	if tokenNetworkState != nil {
 		//[TODO] use token_network.network_graph.network.nodes() when supporting route
 		//[NOTE] this function return network.nodes whose are relative to route, NOT include
-		//channels current nimbus node take part in. So just return empty!!
+		//channels current channel node take part in. So just return empty!!
 		//[NOTE]  use channels in ChannelIdentifiersToChannels may break behavior of this function
 	}
 

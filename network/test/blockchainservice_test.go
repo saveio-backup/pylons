@@ -19,9 +19,9 @@ var (
 	WALLET_PWD  = []byte("123456")
 )
 
-func TestBlockNumber(t *testing.T) {
+func TestBlockHeight(t *testing.T) {
 	blockchainService := network.NewBlockchainService("", WALLET_PATH, WALLET_PWD)
-	height, _ := blockchainService.BlockNumber()
+	height, _ := blockchainService.BlockHeight()
 	fmt.Println("Get current block number: ", height)
 }
 

@@ -602,7 +602,7 @@ func (m *HashTimeLock) GetSecrethash() *SecretHash {
 	return nil
 }
 
-// messages definition for Nimbus
+// messages definition
 // SignedMessage(Message)
 type SignedMessage struct {
 	Signature []byte   `protobuf:"bytes,1,opt,name=signature,proto3" json:"signature,omitempty"`

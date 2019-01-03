@@ -44,7 +44,7 @@ func NewBlockchainService(url string, account *account.Account) *BlockchainServi
 		fmt.Printf("NewRpcClient error\n")
 		return nil
 	}
-	this.currentHeight, _ = this.BlockNumber()
+	this.currentHeight, _ = this.BlockHeight()
 
 	if account == nil {
 		fmt.Printf("NewBlockchainservice Account is nil\n")
@@ -72,7 +72,7 @@ func (this *BlockchainService) UsingContract(contractAddr common.Address) *Block
 	return this
 }
 
-func (this *BlockchainService) BlockNumber() (uint32, error) {
+func (this *BlockchainService) BlockHeight() (uint32, error) {
 	if height, err := this.Client.GetCurrentBlockHeight(); err == nil {
 		return utils.GetUint32(height)
 	} else {
@@ -103,10 +103,10 @@ func (this *BlockchainService) GetBlock(param interface{}) (*types.Block, error)
 }
 
 func (this *BlockchainService) NextBlock() uint32 {
-	currentBlock, _ := this.BlockNumber()
-	targetBlockNumber := currentBlock + 1
-	for currentBlock < targetBlockNumber {
-		currentBlock, _ = this.BlockNumber()
+	currentBlock, _ := this.BlockHeight()
+	targetBlockHeight := currentBlock + 1
+	for currentBlock < targetBlockHeight {
+		currentBlock, _ = this.BlockHeight()
 		time.Sleep(time.Second * 1)
 	}
 	return currentBlock
@@ -121,7 +121,7 @@ func (this *BlockchainService) GetNewEntries(fromBlock, toBlock uint32) {
 func (this *BlockchainService) GetAllEntries() {
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
-	//toBlock, _ := this.BlockNumber()
+	//toBlock, _ := this.BlockHeight()
 	//this.ContractManager.MPay.FilterAllLogs(toBlock)
 }
 

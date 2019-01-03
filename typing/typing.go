@@ -381,7 +381,7 @@ type BlockGasPrice int
 
 type BlockHash []byte
 
-type BlockNumber uint32
+type BlockHeight uint32
 
 type BlockTimeout int
 

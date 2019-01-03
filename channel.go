@@ -1,12 +1,12 @@
-package oniChannel
+package channel
 
 import (
 	"errors"
 	"strconv"
 	"strings"
 
-	"github.com/oniio/oniChannel/account"
-	ch "github.com/oniio/oniChannel/channel"
+	"github.com/oniio/oniChain/account"
+	ch "github.com/oniio/oniChannel/channelservice"
 	"github.com/oniio/oniChannel/network"
 	"github.com/oniio/oniChannel/network/transport"
 	"github.com/oniio/oniChannel/transfer"
@@ -16,7 +16,6 @@ import (
 type Channel struct {
 	Config  *ChannelConfig
 	Service *ch.ChannelService
-	Api     *ch.NimbusAPI
 }
 
 type ChannelConfig struct {
@@ -30,8 +29,8 @@ type ChannelConfig struct {
 	DBPath string
 }
 
-func DefaultNimbusCOnfig() *ChannelConfig {
-	config := &NimbusConfig{
+func DefaultChannelConfig() *ChannelConfig {
+	config := &ChannelConfig{
 		ListenAddress: "127.0.0.1:3001",
 		Protocol:      "tcp",
 		DBPath:        ".",
@@ -40,7 +39,7 @@ func DefaultNimbusCOnfig() *ChannelConfig {
 	return config
 }
 
-func NewNimbus(config *NimbusConfig, account *account.Account) (*Nimbus, error) {
+func NewChannel(config *ChannelConfig, account *account.Account) (*Channel, error) {
 	blockChainService := network.NewBlockchainService(config.ChainNodeURL, account)
 	if blockChainService == nil {
 		return nil, errors.New("error createing BlockChainService")
@@ -48,7 +47,7 @@ func NewNimbus(config *NimbusConfig, account *account.Account) (*Nimbus, error) 
 
 	transport, discovery := setupTransport(blockChainService, config)
 
-	var startBlock typing.BlockNumber
+	var startBlock typing.BlockHeight
 
 	ipPort := config.ListenAddress
 	if config.MappingAddress != "" {
@@ -67,25 +66,21 @@ func NewNimbus(config *NimbusConfig, account *account.Account) (*Nimbus, error) 
 		"port":          port,
 	}
 
-	service := nim.NewChannelService(
+	service := ch.NewChannelService(
 		blockChainService,
 		startBlock,
 		transport,
 		blockChainService.GetAccount(),
-		new(nim.NimbusEventHandler),
-		new(nim.MessageHandler),
+		new(ch.ChannelEventHandler),
+		new(ch.MessageHandler),
 		option,
 		discovery)
 
-	// create raiden API, no need for RPC server, Rest API
-	api := nim.NewNimbusAPI(service)
-
-	nimbus := &Nimbus{
+	channel := &Channel{
 		Config:  config,
 		Service: service,
-		Api:     api,
 	}
-	return nimbus, nil
+	return channel, nil
 }
 
 func parseIPPort(address string) (string, string, error) {
@@ -108,7 +103,7 @@ func parseIPPort(address string) (string, string, error) {
 	return ip, portStr, nil
 }
 
-func setupTransport(blockChainService *network.BlockchainService, config *NimbusConfig) (*transport.Transport, *network.ContractDiscovery) {
+func setupTransport(blockChainService *network.BlockchainService, config *ChannelConfig) (*transport.Transport, *network.ContractDiscovery) {
 	discoveryProxy := blockChainService.Discovery()
 
 	discovery := &network.ContractDiscovery{
@@ -122,14 +117,14 @@ func setupTransport(blockChainService *network.BlockchainService, config *Nimbus
 	return trans, discovery
 }
 
-func (this *Nimbus) StartService() {
+func (this *Channel) StartService() {
 	this.Service.Start()
 }
 
-func (this *Nimbus) Stop() {
+func (this *Channel) Stop() {
 	this.Service.Stop()
 }
 
-func (this *Nimbus) RegisterReceiveNotification(notificaitonChannel chan *transfer.EventPaymentReceivedSuccess) {
+func (this *Channel) RegisterReceiveNotification(notificaitonChannel chan *transfer.EventPaymentReceivedSuccess) {
 	this.Service.ReceiveNotificationChannels[notificaitonChannel] = struct{}{}
 }

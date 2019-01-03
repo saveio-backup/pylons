@@ -46,22 +46,11 @@ func EventFilterForPayments(
 	return result
 }
 
-type NimbusAPI struct {
-	nimbus *ChannelService
+func (self *ChannelService) Address() typing.Address {
+	return self.address
 }
 
-func NewNimbusAPI(nimbus *ChannelService) *NimbusAPI {
-	self := new(NimbusAPI)
-	self.nimbus = nimbus
-
-	return self
-}
-
-func (self NimbusAPI) Address() typing.Address {
-	return self.nimbus.address
-}
-
-func (self NimbusAPI) GetChannel(
+func (self *ChannelService) GetChannel(
 	registryAddress typing.PaymentNetworkID,
 	tokenAddress *typing.TokenAddress,
 	partnerAddress *typing.Address) *transfer.NettingChannelState {
@@ -76,15 +65,7 @@ func (self NimbusAPI) GetChannel(
 	return result
 }
 
-func (self NimbusAPI) TokenNetworkRegister(
-	registryAddress typing.PaymentNetworkID,
-	tokenAddress typing.TokenAddress,
-	retryTimeout typing.NetworkTimeout) typing.TokenNetworkAddress {
-	result := typing.TokenNetworkAddress{}
-	return result
-}
-
-func (self NimbusAPI) tokenNetworkConnect(
+func (self *ChannelService) tokenNetworkConnect(
 	registryAddress typing.PaymentNetworkID,
 	tokenAddress typing.TokenAddress,
 	funds typing.TokenAmount,
@@ -92,9 +73,9 @@ func (self NimbusAPI) tokenNetworkConnect(
 	joinableFundsTarget float32) {
 
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(
-		self.nimbus.StateFromNimbus(), registryAddress, tokenAddress)
+		self.StateFromChannel(), registryAddress, tokenAddress)
 
-	connectionManager := self.nimbus.ConnectionManagerForTokenNetwork(
+	connectionManager := self.ConnectionManagerForTokenNetwork(
 		tokenNetworkIdentifier)
 
 	connectionManager.connect(funds, initialChannelTarget, joinableFundsTarget)
@@ -102,23 +83,23 @@ func (self NimbusAPI) tokenNetworkConnect(
 	return
 }
 
-func (self NimbusAPI) tokenNetworkLeave(registryAddress typing.PaymentNetworkID,
+func (self *ChannelService) tokenNetworkLeave(registryAddress typing.PaymentNetworkID,
 	tokenAddress typing.TokenAddress) *list.List {
 
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(
-		self.nimbus.StateFromNimbus(), registryAddress, tokenAddress)
+		self.StateFromChannel(), registryAddress, tokenAddress)
 
-	connectionManager := self.nimbus.ConnectionManagerForTokenNetwork(
+	connectionManager := self.ConnectionManagerForTokenNetwork(
 		tokenNetworkIdentifier)
 
 	return connectionManager.Leave(registryAddress)
 }
 
-func (self NimbusAPI) ChannelOpen(registryAddress typing.PaymentNetworkID,
+func (self *ChannelService) ChannelOpen(registryAddress typing.PaymentNetworkID,
 	tokenAddress typing.TokenAddress, partnerAddress typing.Address,
 	settleTimeout typing.BlockTimeout, retryTimeout typing.NetworkTimeout) typing.ChannelID {
 
-	chainState := self.nimbus.StateFromNimbus()
+	chainState := self.StateFromChannel()
 	channelState := transfer.GetChannelStateFor(chainState, registryAddress,
 		tokenAddress, partnerAddress)
 
@@ -126,34 +107,34 @@ func (self NimbusAPI) ChannelOpen(registryAddress typing.PaymentNetworkID,
 		return channelState.Identifier
 	}
 
-	tokenNetwork := self.nimbus.chain.TokenNetwork(typing.Address{})
+	tokenNetwork := self.chain.TokenNetwork(typing.Address{})
 	tokenNetwork.NewNettingChannel(partnerAddress, int(settleTimeout))
 
-	WaitForNewChannel(self.nimbus, registryAddress, tokenAddress, partnerAddress,
+	WaitForNewChannel(self, registryAddress, tokenAddress, partnerAddress,
 		float32(retryTimeout))
 
-	channelState = transfer.GetChannelStateFor(self.nimbus.StateFromNimbus(), registryAddress, tokenAddress, partnerAddress)
+	channelState = transfer.GetChannelStateFor(self.StateFromChannel(), registryAddress, tokenAddress, partnerAddress)
 
 	return channelState.Identifier
 
 }
 
-func (self NimbusAPI) SetTotalChannelDeposit(registryAddress typing.PaymentNetworkID,
+func (self *ChannelService) SetTotalChannelDeposit(registryAddress typing.PaymentNetworkID,
 	tokenAddress typing.TokenAddress, partnerAddress typing.Address, totalDeposit typing.TokenAmount,
 	retryTimeout typing.NetworkTimeout) {
 
-	chainState := self.nimbus.StateFromNimbus()
+	chainState := self.StateFromChannel()
 	channelState := transfer.GetChannelStateFor(chainState, registryAddress, tokenAddress, partnerAddress)
 	if channelState == nil {
 		return
 	}
 
-	args := self.nimbus.GetPaymentChannelArgsWithChannelState(channelState)
+	args := self.GetPaymentArgs(channelState)
 	if args == nil {
 		panic("error in HandleContractSendChannelClose, cannot get paymentchannel args")
 	}
 
-	channelProxy := self.nimbus.chain.PaymentChannel(typing.Address{}, channelState.Identifier, args)
+	channelProxy := self.chain.PaymentChannel(typing.Address{}, channelState.Identifier, args)
 
 	balance, err := channelProxy.GetBalance()
 	if err != nil {
@@ -166,14 +147,14 @@ func (self NimbusAPI) SetTotalChannelDeposit(registryAddress typing.PaymentNetwo
 	}
 
 	channelProxy.SetTotalDeposit(totalDeposit)
-	targetAddress := self.nimbus.address
-	WaitForParticipantNewBalance(self.nimbus, registryAddress, tokenAddress, partnerAddress,
+	targetAddress := self.address
+	WaitForParticipantNewBalance(self, registryAddress, tokenAddress, partnerAddress,
 		targetAddress, totalDeposit, float32(retryTimeout))
 
 	return
 }
 
-func (self NimbusAPI) ChannelClose(registryAddress typing.PaymentNetworkID,
+func (self *ChannelService) ChannelClose(registryAddress typing.PaymentNetworkID,
 	tokenAddress typing.TokenAddress, partnerAddress typing.Address,
 	retryTimeout typing.NetworkTimeout) {
 
@@ -184,10 +165,10 @@ func (self NimbusAPI) ChannelClose(registryAddress typing.PaymentNetworkID,
 	return
 }
 
-func (self NimbusAPI) ChannelBatchClose(registryAddress typing.PaymentNetworkID,
+func (self *ChannelService) ChannelBatchClose(registryAddress typing.PaymentNetworkID,
 	tokenAddress typing.TokenAddress, partnerAddress *list.List, retryTimeout typing.NetworkTimeout) {
 
-	chainState := self.nimbus.StateFromNimbus()
+	chainState := self.StateFromChannel()
 	channelsToClose := transfer.FilterChannelsByPartnerAddress(chainState, registryAddress,
 		tokenAddress, partnerAddress)
 
@@ -202,7 +183,7 @@ func (self NimbusAPI) ChannelBatchClose(registryAddress typing.PaymentNetworkID,
 		channelState := e.Value.(*transfer.NettingChannelState)
 
 		identifier := channelState.GetIdentifier()
-		//channel := self.nimbus.chain.PaymentChannel(typing.Address{}, identifier, nil)
+		//channel := self.chain.PaymentChannel(typing.Address{}, identifier, nil)
 		/*
 			lock := channel.LockOrRaise()
 			lock.Lock()
@@ -215,19 +196,19 @@ func (self NimbusAPI) ChannelBatchClose(registryAddress typing.PaymentNetworkID,
 		channelClose.TokenNetworkIdentifier = tokenNetworkIdentifier
 		channelClose.ChannelIdentifier = identifier
 
-		self.nimbus.HandleStateChange(channelClose)
+		self.HandleStateChange(channelClose)
 	}
 
-	WaitForClose(self.nimbus, registryAddress, tokenAddress, channelIds, float32(retryTimeout))
+	WaitForClose(self, registryAddress, tokenAddress, channelIds, float32(retryTimeout))
 
 	return
 }
 
-func (self NimbusAPI) GetChannelList(registryAddress typing.PaymentNetworkID,
+func (self *ChannelService) GetChannelList(registryAddress typing.PaymentNetworkID,
 	tokenAddress *typing.TokenAddress, partnerAddress *typing.Address) *list.List {
 
 	result := list.New()
-	chainState := self.nimbus.StateFromNimbus()
+	chainState := self.StateFromChannel()
 
 	if tokenAddress != nil && partnerAddress != nil {
 		channelState := transfer.GetChannelStateFor(chainState,
@@ -246,24 +227,24 @@ func (self NimbusAPI) GetChannelList(registryAddress typing.PaymentNetworkID,
 	return result
 }
 
-func (self NimbusAPI) GetNodeNetworkState(nodeAddress typing.Address) string {
-	return transfer.GetNodeNetworkStatus(self.nimbus.StateFromNimbus(), nodeAddress)
+func (self *ChannelService) GetNodeNetworkState(nodeAddress typing.Address) string {
+	return transfer.GetNodeNetworkStatus(self.StateFromChannel(), nodeAddress)
 }
 
-func (self NimbusAPI) StartHealthCheckFor(nodeAddress typing.Address) {
+func (self *ChannelService) StartHealthCheckFor(nodeAddress typing.Address) {
 
-	self.nimbus.StartHealthCheckFor(nodeAddress)
+	self.StartHealthCheckFor(nodeAddress)
 	return
 }
 
-func (self NimbusAPI) GetTokensList(registryAddress typing.PaymentNetworkID) *list.List {
-	tokensList := transfer.GetTokenNetworkAddressesFor(self.nimbus.StateFromNimbus(),
+func (self *ChannelService) GetTokensList(registryAddress typing.PaymentNetworkID) *list.List {
+	tokensList := transfer.GetTokenNetworkAddressesFor(self.StateFromChannel(),
 		registryAddress)
 
 	return tokensList
 }
 
-func (self NimbusAPI) TransferAndWait(registryAddress typing.PaymentNetworkID,
+func (self *ChannelService) TransferAndWait(registryAddress typing.PaymentNetworkID,
 	tokenAddress typing.TokenAddress, amount typing.TokenAmount, target typing.Address,
 	identifier typing.PaymentID, transferTimeout int) {
 
@@ -280,29 +261,29 @@ func (self NimbusAPI) TransferAndWait(registryAddress typing.PaymentNetworkID,
 	return
 }
 
-func (self NimbusAPI) TransferAsync(registryAddress typing.PaymentNetworkID,
+func (self *ChannelService) TransferAsync(registryAddress typing.PaymentNetworkID,
 	tokenAddress typing.TokenAddress, amount typing.TokenAmount, target typing.Address,
 	identifier typing.PaymentID) *chan int {
 
 	asyncResult := new(chan int)
 
 	//[TODO] Adding Graph class to hold route information, support async transfer
-	// by calling nimbus mediated_transfer_async
+	// by calling channel mediated_transfer_async
 	return asyncResult
 }
 
-func (self NimbusAPI) DirectTransferAsync(amount typing.TokenAmount, target typing.Address,
+func (self *ChannelService) DirectTransferAsync(amount typing.TokenAmount, target typing.Address,
 	identifier typing.PaymentID) chan bool {
 
 	//Only one payment network
 	paymentNetworkIdentifier := typing.PaymentNetworkID{}
 	tokenAddress := typing.TokenAddress{}
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(
-		self.nimbus.StateFromNimbus(),
+		self.StateFromChannel(),
 		paymentNetworkIdentifier,
 		tokenAddress)
 
-	asyncResult, err := self.nimbus.DirectTransferAsync(tokenNetworkIdentifier, amount, typing.TargetAddress(target), identifier)
+	asyncResult, err := self.DirectTransferAsync(tokenNetworkIdentifier, amount, typing.TargetAddress(target), identifier)
 	if err != nil {
 		fmt.Println(err)
 		return nil
@@ -310,15 +291,15 @@ func (self NimbusAPI) DirectTransferAsync(amount typing.TokenAmount, target typi
 	return asyncResult
 }
 
-func (self NimbusAPI) GetNimbusEventsPaymentHistoryWithTimestamps(tokenAddress typing.TokenAddress,
+func (self *ChannelService) GetEventsPaymentHistoryWithTimestamps(tokenAddress typing.TokenAddress,
 	targetAddress typing.Address, limit int, offset int) *list.List {
 
 	result := list.New()
 
-	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(self.nimbus.StateFromNimbus(),
+	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(self.StateFromChannel(),
 		typing.PaymentNetworkID{}, tokenAddress)
 
-	events := self.nimbus.Wal.Storage.GetEventsWithTimestamps(limit, offset)
+	events := self.Wal.Storage.GetEventsWithTimestamps(limit, offset)
 	for e := events.Front(); e != nil; e = e.Next() {
 		event := e.Value.(*storage.TimestampedEvent)
 		if EventFilterForPayments(event.WrappedEvent, tokenNetworkIdentifier, targetAddress) == true {
@@ -331,11 +312,11 @@ func (self NimbusAPI) GetNimbusEventsPaymentHistoryWithTimestamps(tokenAddress t
 
 }
 
-func (self NimbusAPI) GetNimbusEventsPaymentHistory(tokenAddress typing.TokenAddress,
+func (self *ChannelService) GetEventsPaymentHistory(tokenAddress typing.TokenAddress,
 	targetAddress typing.Address, limit int, offset int) *list.List {
 	result := list.New()
 
-	events := self.GetNimbusEventsPaymentHistoryWithTimestamps(tokenAddress, targetAddress,
+	events := self.GetEventsPaymentHistoryWithTimestamps(tokenAddress, targetAddress,
 		limit, offset)
 
 	for e := events.Front(); e != nil; e = e.Next() {
@@ -348,30 +329,30 @@ func (self NimbusAPI) GetNimbusEventsPaymentHistory(tokenAddress typing.TokenAdd
 
 }
 
-func (self NimbusAPI) GetNimbusInternalEventsWithTimestamps(limit int, offset int) *list.List {
-	return self.nimbus.Wal.Storage.GetEventsWithTimestamps(limit, offset)
+func (self *ChannelService) GetInternalEventsWithTimestamps(limit int, offset int) *list.List {
+	return self.Wal.Storage.GetEventsWithTimestamps(limit, offset)
 
 }
 
-func (self NimbusAPI) GetBlockchainEventsNetwork(registryAddress typing.PaymentNetworkID,
-	fromBlock typing.BlockNumber, toBlock typing.BlockNumber) *list.List {
+func (self *ChannelService) GetBlockchainEventsNetwork(registryAddress typing.PaymentNetworkID,
+	fromBlock typing.BlockHeight, toBlock typing.BlockHeight) *list.List {
 
 	//[TODO] use blockchain.events to get chain event filter
 	//only used by restful, can skip now
 	return nil
 }
 
-func (self NimbusAPI) GetBlockchainEventsTokenNetwork(tokenAddress typing.TokenAddress,
-	fromBlock typing.BlockNumber, toBlock typing.BlockNumber) *list.List {
+func (self *ChannelService) GetBlockchainEventsTokenNetwork(tokenAddress typing.TokenAddress,
+	fromBlock typing.BlockHeight, toBlock typing.BlockHeight) *list.List {
 
 	//[TODO] use blockchain.events to get chain event filter
 	//only used by restful, can skip now
 	return nil
 }
 
-func (self NimbusAPI) GetBlockchainEventsChannel(tokenAddress typing.TokenAddress,
-	partnerAddress typing.Address, fromBlock typing.BlockNumber,
-	toBlock typing.BlockNumber) *list.List {
+func (self *ChannelService) GetBlockchainEventsChannel(tokenAddress typing.TokenAddress,
+	partnerAddress typing.Address, fromBlock typing.BlockHeight,
+	toBlock typing.BlockHeight) *list.List {
 
 	//[TODO] use blockchain.events to get chain event filter
 	//only used by restful, can skip now

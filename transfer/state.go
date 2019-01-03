@@ -40,7 +40,7 @@ func (h TransactionOrderHeap) Len() int {
 }
 
 func (h TransactionOrderHeap) Less(i, j int) bool {
-	return h[i].BlockNumber < h[j].BlockNumber
+	return h[i].BlockHeight < h[j].BlockHeight
 }
 
 func (h TransactionOrderHeap) Swap(i, j int) {
@@ -76,7 +76,7 @@ type TargetTask struct {
 }
 
 type ChainState struct {
-	BlockNumber                  typing.BlockNumber
+	BlockHeight                  typing.BlockHeight
 	ChainId                      typing.ChainID
 	IdentifiersToPaymentnetworks map[typing.PaymentNetworkID]*PaymentNetworkState
 	NodeAddressesToNetworkstates map[typing.Address]string
@@ -229,7 +229,7 @@ type BalanceProofSignedState struct {
 
 type HashTimeLockState struct {
 	Amount     typing.TokenAmount
-	Expiration typing.BlockNumber
+	Expiration typing.BlockHeight
 	Secrethash typing.Keccak256
 	Encoded    []byte
 	Lockhash   typing.LockHash
@@ -247,8 +247,8 @@ type UnlockProofState struct {
 }
 
 type TransactionExecutionStatus struct {
-	StartedBlockNumber  typing.BlockNumber
-	FinishedBlockNumber typing.BlockNumber
+	StartedBlockHeight  typing.BlockHeight
+	FinishedBlockHeight typing.BlockHeight
 	Result              string
 }
 
@@ -316,8 +316,8 @@ type NettingChannelState struct {
 	TokenAddress             typing.Address
 	PaymentNetworkIdentifier typing.PaymentNetworkID
 	TokenNetworkIdentifier   typing.TokenNetworkID
-	RevealTimeout            typing.BlockNumber
-	SettleTimeout            typing.BlockNumber
+	RevealTimeout            typing.BlockHeight
+	SettleTimeout            typing.BlockHeight
 	OurState                 *NettingChannelEndState
 	PartnerState             *NettingChannelEndState
 	DepositTransactionQueue  TransactionOrderHeap
@@ -343,10 +343,10 @@ func (self *NettingChannelState) GetChannelEndState(side int) *NettingChannelEnd
 type TransactionChannelNewBalance struct {
 	ParticipantAddress typing.Address
 	ContractBalance    typing.TokenAmount
-	DepositBlockNumber typing.BlockNumber
+	DepositBlockHeight typing.BlockHeight
 }
 
 type TransactionOrder struct {
-	BlockNumber typing.BlockNumber
+	BlockHeight typing.BlockHeight
 	Transaction TransactionChannelNewBalance
 }

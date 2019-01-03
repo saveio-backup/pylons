@@ -12,28 +12,27 @@ type ConnectionManager struct {
 	funds                  typing.TokenAmount
 	initialChannelTarget   int
 	joinableFundsTarget    float32
-	nimbus                 *ChannelService
+	channel                *ChannelService
 	registryAddress        typing.Address
 	tokenNetworkIdentifier typing.TokenNetworkID
 	tokenAddress           typing.TokenAddress
 
 	lock sync.Mutex
-	api  *NimbusAPI
 
 	wg sync.WaitGroup
 }
 
 func NewConnectionManager(
-	nimbus *ChannelService,
+	channel *ChannelService,
 	tokenNetworkIdentifier typing.TokenNetworkID) *ConnectionManager {
 	self := new(ConnectionManager)
 
 	self.funds = 0
 	self.initialChannelTarget = 0
 	self.joinableFundsTarget = 0
-	self.nimbus = nimbus
+	self = channel
 
-	chainState := nimbus.StateFromNimbus()
+	chainState := channel.StateFromChannel()
 	tokenNetworkState := transfer.GetTokenNetworkByIdentifier(chainState, tokenNetworkIdentifier)
 	tokenNetworkRegistry := transfer.GetTokenNetworkRegistryByTokenNetworkIdentifier(
 		chainState, tokenNetworkIdentifier)
@@ -41,8 +40,6 @@ func NewConnectionManager(
 	self.registryAddress = tokenNetworkRegistry.GetAddress()
 	self.tokenNetworkIdentifier = tokenNetworkIdentifier
 	self.tokenAddress = tokenNetworkState.GetTokenAddress()
-
-	self.api = NewNimbusAPI(nimbus)
 
 	return self
 }
@@ -72,7 +69,7 @@ func (self *ConnectionManager) connect(funds typing.TokenAmount,
 	self.joinableFundsTarget = joinableFundsTarget
 
 	qtyNetworkChannels := transfer.CountTokenNetworkChannels(
-		self.nimbus.StateFromNimbus(),
+		self.StateFromChannel(),
 		typing.PaymentNetworkID(self.registryAddress),
 		self.tokenAddress)
 
@@ -125,7 +122,7 @@ func (self *ConnectionManager) RetryConnect() {
 
 func (self *ConnectionManager) findNewPartners() *list.List {
 
-	openedChannels := transfer.GetChannelStateOpen(self.nimbus.StateFromNimbus(),
+	openedChannels := transfer.GetChannelStateOpen(self.StateFromChannel(),
 		typing.PaymentNetworkID(self.registryAddress), self.tokenAddress)
 
 	known := list.New()
@@ -136,10 +133,10 @@ func (self *ConnectionManager) findNewPartners() *list.List {
 	}
 
 	known.PushBack(getBootstrapAddress())
-	known.PushBack(self.nimbus.address)
+	known.PushBack(self.address)
 
 	participantsAddresses := transfer.GetParticipantsAddresses(
-		self.nimbus.StateFromNimbus(),
+		self.StateFromChannel(),
 		typing.PaymentNetworkID{}, typing.TokenAddress{})
 
 	available := list.New()
@@ -177,7 +174,7 @@ func (self *ConnectionManager) JoinPartner(partner typing.Address) {
 
 func (self *ConnectionManager) openChannels() bool {
 
-	openChannels := transfer.GetChannelStateOpen(self.nimbus.StateFromNimbus(),
+	openChannels := transfer.GetChannelStateOpen(self.StateFromChannel(),
 		typing.PaymentNetworkID{}, typing.TokenAddress{})
 
 	bootstrapAddress := getBootstrapAddress()

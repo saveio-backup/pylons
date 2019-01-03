@@ -77,7 +77,7 @@ type Transport struct {
 	// map address to queue
 	addressQueueMap *sync.Map
 	kill            chan struct{}
-	// messsage handler and signer, reference nimbus service
+	// messsage handler and signer, reference channel service
 	ChannelService ChannelServiceInterface
 }
 

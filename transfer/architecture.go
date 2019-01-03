@@ -38,7 +38,7 @@ type ContractSendExpirableEvent struct {
 
 type ContractReceiveStateChange struct {
 	TransactionHash typing.TransactionHash
-	BlockNumber     typing.BlockNumber
+	BlockHeight     typing.BlockHeight
 }
 
 type TransitionResult struct {

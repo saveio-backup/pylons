@@ -7,7 +7,7 @@ import (
 )
 
 type Block struct {
-	BlockNumber typing.BlockNumber
+	BlockHeight typing.BlockHeight
 	GasLimit    typing.BlockGasLimit
 	BlockHash   typing.BlockHash
 }
@@ -48,7 +48,7 @@ type ContractReceiveChannelClosed struct {
 
 type ActionInitChain struct {
 	PseudoRandomGenerator *rand.Rand
-	BlockNumber           typing.BlockNumber
+	BlockHeight           typing.BlockHeight
 	OurAddress            typing.Address
 	ChainId               typing.ChainID
 }

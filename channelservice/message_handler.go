@@ -9,21 +9,21 @@ import (
 type MessageHandler struct {
 }
 
-func (self *MessageHandler) OnMessage(nimbus *ChannelService, message interface{}) {
+func (self *MessageHandler) OnMessage(channel *ChannelService, message interface{}) {
 
 	switch message.(type) {
 	case *messages.DirectTransfer:
-		self.HandleMessageDirecttransfer(nimbus, message.(*messages.DirectTransfer))
+		self.HandleMessageDirecttransfer(channel, message.(*messages.DirectTransfer))
 	case *messages.Delivered:
-		self.HandleMessageDelivered(nimbus, message.(*messages.Delivered))
+		self.HandleMessageDelivered(channel, message.(*messages.Delivered))
 	case *messages.Processed:
-		self.HandleMessageProcessed(nimbus, message.(*messages.Processed))
+		self.HandleMessageProcessed(channel, message.(*messages.Processed))
 	default:
 
 	}
 }
 
-func (self *MessageHandler) HandleMessageDirecttransfer(nimbus *ChannelService, message *messages.DirectTransfer) {
+func (self *MessageHandler) HandleMessageDirecttransfer(channel *ChannelService, message *messages.DirectTransfer) {
 	var tokenNetworkIdentifier typing.TokenNetworkID
 
 	copy(tokenNetworkIdentifier[:], message.EnvelopeMessage.TokenNetworkAddress.TokenNetworkAddress[:20])
@@ -37,11 +37,11 @@ func (self *MessageHandler) HandleMessageDirecttransfer(nimbus *ChannelService, 
 		BalanceProof:                   balanceProof,
 	}
 
-	nimbus.HandleStateChange(directTransfer)
+	channel.HandleStateChange(directTransfer)
 	return
 }
 
-func (self *MessageHandler) HandleMessageProcessed(nimbus *ChannelService, message *messages.Processed) {
+func (self *MessageHandler) HandleMessageProcessed(channel *ChannelService, message *messages.Processed) {
 	processed := &transfer.ReceiveProcessed{
 		AuthenticatedSenderStateChange: transfer.AuthenticatedSenderStateChange{
 			Sender: messages.ConvertAddress(message.Signature.Sender),
@@ -49,10 +49,10 @@ func (self *MessageHandler) HandleMessageProcessed(nimbus *ChannelService, messa
 		MessageIdentifier: typing.MessageID(message.MessageIdentifier.MessageId),
 	}
 
-	nimbus.HandleStateChange(processed)
+	channel.HandleStateChange(processed)
 }
 
-func (self *MessageHandler) HandleMessageDelivered(nimbus *ChannelService, message *messages.Delivered) {
+func (self *MessageHandler) HandleMessageDelivered(channel *ChannelService, message *messages.Delivered) {
 	delivered := &transfer.ReceiveDelivered{
 		AuthenticatedSenderStateChange: transfer.AuthenticatedSenderStateChange{
 			Sender: messages.ConvertAddress(message.Signature.Sender),
@@ -60,7 +60,7 @@ func (self *MessageHandler) HandleMessageDelivered(nimbus *ChannelService, messa
 		MessageIdentifier: typing.MessageID(message.DeliveredMessageIdentifier.MessageId),
 	}
 
-	nimbus.HandleStateChange(delivered)
+	channel.HandleStateChange(delivered)
 }
 
 func BalanceProofFromEnvelope(message *messages.EnvelopeMessage, dataToSign []byte) *transfer.BalanceProofSignedState {

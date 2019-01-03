@@ -24,7 +24,7 @@ message PaymentProxy{
 
 // bootstrap command to register the ip address to address mapping
 // NOTE: this cannot be replaced even when the endpoint contract is available
-// since the ip address is the connection for paymentproxy message, not the one for nimbus
+// since the ip address is the connection for paymentproxy message, not the one for channel
 message BootStrap{
     bytes sender = 1;
     bool isClient = 2;

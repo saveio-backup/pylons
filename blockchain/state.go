@@ -8,8 +8,8 @@ import (
 
 //Only called by new opened channel
 func GetChannelState(tokenAddress typing.TokenAddress, paymentNetworkIdentifier typing.PaymentNetworkID,
-	tokenNetworkAddress typing.TokenNetworkAddress, revealTimeout typing.BlockNumber,
-	paymentChannelProxy *proxies.PaymentChannel, openedBlockNumber typing.BlockNumber) *transfer.NettingChannelState {
+	tokenNetworkAddress typing.TokenNetworkAddress, revealTimeout typing.BlockHeight,
+	paymentChannelProxy *proxies.PaymentChannel, openedBlockHeight typing.BlockHeight) *transfer.NettingChannelState {
 
 	channelDetails := paymentChannelProxy.Detail()
 	ourState := transfer.NewNettingChannelEndState()
@@ -23,12 +23,12 @@ func GetChannelState(tokenAddress typing.TokenAddress, paymentNetworkIdentifier 
 	identifier := paymentChannelProxy.GetChannelId()
 	settleTimeout := paymentChannelProxy.SettleTimeout()
 
-	if openedBlockNumber <= 0 {
+	if openedBlockHeight <= 0 {
 		return nil
 	}
 
 	openTransaction := &transfer.TransactionExecutionStatus{
-		0, openedBlockNumber, transfer.TransactionExecutionStatusSuccess}
+		0, openedBlockHeight, transfer.TransactionExecutionStatusSuccess}
 
 	channel := &transfer.NettingChannelState{
 		Identifier:               identifier,

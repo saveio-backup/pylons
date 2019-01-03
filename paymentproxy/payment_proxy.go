@@ -9,8 +9,8 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 
+	"github.com/oniio/oniChain/account"
 	"github.com/oniio/oniChannel"
-	"github.com/oniio/oniChannel/account"
 	"github.com/oniio/oniChannel/paymentproxy/messages"
 	"github.com/oniio/oniChannel/transfer"
 	"github.com/oniio/oniChannel/typing"
@@ -42,7 +42,7 @@ type addressItem struct {
 
 type PaymentProxyService struct {
 	net                             *network.Network
-	nimbus                          *nimbus.Nimbus
+	channel                         *channel.Channel
 	account                         *account.Account
 	netAddress                      string
 	mappingAddress                  string
@@ -52,19 +52,19 @@ type PaymentProxyService struct {
 	addressMap                      *sync.Map          // ip address -> account address
 	initDeposit                     typing.TokenAmount // init Despoit for the channele with bootstrap
 	notificationChannels            map[chan *transfer.EventPaymentReceivedSuccess]struct{}
-	nimbusReceiveNotification       chan *transfer.EventPaymentReceivedSuccess
+	channelReceiveNotification      chan *transfer.EventPaymentReceivedSuccess
 	nexthopToIndentifierToInitiator map[string]*sync.Map
 }
 
-func NewPaymentProxyService(nimbus *nimbus.Nimbus, netAddress string, mappingAddress string, isClient bool, bootstrap []string, initDeposit uint64) *PaymentProxyService {
+func NewPaymentProxyService(channel *channel.Channel, netAddress string, mappingAddress string, isClient bool, bootstrap []string, initDeposit uint64) *PaymentProxyService {
 	var address typing.Address
 
-	if nimbus == nil {
-		log.Error("invalid nimbus service")
+	if channel == nil {
+		log.Error("invalid channel service")
 		return nil
 	}
 
-	account := nimbus.Service.Account
+	account := channel.Service.Account
 	copy(address[:], account.Address[:20])
 
 	for i, v := range bootstrap {
@@ -78,7 +78,7 @@ func NewPaymentProxyService(nimbus *nimbus.Nimbus, netAddress string, mappingAdd
 	}
 
 	paymentProxyService := &PaymentProxyService{
-		nimbus:               nimbus,
+		channel:              channel,
 		account:              account,
 		address:              address,
 		netAddress:           PROTOCOL + netAddress,
@@ -90,10 +90,10 @@ func NewPaymentProxyService(nimbus *nimbus.Nimbus, netAddress string, mappingAdd
 		notificationChannels: make(map[chan *transfer.EventPaymentReceivedSuccess]struct{}),
 	}
 
-	// client proxy needs to register to nimbus for the payment notification
+	// client proxy needs to register to channel for the payment notification
 	if isClient {
-		paymentProxyService.nimbusReceiveNotification = make(chan *transfer.EventPaymentReceivedSuccess)
-		nimbus.RegisterReceiveNotification(paymentProxyService.nimbusReceiveNotification)
+		paymentProxyService.channelReceiveNotification = make(chan *transfer.EventPaymentReceivedSuccess)
+		channel.RegisterReceiveNotification(paymentProxyService.channelReceiveNotification)
 
 		paymentProxyService.nexthopToIndentifierToInitiator = make(map[string]*sync.Map)
 	}
@@ -146,7 +146,7 @@ func (this *PaymentProxyService) HandlePaymentProxyMessage(message *messages.Pay
 		var tokenAddress typing.TokenAddress
 
 		// check if there is an channel with the message sender(not initiator)
-		channelState := this.nimbus.Api.GetChannel(registryAddress, &tokenAddress, &from)
+		channelState := this.channel.Api.GetChannel(registryAddress, &tokenAddress, &from)
 		if channelState == nil {
 			log.Errorf("no payment channel can be found with partner : %v", from)
 			return
@@ -216,7 +216,7 @@ func (self *PaymentProxyService) RemoveInitiatorFromCache(nextHop string, identi
 
 func (this *PaymentProxyService) DirectPay(amount uint64, target typing.Address, paymentID uint64) {
 	log.Debugf("DirectPay to %s amount %d with paymentID %d", target, amount, paymentID)
-	this.nimbus.Api.DirectTransferAsync(typing.TokenAmount(amount), target, typing.PaymentID(paymentID))
+	this.channel.Api.DirectTransferAsync(typing.TokenAmount(amount), target, typing.PaymentID(paymentID))
 }
 
 // check for possible route, return the netaddress of next hoop
@@ -338,8 +338,8 @@ func (this *PaymentProxyService) InitPaymentChannelWithBootstrap(partner []byte)
 	}
 
 	log.Debugf("InitPaymentChannelWithBootstrap, try open channel with %s")
-	this.nimbus.Api.ChannelOpen(registryAddress, tokenAddress, partnerAddress, settleTimeout, retryTimeout)
-	this.nimbus.Api.SetTotalChannelDeposit(registryAddress, tokenAddress, partnerAddress, this.initDeposit, retryTimeout)
+	this.channel.Api.ChannelOpen(registryAddress, tokenAddress, partnerAddress, settleTimeout, retryTimeout)
+	this.channel.Api.SetTotalChannelDeposit(registryAddress, tokenAddress, partnerAddress, this.initDeposit, retryTimeout)
 	log.Debugf("InitPaymentChannelWithBootstrap, set channel deposit %d success", this.initDeposit)
 }
 
@@ -444,13 +444,13 @@ func (this *PaymentProxyService) Start() error {
 	this.ConnectBootStrapNodes()
 
 	if this.isClient {
-		go this.ProcessNimbusNotificaion(this.nimbusReceiveNotification)
+		go this.ProcessNotificaion(this.channelReceiveNotification)
 	}
 
 	return nil
 }
 
-func (this *PaymentProxyService) ProcessNimbusNotificaion(receiveChan chan *transfer.EventPaymentReceivedSuccess) {
+func (this *PaymentProxyService) ProcessNotificaion(receiveChan chan *transfer.EventPaymentReceivedSuccess) {
 	var event *transfer.EventPaymentReceivedSuccess
 	var networkIdentifier typing.PaymentNetworkID
 	var tokenNetworkIdentifier typing.TokenNetworkID

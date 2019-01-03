@@ -50,18 +50,18 @@ func compareLocksroot(one typing.Locksroot, two typing.Locksroot) bool {
 	return result
 }
 
-func isDepositConfirmed(channelState *NettingChannelState, blockNumber typing.BlockNumber) bool {
+func isDepositConfirmed(channelState *NettingChannelState, blockNumber typing.BlockHeight) bool {
 	if len(channelState.DepositTransactionQueue) == 0 {
 		return false
 	}
 
-	result := IsTransactionConfirmed(channelState.DepositTransactionQueue[0].BlockNumber, blockNumber)
+	result := IsTransactionConfirmed(channelState.DepositTransactionQueue[0].BlockHeight, blockNumber)
 	return result
 }
 
-func IsTransactionConfirmed(transactionBlockNumber typing.BlockNumber, blockchainBlockNumber typing.BlockNumber) bool {
-	confirmationBlock := transactionBlockNumber + (typing.BlockNumber)(utils.DefaultNumberOfConfirmationsBlock)
-	return blockchainBlockNumber > confirmationBlock
+func IsTransactionConfirmed(transactionBlockHeight typing.BlockHeight, blockchainBlockHeight typing.BlockHeight) bool {
+	confirmationBlock := transactionBlockHeight + (typing.BlockHeight)(utils.DefaultNumberOfConfirmationsBlock)
+	return blockchainBlockHeight > confirmationBlock
 }
 
 func IsBalanceProofSafeForOnchainOperations(balanceProof *BalanceProofSignedState) bool {
@@ -302,7 +302,7 @@ func GetStatus(channelState *NettingChannelState) string {
 		finishedSuccessfully =
 			channelState.SettleTransaction.Result == TransactionExecutionStatusSuccess
 
-		running = channelState.SettleTransaction.FinishedBlockNumber == 0
+		running = channelState.SettleTransaction.FinishedBlockHeight == 0
 
 		if finishedSuccessfully {
 			result = ChannelStateSettled
@@ -315,7 +315,7 @@ func GetStatus(channelState *NettingChannelState) string {
 		finishedSuccessfully =
 			channelState.CloseTransaction.Result == TransactionExecutionStatusSuccess
 
-		running = channelState.CloseTransaction.FinishedBlockNumber == 0
+		running = channelState.CloseTransaction.FinishedBlockHeight == 0
 
 		if finishedSuccessfully {
 			result = ChannelStateClosed
@@ -331,26 +331,26 @@ func GetStatus(channelState *NettingChannelState) string {
 	return result
 }
 
-func setClosed(channelState *NettingChannelState, blockNumber typing.BlockNumber) {
+func setClosed(channelState *NettingChannelState, blockNumber typing.BlockHeight) {
 	if channelState.CloseTransaction == nil {
 		channelState.CloseTransaction = &TransactionExecutionStatus{
 			0,
 			blockNumber,
 			TransactionExecutionStatusSuccess}
-	} else if channelState.CloseTransaction.FinishedBlockNumber == 0 {
-		channelState.CloseTransaction.FinishedBlockNumber = blockNumber
+	} else if channelState.CloseTransaction.FinishedBlockHeight == 0 {
+		channelState.CloseTransaction.FinishedBlockHeight = blockNumber
 		channelState.CloseTransaction.Result = TransactionExecutionStatusSuccess
 	}
 }
 
-func setSettled(channelState *NettingChannelState, blockNumber typing.BlockNumber) {
+func setSettled(channelState *NettingChannelState, blockNumber typing.BlockHeight) {
 	if channelState.SettleTransaction == nil {
 		channelState.SettleTransaction = &TransactionExecutionStatus{
 			0,
 			blockNumber,
 			TransactionExecutionStatusSuccess}
-	} else if channelState.SettleTransaction.FinishedBlockNumber == 0 {
-		channelState.SettleTransaction.FinishedBlockNumber = blockNumber
+	} else if channelState.SettleTransaction.FinishedBlockHeight == 0 {
+		channelState.SettleTransaction.FinishedBlockHeight = blockNumber
 		channelState.SettleTransaction.Result = TransactionExecutionStatusSuccess
 	}
 }
@@ -493,7 +493,7 @@ func sendDirectTransfer(channelState *NettingChannelState, amount typing.Payment
 	return directTransfer
 }
 
-func EventsForClose(channelState *NettingChannelState, blockNumber typing.BlockNumber) *list.List {
+func EventsForClose(channelState *NettingChannelState, blockNumber typing.BlockHeight) *list.List {
 	events := list.New()
 
 	status := GetStatus(channelState)
@@ -576,7 +576,7 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 }
 
 func handleActionClose(channelState *NettingChannelState, close *ActionChannelClose,
-	blockNumber typing.BlockNumber) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 
 	events := EventsForClose(channelState, blockNumber)
 	return TransitionResult{channelState, events}
@@ -624,17 +624,17 @@ func handleReceiveDirecttransfer(channelState *NettingChannelState,
 }
 
 func handleBlock(channelState *NettingChannelState, stateChange *Block,
-	blockNumber typing.BlockNumber) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 
 	events := list.New()
 
 	if GetStatus(channelState) == ChannelStateClosed {
-		closedBlockNumber := channelState.CloseTransaction.FinishedBlockNumber
-		settlementEnd := closedBlockNumber + channelState.SettleTimeout
+		closedBlockHeight := channelState.CloseTransaction.FinishedBlockHeight
+		settlementEnd := closedBlockHeight + channelState.SettleTimeout
 
-		if stateChange.BlockNumber > settlementEnd && channelState.SettleTransaction == nil {
+		if stateChange.BlockHeight > settlementEnd && channelState.SettleTransaction == nil {
 			channelState.SettleTransaction = &TransactionExecutionStatus{
-				stateChange.BlockNumber, 0, ""}
+				stateChange.BlockHeight, 0, ""}
 
 			event := &ContractSendChannelSettle{ContractSendEvent{}, channelState.Identifier,
 				typing.TokenNetworkAddress(channelState.TokenNetworkIdentifier)}
@@ -664,7 +664,7 @@ func handleChannelClosed(channelState *NettingChannelState, stateChange *Contrac
 	}
 
 	if justClosed {
-		setClosed(channelState, stateChange.BlockNumber)
+		setClosed(channelState, stateChange.BlockHeight)
 
 		balanceProof := channelState.PartnerState.BalanceProof
 		callUpdate := false
@@ -675,12 +675,12 @@ func handleChannelClosed(channelState *NettingChannelState, stateChange *Contrac
 		}
 
 		if callUpdate {
-			expiration := stateChange.BlockNumber + channelState.SettleTimeout
+			expiration := stateChange.BlockHeight + channelState.SettleTimeout
 			update := &ContractSendChannelUpdateTransfer{
 				ContractSendExpirableEvent{ContractSendEvent{}, typing.BlockExpiration(expiration)},
 				channelState.Identifier, channelState.TokenNetworkIdentifier, balanceProof}
 
-			channelState.UpdateTransaction = &TransactionExecutionStatus{stateChange.BlockNumber,
+			channelState.UpdateTransaction = &TransactionExecutionStatus{stateChange.BlockHeight,
 				0, ""}
 
 			events.PushBack(update)
@@ -692,7 +692,7 @@ func handleChannelClosed(channelState *NettingChannelState, stateChange *Contrac
 
 func handleChannelUpdatedTransfer(channelState *NettingChannelState,
 	stateChange *ContractReceiveUpdateTransfer,
-	blockNumber typing.BlockNumber) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 
 	if stateChange.ChannelIdentifier == channelState.Identifier {
 		channelState.UpdateTransaction = &TransactionExecutionStatus{
@@ -704,12 +704,12 @@ func handleChannelUpdatedTransfer(channelState *NettingChannelState,
 
 func handleChannelSettled(channelState *NettingChannelState,
 	stateChange *ContractReceiveChannelSettled,
-	blockNumber typing.BlockNumber) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 
 	events := list.New()
 
 	if stateChange.ChannelIdentifier == channelState.Identifier {
-		setSettled(channelState, stateChange.BlockNumber)
+		setSettled(channelState, stateChange.BlockHeight)
 		isSettlePending := false
 		if channelState.OurUnlockTransaction != nil {
 			isSettlePending = true
@@ -739,14 +739,14 @@ func handleChannelSettled(channelState *NettingChannelState,
 
 func handleChannelNewbalance(channelState *NettingChannelState,
 	stateChange *ContractReceiveChannelNewBalance,
-	blockNumber typing.BlockNumber) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 
 	depositTransaction := stateChange.DepositTransaction
 
-	if IsTransactionConfirmed(depositTransaction.DepositBlockNumber, blockNumber) {
+	if IsTransactionConfirmed(depositTransaction.DepositBlockHeight, blockNumber) {
 		applyChannelNewbalance(channelState, &stateChange.DepositTransaction)
 	} else {
-		order := TransactionOrder{depositTransaction.DepositBlockNumber, depositTransaction}
+		order := TransactionOrder{depositTransaction.DepositBlockHeight, depositTransaction}
 		channelState.DepositTransactionQueue.Push(order)
 	}
 
@@ -768,7 +768,7 @@ func applyChannelNewbalance(channelState *NettingChannelState,
 }
 
 func StateTransitionForChannel(channelState *NettingChannelState, stateChange StateChange,
-	pseudoRandomGenerator *rand.Rand, blockNumber typing.BlockNumber) TransitionResult {
+	pseudoRandomGenerator *rand.Rand, blockNumber typing.BlockHeight) TransitionResult {
 
 	events := list.New()
 	iteration := TransitionResult{channelState, events}

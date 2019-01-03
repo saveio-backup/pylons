@@ -12,7 +12,7 @@ type TimestampedEvent struct {
 	logTime      string
 }
 
-const databasePath string = "./nimbus.db"
+const databasePath string = "./channel.db"
 
 const DbCreateSettings string = "CREATE TABLE IF NOT EXISTS settings (name VARCHAR[24] NOT NULL PRIMARY KEY, value TEXT);"
 const DbCreateStateChanges string = "CREATE TABLE IF NOT EXISTS state_changes (identifier INTEGER PRIMARY KEY AUTOINCREMENT, data JSON);"

@@ -111,7 +111,7 @@ func (m *PaymentProxy) GetSignature() []byte {
 
 // bootstrap command to register the ip address to address mapping
 // NOTE: this cannot be replaced even when the endpoint contract is available
-// since the ip address is the connection for paymentproxy message, not the one for nimbus
+// since the ip address is the connection for paymentproxy message, not the one for channel
 type BootStrap struct {
 	Sender    []byte `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	IsClient  bool   `protobuf:"varint,2,opt,name=isClient,proto3" json:"isClient,omitempty"`

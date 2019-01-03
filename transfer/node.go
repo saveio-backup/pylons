@@ -39,7 +39,7 @@ func getTokenNetworkByTokenAddress(
 func subdispatchToAllChannels(
 	chainState *ChainState,
 	stateChange StateChange,
-	blockNumber typing.BlockNumber) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 
 	events := list.New()
 
@@ -195,8 +195,8 @@ func handleBlockForNode(
 
 	events := list.New()
 
-	blockNumber := stateChange.BlockNumber
-	chainState.BlockNumber = blockNumber
+	blockNumber := stateChange.BlockHeight
+	chainState.BlockHeight = blockNumber
 
 	channelsResult := subdispatchToAllChannels(
 		chainState,
@@ -220,7 +220,7 @@ func handleChainInit(
 	result := NewChainState()
 
 	result.PseudoRandomGenerator = stateChange.PseudoRandomGenerator
-	result.BlockNumber = stateChange.BlockNumber
+	result.BlockHeight = stateChange.BlockHeight
 	result.Address = stateChange.OurAddress
 	result.ChainId = stateChange.ChainId
 
@@ -242,7 +242,7 @@ func handleTokenNetworkAction(
 
 	if tokenNetworkState != nil {
 		iteration := stateTransitionForNetwork(paymentNetworkId, tokenNetworkState,
-			stateChange, chainState.PseudoRandomGenerator, chainState.BlockNumber)
+			stateChange, chainState.PseudoRandomGenerator, chainState.BlockHeight)
 
 		if reflect.ValueOf(iteration.NewState).IsNil() {
 
@@ -498,7 +498,7 @@ func isTransactionInvalidated(transaction Event, stateChange StateChange) bool {
 	return false
 }
 
-func isTransactionExpired(transaction Event, blockNumber typing.BlockNumber) bool {
+func isTransactionExpired(transaction Event, blockNumber typing.BlockHeight) bool {
 
 	if v, ok := transaction.(*ContractSendChannelUpdateTransfer); ok {
 		if v.Expiration < typing.BlockExpiration(blockNumber) {
@@ -520,7 +520,7 @@ func isTransactionPending(chainState *ChainState, transaction Event, stateChange
 		return false
 	} else if isTransactionInvalidated(transaction, stateChange) {
 		return false
-	} else if isTransactionExpired(transaction, chainState.BlockNumber) {
+	} else if isTransactionExpired(transaction, chainState.BlockHeight) {
 		return false
 	} else {
 		return true
@@ -584,7 +584,7 @@ func getChannelsCloseEvents(
 
 		for e := filteredChannelStates.Front(); e != nil; e = e.Next() {
 			channelState := e.Value.(*NettingChannelState)
-			eventsForClose := EventsForClose(channelState, chainState.BlockNumber)
+			eventsForClose := EventsForClose(channelState, chainState.BlockHeight)
 			events.PushBackList(eventsForClose)
 		}
 	}

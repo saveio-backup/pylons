@@ -21,7 +21,7 @@ const settlementTimeoutMax int = 100000
 
 type ChannelData struct {
 	ChannelIdentifier typing.ChannelID
-	SettleBlockNumber typing.BlockNumber
+	SettleBlockHeight typing.BlockHeight
 	State             int
 }
 
@@ -68,7 +68,7 @@ func NewTokenNetwork(
 	self.nodeAddress = typing.Address(jsonrpcClient.Account.Address)
 
 	self.openChannelTransactions = make(map[typing.Address]*sync.Mutex)
-	self.channelOperationsLock = make(map[typing.Address]*sync.Mutex)
+	selfOperationsLock = make(map[typing.Address]*sync.Mutex)
 
 	return self
 }
@@ -79,12 +79,12 @@ func (self *TokenNetwork) getOperationLock(partner typing.Address) *sync.Mutex {
 	self.opLock.Lock()
 	defer self.opLock.Unlock()
 
-	val, exist := self.channelOperationsLock[partner]
+	val, exist := selfOperationsLock[partner]
 
 	if exist == false {
 		newOpLock := new(sync.Mutex)
 
-		self.channelOperationsLock[partner] = newOpLock
+		selfOperationsLock[partner] = newOpLock
 		result = newOpLock
 	} else {
 		result = val
@@ -134,7 +134,7 @@ func (self *TokenNetwork) NewNettingChannel(partner typing.Address, settleTimeou
 		defer val.Unlock()
 	}
 
-	channelCreated := self.channelExistsAndNotSettled(self.nodeAddress, partner, 0)
+	channelCreated := selfExistsAndNotSettled(self.nodeAddress, partner, 0)
 	if channelCreated == true {
 		channelDetail := self.detailChannel(self.nodeAddress, partner, 0)
 		channelIdentifier = channelDetail.ChannelIdentifier
@@ -216,7 +216,7 @@ func (self *TokenNetwork) detailChannel(participant1 typing.Address,
 	}
 	channelData := &ChannelData{
 		ChannelIdentifier: channelIdentifier,
-		SettleBlockNumber: typing.BlockNumber(info.SettleBlockHeight),
+		SettleBlockHeight: typing.BlockHeight(info.SettleBlockHeight),
 		State:             int(info.ChannelState),
 	}
 	return channelData
@@ -617,8 +617,8 @@ func (self *TokenNetwork) settle(channelIdentifier typing.ChannelID, transferred
 	return
 }
 
-// func (self *TokenNetwork) eventsFilter(topics *list.List, fromBlock typing.BlockNumber,
-// 	toBlock typing.BlockNumber) *utils.StatelessFilter {
+// func (self *TokenNetwork) eventsFilter(topics *list.List, fromBlock typing.BlockHeight,
+// 	toBlock typing.BlockHeight) *utils.StatelessFilter {
 
 // 	//[TODO] call self.client.new_filter
 // 	result := new(utils.StatelessFilter)
@@ -626,8 +626,8 @@ func (self *TokenNetwork) settle(channelIdentifier typing.ChannelID, transferred
 // 	return result
 // }
 
-// func (self *TokenNetwork) AllEventsFilter(fromBlock typing.BlockNumber,
-// 	toBlock typing.BlockNumber) *utils.StatelessFilter {
+// func (self *TokenNetwork) AllEventsFilter(fromBlock typing.BlockHeight,
+// 	toBlock typing.BlockHeight) *utils.StatelessFilter {
 
 // 	return self.eventsFilter(nil, fromBlock, toBlock)
 // }
@@ -738,7 +738,7 @@ func (self *TokenNetwork) checkChannelStateForSettle(participant1 typing.Address
 			log.Errorf("ParseUint height :%s err :%s", h, err)
 			return false
 		}
-		if height < uint64(channelData.SettleBlockNumber) {
+		if height < uint64(channelData.SettleBlockHeight) {
 			return false
 		}
 	}

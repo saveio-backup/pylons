@@ -11,7 +11,7 @@ import (
 	"github.com/ontio/ontology/common/log"
 )
 
-func (this *RpcClient) GetFilterArgsForAllEventsFromChannel(chanID typing.ChannelID, fromBlock, toBlock typing.BlockNumber) ([]map[string]interface{}, error) {
+func (this *RpcClient) GetFilterArgsForAllEventsFromChannel(chanID typing.ChannelID, fromBlock, toBlock typing.BlockHeight) ([]map[string]interface{}, error) {
 	toBlockUint := uint32(toBlock)
 
 	currentHeight, _ := this.GetCurrentBlockHeight()
@@ -72,7 +72,7 @@ func (this *RpcClient) GetFilterArgsForAllEventsFromChannel(chanID typing.Channe
 
 // GetAllFilterArgsForAllEventsFromChannel get all events from fromBlock to current block height
 // return a slice of map[string]interface{}
-func (this *RpcClient) GetAllFilterArgsForAllEventsFromChannel(chanID typing.ChannelID, fromBlock typing.BlockNumber) ([]map[string]interface{}, error) {
+func (this *RpcClient) GetAllFilterArgsForAllEventsFromChannel(chanID typing.ChannelID, fromBlock typing.BlockHeight) ([]map[string]interface{}, error) {
 	heightBytes, err := this.GetCurrentBlockHeight()
 	if err != nil {
 		return nil, err
@@ -82,6 +82,6 @@ func (this *RpcClient) GetAllFilterArgsForAllEventsFromChannel(chanID typing.Cha
 	if err != nil {
 		return nil, err
 	}
-	toBlockUint := typing.BlockNumber(height)
+	toBlockUint := typing.BlockHeight(height)
 	return this.GetFilterArgsForAllEventsFromChannel(chanID, fromBlock, toBlockUint)
 }

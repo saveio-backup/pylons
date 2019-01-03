@@ -13,9 +13,9 @@ type PaymentChannel struct {
 	channelIdentifier typing.ChannelID
 	Participant1      typing.Address
 	Participant2      typing.Address
-	openBlockNumber   typing.BlockNumber
-	settleTimeout     typing.BlockNumber
-	closeBlockNumber  typing.BlockNumber
+	openBlockHeight   typing.BlockHeight
+	settleTimeout     typing.BlockHeight
+	closeBlockHeight  typing.BlockHeight
 }
 
 func NewPaymentChannel(tokenNetwork *TokenNetwork, channelIdentifier typing.ChannelID, args map[string]interface{}) (*PaymentChannel, error) {
@@ -41,13 +41,13 @@ func NewPaymentChannel(tokenNetwork *TokenNetwork, channelIdentifier typing.Chan
 	}
 
 	if v, exist := args["blockHeight"]; exist {
-		self.openBlockNumber = v.(typing.BlockNumber)
+		self.openBlockHeight = v.(typing.BlockHeight)
 	}
 	if v, exist := args["settleTimeout"]; exist {
-		self.settleTimeout = v.(typing.BlockNumber)
+		self.settleTimeout = v.(typing.BlockHeight)
 	}
 
-	self.channelIdentifier = channelIdentifier
+	selfIdentifier = channelIdentifier
 
 	self.Participant1 = participant1
 	self.Participant2 = participant2
@@ -57,7 +57,7 @@ func NewPaymentChannel(tokenNetwork *TokenNetwork, channelIdentifier typing.Chan
 }
 
 func (self *PaymentChannel) GetChannelId() typing.ChannelID {
-	return self.channelIdentifier
+	return selfIdentifier
 }
 
 func (self *PaymentChannel) LockOrRaise() *sync.Mutex {
@@ -71,15 +71,15 @@ func (self *PaymentChannel) tokenAddress() typing.Address {
 }
 
 func (self *PaymentChannel) Detail() *ChannelDetails {
-	return self.TokenNetwork.detail(self.Participant1, self.Participant2, self.channelIdentifier)
+	return self.TokenNetwork.detail(self.Participant1, self.Participant2, selfIdentifier)
 }
 
 //Should be set when open channel, should NOT get it by filter log
-func (self PaymentChannel) SettleTimeout() typing.BlockNumber {
+func (self PaymentChannel) SettleTimeout() typing.BlockHeight {
 	return self.settleTimeout
 }
 
-func (self *PaymentChannel) CloseBlockNumber() typing.BlockNumber {
+func (self *PaymentChannel) CloseBlockHeight() typing.BlockHeight {
 
 	//[NOTE] should not care about close block number!
 	// can get it by fitler log if needed
@@ -88,32 +88,32 @@ func (self *PaymentChannel) CloseBlockNumber() typing.BlockNumber {
 
 func (self *PaymentChannel) Opened() bool {
 	return self.TokenNetwork.ChannelIsOpened(self.Participant1, self.Participant2,
-		self.channelIdentifier)
+		selfIdentifier)
 }
 
 func (self *PaymentChannel) Closed() bool {
 	return self.TokenNetwork.ChannelIsClosed(self.Participant1, self.Participant2,
-		self.channelIdentifier)
+		selfIdentifier)
 }
 
 func (self *PaymentChannel) Settled() bool {
 	return self.TokenNetwork.ChannelIsSettled(self.Participant1, self.Participant2,
-		self.channelIdentifier)
+		selfIdentifier)
 }
 
 func (self *PaymentChannel) ClosingAddress() typing.Address {
 	return self.TokenNetwork.ClosingAddress(self.Participant1, self.Participant2,
-		self.channelIdentifier)
+		selfIdentifier)
 }
 
 func (self *PaymentChannel) CanTransfer() bool {
 	return self.TokenNetwork.CanTransfer(self.Participant1, self.Participant2,
-		self.channelIdentifier)
+		selfIdentifier)
 }
 
 func (self *PaymentChannel) SetTotalDeposit(totalDeposit typing.TokenAmount) {
 
-	self.TokenNetwork.SetTotalDeposit(self.channelIdentifier, totalDeposit,
+	self.TokenNetwork.SetTotalDeposit(selfIdentifier, totalDeposit,
 		self.Participant2)
 
 	return
@@ -122,7 +122,7 @@ func (self *PaymentChannel) SetTotalDeposit(totalDeposit typing.TokenAmount) {
 func (self *PaymentChannel) Close(nonce typing.Nonce, balanceHash typing.BalanceHash,
 	additionalHash typing.AdditionalHash, signature typing.Signature, pubKey typing.PubKey) {
 
-	self.TokenNetwork.Close(self.channelIdentifier, self.Participant2,
+	self.TokenNetwork.Close(selfIdentifier, self.Participant2,
 		balanceHash, nonce, additionalHash, signature, pubKey)
 
 	return
@@ -132,21 +132,21 @@ func (self *PaymentChannel) UpdateTransfer(nonce typing.Nonce, balanceHash typin
 	additionalHash typing.AdditionalHash, partnerSignature typing.Signature,
 	signature typing.Signature, closePubkey, nonClosePubkey typing.PubKey) {
 
-	self.TokenNetwork.updateTransfer(self.channelIdentifier, self.Participant2,
+	self.TokenNetwork.updateTransfer(selfIdentifier, self.Participant2,
 		balanceHash, nonce, additionalHash, partnerSignature, signature, closePubkey, nonClosePubkey)
 
 	return
 }
 
 func (self *PaymentChannel) Unlock(merkleTreeLeaves *list.List) {
-	self.TokenNetwork.unlock(self.channelIdentifier, self.Participant2, merkleTreeLeaves)
+	self.TokenNetwork.unlock(selfIdentifier, self.Participant2, merkleTreeLeaves)
 	return
 }
 
 func (self *PaymentChannel) Settle(transferredAmount typing.TokenAmount, lockedAmount typing.TokenAmount, locksroot typing.Locksroot,
 	partnerTransferredAmount typing.TokenAmount, partnerLockedAmount typing.TokenAmount, partnerLocksroot typing.Locksroot) {
 
-	self.TokenNetwork.settle(self.channelIdentifier, transferredAmount, lockedAmount,
+	self.TokenNetwork.settle(selfIdentifier, transferredAmount, lockedAmount,
 		locksroot, self.Participant2, partnerTransferredAmount, partnerLockedAmount, partnerLocksroot)
 
 	return
@@ -158,8 +158,8 @@ func (self *PaymentChannel) GetBalance() (typing.Balance, error) {
 }
 
 //Not needed
-func (self PaymentChannel) AllEventsFilter(fromBlock typing.BlockNumber,
-	toBlock typing.BlockNumber) {
+func (self PaymentChannel) AllEventsFilter(fromBlock typing.BlockHeight,
+	toBlock typing.BlockHeight) {
 
 	return
 }

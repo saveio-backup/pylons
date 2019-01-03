@@ -8,45 +8,45 @@ import (
 	"github.com/oniio/oniChannel/utils"
 )
 
-type NimbusEventHandler struct {
+type ChannelEventHandler struct {
 }
 
-func (self NimbusEventHandler) OnNimbusEvent(nimbus *ChannelService, event transfer.Event) {
+func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event transfer.Event) {
 
 	switch event.(type) {
 	case *transfer.SendDirectTransfer:
 		sendDirectTransfer := event.(*transfer.SendDirectTransfer)
-		self.HandleSendDirecttransfer(nimbus, sendDirectTransfer)
+		self.HandleSendDirecttransfer(channel, sendDirectTransfer)
 	case *transfer.SendProcessed:
 		sendProcessed := event.(*transfer.SendProcessed)
-		self.HandleSendProcessed(nimbus, sendProcessed)
+		self.HandleSendProcessed(channel, sendProcessed)
 	case *transfer.EventPaymentSentSuccess:
 		eventPaymentSentSuccess := event.(*transfer.EventPaymentSentSuccess)
-		self.HandlePaymentSentSuccess(nimbus, eventPaymentSentSuccess)
+		self.HandlePaymentSentSuccess(channel, eventPaymentSentSuccess)
 	case *transfer.EventPaymentSentFailed:
 		eventPaymentSentFailed := event.(*transfer.EventPaymentSentFailed)
-		self.HandlePaymentSentFailed(nimbus, eventPaymentSentFailed)
+		self.HandlePaymentSentFailed(channel, eventPaymentSentFailed)
 	case *transfer.EventPaymentReceivedSuccess:
 		eventPaymentReceivedSuccess := event.(*transfer.EventPaymentReceivedSuccess)
-		self.HandlePaymentReceivedSuccess(nimbus, eventPaymentReceivedSuccess)
+		self.HandlePaymentReceivedSuccess(channel, eventPaymentReceivedSuccess)
 	case *transfer.ContractSendChannelClose:
 		contractSendChannelClose := event.(*transfer.ContractSendChannelClose)
-		self.HandleContractSendChannelClose(nimbus, contractSendChannelClose)
+		self.HandleContractSendChannelClose(channel, contractSendChannelClose)
 	case *transfer.ContractSendChannelUpdateTransfer:
 		contractSendChannelUpdateTransfer := event.(*transfer.ContractSendChannelUpdateTransfer)
-		self.HandelContractSendChannelUpdate(nimbus, contractSendChannelUpdateTransfer)
+		self.HandelContractSendChannelUpdate(channel, contractSendChannelUpdateTransfer)
 	case *transfer.ContractSendChannelSettle:
 		contractSendChannelSettle := event.(*transfer.ContractSendChannelSettle)
-		self.HandleContractSendChannelSettle(nimbus, contractSendChannelSettle)
+		self.HandleContractSendChannelSettle(channel, contractSendChannelSettle)
 	default:
 	}
 	return
 }
 
-func (self NimbusEventHandler) HandleSendDirecttransfer(nimbus *ChannelService, sendDirectTransfer *transfer.SendDirectTransfer) {
+func (self ChannelEventHandler) HandleSendDirecttransfer(channel *ChannelService, sendDirectTransfer *transfer.SendDirectTransfer) {
 	message := messages.MessageFromSendEvent(sendDirectTransfer)
 	if message != nil {
-		err := nimbus.Sign(message)
+		err := channel.Sign(message)
 		if err != nil {
 			return
 		}
@@ -56,16 +56,16 @@ func (self NimbusEventHandler) HandleSendDirecttransfer(nimbus *ChannelService, 
 			ChannelIdentifier: sendDirectTransfer.ChannelIdentifier,
 		}
 
-		nimbus.transport.SendAsync(queueId, message)
+		channel.transport.SendAsync(queueId, message)
 	}
 
 	return
 }
 
-func (self NimbusEventHandler) HandleSendProcessed(nimbus *ChannelService, processedEvent *transfer.SendProcessed) {
+func (self ChannelEventHandler) HandleSendProcessed(channel *ChannelService, processedEvent *transfer.SendProcessed) {
 	message := messages.MessageFromSendEvent(processedEvent)
 	if message != nil {
-		err := nimbus.Sign(message)
+		err := channel.Sign(message)
 		if err != nil {
 			return
 		}
@@ -75,51 +75,51 @@ func (self NimbusEventHandler) HandleSendProcessed(nimbus *ChannelService, proce
 			ChannelIdentifier: processedEvent.ChannelIdentifier,
 		}
 
-		nimbus.transport.SendAsync(queueId, message)
+		channel.transport.SendAsync(queueId, message)
 	}
 
 	return
 }
 
-func (self NimbusEventHandler) HandlePaymentSentSuccess(nimbus *ChannelService, paymentSentSuccessEvent *transfer.EventPaymentSentSuccess) {
+func (self ChannelEventHandler) HandlePaymentSentSuccess(channel *ChannelService, paymentSentSuccessEvent *transfer.EventPaymentSentSuccess) {
 	target := typing.Address(paymentSentSuccessEvent.Target)
 	identifier := paymentSentSuccessEvent.Identifier
 
-	paymentStatus, exist := nimbus.GetPaymentStatus(target, identifier)
+	paymentStatus, exist := channel.GetPaymentStatus(target, identifier)
 	if !exist {
 		panic("error in HandlePaymentSentSuccess, no payment status found in the map")
 	}
 
-	nimbus.RemovePaymentStatus(target, identifier)
+	channel.RemovePaymentStatus(target, identifier)
 
 	paymentStatus.paymentDone <- true
 
 	return
 }
 
-func (self NimbusEventHandler) HandlePaymentSentFailed(nimbus *ChannelService, paymentSentFailedEvent *transfer.EventPaymentSentFailed) {
+func (self ChannelEventHandler) HandlePaymentSentFailed(channel *ChannelService, paymentSentFailedEvent *transfer.EventPaymentSentFailed) {
 	target := typing.Address(paymentSentFailedEvent.Target)
 	identifier := paymentSentFailedEvent.Identifier
 
-	paymentStatus, exist := nimbus.GetPaymentStatus(target, identifier)
+	paymentStatus, exist := channel.GetPaymentStatus(target, identifier)
 	if !exist {
 		panic("error in HandlePaymentSentFailed, no payment status found in the map")
 	}
 
-	nimbus.RemovePaymentStatus(target, identifier)
+	channel.RemovePaymentStatus(target, identifier)
 
 	paymentStatus.paymentDone <- false
 
 	return
 }
 
-func (self NimbusEventHandler) HandlePaymentReceivedSuccess(nimbus *ChannelService, paymentReceivedSuccessEvent *transfer.EventPaymentReceivedSuccess) {
-	for channel := range nimbus.ReceiveNotificationChannels {
-		channel <- paymentReceivedSuccessEvent
+func (self ChannelEventHandler) HandlePaymentReceivedSuccess(channel *ChannelService, paymentReceivedSuccessEvent *transfer.EventPaymentReceivedSuccess) {
+	for ch := range channel.ReceiveNotificationChannels {
+		ch <- paymentReceivedSuccessEvent
 	}
 }
 
-func (self NimbusEventHandler) HandleContractSendChannelClose(nimbus *ChannelService, channelCloseEvent *transfer.ContractSendChannelClose) {
+func (self ChannelEventHandler) HandleContractSendChannelClose(channel *ChannelService, channelCloseEvent *transfer.ContractSendChannelClose) {
 	var nonce typing.Nonce
 	var balanceHash typing.BalanceHash
 	var signature typing.Signature
@@ -141,26 +141,26 @@ func (self NimbusEventHandler) HandleContractSendChannelClose(nimbus *ChannelSer
 		publicKey = balanceProof.PublicKey
 	}
 
-	args := nimbus.GetPaymentChannelArgs(channelCloseEvent.TokenNetworkIdentifier, channelCloseEvent.ChannelIdentifier)
+	args := channel.GetPaymentChannelArgs(channelCloseEvent.TokenNetworkIdentifier, channelCloseEvent.ChannelIdentifier)
 	if args == nil {
 		panic("error in HandleContractSendChannelClose, cannot get paymentchannel args")
 	}
 
-	channelProxy := nimbus.chain.PaymentChannel(typing.Address{}, channelCloseEvent.ChannelIdentifier, args)
+	channelProxy := channel.chain.PaymentChannel(typing.Address{}, channelCloseEvent.ChannelIdentifier, args)
 
 	channelProxy.Close(nonce, balanceHash, typing.AdditionalHash(messageHash[:]), signature, publicKey)
 }
 
-func (self NimbusEventHandler) HandelContractSendChannelUpdate(nimbus *ChannelService, channelUpdateEvent *transfer.ContractSendChannelUpdateTransfer) {
+func (self ChannelEventHandler) HandelContractSendChannelUpdate(channel *ChannelService, channelUpdateEvent *transfer.ContractSendChannelUpdateTransfer) {
 	balanceProof := channelUpdateEvent.BalanceProof
 
 	if balanceProof != nil {
-		args := nimbus.GetPaymentChannelArgs(channelUpdateEvent.TokenNetworkIdentifier, channelUpdateEvent.ChannelIdentifier)
+		args := channel.GetPaymentChannelArgs(channelUpdateEvent.TokenNetworkIdentifier, channelUpdateEvent.ChannelIdentifier)
 		if args == nil {
 			panic("error in HandleContractSendChannelClose, cannot get paymentchannel args")
 		}
 
-		channelProxy := nimbus.chain.PaymentChannel(typing.Address{}, channelUpdateEvent.ChannelIdentifier, args)
+		channelProxy := channel.chain.PaymentChannel(typing.Address{}, channelUpdateEvent.ChannelIdentifier, args)
 
 		balanceHash := transfer.HashBalanceData(
 			balanceProof.TransferredAmount,
@@ -176,12 +176,12 @@ func (self NimbusEventHandler) HandelContractSendChannelUpdate(nimbus *ChannelSe
 		var ourSignature typing.Signature
 		var nonClosePubkey typing.PubKey
 
-		ourSignature, err := nimbus.Account.Sign(nonClosingData)
+		ourSignature, err := channel.Account.Sign(nonClosingData)
 		if err != nil {
 			return
 		}
 
-		nonClosePubkey = utils.GetPublicKeyBuf(nimbus.Account.GetPublicKey())
+		nonClosePubkey = utils.GetPublicKeyBuf(channel.Account.GetPublicKey())
 
 		channelProxy.UpdateTransfer(
 			balanceProof.Nonce, balanceHash, typing.AdditionalHash(balanceProof.MessageHash[:]),
@@ -190,7 +190,7 @@ func (self NimbusEventHandler) HandelContractSendChannelUpdate(nimbus *ChannelSe
 	}
 }
 
-func (self NimbusEventHandler) HandleContractSendChannelSettle(nimbus *ChannelService, channelSettleEvent *transfer.ContractSendChannelSettle) {
+func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *ChannelService, channelSettleEvent *transfer.ContractSendChannelSettle) {
 	var ourTransferredAmount typing.TokenAmount
 	var ourLockedAmount typing.TokenAmount
 	var ourLocksroot typing.Locksroot
@@ -202,11 +202,11 @@ func (self NimbusEventHandler) HandleContractSendChannelSettle(nimbus *ChannelSe
 
 	var chainID typing.ChainID
 
-	args := nimbus.GetPaymentChannelArgs(typing.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier), channelSettleEvent.ChannelIdentifier)
+	args := channel.GetPaymentChannelArgs(typing.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier), channelSettleEvent.ChannelIdentifier)
 	if args == nil {
 		panic("error in HandleContractSendChannelClose, cannot get paymentchannel args")
 	}
-	channelProxy := nimbus.chain.PaymentChannel(typing.Address{}, channelSettleEvent.ChannelIdentifier, args)
+	channelProxy := channel.chain.PaymentChannel(typing.Address{}, channelSettleEvent.ChannelIdentifier, args)
 
 	participanatsDetails := channelProxy.TokenNetwork.DetailParticipants(channelProxy.Participant1, channelProxy.Participant2, channelSettleEvent.ChannelIdentifier)
 
@@ -218,7 +218,7 @@ func (self NimbusEventHandler) HandleContractSendChannelSettle(nimbus *ChannelSe
 	ourBalanceHash := participanatsDetails.OurDetails.BalanceHash
 	if len(ourBalanceHash) != 0 {
 		ourBalanceProof = storage.GetLatestKnownBalanceProofFromEvents(
-			nimbus.Wal.Storage, chainID, typing.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier),
+			channel.Wal.Storage, chainID, typing.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier),
 			channelSettleEvent.ChannelIdentifier, ourBalanceHash)
 	}
 
@@ -231,7 +231,7 @@ func (self NimbusEventHandler) HandleContractSendChannelSettle(nimbus *ChannelSe
 	partnerBalanceHash := participanatsDetails.PartnerDetails.BalanceHash
 	if len(partnerBalanceHash) != 0 {
 		partnerBalanceProof = storage.GetLatestKnownBalanceProofFromStateChanges(
-			nimbus.Wal.Storage, chainID, typing.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier),
+			channel.Wal.Storage, chainID, typing.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier),
 			channelSettleEvent.ChannelIdentifier, partnerBalanceHash, participanatsDetails.PartnerDetails.Address)
 	}
 

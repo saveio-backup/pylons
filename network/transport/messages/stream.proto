@@ -68,7 +68,7 @@ message HashTimeLock{
     SecretHash secrethash = 3;
 }
 
-// messages definition for Nimbus
+// messages definition
 // SignedMessage(Message)
 message SignedMessage{
     bytes signature = 1;

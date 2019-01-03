@@ -116,7 +116,7 @@ func GetContractReceiveStateChange(stateChange StateChange) *ContractReceiveStat
 
 func subdispatchToChannelById(tokenNetworkState *TokenNetworkState,
 	stateChange StateChange, pseudoRandomGenerator *rand.Rand,
-	blockNumber typing.BlockNumber) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 
 	events := list.New()
 
@@ -152,7 +152,7 @@ func subdispatchToChannelById(tokenNetworkState *TokenNetworkState,
 
 func handleChannelClose(tokenNetworkState *TokenNetworkState,
 	stateChange StateChange, pseudoRandomGenerator *rand.Rand,
-	blockNumber typing.BlockNumber) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 	return subdispatchToChannelById(
 		tokenNetworkState,
 		stateChange,
@@ -191,7 +191,7 @@ func handleChannelNew(tokenNetworkState *TokenNetworkState,
 
 func handleBalance(tokenNetworkState *TokenNetworkState,
 	stateChange StateChange, pseudoRandomGenerator *rand.Rand,
-	blockNumber typing.BlockNumber) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 	return subdispatchToChannelById(
 		tokenNetworkState,
 		stateChange,
@@ -201,7 +201,7 @@ func handleBalance(tokenNetworkState *TokenNetworkState,
 
 func handleClosed(tokenNetworkState *TokenNetworkState,
 	stateChange StateChange, pseudoRandomGenerator *rand.Rand,
-	blockNumber typing.BlockNumber) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 
 	//[TODO] remove channel from TokenNetworkGraphState when support routing
 	return subdispatchToChannelById(
@@ -213,7 +213,7 @@ func handleClosed(tokenNetworkState *TokenNetworkState,
 
 func handleSettled(tokenNetworkState *TokenNetworkState,
 	stateChange StateChange, pseudoRandomGenerator *rand.Rand,
-	blockNumber typing.BlockNumber) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 
 	return subdispatchToChannelById(
 		tokenNetworkState,
@@ -224,7 +224,7 @@ func handleSettled(tokenNetworkState *TokenNetworkState,
 
 func handleUpdatedTransfer(tokenNetworkState *TokenNetworkState,
 	stateChange StateChange, pseudoRandomGenerator *rand.Rand,
-	blockNumber typing.BlockNumber) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 
 	return subdispatchToChannelById(
 		tokenNetworkState,
@@ -235,7 +235,7 @@ func handleUpdatedTransfer(tokenNetworkState *TokenNetworkState,
 
 func handleActionTransferDirect(paymentNetworkIdentifier typing.PaymentNetworkID,
 	tokenNetworkState *TokenNetworkState, stateChange *ActionTransferDirect,
-	pseudoRandomGenerator *rand.Rand, blockNumber typing.BlockNumber) TransitionResult {
+	pseudoRandomGenerator *rand.Rand, blockNumber typing.BlockHeight) TransitionResult {
 
 	events := list.New()
 
@@ -269,7 +269,7 @@ func handleActionTransferDirect(paymentNetworkIdentifier typing.PaymentNetworkID
 
 func handleReceiveTransferDirect(tokenNetworkState *TokenNetworkState,
 	stateChange *ReceiveTransferDirect, pseudoRandomGenerator *rand.Rand,
-	blockNumber typing.BlockNumber) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 
 	events := list.New()
 
@@ -287,7 +287,7 @@ func handleReceiveTransferDirect(tokenNetworkState *TokenNetworkState,
 
 func stateTransitionForNetwork(paymentNetworkIdentifier typing.PaymentNetworkID,
 	tokenNetworkState *TokenNetworkState, stateChange StateChange,
-	pseudoRandomGenerator *rand.Rand, blockNumber typing.BlockNumber) TransitionResult {
+	pseudoRandomGenerator *rand.Rand, blockNumber typing.BlockHeight) TransitionResult {
 
 	iteration := TransitionResult{}
 
