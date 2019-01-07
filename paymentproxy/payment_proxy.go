@@ -10,6 +10,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 
 	"github.com/oniio/oniChain/account"
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel"
 	"github.com/oniio/oniChannel/paymentproxy/messages"
 	"github.com/oniio/oniChannel/transfer"
@@ -18,7 +19,6 @@ import (
 	"github.com/oniio/oniP2p/network"
 	"github.com/oniio/oniP2p/network/addressmap"
 	"github.com/oniio/oniP2p/types/opcode"
-	"github.com/ontio/ontology/common/log"
 )
 
 const (

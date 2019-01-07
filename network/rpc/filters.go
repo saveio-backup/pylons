@@ -6,9 +6,9 @@ import (
 
 	"fmt"
 
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/network/utils"
 	"github.com/oniio/oniChannel/typing"
-	"github.com/ontio/ontology/common/log"
 )
 
 func (this *RpcClient) GetFilterArgsForAllEventsFromChannel(chanID typing.ChannelID, fromBlock, toBlock typing.BlockHeight) ([]map[string]interface{}, error) {

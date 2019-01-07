@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/oniio/oniChain/core/types"
+	"github.com/oniio/oniChain/crypto/keypair"
+	s "github.com/oniio/oniChain/crypto/signature"
 	"github.com/oniio/oniChannel/typing"
-	"github.com/ontio/ontology-crypto/keypair"
-	s "github.com/ontio/ontology-crypto/signature"
-	"github.com/ontio/ontology/core/types"
 )
 
 func VerifySignature(pubKey keypair.PublicKey, data []byte, signature []byte) error {

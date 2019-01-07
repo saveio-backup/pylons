@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"crypto/sha256"
 
+	mpay "github.com/oniio/oniChain/smartcontract/service/native/micropayment"
 	"github.com/oniio/oniChannel/typing"
-	mpay "github.com/ontio/ontology/smartcontract/service/native/micropayment"
 )
 
 //[TODO] import from channel_contracts.constants import MessageTypeId

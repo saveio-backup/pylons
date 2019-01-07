@@ -8,12 +8,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/oniio/oniChain/common"
+	"github.com/oniio/oniChain/common/log"
+	"github.com/oniio/oniChain/smartcontract/service/native/micropayment"
 	"github.com/oniio/oniChannel/network/rpc"
 	"github.com/oniio/oniChannel/transfer"
 	"github.com/oniio/oniChannel/typing"
-	"github.com/ontio/ontology/common"
-	"github.com/ontio/ontology/common/log"
-	"github.com/ontio/ontology/smartcontract/service/native/micropayment"
 )
 
 const settlementTimeoutMin int = 1000

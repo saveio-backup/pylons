@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/oniio/oniChannel/account"
+	"github.com/oniio/oniChain/account"
 	"github.com/oniio/oniChannel/blockchain"
 	"github.com/oniio/oniChannel/network"
 	"github.com/oniio/oniChannel/network/transport"

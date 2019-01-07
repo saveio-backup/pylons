@@ -6,7 +6,7 @@ import (
 
 	"github.com/oniio/oniChannel/typing"
 
-	"github.com/oniio/oniChannel/account"
+	"github.com/oniio/oniChain/account"
 	"github.com/oniio/oniChannel/network/rpc"
 	"github.com/stretchr/testify/assert"
 )

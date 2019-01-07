@@ -10,8 +10,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/oniio/oniChain/common/log"
 	berr "github.com/oniio/oniChannel/api/base/error"
-	"github.com/ontio/ontology/common/log"
 )
 
 func init() {

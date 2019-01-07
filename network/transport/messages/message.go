@@ -8,12 +8,13 @@ import (
 	"crypto/sha256"
 
 	proto "github.com/gogo/protobuf/proto"
-	"github.com/oniio/oniChannel/account"
+	"github.com/oniio/oniChain/account"
+	sig "github.com/oniio/oniChain/core/signature"
+	"github.com/oniio/oniChain/core/types"
+	"github.com/oniio/oniChain/crypto/keypair"
 	"github.com/oniio/oniChannel/transfer"
 	"github.com/oniio/oniChannel/typing"
 	"github.com/oniio/oniChannel/utils"
-	"github.com/ontio/ontology-crypto/keypair"
-	"github.com/ontio/ontology/core/types"
 )
 
 type SignedMessageInterface interface {
@@ -138,12 +139,12 @@ func DirectTransferFromEvent(event *transfer.SendDirectTransfer) proto.Message {
 func Sign(account *account.Account, message SignedMessageInterface) error {
 	data := message.DataToSign()
 
-	sigData, err := account.Sign(data)
+	sigData, err := sig.Sign(account, data)
 	if err != nil {
 		return err
 	}
 
-	pubKey := keypair.SerializePublicKey(account.GetPublicKey())
+	pubKey := keypair.SerializePublicKey(account.PubKey())
 	switch message.(type) {
 	case *DirectTransfer:
 		msg := message.(*DirectTransfer)

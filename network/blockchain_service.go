@@ -5,14 +5,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/oniio/oniChannel/account"
+	"github.com/oniio/oniChain/account"
+	"github.com/oniio/oniChain/common"
+	"github.com/oniio/oniChain/core/types"
+
 	"github.com/oniio/oniChannel/network/contract"
 	"github.com/oniio/oniChannel/network/proxies"
 	"github.com/oniio/oniChannel/network/rpc"
 	"github.com/oniio/oniChannel/network/utils"
 	"github.com/oniio/oniChannel/typing"
-	"github.com/ontio/ontology/common"
-	"github.com/ontio/ontology/core/types"
 )
 
 type BlockchainService struct {

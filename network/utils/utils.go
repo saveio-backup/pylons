@@ -1,8 +1,8 @@
 /**
  * Description:
  * Author: Yihen.Liu
- * Create: 2018-11-22 
-*/
+ * Create: 2018-11-22
+ */
 package utils
 
 import (
@@ -10,9 +10,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/ontio/ontology/common"
-	"github.com/ontio/ontology/core/payload"
-	"github.com/ontio/ontology/core/types"
+	"github.com/oniio/oniChain/common"
+	"github.com/oniio/oniChain/core/payload"
+	"github.com/oniio/oniChain/core/types"
 )
 
 func GetVersion(data []byte) (string, error) {

@@ -2,12 +2,12 @@ package contract
 
 import (
 	"fmt"
-	"github.com/oniio/oniChannel/account"
-	"github.com/ontio/ontology/common"
-	"github.com/ontio/ontology/common/log"
-	"github.com/ontio/ontology/core/payload"
-	"github.com/ontio/ontology/core/types"
-	httpcom "github.com/ontio/ontology/http/base/common"
+	"github.com/oniio/oniChain/account"
+	"github.com/oniio/oniChain/common"
+	"github.com/oniio/oniChain/common/log"
+	"github.com/oniio/oniChain/core/payload"
+	"github.com/oniio/oniChain/core/types"
+	httpcom "github.com/oniio/oniChain/http/base/common"
 	"math/rand"
 )
 

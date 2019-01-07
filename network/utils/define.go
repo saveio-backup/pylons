@@ -6,8 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/ontio/ontology/common"
-	"github.com/ontio/ontology/core/payload"
+	"github.com/oniio/oniChain/common"
+	"github.com/oniio/oniChain/core/payload"
 	"math/big"
 )
 

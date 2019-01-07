@@ -1,4 +1,4 @@
-package ChannelService
+package channelservice
 
 import (
 	"container/list"

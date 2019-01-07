@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oniio/oniChannel/account"
-	"github.com/ontio/ontology/common"
+	"github.com/oniio/oniChain/account"
+	"github.com/oniio/oniChain/common"
 	"github.com/stretchr/testify/assert"
 )
 

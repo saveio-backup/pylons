@@ -6,11 +6,11 @@
 package contract
 
 import (
-	"github.com/oniio/oniChannel/account"
-	"github.com/ontio/ontology/common"
-	"github.com/ontio/ontology/common/log"
-	"github.com/ontio/ontology/core/types"
-	"github.com/ontio/ontology/smartcontract/service/native/micropayment"
+	"github.com/oniio/oniChain/account"
+	"github.com/oniio/oniChain/common"
+	"github.com/oniio/oniChain/common/log"
+	"github.com/oniio/oniChain/core/types"
+	"github.com/oniio/oniChain/smartcontract/service/native/micropayment"
 )
 
 var (

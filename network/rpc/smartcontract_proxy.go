@@ -9,15 +9,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/oniio/oniChannel/account"
+	"github.com/oniio/oniChain/account"
+	"github.com/oniio/oniChain/common"
+	"github.com/oniio/oniChain/common/log"
+	httpcom "github.com/oniio/oniChain/http/base/common"
+	"github.com/oniio/oniChain/smartcontract/service/native/micropayment"
+	"github.com/oniio/oniChain/smartcontract/service/native/utils"
+	"github.com/oniio/oniChain/vm/neovm/types"
 	"github.com/oniio/oniChannel/network/contract"
 	daseinNetUtils "github.com/oniio/oniChannel/network/utils"
-	"github.com/ontio/ontology/common"
-	"github.com/ontio/ontology/common/log"
-	httpcom "github.com/ontio/ontology/http/base/common"
-	"github.com/ontio/ontology/smartcontract/service/native/micropayment"
-	"github.com/ontio/ontology/smartcontract/service/native/utils"
-	"github.com/ontio/ontology/vm/neovm/types"
 )
 
 // Micropaymenet contract const

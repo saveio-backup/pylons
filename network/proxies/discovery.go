@@ -8,10 +8,10 @@ import (
 	"net"
 	"time"
 
+	"github.com/oniio/oniChain/common"
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/network/rpc"
 	"github.com/oniio/oniChannel/typing"
-	"github.com/ontio/ontology/common"
-	"github.com/ontio/ontology/common/log"
 )
 
 type Discovery struct {

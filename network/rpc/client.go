@@ -12,11 +12,11 @@ import (
 
 	"sync/atomic"
 
-	"github.com/oniio/oniChannel/account"
+	"github.com/oniio/oniChain/account"
+	"github.com/oniio/oniChain/common"
+	"github.com/oniio/oniChain/common/log"
+	"github.com/oniio/oniChain/core/types"
 	"github.com/oniio/oniChannel/network/utils"
-	"github.com/ontio/ontology/common"
-	"github.com/ontio/ontology/common/log"
-	"github.com/ontio/ontology/core/types"
 )
 
 type OntologyClient interface {
