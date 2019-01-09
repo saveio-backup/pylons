@@ -371,7 +371,7 @@ type AddressHex string
 
 type BlockExpiration int
 
-type Balance int
+type Balance uint64
 
 type BalanceHash []byte
 
@@ -414,8 +414,6 @@ type PaymentNetworkID [20]byte
 type ChainID int
 
 type Keccak256 [32]byte
-
-type TargetAddress [ADDR_LEN]byte
 
 type TokenAddress [ADDR_LEN]byte
 

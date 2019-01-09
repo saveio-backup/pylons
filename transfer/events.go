@@ -43,14 +43,14 @@ type EventPaymentSentSuccess struct {
 	TokenNetworkIdentifier   typing.TokenNetworkID
 	Identifier               typing.PaymentID
 	Amount                   typing.TokenAmount
-	Target                   typing.TargetAddress
+	Target                   typing.Address
 }
 
 type EventPaymentSentFailed struct {
 	PaymentNetworkIdentifier typing.PaymentNetworkID
 	TokenNetworkIdentifier   typing.TokenNetworkID
 	Identifier               typing.PaymentID
-	Target                   typing.TargetAddress
+	Target                   typing.Address
 	Reason                   string
 }
 

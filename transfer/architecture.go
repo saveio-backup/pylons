@@ -19,7 +19,7 @@ type Event interface {
 }
 
 type SendMessageEvent struct {
-	Recipient         typing.TargetAddress
+	Recipient         typing.Address
 	ChannelIdentifier typing.ChannelID
 	MessageIdentifier typing.MessageID
 }

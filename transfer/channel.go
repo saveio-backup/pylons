@@ -300,7 +300,7 @@ func GetStatus(channelState *NettingChannelState) string {
 
 	if channelState.SettleTransaction != nil {
 		finishedSuccessfully =
-			channelState.SettleTransaction.Result == TransactionExecutionStatusSuccess
+			channelState.SettleTransaction.Result == TxnExecSucc
 
 		running = channelState.SettleTransaction.FinishedBlockHeight == 0
 
@@ -313,7 +313,7 @@ func GetStatus(channelState *NettingChannelState) string {
 		}
 	} else if channelState.CloseTransaction != nil {
 		finishedSuccessfully =
-			channelState.CloseTransaction.Result == TransactionExecutionStatusSuccess
+			channelState.CloseTransaction.Result == TxnExecSucc
 
 		running = channelState.CloseTransaction.FinishedBlockHeight == 0
 
@@ -336,10 +336,10 @@ func setClosed(channelState *NettingChannelState, blockNumber typing.BlockHeight
 		channelState.CloseTransaction = &TransactionExecutionStatus{
 			0,
 			blockNumber,
-			TransactionExecutionStatusSuccess}
+			TxnExecSucc}
 	} else if channelState.CloseTransaction.FinishedBlockHeight == 0 {
 		channelState.CloseTransaction.FinishedBlockHeight = blockNumber
-		channelState.CloseTransaction.Result = TransactionExecutionStatusSuccess
+		channelState.CloseTransaction.Result = TxnExecSucc
 	}
 }
 
@@ -348,10 +348,10 @@ func setSettled(channelState *NettingChannelState, blockNumber typing.BlockHeigh
 		channelState.SettleTransaction = &TransactionExecutionStatus{
 			0,
 			blockNumber,
-			TransactionExecutionStatusSuccess}
+			TxnExecSucc}
 	} else if channelState.SettleTransaction.FinishedBlockHeight == 0 {
 		channelState.SettleTransaction.FinishedBlockHeight = blockNumber
-		channelState.SettleTransaction.Result = TransactionExecutionStatusSuccess
+		channelState.SettleTransaction.Result = TxnExecSucc
 	}
 }
 
@@ -463,7 +463,7 @@ func createSendDirectTransfer(channelState *NettingChannelState, amount typing.P
 		channelState.ChainId}
 
 	sendDirectTransfer := SendDirectTransfer{
-		SendMessageEvent{typing.TargetAddress(recipient), channelState.Identifier, messageIdentifier},
+		SendMessageEvent{typing.Address(recipient), channelState.Identifier, messageIdentifier},
 		paymentIdentifier, balanceProof, typing.TokenAddress(channelState.TokenAddress)}
 
 	return &sendDirectTransfer
@@ -543,21 +543,21 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 	}
 
 	if isOpen && isValid && canPay {
-		messageIdentifier := MessageIdentifierFromPrng(pseudoRandomGenerator)
+		messageIdentifier := GetMsgID(pseudoRandomGenerator)
 		directTransfer := sendDirectTransfer(channelState, typing.PaymentAmount(amount), messageIdentifier, paymentIdentifier)
 		events.PushBack(directTransfer)
 	} else {
 		if isOpen == false {
 			failure := &EventPaymentSentFailed{channelState.PaymentNetworkIdentifier,
 				channelState.TokenNetworkIdentifier, paymentIdentifier,
-				typing.TargetAddress(targetAddress), "Channel is not opened"}
+				typing.Address(targetAddress), "Channel is not opened"}
 
 			events.PushBack(failure)
 		} else if isValid == false {
 			msg := fmt.Sprintf("Payment amount is invalid. Transfer %d", amount)
 			failure := &EventPaymentSentFailed{channelState.PaymentNetworkIdentifier,
 				channelState.TokenNetworkIdentifier, paymentIdentifier,
-				typing.TargetAddress(targetAddress), msg}
+				typing.Address(targetAddress), msg}
 
 			events.PushBack(failure)
 		} else if canPay == false {
@@ -566,7 +566,7 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 
 			failure := &EventPaymentSentFailed{channelState.PaymentNetworkIdentifier,
 				channelState.TokenNetworkIdentifier, paymentIdentifier,
-				typing.TargetAddress(targetAddress), msg}
+				typing.Address(targetAddress), msg}
 
 			events.PushBack(failure)
 		}
@@ -606,7 +606,7 @@ func handleReceiveDirecttransfer(channelState *NettingChannelState,
 			typing.InitiatorAddress(channelState.PartnerState.Address)}
 
 		sendProcessed := new(SendProcessed)
-		sendProcessed.Recipient = typing.TargetAddress(directTransfer.BalanceProof.Sender)
+		sendProcessed.Recipient = typing.Address(directTransfer.BalanceProof.Sender)
 		sendProcessed.ChannelIdentifier = 0
 		sendProcessed.MessageIdentifier = directTransfer.MessageIdentifier
 

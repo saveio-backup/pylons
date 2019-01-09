@@ -1,46 +1,38 @@
 package proxies
 
 import (
-	"bytes"
-	"encoding/hex"
-	"errors"
 	"fmt"
 	"net"
 	"time"
 
+	chainsdk "github.com/oniio/dsp-go-sdk/chain"
+	sdkcomm "github.com/oniio/dsp-go-sdk/common"
 	"github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChannel/network/rpc"
 	"github.com/oniio/oniChannel/typing"
 )
 
 type Discovery struct {
-	// TODO: use blockchainservice to repliace client, proxy
-	JsonrpcClient    *rpc.RpcClient
-	DiscoveryAddress typing.Address
-	NodeAddress      typing.Address
-	//[TODO] uncomment below line after ContractProxy class is ready
-	Proxy *rpc.ContractProxy
+	ChainClient *chainsdk.Chain
+	NodeAddress typing.Address
 }
 
 /* endpoint: ip + port; for example: 127.0.0.1:20336 */
 func (self *Discovery) RegisterEndpoint(nodeAddress typing.Address, endpoint string) ([]byte, error) {
-	if bytes.Compare(nodeAddress[:], self.JsonrpcClient.Account.Address[:]) != 0 {
-		return nil, errors.New("node address don't match this account address")
-	}
+
 	h, p, err := net.SplitHostPort(endpoint)
 	if err != nil {
-		log.Errorf("parse endpoint err:%s\n", err)
+		fmt.Printf("parse endpoint err:%s\n", err.Error())
 		return nil, err
 	}
 	ip := net.ParseIP(h)
 
-	txHash, err := self.Proxy.RegisterPaymentEndPoint(ip, []byte(p), common.Address(nodeAddress))
+	txHash, err := self.ChainClient.Native.Channel.RegisterPaymentEndPoint(ip, []byte(p), common.Address(nodeAddress))
 	if err != nil {
 		log.Errorf("RegisterPaymentEndPoint err:%s\n", err)
 		return nil, err
 	}
-	confirmed, err := self.JsonrpcClient.PollForTxConfirmed(time.Duration(60)*time.Second, txHash)
+	confirmed, err := self.ChainClient.PollForTxConfirmed(time.Duration(60)*time.Second, txHash)
 	if err != nil || !confirmed {
 		log.Errorf("PollForTxConfirmed err:%s\n", err)
 		return nil, err
@@ -49,7 +41,7 @@ func (self *Discovery) RegisterEndpoint(nodeAddress typing.Address, endpoint str
 }
 
 func (self *Discovery) EndpointByAddress(nodeAddress typing.Address) string {
-	info, err := self.Proxy.GetEndpointByAddress(common.Address(nodeAddress))
+	info, err := self.ChainClient.Native.Channel.GetEndpointByAddress(common.Address(nodeAddress))
 	if err != nil {
 		log.Errorf("GetEndpointByAddress err:%s", err)
 		return ""
@@ -58,5 +50,5 @@ func (self *Discovery) EndpointByAddress(nodeAddress typing.Address) string {
 }
 
 func (self *Discovery) Version() string {
-	return hex.EncodeToString([]byte{self.Proxy.GetVersion()})
+	return sdkcomm.DSP_SDK_VERSION
 }

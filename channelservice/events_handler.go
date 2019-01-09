@@ -1,7 +1,7 @@
 package channelservice
 
 import (
-	"github.com/oniio/oniChannel/blockchain"
+	"github.com/oniio/oniChannel/network/proxies"
 	"github.com/oniio/oniChannel/transfer"
 	"github.com/oniio/oniChannel/typing"
 )
@@ -33,7 +33,7 @@ func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 
 		tokenAddress := typing.TokenAddress{}
 		defaultRegister := typing.PaymentNetworkID{}
-		channelState := blockchain.GetChannelState(tokenAddress, defaultRegister,
+		channelState := GetChannelState(tokenAddress, defaultRegister,
 			typing.TokenNetworkAddress(tokenNetworkIdentifier), revealTimeout, channelProxy, blockNumber)
 
 		newChannel := &transfer.ContractReceiveChannelNew{
@@ -218,6 +218,43 @@ func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 	}
 
 	return
+}
+func GetChannelState(tokenAddress typing.TokenAddress, paymentNetworkIdentifier typing.PaymentNetworkID,
+	tokenNetworkAddress typing.TokenNetworkAddress, revealTimeout typing.BlockHeight,
+	paymentChannelProxy *proxies.PaymentChannel, openedBlockHeight typing.BlockHeight) *transfer.NettingChannelState {
+
+	channelDetails := paymentChannelProxy.Detail()
+	ourState := transfer.NewNettingChannelEndState()
+	ourState.Address = channelDetails.ParticipantsData.OurDetails.Address
+	ourState.ContractBalance = channelDetails.ParticipantsData.OurDetails.Deposit
+
+	partnerState := transfer.NewNettingChannelEndState()
+	partnerState.Address = channelDetails.ParticipantsData.PartnerDetails.Address
+	partnerState.ContractBalance = channelDetails.ParticipantsData.PartnerDetails.Deposit
+
+	identifier := paymentChannelProxy.GetChannelId()
+	settleTimeout := paymentChannelProxy.SettleTimeout()
+
+	if openedBlockHeight <= 0 {
+		return nil
+	}
+
+	openTransaction := &transfer.TransactionExecutionStatus{
+		0, openedBlockHeight, transfer.TxnExecSucc}
+
+	channel := &transfer.NettingChannelState{
+		Identifier:               identifier,
+		ChainId:                  0,
+		TokenAddress:             typing.Address(tokenAddress),
+		PaymentNetworkIdentifier: paymentNetworkIdentifier,
+		TokenNetworkIdentifier:   typing.TokenNetworkID(tokenNetworkAddress),
+		RevealTimeout:            revealTimeout,
+		SettleTimeout:            settleTimeout,
+		OurState:                 ourState,
+		PartnerState:             partnerState,
+		OpenTransaction:          openTransaction}
+
+	return channel
 }
 
 func ParseEvent(event map[string]interface{}) map[string]interface{} {

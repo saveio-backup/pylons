@@ -19,8 +19,8 @@ func TestRegisterEndpoint(t *testing.T) {
 	assert.Nil(t, err)
 	proxy := rpc.NewContractProxy(client)
 	discovery := &Discovery{
-		JsonrpcClient: client,
-		Proxy:         proxy,
+		ChainClient: client,
+		Proxy:       proxy,
 	}
 	var addr typing.Address
 	copy(addr[:], client.Account.Address[:])

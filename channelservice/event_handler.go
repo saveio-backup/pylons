@@ -1,11 +1,13 @@
 package channelservice
 
 import (
+	sdkutils "github.com/oniio/dsp-go-sdk/chain/utils"
+	"github.com/oniio/oniChain/crypto/keypair"
+
 	"github.com/oniio/oniChannel/network/transport/messages"
 	"github.com/oniio/oniChannel/storage"
 	"github.com/oniio/oniChannel/transfer"
 	"github.com/oniio/oniChannel/typing"
-	"github.com/oniio/oniChannel/utils"
 )
 
 type ChannelEventHandler struct {
@@ -176,12 +178,12 @@ func (self ChannelEventHandler) HandelContractSendChannelUpdate(channel *Channel
 		var ourSignature typing.Signature
 		var nonClosePubkey typing.PubKey
 
-		ourSignature, err := channel.Account.Sign(nonClosingData)
+		ourSignature, err := sdkutils.Sign(channel.Account, nonClosingData)
 		if err != nil {
 			return
 		}
 
-		nonClosePubkey = utils.GetPublicKeyBuf(channel.Account.GetPublicKey())
+		nonClosePubkey = keypair.SerializePublicKey(channel.Account.PubKey())
 
 		channelProxy.UpdateTransfer(
 			balanceProof.Nonce, balanceHash, typing.AdditionalHash(balanceProof.MessageHash[:]),

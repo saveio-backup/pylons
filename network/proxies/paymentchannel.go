@@ -47,7 +47,7 @@ func NewPaymentChannel(tokenNetwork *TokenNetwork, channelIdentifier typing.Chan
 		self.settleTimeout = v.(typing.BlockHeight)
 	}
 
-	selfIdentifier = channelIdentifier
+	self.channelIdentifier = channelIdentifier
 
 	self.Participant1 = participant1
 	self.Participant2 = participant2
@@ -57,7 +57,7 @@ func NewPaymentChannel(tokenNetwork *TokenNetwork, channelIdentifier typing.Chan
 }
 
 func (self *PaymentChannel) GetChannelId() typing.ChannelID {
-	return selfIdentifier
+	return self.channelIdentifier
 }
 
 func (self *PaymentChannel) LockOrRaise() *sync.Mutex {
@@ -71,7 +71,7 @@ func (self *PaymentChannel) tokenAddress() typing.Address {
 }
 
 func (self *PaymentChannel) Detail() *ChannelDetails {
-	return self.TokenNetwork.detail(self.Participant1, self.Participant2, selfIdentifier)
+	return self.TokenNetwork.detail(self.Participant1, self.Participant2, self.channelIdentifier)
 }
 
 //Should be set when open channel, should NOT get it by filter log
@@ -88,32 +88,32 @@ func (self *PaymentChannel) CloseBlockHeight() typing.BlockHeight {
 
 func (self *PaymentChannel) Opened() bool {
 	return self.TokenNetwork.ChannelIsOpened(self.Participant1, self.Participant2,
-		selfIdentifier)
+		self.channelIdentifier)
 }
 
 func (self *PaymentChannel) Closed() bool {
 	return self.TokenNetwork.ChannelIsClosed(self.Participant1, self.Participant2,
-		selfIdentifier)
+		self.channelIdentifier)
 }
 
 func (self *PaymentChannel) Settled() bool {
 	return self.TokenNetwork.ChannelIsSettled(self.Participant1, self.Participant2,
-		selfIdentifier)
+		self.channelIdentifier)
 }
 
 func (self *PaymentChannel) ClosingAddress() typing.Address {
 	return self.TokenNetwork.ClosingAddress(self.Participant1, self.Participant2,
-		selfIdentifier)
+		self.channelIdentifier)
 }
 
 func (self *PaymentChannel) CanTransfer() bool {
 	return self.TokenNetwork.CanTransfer(self.Participant1, self.Participant2,
-		selfIdentifier)
+		self.channelIdentifier)
 }
 
 func (self *PaymentChannel) SetTotalDeposit(totalDeposit typing.TokenAmount) {
 
-	self.TokenNetwork.SetTotalDeposit(selfIdentifier, totalDeposit,
+	self.TokenNetwork.SetTotalDeposit(self.channelIdentifier, totalDeposit,
 		self.Participant2)
 
 	return
@@ -122,7 +122,7 @@ func (self *PaymentChannel) SetTotalDeposit(totalDeposit typing.TokenAmount) {
 func (self *PaymentChannel) Close(nonce typing.Nonce, balanceHash typing.BalanceHash,
 	additionalHash typing.AdditionalHash, signature typing.Signature, pubKey typing.PubKey) {
 
-	self.TokenNetwork.Close(selfIdentifier, self.Participant2,
+	self.TokenNetwork.Close(self.channelIdentifier, self.Participant2,
 		balanceHash, nonce, additionalHash, signature, pubKey)
 
 	return
@@ -132,29 +132,29 @@ func (self *PaymentChannel) UpdateTransfer(nonce typing.Nonce, balanceHash typin
 	additionalHash typing.AdditionalHash, partnerSignature typing.Signature,
 	signature typing.Signature, closePubkey, nonClosePubkey typing.PubKey) {
 
-	self.TokenNetwork.updateTransfer(selfIdentifier, self.Participant2,
+	self.TokenNetwork.updateTransfer(self.channelIdentifier, self.Participant2,
 		balanceHash, nonce, additionalHash, partnerSignature, signature, closePubkey, nonClosePubkey)
 
 	return
 }
 
 func (self *PaymentChannel) Unlock(merkleTreeLeaves *list.List) {
-	self.TokenNetwork.unlock(selfIdentifier, self.Participant2, merkleTreeLeaves)
+	self.TokenNetwork.unlock(self.channelIdentifier, self.Participant2, merkleTreeLeaves)
 	return
 }
 
 func (self *PaymentChannel) Settle(transferredAmount typing.TokenAmount, lockedAmount typing.TokenAmount, locksroot typing.Locksroot,
 	partnerTransferredAmount typing.TokenAmount, partnerLockedAmount typing.TokenAmount, partnerLocksroot typing.Locksroot) {
 
-	self.TokenNetwork.settle(selfIdentifier, transferredAmount, lockedAmount,
+	self.TokenNetwork.settle(self.channelIdentifier, transferredAmount, lockedAmount,
 		locksroot, self.Participant2, partnerTransferredAmount, partnerLockedAmount, partnerLocksroot)
 
 	return
 
 }
 
-func (self *PaymentChannel) GetBalance() (typing.Balance, error) {
-	return self.TokenNetwork.GetBalance()
+func (self *PaymentChannel) GetGasBalance() (typing.TokenAmount, error) {
+	return self.TokenNetwork.GetGasBalance()
 }
 
 //Not needed

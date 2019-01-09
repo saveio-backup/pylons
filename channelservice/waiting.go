@@ -113,9 +113,9 @@ func WaitForPaymentBalance(channel *ChannelService, paymentNetworkId typing.Paym
 		partnerState := channelState.GetChannelEndState(1)
 
 		if addressEqual(targetAddress, channel.address) {
-			result = partnerState.GetBalance()
+			result = partnerState.GetGasBalance()
 		} else if addressEqual(partnerAddress, channel.address) {
-			result = ourState.GetBalance()
+			result = ourState.GetGasBalance()
 		} else {
 			return 0, errors.New("Target Address must be one of the channel participants!")
 		}
@@ -231,7 +231,7 @@ func WaitForhealthy(channel *ChannelService, nodeAddress typing.Address, retryTi
 	var networkStatuses *map[typing.Address]string
 
 	networkStatuses = transfer.GetNetworkStatuses(channel.StateFromChannel())
-	for (*networkStatuses)[nodeAddress] != transfer.NodeNetworkReachable {
+	for (*networkStatuses)[nodeAddress] != transfer.NetworkReachable {
 		time.Sleep(time.Duration(retryTimeout*1000) * time.Millisecond)
 		networkStatuses = transfer.GetNetworkStatuses(channel.StateFromChannel())
 	}

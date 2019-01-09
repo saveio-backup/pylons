@@ -10,7 +10,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/oniio/oniChain/common/log"
 	berr "github.com/oniio/oniChannel/api/base/error"
 )
 
@@ -54,11 +53,11 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 	//JSON RPC commands should be POSTs
 	if r.Method != "POST" {
 		if mainMux.defaultFunction != nil {
-			log.Info("HTTP JSON RPC Handle - Method!=\"POST\"")
+			fmt.Println("HTTP JSON RPC Handle - Method!=\"POST\"")
 			mainMux.defaultFunction(w, r)
 			return
 		} else {
-			log.Warn("HTTP JSON RPC Handle - Method!=\"POST\"")
+			fmt.Println("HTTP JSON RPC Handle - Method!=\"POST\"")
 			return
 		}
 	}
@@ -66,11 +65,11 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 	//check if there is Request Body to read
 	if r.Body == nil {
 		if mainMux.defaultFunction != nil {
-			log.Info("HTTP JSON RPC Handle - Request body is nil")
+			fmt.Println("HTTP JSON RPC Handle - Request body is nil")
 			mainMux.defaultFunction(w, r)
 			return
 		} else {
-			log.Warn("HTTP JSON RPC Handle - Request body is nil")
+			fmt.Println("HTTP JSON RPC Handle - Request body is nil")
 			return
 		}
 	}
@@ -78,22 +77,22 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 	//read the body of the request
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Error("HTTP JSON RPC Handle - ioutil.ReadAll: ", err)
+		fmt.Printf("HTTP JSON RPC Handle - ioutil.ReadAll:%s \n", err.Error())
 		return
 	}
 	request := make(map[string]interface{})
 	err = json.Unmarshal(body, &request)
 	if err != nil {
-		log.Error("HTTP JSON RPC Handle - json.Unmarshal: ", err)
+		fmt.Printf("HTTP JSON RPC Handle - json.Unmarshal:%s \n", err.Error())
 		return
 	}
 	if request["method"] == nil {
-		log.Error("HTTP JSON RPC Handle - method not found: ")
+		fmt.Println("HTTP JSON RPC Handle - method not found")
 		return
 	}
 	method, ok := request["method"].(string)
 	if !ok {
-		log.Error("HTTP JSON RPC Handle - method is not string: ")
+		fmt.Println("HTTP JSON RPC Handle - method is not string")
 		return
 	}
 	//get the corresponding function
@@ -108,7 +107,7 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 			"id":      request["id"],
 		})
 		if err != nil {
-			log.Error("HTTP JSON RPC Handle - json.Marshal: ", err)
+			fmt.Printf("HTTP JSON RPC Handle - json.Marshal: ", err)
 			return
 		}
 		w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
@@ -117,7 +116,7 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 		w.Write(data)
 	} else {
 		//if the function does not exist
-		log.Warn("HTTP JSON RPC Handle - No function to call for ", request["method"])
+		fmt.Println("HTTP JSON RPC Handle - No function to call for ", request["method"])
 		data, err := json.Marshal(map[string]interface{}{
 			"error": berr.INVALID_METHOD,
 			"result": map[string]interface{}{

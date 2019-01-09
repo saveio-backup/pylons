@@ -5,23 +5,22 @@ import (
 	"sync"
 	"time"
 
+	chainsdk "github.com/oniio/dsp-go-sdk/chain"
 	"github.com/oniio/oniChain/account"
 	"github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/core/types"
 
 	"github.com/oniio/oniChannel/network/contract"
 	"github.com/oniio/oniChannel/network/proxies"
-	"github.com/oniio/oniChannel/network/rpc"
-	"github.com/oniio/oniChannel/network/utils"
 	"github.com/oniio/oniChannel/typing"
 )
 
 type BlockchainService struct {
-	Address         typing.Address
-	mutex           sync.Mutex
-	Client          *rpc.RpcClient
-	currentHeight   uint32
-	ContractManager *rpc.ContractProxy
+	Address       typing.Address
+	Account       *account.Account
+	mutex         sync.Mutex
+	Client        *chainsdk.Chain
+	currentHeight uint32
 
 	discovery                  *proxies.Discovery
 	tokenNetwork               *proxies.TokenNetwork
@@ -36,28 +35,44 @@ type BlockchainService struct {
 if account is nil, get account from wallet.dat;
 else use account passed from caller
 */
-func NewBlockchainService(url string, account *account.Account) *BlockchainService {
+func NewBlockchainService(clientType string, url string, account *account.Account) *BlockchainService {
+	if clientType == "" || url == "" {
+		fmt.Printf("chain node url is invalid\n")
+		return nil
+	}
+
 	this := &BlockchainService{}
 	this.identifierToPaymentChannel = make(map[typing.ChannelID]*proxies.PaymentChannel)
 
-	this.Client = rpc.NewRpcClient(url)
-	if this.Client == nil {
-		fmt.Printf("NewRpcClient error\n")
-		return nil
+	this.Client = chainsdk.NewChain()
+	switch clientType {
+	case "rpc":
+		this.Client.NewRpcClient().SetAddress(url)
+	case "ws":
+		err := this.Client.NewWebSocketClient().Connect(url)
+		if err != nil {
+			fmt.Printf("connect websocket error:%s", err)
+			return nil
+		}
+	case "rest":
+		this.Client.NewRestClient().SetAddress(url)
+	default:
+		fmt.Printf("node url type is invalid\n")
 	}
+
 	this.currentHeight, _ = this.BlockHeight()
 
 	if account == nil {
 		fmt.Printf("NewBlockchainservice Account is nil\n")
 		return nil
 	}
-	this.Client.Account = account
+	this.Account = account
 	this.Address = typing.Address(account.Address)
 	return this
 }
 
 func (this *BlockchainService) GetAccount() *account.Account {
-	return this.Client.Account
+	return this.Account
 }
 
 func (this *BlockchainService) UsingContract(contractAddr common.Address) *BlockchainService {
@@ -75,7 +90,7 @@ func (this *BlockchainService) UsingContract(contractAddr common.Address) *Block
 
 func (this *BlockchainService) BlockHeight() (uint32, error) {
 	if height, err := this.Client.GetCurrentBlockHeight(); err == nil {
-		return utils.GetUint32(height)
+		return height, nil
 	} else {
 		return uint32(0), err
 	}
@@ -86,14 +101,14 @@ func (this *BlockchainService) GetBlock(param interface{}) (*types.Block, error)
 	case string:
 		identifier := param.(string)
 		if block, err := this.Client.GetBlockByHash(identifier); err == nil {
-			return utils.GetBlock(block)
+			return block, nil
 		} else {
 			return nil, err
 		}
 	case uint32:
 		identifier := param.(uint32)
 		if block, err := this.Client.GetBlockByHeight(identifier); err == nil {
-			return utils.GetBlock(block)
+			return block, nil
 		} else {
 			return nil, err
 		}
@@ -132,9 +147,8 @@ func (this *BlockchainService) SecretRegistry(address common.Address) {
 
 func (this *BlockchainService) Discovery() *proxies.Discovery {
 	discovery := &proxies.Discovery{
-		JsonrpcClient: this.Client,
-		NodeAddress:   this.Address,
-		Proxy:         rpc.NewContractProxy(this.Client),
+		ChainClient: this.Client,
+		NodeAddress: this.Address,
 	}
 
 	return discovery

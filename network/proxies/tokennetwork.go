@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
+	sdk "github.com/oniio/dsp-go-sdk/chain"
 	"github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChain/smartcontract/service/native/micropayment"
-	"github.com/oniio/oniChannel/network/rpc"
 	"github.com/oniio/oniChannel/transfer"
 	"github.com/oniio/oniChannel/typing"
 )
@@ -49,7 +49,7 @@ type ChannelDetails struct {
 
 type TokenNetwork struct {
 	Address                 typing.Address
-	proxy                   *rpc.ContractProxy
+	ChainClient             *sdk.Chain
 	nodeAddress             typing.Address
 	openLock                sync.Mutex
 	openChannelTransactions map[typing.Address]*sync.Mutex
@@ -59,16 +59,16 @@ type TokenNetwork struct {
 }
 
 func NewTokenNetwork(
-	jsonrpcClient *rpc.RpcClient,
+	chainClient *sdk.Chain,
 	ManagerAddress typing.Address) *TokenNetwork {
 	self := new(TokenNetwork)
 
 	self.Address = ManagerAddress
-	self.proxy = rpc.NewContractProxy(jsonrpcClient)
-	self.nodeAddress = typing.Address(jsonrpcClient.Account.Address)
+	self.ChainClient = chainClient
+	self.nodeAddress = typing.Address(chainClient.Native.Channel.DefAcc.Address)
 
 	self.openChannelTransactions = make(map[typing.Address]*sync.Mutex)
-	selfOperationsLock = make(map[typing.Address]*sync.Mutex)
+	self.channelOperationsLock = make(map[typing.Address]*sync.Mutex)
 
 	return self
 }
@@ -79,12 +79,12 @@ func (self *TokenNetwork) getOperationLock(partner typing.Address) *sync.Mutex {
 	self.opLock.Lock()
 	defer self.opLock.Unlock()
 
-	val, exist := selfOperationsLock[partner]
+	val, exist := self.channelOperationsLock[partner]
 
 	if exist == false {
 		newOpLock := new(sync.Mutex)
 
-		selfOperationsLock[partner] = newOpLock
+		self.channelOperationsLock[partner] = newOpLock
 		result = newOpLock
 	} else {
 		result = val
@@ -121,7 +121,7 @@ func (self *TokenNetwork) NewNettingChannel(partner typing.Address, settleTimeou
 
 		txHash := self.newNettingChannel(partner, settleTimeout)
 		fmt.Printf("new netting tx:%s\n", txHash)
-		confirmed, err := self.proxy.JsonrpcClient.PollForTxConfirmed(time.Duration(60)*time.Second, txHash)
+		confirmed, err := self.ChainClient.PollForTxConfirmed(time.Duration(60)*time.Second, txHash)
 		if err != nil || !confirmed {
 			log.Errorf("The new netting channel tx failed", err)
 			return 0
@@ -134,7 +134,7 @@ func (self *TokenNetwork) NewNettingChannel(partner typing.Address, settleTimeou
 		defer val.Unlock()
 	}
 
-	channelCreated := selfExistsAndNotSettled(self.nodeAddress, partner, 0)
+	channelCreated := self.channelExistsAndNotSettled(self.nodeAddress, partner, 0)
 	if channelCreated == true {
 		channelDetail := self.detailChannel(self.nodeAddress, partner, 0)
 		channelIdentifier = channelDetail.ChannelIdentifier
@@ -144,7 +144,7 @@ func (self *TokenNetwork) NewNettingChannel(partner typing.Address, settleTimeou
 }
 
 func (self *TokenNetwork) newNettingChannel(partner typing.Address, settleTimeout int) []byte {
-	hash, err := self.proxy.OpenChannel(common.Address(self.nodeAddress), common.Address(partner), uint64(settleTimeout))
+	hash, err := self.ChainClient.Native.Channel.OpenChannel(common.Address(self.nodeAddress), common.Address(partner), uint64(settleTimeout))
 	if err != nil {
 		log.Errorf("new netting channel err:%s", err)
 	}
@@ -157,7 +157,7 @@ func (self *TokenNetwork) inspectChannelIdentifier(participant1 typing.Address,
 	// need getChannelIdentifier api
 	// result := self.callAndCheckResult("getChannelIdentifier", participant1, participant2)
 	// return result.(typing.ChannelID)
-	id, err := self.proxy.GetChannelIdentifier(common.Address(participant1), common.Address(participant2))
+	id, err := self.ChainClient.Native.Channel.GetChannelIdentifier(common.Address(participant1), common.Address(participant2))
 	if err != nil {
 		log.Errorf("Get channelIdentifier err:%s", err)
 		return 0
@@ -181,7 +181,7 @@ func (self *TokenNetwork) channelExistsAndNotSettled(participant1 typing.Address
 
 func (self *TokenNetwork) detailParticipant(channelIdentifier typing.ChannelID,
 	participant typing.Address, partner typing.Address) *ParticipantDetails {
-	info, err := self.proxy.GetChannelParticipantInfo(uint64(channelIdentifier), common.Address(participant), common.Address(partner))
+	info, err := self.ChainClient.Native.Channel.GetChannelParticipantInfo(uint64(channelIdentifier), common.Address(participant), common.Address(partner))
 	if err != nil {
 		log.Errorf("GetChannelParticipantInfo err:%s", err)
 		return nil
@@ -209,7 +209,7 @@ func (self *TokenNetwork) detailChannel(participant1 typing.Address,
 			"detailChannel", channelIdentifier)
 	}
 
-	info, err := self.proxy.GetChannelInfo(uint64(channelIdentifier), common.Address(participant1), common.Address(participant2))
+	info, err := self.ChainClient.Native.Channel.GetChannelInfo(uint64(channelIdentifier), common.Address(participant1), common.Address(participant2))
 	if err != nil {
 		log.Errorf("GetChannelInfo err:%s", err)
 		return nil
@@ -332,12 +332,13 @@ func (self *TokenNetwork) CanTransfer(participant1 typing.Address,
 
 }
 
-func (self *TokenNetwork) GetBalance() (typing.Balance, error) {
+//token balance should divided by Decimals of token
+func (self *TokenNetwork) GetGasBalance() (typing.TokenAmount, error) {
 
-	bal, err := self.proxy.GetOntBalance(common.Address(self.nodeAddress))
-	currentBalance := typing.Balance(bal)
+	bal, err := self.ChainClient.Native.Ong.BalanceOf(common.Address(self.nodeAddress))
+	currentBalance := typing.TokenAmount(bal)
 	if err != nil {
-		log.Errorf("GetOntBalance err:%s", err)
+		log.Errorf("GetGasBalance err:%s", err)
 		return currentBalance, err
 	}
 
@@ -349,7 +350,7 @@ func (self *TokenNetwork) SetTotalDeposit(channelIdentifier typing.ChannelID,
 
 	var opLock *sync.Mutex
 
-	if self.CheckForOutdatedChannel(self.nodeAddress, partner, channelIdentifier) == false {
+	if !self.CheckForOutdatedChannel(self.nodeAddress, partner, channelIdentifier) {
 		return
 	}
 
@@ -365,37 +366,28 @@ func (self *TokenNetwork) SetTotalDeposit(channelIdentifier typing.ChannelID,
 	currentDeposit := detail.Deposit
 	amountToDeposit := totalDeposit - currentDeposit
 
-	if totalDeposit < currentDeposit {
+	if totalDeposit <= currentDeposit {
 		log.Errorf("SetTotalDeposit failed, Current total deposit %d is already larger than the requested total deposit amount %d",
-			currentDeposit, totalDeposit)
-		return
-	} else if amountToDeposit <= 0 {
-		log.Errorf("SetTotalDeposit failed, new_total_deposit - previous_total_deposit must be greater than 0",
 			currentDeposit, totalDeposit)
 		return
 	}
 
-	//call ont api to get balance of wallet!
-	var currentBalance typing.TokenAmount
-	bal, err := self.proxy.GetOntBalance(common.Address(self.nodeAddress))
-	currentBalance = typing.TokenAmount(bal)
-	if err != nil {
-		log.Errorf("GetOntBalance err:%s", err)
-		return
-	}
+	//call native api to get balance of wallet!
+	currentBalance, err := self.GetGasBalance()
+
 	if currentBalance < amountToDeposit {
 		log.Errorf("SetTotalDeposit failed, new_total_deposit - previous_total_deposit = %d can not be larger than the available balance %d",
 			amountToDeposit, currentBalance)
 		return
 	}
 
-	txHash, err := self.proxy.SetTotalDeposit(uint64(channelIdentifier), common.Address(self.nodeAddress), common.Address(partner), uint64(totalDeposit))
+	txHash, err := self.ChainClient.Native.Channel.SetTotalDeposit(uint64(channelIdentifier), common.Address(self.nodeAddress), common.Address(partner), uint64(totalDeposit))
 	if err != nil {
 		log.Errorf("SetTotalDeposit err:%s", err)
 		return
 	}
 	log.Infof("SetTotalDeposit tx hash:%v\n", txHash)
-	_, err = self.proxy.JsonrpcClient.PollForTxConfirmed(time.Minute, txHash)
+	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("SetTotalDeposit  WaitForGenerateBlock err:%s", err)
 		self.checkChannelStateForDeposit(self.nodeAddress, partner, channelIdentifier, totalDeposit)
@@ -423,13 +415,13 @@ func (self *TokenNetwork) Close(channelIdentifier typing.ChannelID, partner typi
 	opLock.Lock()
 	defer opLock.Unlock()
 
-	txHash, err := self.proxy.CloseChannel(uint64(channelIdentifier), common.Address(self.nodeAddress), common.Address(partner), []byte(balanceHash), uint64(nonce), []byte(additionalHash), []byte(signature), []byte(partnerPubKey))
+	txHash, err := self.ChainClient.Native.Channel.CloseChannel(uint64(channelIdentifier), common.Address(self.nodeAddress), common.Address(partner), []byte(balanceHash), uint64(nonce), []byte(additionalHash), []byte(signature), []byte(partnerPubKey))
 	if err != nil {
 		log.Errorf("CloseChannel err:%s", err)
 		return
 	}
 	log.Infof("CloseChannel tx hash:%s\n", txHash)
-	_, err = self.proxy.JsonrpcClient.PollForTxConfirmed(time.Minute, txHash)
+	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("CloseChannel  WaitForGenerateBlock err:%s", err)
 		self.checkChannelStateForClose(self.nodeAddress, partner, channelIdentifier)
@@ -449,13 +441,13 @@ func (self *TokenNetwork) updateTransfer(channelIdentifier typing.ChannelID, par
 	}
 
 	// need pubkey
-	txHash, err := self.proxy.UpdateNonClosingBalanceProof(uint64(channelIdentifier), common.Address(partner), common.Address(self.nodeAddress), []byte(balanceHash), uint64(nonce), []byte(additionalHash), []byte(closingSignature), []byte(nonClosingSignature), closePubKey, nonClosePubKey)
+	txHash, err := self.ChainClient.Native.Channel.UpdateNonClosingBalanceProof(uint64(channelIdentifier), common.Address(partner), common.Address(self.nodeAddress), []byte(balanceHash), uint64(nonce), []byte(additionalHash), []byte(closingSignature), []byte(nonClosingSignature), closePubKey, nonClosePubKey)
 	if err != nil {
 		log.Errorf("UpdateNonClosingBalanceProof err:%s", err)
 		return
 	}
 	log.Infof("UpdateNonClosingBalanceProof tx hash:%s\n", txHash)
-	_, err = self.proxy.JsonrpcClient.PollForTxConfirmed(time.Minute, txHash)
+	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("UpdateNonClosingBalanceProof  WaitForGenerateBlock err:%s", err)
 		channelClosed := self.ChannelIsClosed(self.nodeAddress, partner, channelIdentifier)
@@ -493,13 +485,13 @@ func (self *TokenNetwork) withDraw(channelIdentifier typing.ChannelID, partner t
 	opLock.Lock()
 	defer opLock.Unlock()
 
-	txHash, err := self.proxy.SetTotalWithdraw(uint64(channelIdentifier), common.Address(self.nodeAddress), common.Address(partner), uint64(totalWithdraw), []byte(signature), pubKey, []byte(partnerSignature), partnerPubKey)
+	txHash, err := self.ChainClient.Native.Channel.SetTotalWithdraw(uint64(channelIdentifier), common.Address(self.nodeAddress), common.Address(partner), uint64(totalWithdraw), []byte(signature), pubKey, []byte(partnerSignature), partnerPubKey)
 	if err != nil {
 		log.Errorf("UpdateNonClosingBalanceProof err:%s", err)
 		return
 	}
 	log.Infof("UpdateNonClosingBalanceProof tx hash:%s\n", txHash)
-	_, err = self.proxy.JsonrpcClient.PollForTxConfirmed(time.Minute, txHash)
+	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("UpdateNonClosingBalanceProof  WaitForGenerateBlock err:%s", err)
 		self.checkChannelStateForWithdraw(self.nodeAddress, partner, channelIdentifier, totalWithdraw)
@@ -577,7 +569,7 @@ func (self *TokenNetwork) settle(channelIdentifier typing.ChannelID, transferred
 
 	if ourBpIsLarger {
 
-		txHash, err = self.proxy.SettleChannel(uint64(channelIdentifier),
+		txHash, err = self.ChainClient.Native.Channel.SettleChannel(uint64(channelIdentifier),
 			common.Address(partner),
 			uint64(partnerTransferredAmount),
 			uint64(partnerLockedAmount),
@@ -590,7 +582,7 @@ func (self *TokenNetwork) settle(channelIdentifier typing.ChannelID, transferred
 
 	} else {
 
-		txHash, err = self.proxy.SettleChannel(uint64(channelIdentifier),
+		txHash, err = self.ChainClient.Native.Channel.SettleChannel(uint64(channelIdentifier),
 			common.Address(self.nodeAddress),
 			uint64(transferredAmount),
 			uint64(lockedAmount),
@@ -607,7 +599,7 @@ func (self *TokenNetwork) settle(channelIdentifier typing.ChannelID, transferred
 		return
 	}
 	log.Infof("SettleChannel tx hash:%s\n", txHash)
-	_, err = self.proxy.JsonrpcClient.PollForTxConfirmed(time.Minute, txHash)
+	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("SettleChannel  WaitForGenerateBlock err:%s", err)
 		self.checkChannelStateForSettle(self.nodeAddress, partner, channelIdentifier)
@@ -728,7 +720,7 @@ func (self *TokenNetwork) checkChannelStateForSettle(participant1 typing.Address
 	} else if channelData.State == micropayment.Closed {
 		//[TODO] use rpc client to get block number
 		//self.client.block_number() < channel_data.settle_block_numbe
-		h, err := self.proxy.JsonrpcClient.GetCurrentBlockHeight()
+		h, err := self.ChainClient.GetCurrentBlockHeight()
 		if err != nil {
 			log.Errorf("GetCurrentBlockHeight err :%s", err)
 			return false

@@ -258,7 +258,7 @@ func handleActionTransferDirect(paymentNetworkIdentifier typing.PaymentNetworkID
 			paymentNetworkIdentifier,
 			stateChange.TokenNetworkIdentifier,
 			stateChange.PaymentIdentifier,
-			typing.TargetAddress(receiverAddress),
+			typing.Address(receiverAddress),
 			"Unknown partner channel"}
 
 		events.PushBack(failure)

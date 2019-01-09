@@ -3,29 +3,31 @@ package main
 import (
 	"fmt"
 
-	"github.com/oniio/oniChain/account"
-	"github.com/oniio/oniChannel"
+	"github.com/oniio/dsp-go-sdk/chain/wallet"
+	ch "github.com/oniio/oniChannel"
 	"github.com/oniio/oniChannel/typing"
 )
 
-var testConfig = &channel.ChannelConfig{
+var (
+	WALLET_PATH = "./wallet.dat"
+	WALLET_PWD  = []byte("123")
+)
+var testConfig = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
-	WalletPath:    "wallet.dat",
-	Password:      []byte(string("123")),
 	ListenAddress: "127.0.0.1:3000",
 	Protocol:      "tcp",
 }
 
 func main() {
-	wallet, err := account.OpenWallet(testConfig.WalletPath)
+	wallet, err := wallet.OpenWallet(WALLET_PATH)
 	if err != nil {
 		fmt.Printf("wallet.Open error:%s\n", err)
 	}
-	account, err := wallet.GetDefaultAccount(testConfig.Password)
+	account, err := wallet.GetDefaultAccount(WALLET_PWD)
 	if err != nil {
 		fmt.Printf("GetDefaultAccount error:%s\n", err)
 	}
-	channel, err := channel.NewChannel(testConfig, account)
+	channel, err := ch.NewChannel(testConfig, account)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -46,5 +48,5 @@ func main() {
 
 	*/
 	var target typing.Address
-	channel.Api.DirectTransferAsync(1, target, 111)
+	channel.Service.DirectTransferAsync(1, target, 111)
 }

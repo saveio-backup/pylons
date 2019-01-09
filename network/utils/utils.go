@@ -1,8 +1,3 @@
-/**
- * Description:
- * Author: Yihen.Liu
- * Create: 2018-11-22
- */
 package utils
 
 import (
@@ -10,6 +5,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+
+	"github.com/oniio/oniChain/account"
 	"github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/core/payload"
 	"github.com/oniio/oniChain/core/types"
@@ -209,4 +206,16 @@ func GetMemPoolTxCount(data []byte) (*MemPoolTxCount, error) {
 		Verified: count[0],
 		Verifing: count[1],
 	}, nil
+}
+
+func (this *account.Account) Sign(data []byte) ([]byte, error) {
+	sig, err := s.Sign(this.SigScheme, this.PrivateKey, data, nil)
+	if err != nil {
+		return nil, err
+	}
+	sigData, err := s.Serialize(sig)
+	if err != nil {
+		return nil, fmt.Errorf("signature.Serialize error:%s", err)
+	}
+	return sigData, nil
 }

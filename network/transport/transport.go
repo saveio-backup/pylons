@@ -386,10 +386,10 @@ func (this *Transport) syncPeerState() {
 		case state := <-this.peerStateChan:
 			if state.State == keepalive.PEER_REACHABLE {
 				this.activePeers.LoadOrStore(state.Address, struct{}{})
-				nodeNetworkState = transfer.NodeNetworkReachable
+				nodeNetworkState = transfer.NetworkReachable
 			} else {
 				this.activePeers.Delete(state.Address)
-				nodeNetworkState = transfer.NodeNetworkUnreachable
+				nodeNetworkState = transfer.NetworkUnreachable
 			}
 
 			this.addressForHealthCheck.Delete(state.Address)

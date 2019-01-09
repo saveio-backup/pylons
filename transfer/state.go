@@ -21,15 +21,15 @@ const ChannelStateSettled string = "settled"
 const ChannelStateSettling string = "waiting_for_settle"
 const ChannelStateUnusable string = "channel_unusable"
 
-const TransactionExecutionStatusSuccess string = "success"
-const TransactionExecutionStatusFailure string = "failure"
+const TxnExecSucc string = "success"
+const TxnExecFail string = "failure"
 
-const NodeNetworkUnknown string = "unknown"
-const NodeNetworkUnreachable string = "unreachable"
-const NodeNetworkReachable string = "reachable"
+const NetworkUnknown string = "unknown"
+const NetworkUnreachable string = "unreachable"
+const NetworkReachable string = "reachable"
 
-func MessageIdentifierFromPrng(prng *rand.Rand) typing.MessageID {
-	messageId := prng.Int63n(math.MaxInt64)
+func GetMsgID(r *rand.Rand) typing.MessageID {
+	messageId := r.Int63n(math.MaxInt64)
 	return typing.MessageID(messageId)
 }
 
@@ -279,7 +279,7 @@ func (self *NettingChannelEndState) GetContractBalance() typing.TokenAmount {
 	return self.ContractBalance
 }
 
-func (self *NettingChannelEndState) GetBalance() typing.TokenAmount {
+func (self *NettingChannelEndState) GetGasBalance() typing.TokenAmount {
 	var amount typing.TokenAmount
 
 	// the balanceProof could be nil in following cases:

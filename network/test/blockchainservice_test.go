@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"testing"
 
+	chainsdk "github.com/oniio/dsp-go-sdk/chain"
 	"github.com/oniio/oniChannel/network"
 	"github.com/oniio/oniChannel/network/contract"
-	"github.com/oniio/oniChannel/network/rpc"
 )
 
 var (
@@ -38,9 +38,9 @@ func TestNextBlock(t *testing.T) {
 }
 
 func TestRPCServerRun(t *testing.T) {
-
-	rpcClient := rpc.NewRpcClient("http://localhost:20336")
-	height, _ := rpcClient.GetCurrentBlockHeight()
+	testSdk := chainsdk.NewChain()
+	testSdk.NewRpcClient().SetAddress("http://localhost:20336")
+	height, _ := testSdk.GetCurrentBlockHeight()
 	/*
 		_, err := ontSdk.OpenWallet("./wallet.dat")
 		if err != nil {

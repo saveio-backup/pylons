@@ -7,18 +7,17 @@ import (
 	"github.com/oniio/oniChannel/typing"
 )
 
-func AllNeighbourNodes(chainState *ChainState) map[typing.Address]int {
-	addresses := make(map[typing.Address]int)
+func GetNeigbours(chainState *ChainState) []typing.Address {
+	addr := make([]typing.Address, 0)
 
 	for _, p := range chainState.IdentifiersToPaymentnetworks {
 		for _, t := range p.TokenIdentifiersToTokenNetworks {
 			for _, c := range t.ChannelIdentifiersToChannels {
-				addresses[c.PartnerState.Address] = 0
+				addr = append(addr, c.PartnerState.Address)
 			}
 		}
 	}
-
-	return addresses
+	return addr
 }
 
 func GetBlockHeight(chainState *ChainState) typing.BlockHeight {
@@ -62,7 +61,7 @@ func GetNodeNetworkStatus(chainState *ChainState, nodeAddress typing.Address) st
 	result, exist := chainState.NodeAddressesToNetworkstates[nodeAddress]
 
 	if !exist {
-		result = NodeNetworkUnknown
+		result = NetworkUnknown
 	}
 
 	return result

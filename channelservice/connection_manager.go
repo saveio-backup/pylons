@@ -30,7 +30,7 @@ func NewConnectionManager(
 	self.funds = 0
 	self.initialChannelTarget = 0
 	self.joinableFundsTarget = 0
-	self = channel
+	self.channel = channel
 
 	chainState := channel.StateFromChannel()
 	tokenNetworkState := transfer.GetTokenNetworkByIdentifier(chainState, tokenNetworkIdentifier)
@@ -69,14 +69,14 @@ func (self *ConnectionManager) connect(funds typing.TokenAmount,
 	self.joinableFundsTarget = joinableFundsTarget
 
 	qtyNetworkChannels := transfer.CountTokenNetworkChannels(
-		self.StateFromChannel(),
+		self.channel.StateFromChannel(),
 		typing.PaymentNetworkID(self.registryAddress),
 		self.tokenAddress)
 
 	if qtyNetworkChannels == 0 {
 		bootstrapAddr := getBootstrapAddress()
 
-		self.api.ChannelOpen(typing.PaymentNetworkID(self.registryAddress), self.tokenAddress, bootstrapAddr, 0, 0.5)
+		self.channel.ChannelOpen(typing.PaymentNetworkID(self.registryAddress), self.tokenAddress, bootstrapAddr, 0, 0.5)
 	} else {
 		self.openChannels()
 	}
@@ -103,7 +103,7 @@ func (self *ConnectionManager) JoinChannel(partnerAddress typing.Address,
 	//Currently, only router will join channel! Just use same deposit with partner.
 	//Can add policy function later
 	joiningFunds = partnerDeposit
-	self.api.SetTotalChannelDeposit(typing.PaymentNetworkID(self.registryAddress), self.tokenAddress,
+	self.channel.SetTotalChannelDeposit(typing.PaymentNetworkID(self.registryAddress), self.tokenAddress,
 		partnerAddress, joiningFunds, 0.5)
 
 	return
@@ -122,7 +122,7 @@ func (self *ConnectionManager) RetryConnect() {
 
 func (self *ConnectionManager) findNewPartners() *list.List {
 
-	openedChannels := transfer.GetChannelStateOpen(self.StateFromChannel(),
+	openedChannels := transfer.GetChannelStateOpen(self.channel.StateFromChannel(),
 		typing.PaymentNetworkID(self.registryAddress), self.tokenAddress)
 
 	known := list.New()
@@ -133,10 +133,10 @@ func (self *ConnectionManager) findNewPartners() *list.List {
 	}
 
 	known.PushBack(getBootstrapAddress())
-	known.PushBack(self.address)
+	known.PushBack(self.channel.address)
 
 	participantsAddresses := transfer.GetParticipantsAddresses(
-		self.StateFromChannel(),
+		self.channel.StateFromChannel(),
 		typing.PaymentNetworkID{}, typing.TokenAddress{})
 
 	available := list.New()
@@ -163,9 +163,9 @@ func (self *ConnectionManager) findNewPartners() *list.List {
 
 func (self *ConnectionManager) JoinPartner(partner typing.Address) {
 
-	self.api.ChannelOpen(typing.PaymentNetworkID(self.registryAddress), self.tokenAddress, partner, 0, 0.5)
+	self.channel.ChannelOpen(typing.PaymentNetworkID(self.registryAddress), self.tokenAddress, partner, 0, 0.5)
 
-	self.api.SetTotalChannelDeposit(typing.PaymentNetworkID(self.registryAddress), self.tokenAddress,
+	self.channel.SetTotalChannelDeposit(typing.PaymentNetworkID(self.registryAddress), self.tokenAddress,
 		partner, self.initialFundingPerPartner(), 0.5)
 
 	self.wg.Done()
@@ -174,7 +174,7 @@ func (self *ConnectionManager) JoinPartner(partner typing.Address) {
 
 func (self *ConnectionManager) openChannels() bool {
 
-	openChannels := transfer.GetChannelStateOpen(self.StateFromChannel(),
+	openChannels := transfer.GetChannelStateOpen(self.channel.StateFromChannel(),
 		typing.PaymentNetworkID{}, typing.TokenAddress{})
 
 	bootstrapAddress := getBootstrapAddress()
