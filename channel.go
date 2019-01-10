@@ -113,3 +113,7 @@ func (this *Channel) Stop() {
 func (this *Channel) RegisterReceiveNotification(notificaitonChannel chan *transfer.EventPaymentReceivedSuccess) {
 	this.Service.ReceiveNotificationChannels[notificaitonChannel] = struct{}{}
 }
+
+func (this *Channel) GetVersion() string {
+	return Version
+}

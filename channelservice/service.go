@@ -298,7 +298,7 @@ func (self *ChannelService) InitializeMessagesQueues(chainState *transfer.ChainS
 	eventsQueues := transfer.GetAllMessageQueues(chainState)
 
 	for queueIdentifier, eventQueue := range *eventsQueues {
-		self.StartHealthCheckFor(queueIdentifier.Recipient)
+		self.transport.StartHealthCheck(queueIdentifier.Recipient)
 
 		for _, event := range eventQueue {
 
@@ -681,12 +681,6 @@ func (self *ChannelService) GetNodeNetworkState(nodeAddress typing.Address) stri
 	return transfer.GetNodeNetworkStatus(self.StateFromChannel(), nodeAddress)
 }
 
-func (self *ChannelService) StartHealthCheckFor(nodeAddress typing.Address) {
-
-	self.StartHealthCheckFor(nodeAddress)
-	return
-}
-
 func (self *ChannelService) GetTokensList(registryAddress typing.PaymentNetworkID) *list.List {
 	tokensList := transfer.GetTokenNetworkAddressesFor(self.StateFromChannel(),
 		registryAddress)
@@ -732,7 +726,7 @@ func (self *ChannelService) DirectTransferAsync(amount typing.TokenAmount, targe
 		self.StateFromChannel(),
 		paymentNetworkIdentifier,
 		tokenAddress)
-	self.StartHealthCheckFor(typing.Address(target))
+	self.transport.StartHealthCheck(typing.Address(target))
 
 	if identifier == typing.PaymentID(0) {
 		identifier = CreateDefaultIdentifier()

@@ -67,6 +67,7 @@ func NewBlockchainService(clientType string, url string, account *account.Accoun
 		return nil
 	}
 	this.Account = account
+	this.Client.Native.Channel.DefAcc = account
 	this.Address = typing.Address(account.Address)
 	return this
 }

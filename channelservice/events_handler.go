@@ -44,7 +44,7 @@ func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 
 		//register partner address in UDPTransport!
 		partnerAddress := channelState.PartnerState.Address
-		self.StartHealthCheckFor(partnerAddress)
+		self.transport.StartHealthCheck(partnerAddress)
 
 	} else {
 		//[TODO] generate ContractReceiveRouteNew when supporting route

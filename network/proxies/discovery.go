@@ -22,19 +22,23 @@ func (self *Discovery) RegisterEndpoint(nodeAddress typing.Address, endpoint str
 
 	h, p, err := net.SplitHostPort(endpoint)
 	if err != nil {
-		fmt.Printf("parse endpoint err:%s\n", err.Error())
+		log.Error("parse endpoint err:", err)
 		return nil, err
 	}
 	ip := net.ParseIP(h)
 
 	txHash, err := self.ChainClient.Native.Channel.RegisterPaymentEndPoint(ip, []byte(p), common.Address(nodeAddress))
 	if err != nil {
-		log.Errorf("RegisterPaymentEndPoint err:%s\n", err)
+		log.Error("RegisterPaymentEndPoint err:", err)
 		return nil, err
 	}
 	confirmed, err := self.ChainClient.PollForTxConfirmed(time.Duration(60)*time.Second, txHash)
-	if err != nil || !confirmed {
-		log.Errorf("PollForTxConfirmed err:%s\n", err)
+	if err != nil {
+		log.Warn("PollForTxConfirmed err:%", err)
+		return nil, err
+	}
+	if !confirmed {
+		log.Warn("PollForTxConfirmed err:%", err)
 		return nil, err
 	}
 	return txHash, nil
