@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	sdk "github.com/oniio/dsp-go-sdk/chain"
+	sdk "github.com/oniio/oniChain-go-sdk"
 	"github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChain/smartcontract/service/native/micropayment"

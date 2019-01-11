@@ -1,7 +1,7 @@
 package channelservice
 
 import (
-	sdkutils "github.com/oniio/dsp-go-sdk/chain/utils"
+	sdkutils "github.com/oniio/oniChain-go-sdk/utils"
 	"github.com/oniio/oniChain/crypto/keypair"
 
 	"github.com/oniio/oniChannel/network/transport/messages"

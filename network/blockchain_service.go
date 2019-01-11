@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	chainsdk "github.com/oniio/dsp-go-sdk/chain"
+	chainsdk "github.com/oniio/oniChain-go-sdk"
 	"github.com/oniio/oniChain/account"
 	"github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"

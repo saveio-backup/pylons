@@ -3,7 +3,7 @@ package contract
 import (
 	"fmt"
 
-	sdk_utils "github.com/oniio/dsp-go-sdk/chain/utils"
+	sdk_utils "github.com/oniio/oniChain-go-sdk/utils"
 	"github.com/oniio/oniChain/account"
 	"github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/core/types"

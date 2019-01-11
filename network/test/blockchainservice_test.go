@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"testing"
 
-	chainsdk "github.com/oniio/dsp-go-sdk/chain"
+	chainsdk "github.com/oniio/oniChain-go-sdk"
 	"github.com/oniio/oniChannel/network"
 	"github.com/oniio/oniChannel/network/contract"
 )

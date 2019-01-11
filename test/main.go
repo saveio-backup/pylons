@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/oniio/dsp-go-sdk/chain/wallet"
+	"github.com/oniio/oniChain-go-sdk/wallet"
 	"github.com/oniio/oniChain/common/log"
 	ch "github.com/oniio/oniChannel"
 	"github.com/oniio/oniChannel/typing"
