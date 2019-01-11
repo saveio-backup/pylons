@@ -40,20 +40,21 @@ func DefaultChannelConfig() *ChannelConfig {
 		Protocol:      "tcp",
 		DBPath:        ".",
 	}
-
 	return config
 }
 
 func NewChannel(config *ChannelConfig, account *account.Account) (*Channel, error) {
 	blockChainService := network.NewBlockchainService(config.ClientType, config.ChainNodeURL, account)
 	if blockChainService == nil {
-		return nil, errors.New("error createing BlockChainService")
+		return nil, errors.New("createing BlockChainService failed")
 	}
 
 	transport, discovery := setupTransport(blockChainService, config)
 
-	var startBlock typing.BlockHeight
-
+	startBlock, err := blockChainService.Client.GetCurrentBlockHeight()
+	if err != nil {
+		return nil, fmt.Errorf("GetCurrentBlockHeight error:%s", err)
+	}
 	ipPort := config.ListenAddress
 	if config.MappingAddress != "" {
 		ipPort = config.MappingAddress
@@ -61,7 +62,6 @@ func NewChannel(config *ChannelConfig, account *account.Account) (*Channel, erro
 
 	h, p, err := net.SplitHostPort(ipPort)
 	if err != nil {
-		fmt.Errorf("parse ipPort err:%s\n", err)
 		return nil, err
 	}
 
@@ -74,7 +74,7 @@ func NewChannel(config *ChannelConfig, account *account.Account) (*Channel, erro
 
 	service := ch.NewChannelService(
 		blockChainService,
-		startBlock,
+		typing.BlockHeight(startBlock),
 		transport,
 		new(ch.ChannelEventHandler),
 		new(ch.MessageHandler),

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/oniio/dsp-go-sdk/chain/wallet"
 	"github.com/oniio/oniChain/common/log"
 	ch "github.com/oniio/oniChannel"
@@ -21,18 +19,20 @@ var testConfig = &ch.ChannelConfig{
 }
 
 func main() {
-	log.InitLog(3, log.PATH, log.Stdout)
+	log.InitLog(3, log.Stdout)
 	wallet, err := wallet.OpenWallet(WALLET_PATH)
 	if err != nil {
-		fmt.Printf("wallet.Open error:%s\n", err)
+		log.Fatal("wallet.Open error:%s\n", err)
 	}
 	account, err := wallet.GetDefaultAccount(WALLET_PWD)
 	if err != nil {
-		fmt.Printf("GetDefaultAccount error:%s\n", err)
+		log.Fatal("GetDefaultAccount error:%s\n", err)
 	}
+
+	log.Info("using address is ", account.Address.ToBase58())
 	channel, err := ch.NewChannel(testConfig, account)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 		return
 	}
 

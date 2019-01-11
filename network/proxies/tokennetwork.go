@@ -16,9 +16,6 @@ import (
 	"github.com/oniio/oniChannel/typing"
 )
 
-const settlementTimeoutMin int = 1000
-const settlementTimeoutMax int = 100000
-
 type ChannelData struct {
 	ChannelIdentifier typing.ChannelID
 	SettleBlockHeight typing.BlockHeight
@@ -265,16 +262,6 @@ func (self *TokenNetwork) detail(participant1 typing.Address,
 	channelDetails.ParticipantsData = participantsData
 
 	return channelDetails
-}
-
-func (self *TokenNetwork) settlementTimeoutMin() int {
-	//Hard code it, can support it in contract if needed
-	return settlementTimeoutMin
-}
-
-func (self *TokenNetwork) settlementTimeoutMax() int {
-	//Hard code it, can support it in contract if needed
-	return settlementTimeoutMax
 }
 
 func (self *TokenNetwork) ChannelIsOpened(participant1 typing.Address,

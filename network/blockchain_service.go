@@ -8,6 +8,7 @@ import (
 	chainsdk "github.com/oniio/dsp-go-sdk/chain"
 	"github.com/oniio/oniChain/account"
 	"github.com/oniio/oniChain/common"
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChain/core/types"
 
 	"github.com/oniio/oniChannel/network/contract"
@@ -37,7 +38,7 @@ else use account passed from caller
 */
 func NewBlockchainService(clientType string, url string, account *account.Account) *BlockchainService {
 	if clientType == "" || url == "" {
-		fmt.Printf("chain node url is invalid\n")
+		log.Error("chain node url is invalid")
 		return nil
 	}
 
@@ -51,13 +52,13 @@ func NewBlockchainService(clientType string, url string, account *account.Accoun
 	case "ws":
 		err := this.Client.NewWebSocketClient().Connect(url)
 		if err != nil {
-			fmt.Printf("connect websocket error:%s", err)
+			log.Error("connect websocket error:", err)
 			return nil
 		}
 	case "rest":
 		this.Client.NewRestClient().SetAddress(url)
 	default:
-		fmt.Printf("node url type is invalid\n")
+		log.Error("node url type is invalid")
 	}
 
 	this.currentHeight, _ = this.BlockHeight()
