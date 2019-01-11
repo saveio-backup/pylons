@@ -419,14 +419,13 @@ func (this *Transport) GetFullMappingAddress() string {
 
 var once sync.Once
 
-func (this *Transport) Start(ChannelService ChannelServiceInterface) error {
-	var err error
+func (this *Transport) Start(channelservice ChannelServiceInterface) error {
 
-	this.ChannelService = ChannelService
+	this.ChannelService = channelservice
 
 	// must set the writeFlushLatency to proper value, otherwise the message exchange speed will be very low
 	builder := network.NewBuilderWithOptions(network.WriteFlushLatency(1 * time.Millisecond))
-
+	
 	if this.keys != nil {
 		builder.SetKeys(this.keys)
 	} else {
@@ -458,7 +457,7 @@ func (this *Transport) Start(ChannelService ChannelServiceInterface) error {
 
 	builder.AddComponent(keepalive.New(options...))
 
-	this.net, err = builder.Build()
+	this.net, err := builder.Build()
 	if err != nil {
 		return err
 	}

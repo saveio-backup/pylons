@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/oniio/oniChain/account"
+	"github.com/oniio/oniChain/common/log"
 	ch "github.com/oniio/oniChannel/channelservice"
 	"github.com/oniio/oniChannel/network"
 	"github.com/oniio/oniChannel/network/transport"
@@ -46,13 +47,15 @@ func DefaultChannelConfig() *ChannelConfig {
 func NewChannel(config *ChannelConfig, account *account.Account) (*Channel, error) {
 	blockChainService := network.NewBlockchainService(config.ClientType, config.ChainNodeURL, account)
 	if blockChainService == nil {
-		return nil, errors.New("createing BlockChainService failed")
+		log.Fatal("createing blockchain service failed")
+		return nil, errors.New("createing blockchain service failed")
 	}
 
-	transport, discovery := setupTransport(blockChainService, config)
+	transport := setupTransport(blockChainService, config)
 
 	startBlock, err := blockChainService.Client.GetCurrentBlockHeight()
 	if err != nil {
+		log.Fatal("can not get current block height from blockchain service")
 		return nil, fmt.Errorf("GetCurrentBlockHeight error:%s", err)
 	}
 	ipPort := config.ListenAddress
@@ -62,6 +65,7 @@ func NewChannel(config *ChannelConfig, account *account.Account) (*Channel, erro
 
 	h, p, err := net.SplitHostPort(ipPort)
 	if err != nil {
+		log.Fatal("invalid listenning url ", ipPort)
 		return nil, err
 	}
 
@@ -78,9 +82,8 @@ func NewChannel(config *ChannelConfig, account *account.Account) (*Channel, erro
 		transport,
 		new(ch.ChannelEventHandler),
 		new(ch.MessageHandler),
-		option,
-		discovery)
-
+		option)
+	log.Info("channel service created, use account ", blockChainService.GetAccount().Address.ToBase58())
 	channel := &Channel{
 		Config:  config,
 		Service: service,
@@ -88,18 +91,14 @@ func NewChannel(config *ChannelConfig, account *account.Account) (*Channel, erro
 	return channel, nil
 }
 
-func setupTransport(blockChainService *network.BlockchainService, config *ChannelConfig) (*transport.Transport, *network.ContractDiscovery) {
-	discoveryProxy := blockChainService.Discovery()
+func setupTransport(blockChainService *network.BlockchainService, config *ChannelConfig) *transport.Transport {
 
-	discovery := &network.ContractDiscovery{
-		NodeAddress:    blockChainService.Address,
-		DiscoveryProxy: discoveryProxy,
-	}
 	trans := transport.NewTransport(config.Protocol, discovery)
 	trans.SetAddress(config.ListenAddress)
 	trans.SetMappingAddress(config.MappingAddress)
+	trans.SetKeys(blockChainService.GetAccount().PubKey())
 
-	return trans, discovery
+	return trans
 }
 
 func (this *Channel) StartService() {

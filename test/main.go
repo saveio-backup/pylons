@@ -22,14 +22,15 @@ func main() {
 	log.InitLog(3, log.Stdout)
 	wallet, err := wallet.OpenWallet(WALLET_PATH)
 	if err != nil {
-		log.Fatal("wallet.Open error:%s\n", err)
+		log.Fatal("wallet.Open error:%s", err)
+		return
 	}
 	account, err := wallet.GetDefaultAccount(WALLET_PWD)
 	if err != nil {
-		log.Fatal("GetDefaultAccount error:%s\n", err)
+		log.Fatal("GetDefaultAccount error:%s", err)
+		return
 	}
 
-	log.Info("using address is ", account.Address.ToBase58())
 	channel, err := ch.NewChannel(testConfig, account)
 	if err != nil {
 		log.Fatal(err)

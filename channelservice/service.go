@@ -15,6 +15,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/oniio/oniChain/account"
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/network"
 	"github.com/oniio/oniChannel/network/transport"
 	"github.com/oniio/oniChannel/network/transport/messages"
@@ -83,10 +84,9 @@ func NewChannelService(chain *network.BlockchainService,
 	//defaultSecretRegistry SecretRegistry,
 	channel_event_handler *ChannelEventHandler,
 	messageHandler *MessageHandler,
-	config map[string]string,
-	discovery *network.ContractDiscovery) *ChannelService {
+	config map[string]string) *ChannelService {
 	if chain == nil {
-		fmt.Println("error in create new channel service: chain service not available")
+		log.Error("error in create new channel service: chain service not available")
 		return nil
 	}
 	self := new(ChannelService)
@@ -102,36 +102,31 @@ func NewChannelService(chain *network.BlockchainService,
 
 	// address in the blockchain service is set when import wallet
 	self.address = chain.Address
-	self.discovery = discovery
-
 	self.channelEventHandler = new(ChannelEventHandler)
 	self.messageHandler = messageHandler
 
+	self.transport = transport
+	self.alarm = NewAlarmTask(chain)
+
 	if _, exist := config["database_path"]; exist == false {
 		self.databasePath = ":memory:"
+		self.databaseDir = ""
 	} else {
 		self.databasePath = config["database_path"]
 		if self.databasePath == "." {
 			fullname, err := GetFullDatabasePath()
 			if err == nil {
+				databaseDir := filepath.Dir(self.databasePath)
+				os.Mkdir(databaseDir, os.ModeDir)
 				self.databasePath = fullname
+				self.databaseDir = databaseDir
+				log.Info("database set to", fullname)
 			} else {
 				self.databasePath = ":memory:"
+				self.databaseDir = ""
+				log.Warn("use memory database")
 			}
 		}
-	}
-
-	self.transport = transport
-
-	self.alarm = NewAlarmTask(chain)
-
-	if self.databasePath != ":memory:" {
-		databaseDir := filepath.Dir(config["database_path"])
-		os.Mkdir(databaseDir, os.ModeDir)
-		self.databaseDir = databaseDir
-	} else {
-		self.databasePath = ":memory:"
-		self.databaseDir = ""
 	}
 
 	return self
@@ -140,7 +135,7 @@ func NewChannelService(chain *network.BlockchainService,
 func (self *ChannelService) Start() {
 	// register to Endpoint contract
 	port, _ := strconv.Atoi(self.config["port"])
-	go self.discovery.Register(self.address, self.config["host"], port)
+	go self.chain.Client.Native.Channel.RegisterPaymentEndPoint(self.address, self.config["host"], port)
 
 	var lastLogBlockHeight typing.BlockHeight
 
@@ -195,10 +190,6 @@ func (self *ChannelService) Start() {
 	self.StartNeighboursHealthcheck()
 
 	return
-}
-
-func (self *ChannelService) run() {
-
 }
 
 func (self *ChannelService) Stop() {

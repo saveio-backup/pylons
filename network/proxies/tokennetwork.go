@@ -8,7 +8,8 @@ import (
 	"sync"
 	"time"
 
-	sdk "github.com/oniio/oniChain-go-sdk"
+	chnsdk "github.com/oniio/oniChain-go-sdk/channel"
+	chainsdk "github.com/oniio/oniChain-go-sdk"
 	"github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChain/smartcontract/service/native/micropayment"
@@ -46,7 +47,8 @@ type ChannelDetails struct {
 
 type TokenNetwork struct {
 	Address                 typing.Address
-	ChainClient             *sdk.Chain
+	ChainClient             *chainsdk.Chain
+	ChannelClient           *chnsdk.Channel
 	nodeAddress             typing.Address
 	openLock                sync.Mutex
 	openChannelTransactions map[typing.Address]*sync.Mutex
@@ -56,13 +58,14 @@ type TokenNetwork struct {
 }
 
 func NewTokenNetwork(
-	chainClient *sdk.Chain,
+	chainClient *chainsdk.Chain,
 	ManagerAddress typing.Address) *TokenNetwork {
 	self := new(TokenNetwork)
 
 	self.Address = ManagerAddress
 	self.ChainClient = chainClient
-	self.nodeAddress = typing.Address(chainClient.Native.Channel.DefAcc.Address)
+	self.ChannelClient = chainClient.Native.Channel
+	self.nodeAddress = typing.Address(self.ChannelClient.DefAcc.Address)
 
 	self.openChannelTransactions = make(map[typing.Address]*sync.Mutex)
 	self.channelOperationsLock = make(map[typing.Address]*sync.Mutex)
@@ -141,7 +144,7 @@ func (self *TokenNetwork) NewNettingChannel(partner typing.Address, settleTimeou
 }
 
 func (self *TokenNetwork) newNettingChannel(partner typing.Address, settleTimeout int) []byte {
-	hash, err := self.ChainClient.Native.Channel.OpenChannel(common.Address(self.nodeAddress), common.Address(partner), uint64(settleTimeout))
+	hash, err := self.ChannelClient.OpenChannel(common.Address(self.nodeAddress), common.Address(partner), uint64(settleTimeout))
 	if err != nil {
 		log.Errorf("new netting channel err:%s", err)
 	}
@@ -154,7 +157,7 @@ func (self *TokenNetwork) inspectChannelIdentifier(participant1 typing.Address,
 	// need getChannelIdentifier api
 	// result := self.callAndCheckResult("getChannelIdentifier", participant1, participant2)
 	// return result.(typing.ChannelID)
-	id, err := self.ChainClient.Native.Channel.GetChannelIdentifier(common.Address(participant1), common.Address(participant2))
+	id, err := self.ChannelClient.GetChannelIdentifier(common.Address(participant1), common.Address(participant2))
 	if err != nil {
 		log.Errorf("Get channelIdentifier err:%s", err)
 		return 0
@@ -178,7 +181,7 @@ func (self *TokenNetwork) channelExistsAndNotSettled(participant1 typing.Address
 
 func (self *TokenNetwork) detailParticipant(channelIdentifier typing.ChannelID,
 	participant typing.Address, partner typing.Address) *ParticipantDetails {
-	info, err := self.ChainClient.Native.Channel.GetChannelParticipantInfo(uint64(channelIdentifier), common.Address(participant), common.Address(partner))
+	info, err := self.ChannelClient.GetChannelParticipantInfo(uint64(channelIdentifier), common.Address(participant), common.Address(partner))
 	if err != nil {
 		log.Errorf("GetChannelParticipantInfo err:%s", err)
 		return nil
@@ -206,7 +209,7 @@ func (self *TokenNetwork) detailChannel(participant1 typing.Address,
 			"detailChannel", channelIdentifier)
 	}
 
-	info, err := self.ChainClient.Native.Channel.GetChannelInfo(uint64(channelIdentifier), common.Address(participant1), common.Address(participant2))
+	info, err := self.ChannelClient.GetChannelInfo(uint64(channelIdentifier), common.Address(participant1), common.Address(participant2))
 	if err != nil {
 		log.Errorf("GetChannelInfo err:%s", err)
 		return nil
@@ -368,7 +371,7 @@ func (self *TokenNetwork) SetTotalDeposit(channelIdentifier typing.ChannelID,
 		return
 	}
 
-	txHash, err := self.ChainClient.Native.Channel.SetTotalDeposit(uint64(channelIdentifier), common.Address(self.nodeAddress), common.Address(partner), uint64(totalDeposit))
+	txHash, err := self.ChannelClient.SetTotalDeposit(uint64(channelIdentifier), common.Address(self.nodeAddress), common.Address(partner), uint64(totalDeposit))
 	if err != nil {
 		log.Errorf("SetTotalDeposit err:%s", err)
 		return
@@ -402,7 +405,7 @@ func (self *TokenNetwork) Close(channelIdentifier typing.ChannelID, partner typi
 	opLock.Lock()
 	defer opLock.Unlock()
 
-	txHash, err := self.ChainClient.Native.Channel.CloseChannel(uint64(channelIdentifier), common.Address(self.nodeAddress), common.Address(partner), []byte(balanceHash), uint64(nonce), []byte(additionalHash), []byte(signature), []byte(partnerPubKey))
+	txHash, err := self.ChannelClient.CloseChannel(uint64(channelIdentifier), common.Address(self.nodeAddress), common.Address(partner), []byte(balanceHash), uint64(nonce), []byte(additionalHash), []byte(signature), []byte(partnerPubKey))
 	if err != nil {
 		log.Errorf("CloseChannel err:%s", err)
 		return
@@ -428,7 +431,7 @@ func (self *TokenNetwork) updateTransfer(channelIdentifier typing.ChannelID, par
 	}
 
 	// need pubkey
-	txHash, err := self.ChainClient.Native.Channel.UpdateNonClosingBalanceProof(uint64(channelIdentifier), common.Address(partner), common.Address(self.nodeAddress), []byte(balanceHash), uint64(nonce), []byte(additionalHash), []byte(closingSignature), []byte(nonClosingSignature), closePubKey, nonClosePubKey)
+	txHash, err := self.ChannelClient.UpdateNonClosingBalanceProof(uint64(channelIdentifier), common.Address(partner), common.Address(self.nodeAddress), []byte(balanceHash), uint64(nonce), []byte(additionalHash), []byte(closingSignature), []byte(nonClosingSignature), closePubKey, nonClosePubKey)
 	if err != nil {
 		log.Errorf("UpdateNonClosingBalanceProof err:%s", err)
 		return
@@ -472,7 +475,7 @@ func (self *TokenNetwork) withDraw(channelIdentifier typing.ChannelID, partner t
 	opLock.Lock()
 	defer opLock.Unlock()
 
-	txHash, err := self.ChainClient.Native.Channel.SetTotalWithdraw(uint64(channelIdentifier), common.Address(self.nodeAddress), common.Address(partner), uint64(totalWithdraw), []byte(signature), pubKey, []byte(partnerSignature), partnerPubKey)
+	txHash, err := self.ChannelClient.SetTotalWithdraw(uint64(channelIdentifier), common.Address(self.nodeAddress), common.Address(partner), uint64(totalWithdraw), []byte(signature), pubKey, []byte(partnerSignature), partnerPubKey)
 	if err != nil {
 		log.Errorf("UpdateNonClosingBalanceProof err:%s", err)
 		return
@@ -556,7 +559,7 @@ func (self *TokenNetwork) settle(channelIdentifier typing.ChannelID, transferred
 
 	if ourBpIsLarger {
 
-		txHash, err = self.ChainClient.Native.Channel.SettleChannel(uint64(channelIdentifier),
+		txHash, err = self.ChannelClient.SettleChannel(uint64(channelIdentifier),
 			common.Address(partner),
 			uint64(partnerTransferredAmount),
 			uint64(partnerLockedAmount),
@@ -569,7 +572,7 @@ func (self *TokenNetwork) settle(channelIdentifier typing.ChannelID, transferred
 
 	} else {
 
-		txHash, err = self.ChainClient.Native.Channel.SettleChannel(uint64(channelIdentifier),
+		txHash, err = self.ChannelClient.SettleChannel(uint64(channelIdentifier),
 			common.Address(self.nodeAddress),
 			uint64(transferredAmount),
 			uint64(lockedAmount),
