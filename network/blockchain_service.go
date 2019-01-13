@@ -30,10 +30,6 @@ type BlockchainService struct {
 	paymentChannelCreateLock sync.Mutex
 }
 
-/*
-if account is nil, get account from wallet.dat;
-else use account passed from caller
-*/
 func NewBlockchainService(clientType string, url string, account *account.Account) *BlockchainService {
 	if clientType == "" || url == "" {
 		log.Error("chain node url is invalid")
@@ -107,38 +103,14 @@ func (this *BlockchainService) GetBlock(param interface{}) (*types.Block, error)
 	return nil, nil
 }
 
-func (this *BlockchainService) NextBlock() uint32 {
-	currentBlock, _ := this.BlockHeight()
-	targetBlockHeight := currentBlock + 1
-	for currentBlock < targetBlockHeight {
-		currentBlock, _ = this.BlockHeight()
-		time.Sleep(time.Second * 1)
-	}
-	return currentBlock
-}
-
-func (this *BlockchainService) GetNewEntries(fromBlock, toBlock uint32) {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
-	//this.ContractManager.MPay.FilterNewLogs(fromBlock, toBlock)
-}
-
-func (this *BlockchainService) GetAllEntries() {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
-	//toBlock, _ := this.BlockHeight()
-	//this.ContractManager.MPay.FilterAllLogs(toBlock)
-}
-
 func (this *BlockchainService) SecretRegistry(address common.Address) {
 
 }
 
-func (this *BlockchainService) TokenNetwork(address typing.Address) *proxies.TokenNetwork {
+func (this *BlockchainService) NewTokenNetwork(address typing.Address) *proxies.TokenNetwork {
 	this.tokenNetworkCreateLock.Lock()
 	defer this.tokenNetworkCreateLock.Unlock()
 
-	//[TODO] should pass *rpc.RpcClient and *rpc.ContractProxy to NewTokenNetwork ?
 	if this.tokenNetwork == nil {
 
 		this.tokenNetwork = proxies.NewTokenNetwork(this.ChainClient, address)
@@ -157,7 +129,7 @@ func (this *BlockchainService) PaymentChannel(tokenNetworkAddress typing.Address
 		return channel
 	}
 
-	tokenNetwork := this.TokenNetwork(tokenNetworkAddress)
+	tokenNetwork := this.NewTokenNetwork(tokenNetworkAddress)
 
 	if args == nil {
 		return nil

@@ -548,7 +548,7 @@ func (self *ChannelService) ChannelOpen(registryAddress typing.PaymentNetworkID,
 		return channelState.Identifier
 	}
 
-	tokenNetwork := self.chain.TokenNetwork(typing.Address{})
+	tokenNetwork := self.chain.NewTokenNetwork(typing.Address{})
 	tokenNetwork.NewNettingChannel(partnerAddress, int(settleTimeout))
 
 	WaitForNewChannel(self, registryAddress, tokenAddress, partnerAddress,

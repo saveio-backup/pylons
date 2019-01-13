@@ -39,12 +39,7 @@ func TestGetBlock(t *testing.T) {
 	fmt.Println(block.ToArray())
 }
 
-func TestNextBlock(t *testing.T) {
-	currentHeight := blockchainService.NextBlock()
-	fmt.Println("Current height:", currentHeight)
-}
-
 func TestRPCServerRun(t *testing.T) {
-	tx,err := blockchainService.ChannelClient.RegisterPaymentEndPoint([]byte("127.0.0.1"), []byte("15566"),blockchainService.GetAccount().Address)
+	tx, err := blockchainService.ChannelClient.RegisterPaymentEndPoint([]byte("127.0.0.1"), []byte("15566"), blockchainService.GetAccount().Address)
 	fmt.Printf("res:%s, err:%s\n", tx[:], err)
 }
