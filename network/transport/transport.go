@@ -96,7 +96,7 @@ func registerMessages() error {
 	return nil
 }
 
-func NewTransport(protocol string, discovery Discoverer) *Transport {
+func NewTransport(protocol string) *Transport {
 	return &Transport{
 		protocol:              protocol,
 		peerStateChan:         make(chan *keepalive.PeerStateEvent, 10),
@@ -106,7 +106,6 @@ func NewTransport(protocol string, discovery Discoverer) *Transport {
 		messageQueues:         new(sync.Map),
 		addressQueueMap:       new(sync.Map),
 		hostPortToAddress:     new(sync.Map),
-		discovery:             discovery,
 	}
 }
 
@@ -425,7 +424,7 @@ func (this *Transport) Start(channelservice ChannelServiceInterface) error {
 
 	// must set the writeFlushLatency to proper value, otherwise the message exchange speed will be very low
 	builder := network.NewBuilderWithOptions(network.WriteFlushLatency(1 * time.Millisecond))
-	
+
 	if this.keys != nil {
 		builder.SetKeys(this.keys)
 	} else {
@@ -456,8 +455,8 @@ func (this *Transport) Start(channelservice ChannelServiceInterface) error {
 	}
 
 	builder.AddComponent(keepalive.New(options...))
-
-	this.net, err := builder.Build()
+	var err error
+	this.net, err = builder.Build()
 	if err != nil {
 		return err
 	}

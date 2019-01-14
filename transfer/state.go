@@ -28,8 +28,9 @@ const NetworkUnknown string = "unknown"
 const NetworkUnreachable string = "unreachable"
 const NetworkReachable string = "reachable"
 
-func GetMsgID(r *rand.Rand) typing.MessageID {
-	messageId := r.Int63n(math.MaxInt64)
+func GetMsgID() typing.MessageID {
+	rand.Seed(time.Now().UnixNano())
+	messageId := rand.Int63n(math.MaxInt64)
 	return typing.MessageID(messageId)
 }
 
@@ -83,7 +84,6 @@ type ChainState struct {
 	Address                      typing.Address
 	PaymentMapping               PaymentMappingState
 	PendingTransactions          []Event
-	PseudoRandomGenerator        *rand.Rand
 	QueueIdsToQueues             QueueIdsToQueuesType
 }
 
@@ -93,7 +93,6 @@ func NewChainState() *ChainState {
 	result.IdentifiersToPaymentnetworks = make(map[typing.PaymentNetworkID]*PaymentNetworkState)
 	result.NodeAddressesToNetworkstates = make(map[typing.Address]string)
 	result.PaymentMapping.SecrethashesToTask = make(map[typing.SecretHash]State)
-	result.PseudoRandomGenerator = rand.New(rand.NewSource(time.Now().Unix()))
 	result.PendingTransactions = []Event{}
 	result.QueueIdsToQueues = make(QueueIdsToQueuesType)
 
@@ -106,7 +105,6 @@ func (self *ChainState) AdjustChainState() {
 		v.AdjustPaymentNetworkState()
 	}
 
-	self.PseudoRandomGenerator = rand.New(rand.NewSource(time.Now().UnixNano()))
 	return
 }
 

@@ -5,7 +5,6 @@ import (
 	"container/list"
 	"fmt"
 	"math"
-	"math/rand"
 
 	"github.com/oniio/oniChannel/typing"
 	"github.com/oniio/oniChannel/utils"
@@ -512,7 +511,7 @@ func EventsForClose(channelState *NettingChannelState, blockNumber typing.BlockH
 }
 
 func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *ActionTransferDirect,
-	pseudoRandomGenerator *rand.Rand) TransitionResult {
+) TransitionResult {
 
 	events := list.New()
 
@@ -543,7 +542,7 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 	}
 
 	if isOpen && isValid && canPay {
-		messageIdentifier := GetMsgID(pseudoRandomGenerator)
+		messageIdentifier := GetMsgID()
 		directTransfer := sendDirectTransfer(channelState, typing.PaymentAmount(amount), messageIdentifier, paymentIdentifier)
 		events.PushBack(directTransfer)
 	} else {
@@ -768,7 +767,7 @@ func applyChannelNewbalance(channelState *NettingChannelState,
 }
 
 func StateTransitionForChannel(channelState *NettingChannelState, stateChange StateChange,
-	pseudoRandomGenerator *rand.Rand, blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 
 	events := list.New()
 	iteration := TransitionResult{channelState, events}
@@ -783,8 +782,7 @@ func StateTransitionForChannel(channelState *NettingChannelState, stateChange St
 		iteration = handleActionClose(channelState, actionChannelClose, blockNumber)
 	case *ActionTransferDirect:
 		actionTransferDirect, _ := stateChange.(*ActionTransferDirect)
-		iteration = handleSendDirectTransfer(channelState, actionTransferDirect,
-			pseudoRandomGenerator)
+		iteration = handleSendDirectTransfer(channelState, actionTransferDirect)
 	case *ContractReceiveChannelClosed:
 		contractReceiveChannelClosed, _ := stateChange.(*ContractReceiveChannelClosed)
 		iteration = handleChannelClosed(channelState, contractReceiveChannelClosed)

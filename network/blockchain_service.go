@@ -2,7 +2,6 @@ package network
 
 import (
 	"sync"
-	"time"
 
 	chainsdk "github.com/oniio/oniChain-go-sdk"
 	chnsdk "github.com/oniio/oniChain-go-sdk/channel"

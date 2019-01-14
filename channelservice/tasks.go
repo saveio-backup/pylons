@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/network"
 	"github.com/oniio/oniChannel/typing"
 )
@@ -86,21 +87,24 @@ func (self *AlarmTask) GetLatestBlock() (typing.BlockHeight, typing.BlockHash, e
 	return latestBlockHeight, blockHash[:], nil
 }
 
-func (self *AlarmTask) FirstRun() {
+func (self *AlarmTask) FirstRun() error {
 	var latestBlock typing.BlockHeight
 	var blockHash typing.BlockHash
 
 	//[TODO] use BlockchainService.GetBlock to get latestBlockHeight
 	//and blockHash
-	latestBlock, blockHash, _ = self.GetLatestBlock()
-
+	latestBlock, blockHash, err := self.GetLatestBlock()
+	if err != nil {
+		log.Error("get latest block error ", err)
+		return err
+	}
 	self.runCallbacks(latestBlock, blockHash)
-	return
+	return nil
 }
 
 func (self *AlarmTask) runCallbacks(latestBlockHeight typing.BlockHeight, blockHash typing.BlockHash) {
 
-	fmt.Printf("RunCallbacks for Block %d\n", latestBlockHeight)
+	log.Infof("RunCallbacks for Block %d\n", latestBlockHeight)
 
 	for _, f := range self.callbacks {
 		f(latestBlockHeight, blockHash)

@@ -7,11 +7,13 @@ import (
 
 	"github.com/oniio/oniChain/account"
 	"github.com/oniio/oniChain/common/log"
+	"github.com/oniio/oniChain/crypto/keypair"
 	ch "github.com/oniio/oniChannel/channelservice"
 	"github.com/oniio/oniChannel/network"
 	"github.com/oniio/oniChannel/network/transport"
 	"github.com/oniio/oniChannel/transfer"
 	"github.com/oniio/oniChannel/typing"
+	trancrypto "github.com/oniio/oniP2p/crypto"
 )
 
 var Version = "0.1"
@@ -53,7 +55,7 @@ func NewChannel(config *ChannelConfig, account *account.Account) (*Channel, erro
 
 	transport := setupTransport(blockChainService, config)
 
-	startBlock, err := blockChainService.Client.GetCurrentBlockHeight()
+	startBlock, err := blockChainService.ChainClient.GetCurrentBlockHeight()
 	if err != nil {
 		log.Fatal("can not get current block height from blockchain service")
 		return nil, fmt.Errorf("GetCurrentBlockHeight error:%s", err)
@@ -93,10 +95,16 @@ func NewChannel(config *ChannelConfig, account *account.Account) (*Channel, erro
 
 func setupTransport(blockChainService *network.BlockchainService, config *ChannelConfig) *transport.Transport {
 
-	trans := transport.NewTransport(config.Protocol, discovery)
+	trans := transport.NewTransport(config.Protocol)
 	trans.SetAddress(config.ListenAddress)
 	trans.SetMappingAddress(config.MappingAddress)
-	trans.SetKeys(blockChainService.GetAccount().PubKey())
+	bPrivate := keypair.SerializePublicKey(blockChainService.GetAccount().PrivKey())
+	bPub := keypair.SerializePublicKey(blockChainService.GetAccount().PubKey())
+	keys := &trancrypto.KeyPair{
+		PrivateKey: bPrivate,
+		PublicKey:  bPub,
+	}
+	trans.SetKeys(keys)
 
 	return trans
 }

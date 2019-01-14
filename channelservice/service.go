@@ -8,13 +8,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/oniio/oniChain/account"
+	"github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/network"
 	"github.com/oniio/oniChannel/network/transport"
@@ -34,7 +34,6 @@ type ChannelService struct {
 	channelEventHandler           *ChannelEventHandler
 	messageHandler                *MessageHandler
 	config                        map[string]string
-	discovery                     *network.ContractDiscovery
 	transport                     *transport.Transport
 	targetsToIndentifierToStatues map[typing.Address]*sync.Map
 	ReceiveNotificationChannels   map[chan *transfer.EventPaymentReceivedSuccess]struct{}
@@ -134,51 +133,90 @@ func NewChannelService(chain *network.BlockchainService,
 
 func (self *ChannelService) Start() {
 	// register to Endpoint contract
-	port, _ := strconv.Atoi(self.config["port"])
-	go self.chain.Client.Native.Channel.RegisterPaymentEndPoint(self.address, self.config["host"], port)
+	var addr common.Address
+	var err error
+	if addr, err = common.AddressParseFromBytes(self.address[:]); err != nil {
+		log.Fatal("address format invalid", err)
+		return
+	}
+	info, err := self.chain.ChannelClient.GetEndpointByAddress(addr)
+	if err != nil {
+		log.Fatal("start channel service failed", err)
+		return
+	}
+	log.Info("this account haven`t registered, begin registering...")
+	if info == nil {
+		txHash, err := self.chain.ChannelClient.RegisterPaymentEndPoint([]byte(self.config["host"]), []byte(self.config["port"]), addr)
+		if err != nil {
+			log.Fatal("register endpoint service failed", err)
+			return
+		}
+		log.Info("wait for the confirmation of transaction...")
+		_, err = self.chain.ChainClient.PollForTxConfirmed(time.Duration(15)*time.Second, txHash)
+		if err != nil {
+			log.Error("poll transaction failed", err)
+			return
+		}
+		log.Info("endpoint register succesful")
+	}
 
+	sqliteStorage, err := storage.NewSQLiteStorage(self.databasePath)
+	if err != nil {
+		log.Error("create db failed", err)
+		return
+	}
 	var lastLogBlockHeight typing.BlockHeight
-
-	sqliteStorage := storage.NewSQLiteStorage(self.databasePath)
 	self.Wal = storage.RestoreToStateChange(transfer.StateTransition, sqliteStorage, "latest")
 	if self.Wal.StateManager.CurrentState == nil {
 
 		var stateChange transfer.StateChange
 
-		rand := rand.New(rand.NewSource(time.Now().UnixNano()))
+		lastLogBlockHeight = 0
+		networkId, err := self.chain.ChainClient.GetNetworkId()
+		if err != nil {
+			log.Error("get network id failed", err)
+			return
+		}
+		currentHeight, err := self.chain.ChainClient.GetCurrentBlockHeight()
+		if err != nil {
+			log.Error("get current block height failed", err)
+			return
+		}
+		chainNetworkId := typing.ChainID(networkId)
 		stateChange = &transfer.ActionInitChain{
-			PseudoRandomGenerator: rand,
-			BlockHeight:           lastLogBlockHeight,
-			OurAddress:            typing.Address{},
-			ChainId:               0}
+			BlockHeight: typing.BlockHeight(currentHeight),
+			OurAddress:  self.address,
+			ChainId:     chainNetworkId}
 		self.HandleStateChange(stateChange)
 
 		paymentNetwork := transfer.NewPaymentNetworkState()
 		stateChange = &transfer.ContractReceiveNewPaymentNetwork{
 			transfer.ContractReceiveStateChange{typing.TransactionHash{}, lastLogBlockHeight}, paymentNetwork}
 		self.HandleStateChange(stateChange)
-
 		self.InitializeTokenNetwork()
 
-		lastLogBlockHeight = 0
 	} else {
-
 		lastLogBlockHeight = transfer.GetBlockHeight(self.StateFromChannel())
-
 	}
 
 	stateChangeQty := self.Wal.Storage.CountStateChanges()
 	self.snapshotGroup = stateChangeQty / SnapshotStateChangesCount
-
-	//set filter start block number
+	log.Info("db setup done", err)
+	//set filter start block 	number
 	self.lastFilterBlock = lastLogBlockHeight
 
 	self.alarm.RegisterCallback(self.CallbackNewBlock)
-	self.alarm.FirstRun()
-
+	err = self.alarm.FirstRun()
+	if err != nil {
+		log.Error("run alarm call back failed ", err)
+		return
+	}
 	// start the transport layer, pass channel service for message hanlding and signing
-	self.transport.Start(self)
-
+	err = self.transport.Start(self)
+	if err != nil {
+		log.Error("transport layer start failed ", err)
+		return
+	}
 	chainState := self.StateFromChannel()
 
 	self.InitializeTransactionsQueues(chainState)
@@ -315,7 +353,7 @@ func (self *ChannelService) CallbackNewBlock(latestBlock typing.BlockHeight, blo
 	fromBlock := self.lastFilterBlock + 1
 	toBlock := latestBlock
 
-	events, err := self.chain.Client.Native.Channel.GetFilterArgsForAllEventsFromChannel(0, uint32(fromBlock), uint32(toBlock))
+	events, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannel(0, uint32(fromBlock), uint32(toBlock))
 	if err != nil {
 		return
 	}
@@ -788,31 +826,6 @@ func (self *ChannelService) GetEventsPaymentHistory(tokenAddress typing.TokenAdd
 func (self *ChannelService) GetInternalEventsWithTimestamps(limit int, offset int) *list.List {
 	return self.Wal.Storage.GetEventsWithTimestamps(limit, offset)
 
-}
-
-func (self *ChannelService) GetBlockchainEventsNetwork(registryAddress typing.PaymentNetworkID,
-	fromBlock typing.BlockHeight, toBlock typing.BlockHeight) *list.List {
-
-	//[TODO] use blockchain.events to get chain event filter
-	//only used by restful, can skip now
-	return nil
-}
-
-func (self *ChannelService) GetBlockchainEventsTokenNetwork(tokenAddress typing.TokenAddress,
-	fromBlock typing.BlockHeight, toBlock typing.BlockHeight) *list.List {
-
-	//[TODO] use blockchain.events to get chain event filter
-	//only used by restful, can skip now
-	return nil
-}
-
-func (self *ChannelService) GetBlockchainEventsChannel(tokenAddress typing.TokenAddress,
-	partnerAddress typing.Address, fromBlock typing.BlockHeight,
-	toBlock typing.BlockHeight) *list.List {
-
-	//[TODO] use blockchain.events to get chain event filter
-	//only used by restful, can skip now
-	return nil
 }
 
 func GetFullDatabasePath() (string, error) {

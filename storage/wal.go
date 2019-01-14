@@ -2,11 +2,11 @@ package storage
 
 import (
 	"container/list"
-	"fmt"
 	"reflect"
 	"sync"
 	"time"
 
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/transfer"
 )
 
@@ -16,7 +16,7 @@ func RestoreToStateChange(transitionFunction transfer.StateTransitionCallback,
 	fromStateChangeId, snapshot := storage.getSnapshotClosestToStateChange(stateChangeIdentifier)
 
 	if snapshot == nil {
-		fmt.Println("No snapshot found, replaying all state changes")
+		log.Info("No snapshot found, replaying all state changes")
 	}
 
 	unappliedStateChanges := storage.getStateChangesByIdentifier(

@@ -2,7 +2,6 @@ package transfer
 
 import (
 	"container/list"
-	"math/rand"
 	"reflect"
 
 	"github.com/oniio/oniChannel/typing"
@@ -115,8 +114,7 @@ func GetContractReceiveStateChange(stateChange StateChange) *ContractReceiveStat
 }
 
 func subdispatchToChannelById(tokenNetworkState *TokenNetworkState,
-	stateChange StateChange, pseudoRandomGenerator *rand.Rand,
-	blockNumber typing.BlockHeight) TransitionResult {
+	stateChange StateChange, blockNumber typing.BlockHeight) TransitionResult {
 
 	events := list.New()
 
@@ -129,7 +127,6 @@ func subdispatchToChannelById(tokenNetworkState *TokenNetworkState,
 		result := StateTransitionForChannel(
 			channelState,
 			stateChange,
-			pseudoRandomGenerator,
 			blockNumber)
 
 		if tokenNetworkState.partnerAddressesToChannels[channelState.PartnerState.Address] == nil {
@@ -151,12 +148,11 @@ func subdispatchToChannelById(tokenNetworkState *TokenNetworkState,
 }
 
 func handleChannelClose(tokenNetworkState *TokenNetworkState,
-	stateChange StateChange, pseudoRandomGenerator *rand.Rand,
+	stateChange StateChange,
 	blockNumber typing.BlockHeight) TransitionResult {
 	return subdispatchToChannelById(
 		tokenNetworkState,
 		stateChange,
-		pseudoRandomGenerator,
 		blockNumber)
 }
 
@@ -190,52 +186,48 @@ func handleChannelNew(tokenNetworkState *TokenNetworkState,
 }
 
 func handleBalance(tokenNetworkState *TokenNetworkState,
-	stateChange StateChange, pseudoRandomGenerator *rand.Rand,
+	stateChange StateChange,
 	blockNumber typing.BlockHeight) TransitionResult {
 	return subdispatchToChannelById(
 		tokenNetworkState,
 		stateChange,
-		pseudoRandomGenerator,
 		blockNumber)
 }
 
 func handleClosed(tokenNetworkState *TokenNetworkState,
-	stateChange StateChange, pseudoRandomGenerator *rand.Rand,
+	stateChange StateChange,
 	blockNumber typing.BlockHeight) TransitionResult {
 
 	//[TODO] remove channel from TokenNetworkGraphState when support routing
 	return subdispatchToChannelById(
 		tokenNetworkState,
 		stateChange,
-		pseudoRandomGenerator,
 		blockNumber)
 }
 
 func handleSettled(tokenNetworkState *TokenNetworkState,
-	stateChange StateChange, pseudoRandomGenerator *rand.Rand,
+	stateChange StateChange,
 	blockNumber typing.BlockHeight) TransitionResult {
 
 	return subdispatchToChannelById(
 		tokenNetworkState,
 		stateChange,
-		pseudoRandomGenerator,
 		blockNumber)
 }
 
 func handleUpdatedTransfer(tokenNetworkState *TokenNetworkState,
-	stateChange StateChange, pseudoRandomGenerator *rand.Rand,
+	stateChange StateChange,
 	blockNumber typing.BlockHeight) TransitionResult {
 
 	return subdispatchToChannelById(
 		tokenNetworkState,
 		stateChange,
-		pseudoRandomGenerator,
 		blockNumber)
 }
 
 func handleActionTransferDirect(paymentNetworkIdentifier typing.PaymentNetworkID,
 	tokenNetworkState *TokenNetworkState, stateChange *ActionTransferDirect,
-	pseudoRandomGenerator *rand.Rand, blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 
 	events := list.New()
 
@@ -250,7 +242,6 @@ func handleActionTransferDirect(paymentNetworkIdentifier typing.PaymentNetworkID
 		iteration := StateTransitionForChannel(
 			channelStates.Back().Value.(*NettingChannelState),
 			stateChange,
-			pseudoRandomGenerator,
 			blockNumber)
 		events = iteration.Events
 	} else {
@@ -268,7 +259,7 @@ func handleActionTransferDirect(paymentNetworkIdentifier typing.PaymentNetworkID
 }
 
 func handleReceiveTransferDirect(tokenNetworkState *TokenNetworkState,
-	stateChange *ReceiveTransferDirect, pseudoRandomGenerator *rand.Rand,
+	stateChange *ReceiveTransferDirect,
 	blockNumber typing.BlockHeight) TransitionResult {
 
 	events := list.New()
@@ -278,7 +269,7 @@ func handleReceiveTransferDirect(tokenNetworkState *TokenNetworkState,
 
 	if channelState != nil {
 		result := StateTransitionForChannel(channelState, stateChange,
-			pseudoRandomGenerator, blockNumber)
+			blockNumber)
 		events.PushBackList(result.Events)
 	}
 
@@ -287,37 +278,37 @@ func handleReceiveTransferDirect(tokenNetworkState *TokenNetworkState,
 
 func stateTransitionForNetwork(paymentNetworkIdentifier typing.PaymentNetworkID,
 	tokenNetworkState *TokenNetworkState, stateChange StateChange,
-	pseudoRandomGenerator *rand.Rand, blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber typing.BlockHeight) TransitionResult {
 
 	iteration := TransitionResult{}
 
 	switch stateChange.(type) {
 	case *ActionChannelClose:
 		iteration = handleChannelClose(tokenNetworkState, stateChange,
-			pseudoRandomGenerator, blockNumber)
+			blockNumber)
 	case *ContractReceiveChannelNew:
 		contractReceiveChannelNew, _ := stateChange.(*ContractReceiveChannelNew)
 		iteration = handleChannelNew(tokenNetworkState, contractReceiveChannelNew)
 	case *ContractReceiveChannelNewBalance:
 		iteration = handleBalance(tokenNetworkState, stateChange,
-			pseudoRandomGenerator, blockNumber)
+			blockNumber)
 	case *ContractReceiveChannelClosed:
 		iteration = handleClosed(tokenNetworkState, stateChange,
-			pseudoRandomGenerator, blockNumber)
+			blockNumber)
 	case *ContractReceiveChannelSettled:
 		iteration = handleSettled(tokenNetworkState, stateChange,
-			pseudoRandomGenerator, blockNumber)
+			blockNumber)
 	case *ContractReceiveUpdateTransfer:
 		iteration = handleUpdatedTransfer(tokenNetworkState, stateChange,
-			pseudoRandomGenerator, blockNumber)
+			blockNumber)
 	case *ActionTransferDirect:
 		actionTransferDirect, _ := stateChange.(*ActionTransferDirect)
 		iteration = handleActionTransferDirect(paymentNetworkIdentifier,
-			tokenNetworkState, actionTransferDirect, pseudoRandomGenerator, blockNumber)
+			tokenNetworkState, actionTransferDirect, blockNumber)
 	case *ReceiveTransferDirect:
 		receiveTransferDirect, _ := stateChange.(*ReceiveTransferDirect)
 		iteration = handleReceiveTransferDirect(tokenNetworkState, receiveTransferDirect,
-			pseudoRandomGenerator, blockNumber)
+			blockNumber)
 	}
 
 	return iteration

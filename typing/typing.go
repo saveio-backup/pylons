@@ -385,7 +385,7 @@ type BlockHeight uint32
 
 type BlockTimeout int
 
-type ChannelID int
+type ChannelID uint32
 
 type ChannelState int
 

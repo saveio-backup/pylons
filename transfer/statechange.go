@@ -1,8 +1,6 @@
 package transfer
 
 import (
-	"math/rand"
-
 	"github.com/oniio/oniChannel/typing"
 )
 
@@ -47,10 +45,9 @@ type ContractReceiveChannelClosed struct {
 }
 
 type ActionInitChain struct {
-	PseudoRandomGenerator *rand.Rand
-	BlockHeight           typing.BlockHeight
-	OurAddress            typing.Address
-	ChainId               typing.ChainID
+	BlockHeight typing.BlockHeight
+	OurAddress  typing.Address
+	ChainId     typing.ChainID
 }
 
 type ActionNewTokenNetwork struct {

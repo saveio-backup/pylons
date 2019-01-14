@@ -34,22 +34,22 @@ type SQLiteStorage struct {
 	writeLock sync.Mutex
 }
 
-func NewSQLiteStorage(databasePath string) *SQLiteStorage {
+func NewSQLiteStorage(databasePath string) (*SQLiteStorage, error) {
 	self := new(SQLiteStorage)
 
 	conn, err := sql.Open("sqlite3", databasePath)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	_, err = conn.Exec("PRAGMA synchronous = NORMAL")
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	_, err = conn.Exec("PRAGMA journal_mode=WAL")
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	self.conn = conn
@@ -57,12 +57,12 @@ func NewSQLiteStorage(databasePath string) *SQLiteStorage {
 	createScript := GetDbScriptCreateTables()
 	_, err = self.conn.Exec(createScript)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	self.runUpdates()
 
-	return self
+	return self, nil
 }
 
 func (self *SQLiteStorage) runUpdates() (bool, error) {

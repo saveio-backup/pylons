@@ -46,7 +46,7 @@ func subdispatchToAllChannels(
 	for _, v := range chainState.IdentifiersToPaymentnetworks {
 		for _, v2 := range v.tokenAddressesToTokenNetworks {
 			for _, v3 := range v2.ChannelIdentifiersToChannels {
-				result := StateTransitionForChannel(v3, stateChange, chainState.PseudoRandomGenerator, blockNumber)
+				result := StateTransitionForChannel(v3, stateChange, blockNumber)
 				events.PushBackList(result.Events)
 			}
 		}
@@ -218,8 +218,6 @@ func handleChainInit(
 	stateChange *ActionInitChain) TransitionResult {
 
 	result := NewChainState()
-
-	result.PseudoRandomGenerator = stateChange.PseudoRandomGenerator
 	result.BlockHeight = stateChange.BlockHeight
 	result.Address = stateChange.OurAddress
 	result.ChainId = stateChange.ChainId
@@ -242,7 +240,7 @@ func handleTokenNetworkAction(
 
 	if tokenNetworkState != nil {
 		iteration := stateTransitionForNetwork(paymentNetworkId, tokenNetworkState,
-			stateChange, chainState.PseudoRandomGenerator, chainState.BlockHeight)
+			stateChange, chainState.BlockHeight)
 
 		if reflect.ValueOf(iteration.NewState).IsNil() {
 
