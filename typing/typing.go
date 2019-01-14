@@ -14,6 +14,8 @@ const HASH_LEN = 32
 
 type Address [ADDR_LEN]byte
 
+var ADDRESS_EMPTY = Address{}
+
 func AddressEqual(address1 Address, address2 Address) bool {
 	result := true
 

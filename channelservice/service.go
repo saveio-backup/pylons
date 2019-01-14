@@ -131,39 +131,40 @@ func NewChannelService(chain *network.BlockchainService,
 	return self
 }
 
-func (self *ChannelService) Start() {
+func (self *ChannelService) Start() error {
 	// register to Endpoint contract
 	var addr common.Address
 	var err error
 	if addr, err = common.AddressParseFromBytes(self.address[:]); err != nil {
 		log.Fatal("address format invalid", err)
-		return
+		return err
 	}
+
 	info, err := self.chain.ChannelClient.GetEndpointByAddress(addr)
 	if err != nil {
-		log.Fatal("start channel service failed", err)
-		return
+		log.Fatal("check endpoint info failed:", err)
+		return err
 	}
 	log.Info("this account haven`t registered, begin registering...")
 	if info == nil {
 		txHash, err := self.chain.ChannelClient.RegisterPaymentEndPoint([]byte(self.config["host"]), []byte(self.config["port"]), addr)
 		if err != nil {
-			log.Fatal("register endpoint service failed", err)
-			return
+			log.Fatal("register endpoint service failed:", err)
+			return err
 		}
 		log.Info("wait for the confirmation of transaction...")
 		_, err = self.chain.ChainClient.PollForTxConfirmed(time.Duration(15)*time.Second, txHash)
 		if err != nil {
-			log.Error("poll transaction failed", err)
-			return
+			log.Error("poll transaction failed:", err)
+			return err
 		}
 		log.Info("endpoint register succesful")
 	}
-
+	log.Info("account been registered")
 	sqliteStorage, err := storage.NewSQLiteStorage(self.databasePath)
 	if err != nil {
-		log.Error("create db failed", err)
-		return
+		log.Error("create db failed:", err)
+		return err
 	}
 	var lastLogBlockHeight typing.BlockHeight
 	self.Wal = storage.RestoreToStateChange(transfer.StateTransition, sqliteStorage, "latest")
@@ -174,13 +175,13 @@ func (self *ChannelService) Start() {
 		lastLogBlockHeight = 0
 		networkId, err := self.chain.ChainClient.GetNetworkId()
 		if err != nil {
-			log.Error("get network id failed", err)
-			return
+			log.Error("get network id failed:", err)
+			return err
 		}
 		currentHeight, err := self.chain.ChainClient.GetCurrentBlockHeight()
 		if err != nil {
-			log.Error("get current block height failed", err)
-			return
+			log.Error("get current block height failed:", err)
+			return err
 		}
 		chainNetworkId := typing.ChainID(networkId)
 		stateChange = &transfer.ActionInitChain{
@@ -201,21 +202,21 @@ func (self *ChannelService) Start() {
 
 	stateChangeQty := self.Wal.Storage.CountStateChanges()
 	self.snapshotGroup = stateChangeQty / SnapshotStateChangesCount
-	log.Info("db setup done", err)
+	log.Info("db setup done")
 	//set filter start block 	number
 	self.lastFilterBlock = lastLogBlockHeight
 
 	self.alarm.RegisterCallback(self.CallbackNewBlock)
 	err = self.alarm.FirstRun()
 	if err != nil {
-		log.Error("run alarm call back failed ", err)
-		return
+		log.Error("run alarm call back failed:", err)
+		return err
 	}
 	// start the transport layer, pass channel service for message hanlding and signing
 	err = self.transport.Start(self)
 	if err != nil {
-		log.Error("transport layer start failed ", err)
-		return
+		log.Error("transport layer start failed:", err)
+		return err
 	}
 	chainState := self.StateFromChannel()
 
@@ -227,7 +228,7 @@ func (self *ChannelService) Start() {
 
 	self.StartNeighboursHealthcheck()
 
-	return
+	return nil
 }
 
 func (self *ChannelService) Stop() {
@@ -747,7 +748,10 @@ func (self *ChannelService) TransferAsync(registryAddress typing.PaymentNetworkI
 
 func (self *ChannelService) DirectTransferAsync(amount typing.TokenAmount, target typing.Address,
 	identifier typing.PaymentID) (chan bool, error) {
-
+	if target == typing.ADDRESS_EMPTY {
+		log.Error("target address is invalid:", target)
+		return nil, fmt.Errorf("target address is invalid")
+	}
 	//Only one payment network
 	paymentNetworkIdentifier := typing.PaymentNetworkID{}
 	tokenAddress := typing.TokenAddress{}

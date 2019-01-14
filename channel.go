@@ -98,7 +98,7 @@ func setupTransport(blockChainService *network.BlockchainService, config *Channe
 	trans := transport.NewTransport(config.Protocol)
 	trans.SetAddress(config.ListenAddress)
 	trans.SetMappingAddress(config.MappingAddress)
-	bPrivate := keypair.SerializePublicKey(blockChainService.GetAccount().PrivKey())
+	bPrivate := keypair.SerializePrivateKey(blockChainService.GetAccount().PrivKey())
 	bPub := keypair.SerializePublicKey(blockChainService.GetAccount().PubKey())
 	keys := &trancrypto.KeyPair{
 		PrivateKey: bPrivate,
@@ -109,8 +109,9 @@ func setupTransport(blockChainService *network.BlockchainService, config *Channe
 	return trans
 }
 
-func (this *Channel) StartService() {
-	this.Service.Start()
+func (this *Channel) StartService() error {
+	return this.Service.Start()
+
 }
 
 func (this *Channel) Stop() {

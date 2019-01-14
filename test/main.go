@@ -19,7 +19,7 @@ var testConfig = &ch.ChannelConfig{
 }
 
 func main() {
-	log.InitLog(3, log.Stdout)
+	log.InitLog(0, log.Stdout)
 	wallet, err := wallet.OpenWallet(WALLET_PATH)
 	if err != nil {
 		log.Fatal("wallet.Open error:%s", err)
@@ -37,8 +37,11 @@ func main() {
 		return
 	}
 
-	channel.StartService()
-
+	err = channel.StartService()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 	/*
 		var registryAddress typing.PaymentNetworkID
 		var tokenAddress typing.TokenAddress
