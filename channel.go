@@ -9,10 +9,10 @@ import (
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChain/crypto/keypair"
 	ch "github.com/oniio/oniChannel/channelservice"
+	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/network"
 	"github.com/oniio/oniChannel/network/transport"
 	"github.com/oniio/oniChannel/transfer"
-	"github.com/oniio/oniChannel/typing"
 	trancrypto "github.com/oniio/oniP2p/crypto"
 )
 
@@ -46,7 +46,7 @@ func DefaultChannelConfig() *ChannelConfig {
 	return config
 }
 
-func NewChannel(config *ChannelConfig, account *account.Account) (*Channel, error) {
+func NewChannelService(config *ChannelConfig, account *account.Account) (*Channel, error) {
 	blockChainService := network.NewBlockchainService(config.ClientType, config.ChainNodeURL, account)
 	if blockChainService == nil {
 		log.Fatal("createing blockchain service failed")
@@ -80,7 +80,7 @@ func NewChannel(config *ChannelConfig, account *account.Account) (*Channel, erro
 
 	service := ch.NewChannelService(
 		blockChainService,
-		typing.BlockHeight(startBlock),
+		common.BlockHeight(startBlock),
 		transport,
 		new(ch.ChannelEventHandler),
 		new(ch.MessageHandler),

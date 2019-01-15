@@ -5,14 +5,14 @@ import (
 	"errors"
 	"time"
 
+	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/transfer"
-	"github.com/oniio/oniChannel/typing"
 )
 
-func WaitForBlock(channel *ChannelService, blockNumber typing.BlockHeight,
+func WaitForBlock(channel *ChannelService, blockNumber common.BlockHeight,
 	retryTimeout float32) {
 
-	var currentBlockHeight typing.BlockHeight
+	var currentBlockHeight common.BlockHeight
 
 	chainState := channel.StateFromChannel()
 	currentBlockHeight = transfer.GetBlockHeight(chainState)
@@ -25,8 +25,8 @@ func WaitForBlock(channel *ChannelService, blockNumber typing.BlockHeight,
 	return
 }
 
-func WaitForNewChannel(channel *ChannelService, paymentNetworkId typing.PaymentNetworkID,
-	tokenAddress typing.TokenAddress, partnerAddress typing.Address, retryTimeout float32) {
+func WaitForNewChannel(channel *ChannelService, paymentNetworkId common.PaymentNetworkID,
+	tokenAddress common.TokenAddress, partnerAddress common.Address, retryTimeout float32) {
 
 	var channelState *transfer.NettingChannelState
 
@@ -43,7 +43,7 @@ func WaitForNewChannel(channel *ChannelService, paymentNetworkId typing.PaymentN
 	return
 }
 
-func addressEqual(address1 typing.Address, address2 typing.Address) bool {
+func addressEqual(address1 common.Address, address2 common.Address) bool {
 	result := true
 
 	for i := 0; i < 20; i++ {
@@ -56,12 +56,12 @@ func addressEqual(address1 typing.Address, address2 typing.Address) bool {
 	return result
 }
 
-func WaitForParticipantNewBalance(channel *ChannelService, paymentNetworkId typing.PaymentNetworkID,
-	tokenAddress typing.TokenAddress, partnerAddress typing.Address, targetAddress typing.Address,
-	targetBalance typing.TokenAmount, retryTimeout float32) error {
+func WaitForParticipantNewBalance(channel *ChannelService, paymentNetworkId common.PaymentNetworkID,
+	tokenAddress common.TokenAddress, partnerAddress common.Address, targetAddress common.Address,
+	targetBalance common.TokenAmount, retryTimeout float32) error {
 
-	balance := func(channelState *transfer.NettingChannelState) (typing.TokenAmount, error) {
-		var result typing.TokenAmount
+	balance := func(channelState *transfer.NettingChannelState) (common.TokenAmount, error) {
+		var result common.TokenAmount
 
 		ourState := channelState.GetChannelEndState(0)
 		partnerState := channelState.GetChannelEndState(1)
@@ -102,12 +102,12 @@ func WaitForParticipantNewBalance(channel *ChannelService, paymentNetworkId typi
 	return nil
 }
 
-func WaitForPaymentBalance(channel *ChannelService, paymentNetworkId typing.PaymentNetworkID,
-	tokenAddress typing.TokenAddress, partnerAddress typing.Address, targetAddress typing.Address,
-	targetBalance typing.TokenAmount, retryTimeout float32) {
+func WaitForPaymentBalance(channel *ChannelService, paymentNetworkId common.PaymentNetworkID,
+	tokenAddress common.TokenAddress, partnerAddress common.Address, targetAddress common.Address,
+	targetBalance common.TokenAmount, retryTimeout float32) {
 
-	balance := func(channelState *transfer.NettingChannelState) (typing.TokenAmount, error) {
-		var result typing.TokenAmount
+	balance := func(channelState *transfer.NettingChannelState) (common.TokenAmount, error) {
+		var result common.TokenAmount
 
 		ourState := channelState.GetChannelEndState(0)
 		partnerState := channelState.GetChannelEndState(1)
@@ -149,8 +149,8 @@ func WaitForPaymentBalance(channel *ChannelService, paymentNetworkId typing.Paym
 	return
 }
 
-func WaitForClose(channel *ChannelService, paymentNetworkId typing.PaymentNetworkID,
-	tokenAddress typing.TokenAddress, channelIds *list.List, retryTimeout float32) {
+func WaitForClose(channel *ChannelService, paymentNetworkId common.PaymentNetworkID,
+	tokenAddress common.TokenAddress, channelIds *list.List, retryTimeout float32) {
 
 	len := channelIds.Len()
 	for ; len > 0; len = channelIds.Len() {
@@ -158,7 +158,7 @@ func WaitForClose(channel *ChannelService, paymentNetworkId typing.PaymentNetwor
 
 		e := channelIds.Back()
 		channelState := transfer.GetChannelStateById(channel.StateFromChannel(),
-			paymentNetworkId, tokenAddress, *(e.Value.(*typing.ChannelID)))
+			paymentNetworkId, tokenAddress, *(e.Value.(*common.ChannelID)))
 
 		channelStatus := transfer.GetStatus(channelState)
 		if channelState == nil || channelStatus == transfer.ChannelStateClosed ||
@@ -176,14 +176,14 @@ func WaitForClose(channel *ChannelService, paymentNetworkId typing.PaymentNetwor
 	return
 }
 
-func WaitForPaymentNetwork(channel *ChannelService, paymentNetworkId typing.PaymentNetworkID,
-	tokenAddress typing.TokenAddress, retryTimeout float32) {
+func WaitForPaymentNetwork(channel *ChannelService, paymentNetworkId common.PaymentNetworkID,
+	tokenAddress common.TokenAddress, retryTimeout float32) {
 
 	return
 }
 
-func WaitForSettle(channel *ChannelService, paymentNetworkId typing.PaymentNetworkID,
-	tokenAddress typing.TokenAddress, channelIds *list.List, retryTimeout float32) {
+func WaitForSettle(channel *ChannelService, paymentNetworkId common.PaymentNetworkID,
+	tokenAddress common.TokenAddress, channelIds *list.List, retryTimeout float32) {
 
 	len := channelIds.Len()
 	for ; len > 0; len = channelIds.Len() {
@@ -191,7 +191,7 @@ func WaitForSettle(channel *ChannelService, paymentNetworkId typing.PaymentNetwo
 
 		e := channelIds.Back()
 		channelState := transfer.GetChannelStateById(channel.StateFromChannel(),
-			paymentNetworkId, tokenAddress, e.Value.(typing.ChannelID))
+			paymentNetworkId, tokenAddress, e.Value.(common.ChannelID))
 
 		channelStatus := transfer.GetStatus(channelState)
 		if channelState == nil || channelStatus == transfer.ChannelStateSettled {
@@ -210,7 +210,7 @@ func WaitForSettle(channel *ChannelService, paymentNetworkId typing.PaymentNetwo
 
 func WaitForSettleAllChannels(channel *ChannelService, retryTimeout float32) {
 	tokenNetworkState := transfer.GetTokenNetworkByTokenAddress(channel.StateFromChannel(),
-		typing.PaymentNetworkID{}, typing.TokenAddress{})
+		common.PaymentNetworkID{}, common.TokenAddress{})
 
 	channelIds := list.New()
 	for k := range tokenNetworkState.ChannelIdentifiersToChannels {
@@ -219,16 +219,16 @@ func WaitForSettleAllChannels(channel *ChannelService, retryTimeout float32) {
 
 	WaitForSettle(
 		channel,
-		typing.PaymentNetworkID{},
-		typing.TokenAddress{},
+		common.PaymentNetworkID{},
+		common.TokenAddress{},
 		channelIds,
 		retryTimeout)
 
 	return
 }
 
-func WaitForhealthy(channel *ChannelService, nodeAddress typing.Address, retryTimeout float32) {
-	var networkStatuses *map[typing.Address]string
+func WaitForhealthy(channel *ChannelService, nodeAddress common.Address, retryTimeout float32) {
+	var networkStatuses *map[common.Address]string
 
 	networkStatuses = transfer.GetNetworkStatuses(channel.StateFromChannel())
 	for (*networkStatuses)[nodeAddress] != transfer.NetworkReachable {
@@ -239,8 +239,8 @@ func WaitForhealthy(channel *ChannelService, nodeAddress typing.Address, retryTi
 	return
 }
 
-func WaitForTransferSuccess(channel *ChannelService, paymentIdentifier typing.PaymentID,
-	amount typing.PaymentAmount, retryTimeout float32) {
+func WaitForTransferSuccess(channel *ChannelService, paymentIdentifier common.PaymentID,
+	amount common.PaymentAmount, retryTimeout float32) {
 
 	found := false
 	for found == false {
@@ -248,7 +248,7 @@ func WaitForTransferSuccess(channel *ChannelService, paymentIdentifier typing.Pa
 
 		for e := stateEvents.Front(); e != nil; e = e.Next() {
 			if event, ok := e.Value.(*transfer.EventPaymentReceivedSuccess); ok {
-				if event.Identifier == paymentIdentifier && typing.PaymentAmount(event.Amount) == amount {
+				if event.Identifier == paymentIdentifier && common.PaymentAmount(event.Amount) == amount {
 					found = true
 					break
 				}

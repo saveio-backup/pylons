@@ -4,12 +4,12 @@ import (
 	"container/list"
 	"reflect"
 
-	"github.com/oniio/oniChannel/typing"
+	"github.com/oniio/oniChannel/common"
 )
 
 func getNetworks(chainState *ChainState,
-	paymentNetworkIdentifier typing.PaymentNetworkID,
-	tokenAddress typing.TokenAddress) (*PaymentNetworkState, *TokenNetworkState) {
+	paymentNetworkIdentifier common.PaymentNetworkID,
+	tokenAddress common.TokenAddress) (*PaymentNetworkState, *TokenNetworkState) {
 
 	var tokenNetworkState *TokenNetworkState
 
@@ -24,8 +24,8 @@ func getNetworks(chainState *ChainState,
 
 func getTokenNetworkByTokenAddress(
 	chainState *ChainState,
-	paymentNetworkIdentifier typing.PaymentNetworkID,
-	tokenAddress typing.TokenAddress) *TokenNetworkState {
+	paymentNetworkIdentifier common.PaymentNetworkID,
+	tokenAddress common.TokenAddress) *TokenNetworkState {
 
 	_, tokenNetworkState := getNetworks(
 		chainState,
@@ -39,7 +39,7 @@ func getTokenNetworkByTokenAddress(
 func subdispatchToAllChannels(
 	chainState *ChainState,
 	stateChange StateChange,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 
 	events := list.New()
 
@@ -72,7 +72,7 @@ func subdispatchToAllLockedTransfers(
 func subdispatchToPaymenttask(
 	chainState *ChainState,
 	stateChange StateChange,
-	secrethash typing.SecretHash) TransitionResult {
+	secrethash common.SecretHash) TransitionResult {
 
 	events := list.New()
 
@@ -83,8 +83,8 @@ func subdispatchToPaymenttask(
 func subdispatchInitiatortask(
 	chainState *ChainState,
 	stateChange StateChange,
-	tokenNetworkIdentifier typing.TokenNetworkID,
-	secrethash typing.SecretHash) TransitionResult {
+	tokenNetworkIdentifier common.TokenNetworkID,
+	secrethash common.SecretHash) TransitionResult {
 
 	events := list.New()
 
@@ -95,8 +95,8 @@ func subdispatchInitiatortask(
 func subdispatchMediatortask(
 	chainState *ChainState,
 	stateChange StateChange,
-	tokenNetworkIdentifier typing.TokenNetworkID,
-	secrethash typing.SecretHash) TransitionResult {
+	tokenNetworkIdentifier common.TokenNetworkID,
+	secrethash common.SecretHash) TransitionResult {
 
 	events := list.New()
 
@@ -107,9 +107,9 @@ func subdispatchMediatortask(
 func subdispatchTargettask(
 	chainState *ChainState,
 	stateChange StateChange,
-	tokenNetworkIdentifier typing.TokenNetworkID,
-	channelIdentifier typing.ChannelID,
-	secrethash typing.SecretHash) TransitionResult {
+	tokenNetworkIdentifier common.TokenNetworkID,
+	channelIdentifier common.ChannelID,
+	secrethash common.SecretHash) TransitionResult {
 
 	events := list.New()
 
@@ -118,7 +118,7 @@ func subdispatchTargettask(
 
 func maybeAddTokennetwork(
 	chainState *ChainState,
-	paymentNetworkIdentifier typing.PaymentNetworkID,
+	paymentNetworkIdentifier common.PaymentNetworkID,
 	tokenNetworkState *TokenNetworkState) {
 
 	tokenNetworkIdentifier := tokenNetworkState.Address
@@ -178,7 +178,7 @@ func inplaceDeleteMessage(
 	for i := 0; i < len; {
 		message := GetSenderMessageEvent(messageQueue[i])
 		sender, messageId := GetSenderAndMessageIdentifier(stateChange)
-		if message.MessageIdentifier == messageId && typing.AddressEqual(typing.Address(message.Recipient), sender) {
+		if message.MessageIdentifier == messageId && common.AddressEqual(common.Address(message.Recipient), sender) {
 			messageQueue = append(messageQueue[:i], messageQueue[i+1:]...)
 			len--
 		} else {
@@ -232,9 +232,9 @@ func handleTokenNetworkAction(
 
 	events := list.New()
 
-	tokenNetworkState := GetTokenNetworkByIdentifier(chainState, typing.TokenNetworkID{})
+	tokenNetworkState := GetTokenNetworkByIdentifier(chainState, common.TokenNetworkID{})
 	paymentNetworkState := GetTokenNetworkRegistryByTokenNetworkIdentifier(
-		chainState, typing.TokenNetworkID{})
+		chainState, common.TokenNetworkID{})
 
 	paymentNetworkId := paymentNetworkState.Address
 
@@ -245,10 +245,10 @@ func handleTokenNetworkAction(
 		if reflect.ValueOf(iteration.NewState).IsNil() {
 
 			paymentNetworkState = searchPaymentNetworkByTokenNetworkId(
-				chainState, typing.TokenNetworkID{})
+				chainState, common.TokenNetworkID{})
 
-			delete(paymentNetworkState.tokenAddressesToTokenNetworks, typing.TokenAddress{})
-			delete(paymentNetworkState.TokenIdentifiersToTokenNetworks, typing.TokenNetworkID{})
+			delete(paymentNetworkState.tokenAddressesToTokenNetworks, common.TokenAddress{})
+			delete(paymentNetworkState.TokenIdentifiersToTokenNetworks, common.TokenNetworkID{})
 		}
 
 		events = iteration.Events
@@ -263,7 +263,7 @@ func handleContractReceiveChannelClosed(
 
 	channelId := GetChannelIdentifier(stateChange)
 	channelState := GetChannelStateByTokenNetworkIdentifier(
-		chainState, typing.TokenNetworkID{}, channelId)
+		chainState, common.TokenNetworkID{}, channelId)
 
 	if channelState != nil {
 		queueId := QueueIdentifier{channelState.PartnerState.Address, channelId}
@@ -369,10 +369,10 @@ func handleProcessed(
 			message := GetSenderMessageEvent(v[i])
 			sender, messageId := GetSenderAndMessageIdentifier(stateChange)
 
-			if message.MessageIdentifier == messageId && typing.AddressEqual(typing.Address(message.Recipient), sender) {
+			if message.MessageIdentifier == messageId && common.AddressEqual(common.Address(message.Recipient), sender) {
 				if message, ok := v[i].(*SendDirectTransfer); ok {
 					channelState := GetChannelStateByTokenNetworkAndPartner(chainState,
-						message.BalanceProof.TokenNetworkIdentifier, typing.Address(message.Recipient))
+						message.BalanceProof.TokenNetworkIdentifier, common.Address(message.Recipient))
 
 					events.PushBack(&EventPaymentSentSuccess{channelState.PaymentNetworkIdentifier,
 						channelState.TokenNetworkIdentifier, message.PaymentIdentifier,
@@ -474,7 +474,7 @@ func isTransactionEffectSatisfied(chainState *ChainState, transaction Event,
 
 	if receiveSecretReveal, ok := stateChange.(*ContractReceiveSecretReveal); ok {
 		if sendSecretReveal, ok := transaction.(*ContractSendSecretReveal); ok {
-			if typing.SliceEqual([]byte(receiveSecretReveal.Secret), []byte(sendSecretReveal.Secret)) {
+			if common.SliceEqual([]byte(receiveSecretReveal.Secret), []byte(sendSecretReveal.Secret)) {
 				return true
 			}
 		}
@@ -496,16 +496,16 @@ func isTransactionInvalidated(transaction Event, stateChange StateChange) bool {
 	return false
 }
 
-func isTransactionExpired(transaction Event, blockNumber typing.BlockHeight) bool {
+func isTransactionExpired(transaction Event, blockNumber common.BlockHeight) bool {
 
 	if v, ok := transaction.(*ContractSendChannelUpdateTransfer); ok {
-		if v.Expiration < typing.BlockExpiration(blockNumber) {
+		if v.Expiration < common.BlockExpiration(blockNumber) {
 			return true
 		}
 	}
 
 	if v, ok := transaction.(*ContractSendSecretReveal); ok {
-		if v.Expiration < typing.BlockExpiration(blockNumber) {
+		if v.Expiration < common.BlockExpiration(blockNumber) {
 			return true
 		}
 	}
@@ -523,8 +523,6 @@ func isTransactionPending(chainState *ChainState, transaction Event, stateChange
 	} else {
 		return true
 	}
-
-	return true
 }
 
 func updateQueues(iteration TransitionResult, stateChange StateChange) {
@@ -548,7 +546,7 @@ func updateQueues(iteration TransitionResult, stateChange StateChange) {
 		if v, ok := e.Value.(Event); ok {
 			event := GetSenderMessageEvent(v)
 			if event != nil {
-				queueIdentifier := QueueIdentifier{typing.Address(event.Recipient), event.ChannelIdentifier}
+				queueIdentifier := QueueIdentifier{common.Address(event.Recipient), event.ChannelIdentifier}
 				chainState.QueueIdsToQueues[queueIdentifier] = append(chainState.QueueIdsToQueues[queueIdentifier], v)
 			}
 

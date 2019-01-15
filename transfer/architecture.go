@@ -3,7 +3,7 @@ package transfer
 import (
 	"container/list"
 
-	"github.com/oniio/oniChannel/typing"
+	"github.com/oniio/oniChannel/common"
 )
 
 type State interface {
@@ -19,13 +19,13 @@ type Event interface {
 }
 
 type SendMessageEvent struct {
-	Recipient         typing.Address
-	ChannelIdentifier typing.ChannelID
-	MessageIdentifier typing.MessageID
+	Recipient         common.Address
+	ChannelIdentifier common.ChannelID
+	MessageIdentifier common.MessageID
 }
 
 type AuthenticatedSenderStateChange struct {
-	Sender typing.Address
+	Sender common.Address
 }
 
 type ContractSendEvent struct {
@@ -33,12 +33,12 @@ type ContractSendEvent struct {
 
 type ContractSendExpirableEvent struct {
 	ContractSendEvent
-	Expiration typing.BlockExpiration
+	Expiration common.BlockExpiration
 }
 
 type ContractReceiveStateChange struct {
-	TransactionHash typing.TransactionHash
-	BlockHeight     typing.BlockHeight
+	TransactionHash common.TransactionHash
+	BlockHeight     common.BlockHeight
 }
 
 type TransitionResult struct {

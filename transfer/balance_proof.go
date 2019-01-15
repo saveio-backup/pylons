@@ -5,12 +5,12 @@ import (
 	"crypto/sha256"
 
 	mpay "github.com/oniio/oniChain/smartcontract/service/native/micropayment"
-	"github.com/oniio/oniChannel/typing"
+	"github.com/oniio/oniChannel/common"
 )
 
 //[TODO] import from channel_contracts.constants import MessageTypeId
-func PackBalanceProof(nonce typing.Nonce, balanceHash typing.BalanceHash, addtionalHash typing.AdditionalHash,
-	channelId typing.ChannelID, tokenNetworkAddr typing.TokenNetworkAddress, chainId typing.ChainID,
+func PackBalanceProof(nonce common.Nonce, balanceHash common.BalanceHash, addtionalHash common.AdditionalHash,
+	channelId common.ChannelID, tokenNetworkAddr common.TokenNetworkAddress, chainId common.ChainID,
 	msgtype int) []byte {
 
 	var buf bytes.Buffer
@@ -33,8 +33,8 @@ func PackBalanceProof(nonce typing.Nonce, balanceHash typing.BalanceHash, addtio
 	return result[:]
 }
 
-func PackBalanceProofUpdate(nonce typing.Nonce, balanceHash typing.BalanceHash, addtionalHash typing.AdditionalHash,
-	channelId typing.ChannelID, tokenNetworkAddr typing.TokenNetworkAddress, chainId typing.ChainID, closeSignature typing.Signature) []byte {
+func PackBalanceProofUpdate(nonce common.Nonce, balanceHash common.BalanceHash, addtionalHash common.AdditionalHash,
+	channelId common.ChannelID, tokenNetworkAddr common.TokenNetworkAddress, chainId common.ChainID, closeSignature common.Signature) []byte {
 	var buf bytes.Buffer
 
 	//[TODO] should reuse the packBalanceProof when it returns the []byte instead of the hash

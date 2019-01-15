@@ -4,7 +4,7 @@ import (
 	"github.com/oniio/oniChain-go-sdk/wallet"
 	"github.com/oniio/oniChain/common/log"
 	ch "github.com/oniio/oniChannel"
-	"github.com/oniio/oniChannel/typing"
+	"github.com/oniio/oniChannel/common"
 )
 
 var (
@@ -31,7 +31,7 @@ func main() {
 		return
 	}
 
-	channel, err := ch.NewChannel(testConfig, account)
+	channel, err := ch.NewChannelService(testConfig, account)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -43,17 +43,17 @@ func main() {
 		return
 	}
 	/*
-		var registryAddress typing.PaymentNetworkID
-		var tokenAddress typing.TokenAddress
-		var partnerAddress typing.Address
-		var settleTimeout typing.BlockTimeout
-		var retryTimeout typing.NetworkTimeout
+		var registryAddress common.PaymentNetworkID
+		var tokenAddress common.TokenAddress
+		var partnerAddress common.Address
+		var settleTimeout common.BlockTimeout
+		var retryTimeout common.NetworkTimeout
 
 		channel.Api.ChannelOpen(registryAddress,
 			tokenAddress, partnerAddress,
 			settleTimeout, retryTimeout)
 
 	*/
-	var target typing.Address
+	var target common.Address
 	channel.Service.DirectTransferAsync(1, target, 111)
 }

@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/oniio/oniChannel/common"
+	"github.com/oniio/oniChannel/network"
 	"github.com/oniio/oniChannel/network/transport/messages"
-	"github.com/oniio/oniChannel/typing"
 )
 
 var (
@@ -65,7 +66,7 @@ func (t *TestMsgHandler) OnMessage(message proto.Message, from string) {
 
 type TestDiscoverer struct{}
 
-func (t *TestDiscoverer) Get(nodeAddress typing.Address) string {
+func (t *TestDiscoverer) Get(nodeAddress common.Address) string {
 	address, ok := addressToIPMap[nodeAddress]
 	if !ok {
 		return ""
@@ -87,16 +88,16 @@ func CheckConnectedNodes(peerMap *sync.Map, expected []string) error {
 
 func TestConnect(t *testing.T) {
 	var err error
-	node1 := NewTransport("tcp", defaultHandler, new(TestDiscoverer))
-	node2 := NewTransport("tcp", defaultHandler, new(TestDiscoverer))
-	node3 := NewTransport("tcp", defaultHandler, new(TestDiscoverer))
+	node1 := NewTransport("tcp")
+	node2 := NewTransport("tcp")
+	node3 := NewTransport("tcp")
 
 	node1.SetAddress(node1Addr)
 	node2.SetAddress(node2Addr)
 	node3.SetAddress(node3Addr)
-
-	node1.Start()
-	node2.Start()
+	bs := network.BlockchainService{}
+	node1.Start(bs)
+	node2.Start(bs)
 
 	node2.Connect(node1Addr)
 
@@ -111,7 +112,7 @@ func TestConnect(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	node3.Start()
+	node3.Start(bs)
 
 	node2.Connect(node3Addr)
 
@@ -148,13 +149,13 @@ func TestConnect(t *testing.T) {
 func TestQueueSend(t *testing.T) {
 
 	msgHandler1 := new(TestMsgHandler)
-	msgHandler1.transport = NewTransport("tcp", msgHandler1, new(TestDiscoverer))
+	msgHandler1.transport = NewTransport("tcp")
 
 	msgHandler2 := new(TestMsgHandler)
-	msgHandler2.transport = NewTransport("tcp", msgHandler2, new(TestDiscoverer))
+	msgHandler2.transport = NewTransport("tcp")
 
 	msgHandler3 := new(TestMsgHandler)
-	msgHandler3.transport = NewTransport("tcp", msgHandler3, new(TestDiscoverer))
+	msgHandler3.transport = NewTransport("tcp")
 
 	node1 := msgHandler1.transport
 	node2 := msgHandler2.transport
@@ -205,7 +206,7 @@ func TestQueueSend(t *testing.T) {
 	}
 }
 
-func SendQueueMessages(sender *Transport, recipient typing.Address, initMessageID int, channelID int, messageCount int) {
+func SendQueueMessages(sender *Transport, recipient common.Address, initMessageID int, channelID int, messageCount int) {
 	for i := 0; i < messageCount; i++ {
 		msg := &messages.DirectTransfer{
 			MessageIdentifier: &messages.MessageID{uint64(initMessageID + i)},
@@ -213,7 +214,7 @@ func SendQueueMessages(sender *Transport, recipient typing.Address, initMessageI
 
 		queueId := &QueueIdentifier{
 			Recipient: recipient,
-			ChannelID: typing.ChannelID(channelID),
+			ChannelID: common.ChannelID(channelID),
 		}
 
 		sender.SendAsync(queueId, msg, msg.MessageIdentifier)

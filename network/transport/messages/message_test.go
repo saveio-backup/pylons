@@ -5,13 +5,13 @@ import (
 
 	proto "github.com/gogo/protobuf/proto"
 	"github.com/oniio/oniChain/account"
-	"github.com/oniio/oniChannel/typing"
+	"github.com/oniio/oniChannel/common"
 )
 
-func BuildDirectTransfer(chainID typing.ChainID, nonce typing.Nonce, amount typing.TokenAmount,
-	lockedAmount typing.TokenAmount, locksRoot typing.Locksroot, channelID typing.ChannelID,
-	tokenNetworkID typing.TokenNetworkID, messageID typing.MessageID,
-	paymentID typing.PaymentID, tokenAddress typing.TokenAddress, recipient typing.Address) proto.Message {
+func BuildDirectTransfer(chainID common.ChainID, nonce common.Nonce, amount common.TokenAmount,
+	lockedAmount common.TokenAmount, locksRoot common.Locksroot, channelID common.ChannelID,
+	tokenNetworkID common.TokenNetworkID, messageID common.MessageID,
+	paymentID common.PaymentID, tokenAddress common.TokenAddress, recipient common.Address) proto.Message {
 	env := &EnvelopeMessage{
 		ChainId:             &ChainID{uint64(chainID)},
 		Nonce:               uint64(nonce),
@@ -33,21 +33,21 @@ func BuildDirectTransfer(chainID typing.ChainID, nonce typing.Nonce, amount typi
 	return msg
 }
 func TestVerifySiganature(t *testing.T) {
-	account := account.NewAccount()
+	account := account.NewAccount("")
 
-	chainID := typing.ChainID(0)
-	nonce := typing.Nonce(1)
-	amount := typing.TokenAmount(100)
-	lockedAmount := typing.TokenAmount(200)
+	chainID := common.ChainID(0)
+	nonce := common.Nonce(1)
+	amount := common.TokenAmount(100)
+	lockedAmount := common.TokenAmount(200)
 
-	var locksRoot typing.Locksroot
-	var tokenAddress typing.TokenAddress
-	var recipient typing.Address
-	var tokenNetworkID typing.TokenNetworkID
+	var locksRoot common.Locksroot
+	var tokenAddress common.TokenAddress
+	var recipient common.Address
+	var tokenNetworkID common.TokenNetworkID
 
-	channelID := typing.ChannelID(1)
-	messageID := typing.MessageID(3)
-	paymentID := typing.PaymentID(4)
+	channelID := common.ChannelID(1)
+	messageID := common.MessageID(3)
+	paymentID := common.PaymentID(4)
 
 	message := BuildDirectTransfer(chainID, nonce, amount, lockedAmount, locksRoot, channelID, tokenNetworkID, messageID, paymentID, tokenAddress, recipient)
 

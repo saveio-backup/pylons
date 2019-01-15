@@ -4,18 +4,18 @@ import (
 	"container/list"
 	"sync"
 
+	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/transfer"
-	"github.com/oniio/oniChannel/typing"
 )
 
 type ConnectionManager struct {
-	funds                  typing.TokenAmount
+	funds                  common.TokenAmount
 	initialChannelTarget   int
 	joinableFundsTarget    float32
 	channel                *ChannelService
-	registryAddress        typing.Address
-	tokenNetworkIdentifier typing.TokenNetworkID
-	tokenAddress           typing.TokenAddress
+	registryAddress        common.Address
+	tokenNetworkIdentifier common.TokenNetworkID
+	tokenAddress           common.TokenAddress
 
 	lock sync.Mutex
 
@@ -24,7 +24,7 @@ type ConnectionManager struct {
 
 func NewConnectionManager(
 	channel *ChannelService,
-	tokenNetworkIdentifier typing.TokenNetworkID) *ConnectionManager {
+	tokenNetworkIdentifier common.TokenNetworkID) *ConnectionManager {
 	self := new(ConnectionManager)
 
 	self.funds = 0
@@ -44,8 +44,8 @@ func NewConnectionManager(
 	return self
 }
 
-func getBootstrapAddress() typing.Address {
-	bootstrapAddr := new(typing.Address)
+func getBootstrapAddress() common.Address {
+	bootstrapAddr := new(common.Address)
 
 	for i := 0; i < 20; i++ {
 		bootstrapAddr[i] = 0x22
@@ -54,12 +54,12 @@ func getBootstrapAddress() typing.Address {
 	return *bootstrapAddr
 }
 
-func (self *ConnectionManager) connect(funds typing.TokenAmount,
+func (self *ConnectionManager) connect(funds common.TokenAmount,
 	initialChannelTarget int,
 	joinableFundsTarget float32) {
 
 	//[TODO] check there is enough token for funds
-	//var tokenBalance typing.TokenAmount
+	//var tokenBalance common.TokenAmount
 
 	self.lock.Lock()
 	defer self.lock.Unlock()
@@ -70,13 +70,13 @@ func (self *ConnectionManager) connect(funds typing.TokenAmount,
 
 	qtyNetworkChannels := transfer.CountTokenNetworkChannels(
 		self.channel.StateFromChannel(),
-		typing.PaymentNetworkID(self.registryAddress),
+		common.PaymentNetworkID(self.registryAddress),
 		self.tokenAddress)
 
 	if qtyNetworkChannels == 0 {
 		bootstrapAddr := getBootstrapAddress()
 
-		self.channel.ChannelOpen(typing.PaymentNetworkID(self.registryAddress), self.tokenAddress, bootstrapAddr, 0, 0.5)
+		self.channel.ChannelOpen(common.PaymentNetworkID(self.registryAddress), self.tokenAddress, bootstrapAddr, 0, 0.5)
 	} else {
 		self.openChannels()
 	}
@@ -84,7 +84,7 @@ func (self *ConnectionManager) connect(funds typing.TokenAmount,
 	return
 }
 
-func (self *ConnectionManager) Leave(registryAddress typing.PaymentNetworkID) *list.List {
+func (self *ConnectionManager) Leave(registryAddress common.PaymentNetworkID) *list.List {
 	self.lock.Lock()
 	defer self.lock.Unlock()
 
@@ -93,17 +93,17 @@ func (self *ConnectionManager) Leave(registryAddress typing.PaymentNetworkID) *l
 	return nil
 }
 
-func (self *ConnectionManager) JoinChannel(partnerAddress typing.Address,
-	partnerDeposit typing.TokenAmount) {
+func (self *ConnectionManager) JoinChannel(partnerAddress common.Address,
+	partnerDeposit common.TokenAmount) {
 	self.lock.Lock()
 	defer self.lock.Unlock()
 
-	var joiningFunds typing.TokenAmount
+	var joiningFunds common.TokenAmount
 
 	//Currently, only router will join channel! Just use same deposit with partner.
 	//Can add policy function later
 	joiningFunds = partnerDeposit
-	self.channel.SetTotalChannelDeposit(typing.PaymentNetworkID(self.registryAddress), self.tokenAddress,
+	self.channel.SetTotalChannelDeposit(common.PaymentNetworkID(self.registryAddress), self.tokenAddress,
 		partnerAddress, joiningFunds, 0.5)
 
 	return
@@ -123,7 +123,7 @@ func (self *ConnectionManager) RetryConnect() {
 func (self *ConnectionManager) findNewPartners() *list.List {
 
 	openedChannels := transfer.GetChannelStateOpen(self.channel.StateFromChannel(),
-		typing.PaymentNetworkID(self.registryAddress), self.tokenAddress)
+		common.PaymentNetworkID(self.registryAddress), self.tokenAddress)
 
 	known := list.New()
 	for e := openedChannels.Front(); e != nil; e = e.Next() {
@@ -137,14 +137,14 @@ func (self *ConnectionManager) findNewPartners() *list.List {
 
 	participantsAddresses := transfer.GetParticipantsAddresses(
 		self.channel.StateFromChannel(),
-		typing.PaymentNetworkID{}, typing.TokenAddress{})
+		common.PaymentNetworkID{}, common.TokenAddress{})
 
 	available := list.New()
 	for k := range participantsAddresses {
 		found := false
 		for e := known.Front(); e != nil; {
-			knownAddress := e.Value.(typing.Address)
-			if typing.AddressEqual(k, knownAddress) {
+			knownAddress := e.Value.(common.Address)
+			if common.AddressEqual(k, knownAddress) {
 				found = true
 				break
 			}
@@ -161,11 +161,11 @@ func (self *ConnectionManager) findNewPartners() *list.List {
 	return newPartners
 }
 
-func (self *ConnectionManager) JoinPartner(partner typing.Address) {
+func (self *ConnectionManager) JoinPartner(partner common.Address) {
 
-	self.channel.ChannelOpen(typing.PaymentNetworkID(self.registryAddress), self.tokenAddress, partner, 0, 0.5)
+	self.channel.ChannelOpen(common.PaymentNetworkID(self.registryAddress), self.tokenAddress, partner, 0, 0.5)
 
-	self.channel.SetTotalChannelDeposit(typing.PaymentNetworkID(self.registryAddress), self.tokenAddress,
+	self.channel.SetTotalChannelDeposit(common.PaymentNetworkID(self.registryAddress), self.tokenAddress,
 		partner, self.initialFundingPerPartner(), 0.5)
 
 	self.wg.Done()
@@ -175,13 +175,13 @@ func (self *ConnectionManager) JoinPartner(partner typing.Address) {
 func (self *ConnectionManager) openChannels() bool {
 
 	openChannels := transfer.GetChannelStateOpen(self.channel.StateFromChannel(),
-		typing.PaymentNetworkID{}, typing.TokenAddress{})
+		common.PaymentNetworkID{}, common.TokenAddress{})
 
 	bootstrapAddress := getBootstrapAddress()
 	for e := openChannels.Front(); e != nil; {
 		channelState := e.Value.(*transfer.NettingChannelState)
 		channelEndState := channelState.GetChannelEndState(1)
-		if typing.AddressEqual(channelEndState.GetAddress(), bootstrapAddress) {
+		if common.AddressEqual(channelEndState.GetAddress(), bootstrapAddress) {
 			e = e.Next()
 			openChannels.Remove(e)
 		} else {
@@ -228,19 +228,19 @@ func (self *ConnectionManager) openChannels() bool {
 	numJoined := 0
 
 	for e := nonfundedPartners.Front(); e != nil && numJoined < nToJoin; {
-		partnerAddress := e.Value.(typing.Address)
+		partnerAddress := e.Value.(common.Address)
 		joinPartners.PushBack(partnerAddress)
 		numJoined++
 	}
 
 	for e := possibleNewPartners.Front(); e != nil && numJoined < nToJoin; {
-		partnerAddress := e.Value.(typing.Address)
+		partnerAddress := e.Value.(common.Address)
 		joinPartners.PushBack(partnerAddress)
 		numJoined++
 	}
 
 	for e := joinPartners.Front(); e != nil; {
-		partnerAddress := e.Value.(typing.Address)
+		partnerAddress := e.Value.(common.Address)
 		self.wg.Add(1)
 		go self.JoinPartner(partnerAddress)
 	}
@@ -250,7 +250,7 @@ func (self *ConnectionManager) openChannels() bool {
 	return true
 }
 
-func (self *ConnectionManager) initialFundingPerPartner() typing.TokenAmount {
+func (self *ConnectionManager) initialFundingPerPartner() common.TokenAmount {
 	return 0
 }
 

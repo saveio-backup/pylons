@@ -5,20 +5,20 @@ import (
 	"time"
 
 	"github.com/oniio/oniChain/common/log"
+	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/network"
-	"github.com/oniio/oniChannel/typing"
 )
 
 type AlarmTask struct {
 	callbacks       []AlarmTaskCallback
 	chain           *network.BlockchainService
 	chainId         int
-	lastBlockHeight typing.BlockHeight
+	lastBlockHeight common.BlockHeight
 	stopEvent       chan int
 	sleepTime       int
 }
 
-type AlarmTaskCallback func(blockNumber typing.BlockHeight, blockHash typing.BlockHash)
+type AlarmTaskCallback func(blockNumber common.BlockHeight, blockHash common.BlockHash)
 
 func NewAlarmTask(chain *network.BlockchainService) *AlarmTask {
 	self := new(AlarmTask)
@@ -45,8 +45,8 @@ func (self *AlarmTask) RemoveCallback(callback AlarmTaskCallback) {
 }
 
 func (self *AlarmTask) LoopUntilStop() {
-	var lastBlockHeight, latestBlockHeight typing.BlockHeight
-	var blockHash typing.BlockHash
+	var lastBlockHeight, latestBlockHeight common.BlockHeight
+	var blockHash common.BlockHash
 	var err error
 	sleepTime := self.sleepTime
 
@@ -74,9 +74,9 @@ func (self *AlarmTask) LoopUntilStop() {
 	}
 }
 
-func (self *AlarmTask) GetLatestBlock() (typing.BlockHeight, typing.BlockHash, error) {
+func (self *AlarmTask) GetLatestBlock() (common.BlockHeight, common.BlockHash, error) {
 	blockNumber, err := self.chain.BlockHeight()
-	latestBlockHeight := typing.BlockHeight(blockNumber)
+	latestBlockHeight := common.BlockHeight(blockNumber)
 	if err != nil {
 		return 0, nil, fmt.Errorf("GetBlockHeight error")
 	}
@@ -88,8 +88,8 @@ func (self *AlarmTask) GetLatestBlock() (typing.BlockHeight, typing.BlockHash, e
 }
 
 func (self *AlarmTask) FirstRun() error {
-	var latestBlock typing.BlockHeight
-	var blockHash typing.BlockHash
+	var latestBlock common.BlockHeight
+	var blockHash common.BlockHash
 
 	//[TODO] use BlockchainService.GetBlock to get latestBlockHeight
 	//and blockHash
@@ -102,7 +102,7 @@ func (self *AlarmTask) FirstRun() error {
 	return nil
 }
 
-func (self *AlarmTask) runCallbacks(latestBlockHeight typing.BlockHeight, blockHash typing.BlockHash) {
+func (self *AlarmTask) runCallbacks(latestBlockHeight common.BlockHeight, blockHash common.BlockHash) {
 
 	log.Infof("RunCallbacks for Block %d\n", latestBlockHeight)
 

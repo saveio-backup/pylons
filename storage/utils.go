@@ -3,8 +3,8 @@ package storage
 import (
 	"fmt"
 
+	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/transfer"
-	"github.com/oniio/oniChannel/typing"
 )
 
 type TimestampedEvent struct {
@@ -36,21 +36,21 @@ func GetDbScriptCreateTables() string {
 }
 
 func GetLatestKnownBalanceProofFromStateChanges(
-	storage *SQLiteStorage, chainID typing.ChainID, tokenNetworkID typing.TokenNetworkID,
-	channelIdentifier typing.ChannelID, balanceHash typing.BalanceHash, sender typing.Address) *transfer.BalanceProofSignedState {
+	storage *SQLiteStorage, chainID common.ChainID, tokenNetworkID common.TokenNetworkID,
+	channelIdentifier common.ChannelID, balanceHash common.BalanceHash, sender common.Address) *transfer.BalanceProofSignedState {
 
 	type BalanceProofSignedState struct {
-		Nonce                  typing.Nonce
-		TransferredAmount      typing.TokenAmount
-		LockedAmount           typing.TokenAmount
-		LocksRoot              typing.Locksroot
-		TokenNetworkIdentifier typing.TokenNetworkID
-		ChannelIdentifier      typing.ChannelID
-		MessageHash            typing.Keccak256
-		Signature              typing.Signature
-		Sender                 typing.Address
-		ChainId                typing.ChainID
-		PublicKey              typing.PubKey
+		Nonce                  common.Nonce
+		TransferredAmount      common.TokenAmount
+		LockedAmount           common.TokenAmount
+		LocksRoot              common.Locksroot
+		TokenNetworkIdentifier common.TokenNetworkID
+		ChannelIdentifier      common.ChannelID
+		MessageHash            common.Keccak256
+		Signature              common.Signature
+		Sender                 common.Address
+		ChainId                common.ChainID
+		PublicKey              common.PubKey
 	}
 
 	filters := map[string]interface{}{
@@ -69,14 +69,14 @@ func GetLatestKnownBalanceProofFromStateChanges(
 			stateChange := stateChangeRecord.Data.(*transfer.ReceiveTransferDirect)
 
 			balanceProof := stateChange.BalanceProof
-			if balanceProof != nil && typing.AddressEqual(balanceProof.Sender, sender) {
+			if balanceProof != nil && common.AddressEqual(balanceProof.Sender, sender) {
 				hash := transfer.HashBalanceData(
 					balanceProof.TransferredAmount,
 					balanceProof.LockedAmount,
 					balanceProof.LocksRoot,
 				)
 
-				if typing.SliceEqual(hash, balanceHash) {
+				if common.SliceEqual(hash, balanceHash) {
 					return balanceProof
 				}
 			}
@@ -88,8 +88,8 @@ func GetLatestKnownBalanceProofFromStateChanges(
 }
 
 func GetLatestKnownBalanceProofFromEvents(
-	storage *SQLiteStorage, chainID typing.ChainID, tokenNetworkID typing.TokenNetworkID,
-	channelIdentifier typing.ChannelID, balanceHash typing.BalanceHash) *transfer.BalanceProofUnsignedState {
+	storage *SQLiteStorage, chainID common.ChainID, tokenNetworkID common.TokenNetworkID,
+	channelIdentifier common.ChannelID, balanceHash common.BalanceHash) *transfer.BalanceProofUnsignedState {
 
 	filters := map[string]interface{}{
 		//"BalanceProof.ChainId":                 chainID,
@@ -112,7 +112,7 @@ func GetLatestKnownBalanceProofFromEvents(
 					balanceProof.LocksRoot,
 				)
 
-				if typing.SliceEqual(hash, balanceHash) {
+				if common.SliceEqual(hash, balanceHash) {
 					return balanceProof
 				}
 			}

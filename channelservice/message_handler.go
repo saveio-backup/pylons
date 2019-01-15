@@ -1,9 +1,9 @@
 package channelservice
 
 import (
+	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/network/transport/messages"
 	"github.com/oniio/oniChannel/transfer"
-	"github.com/oniio/oniChannel/typing"
 )
 
 type MessageHandler struct {
@@ -24,7 +24,7 @@ func (self *MessageHandler) OnMessage(channel *ChannelService, message interface
 }
 
 func (self *MessageHandler) HandleMessageDirecttransfer(channel *ChannelService, message *messages.DirectTransfer) {
-	var tokenNetworkIdentifier typing.TokenNetworkID
+	var tokenNetworkIdentifier common.TokenNetworkID
 
 	copy(tokenNetworkIdentifier[:], message.EnvelopeMessage.TokenNetworkAddress.TokenNetworkAddress[:20])
 	balanceProof := BalanceProofFromEnvelope(message.EnvelopeMessage, message.Pack())
@@ -32,8 +32,8 @@ func (self *MessageHandler) HandleMessageDirecttransfer(channel *ChannelService,
 	directTransfer := &transfer.ReceiveTransferDirect{
 		AuthenticatedSenderStateChange: transfer.AuthenticatedSenderStateChange{Sender: balanceProof.Sender},
 		TokenNetworkIdentifier:         tokenNetworkIdentifier,
-		MessageIdentifier:              typing.MessageID(message.MessageIdentifier.MessageId),
-		PaymentIdentifier:              typing.PaymentID(message.PaymentIdentifier.PaymentId),
+		MessageIdentifier:              common.MessageID(message.MessageIdentifier.MessageId),
+		PaymentIdentifier:              common.PaymentID(message.PaymentIdentifier.PaymentId),
 		BalanceProof:                   balanceProof,
 	}
 
@@ -46,7 +46,7 @@ func (self *MessageHandler) HandleMessageProcessed(channel *ChannelService, mess
 		AuthenticatedSenderStateChange: transfer.AuthenticatedSenderStateChange{
 			Sender: messages.ConvertAddress(message.Signature.Sender),
 		},
-		MessageIdentifier: typing.MessageID(message.MessageIdentifier.MessageId),
+		MessageIdentifier: common.MessageID(message.MessageIdentifier.MessageId),
 	}
 
 	channel.HandleStateChange(processed)
@@ -57,29 +57,29 @@ func (self *MessageHandler) HandleMessageDelivered(channel *ChannelService, mess
 		AuthenticatedSenderStateChange: transfer.AuthenticatedSenderStateChange{
 			Sender: messages.ConvertAddress(message.Signature.Sender),
 		},
-		MessageIdentifier: typing.MessageID(message.DeliveredMessageIdentifier.MessageId),
+		MessageIdentifier: common.MessageID(message.DeliveredMessageIdentifier.MessageId),
 	}
 
 	channel.HandleStateChange(delivered)
 }
 
 func BalanceProofFromEnvelope(message *messages.EnvelopeMessage, dataToSign []byte) *transfer.BalanceProofSignedState {
-	var tokenNetworkIdentifier typing.TokenNetworkID
-	var messageHash typing.Keccak256
+	var tokenNetworkIdentifier common.TokenNetworkID
+	var messageHash common.Keccak256
 
 	copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
 	copy(messageHash[:], messages.MessageHash(dataToSign)[:32])
 
 	balanceProof := &transfer.BalanceProofSignedState{
-		Nonce:                  typing.Nonce(message.Nonce),
-		TransferredAmount:      typing.TokenAmount(message.TransferredAmount.TokenAmount),
-		LockedAmount:           typing.TokenAmount(message.LockedAmount.TokenAmount),
+		Nonce:                  common.Nonce(message.Nonce),
+		TransferredAmount:      common.TokenAmount(message.TransferredAmount.TokenAmount),
+		LockedAmount:           common.TokenAmount(message.LockedAmount.TokenAmount),
 		TokenNetworkIdentifier: tokenNetworkIdentifier,
-		ChannelIdentifier:      typing.ChannelID(message.ChannelIdentifier.ChannelId),
+		ChannelIdentifier:      common.ChannelID(message.ChannelIdentifier.ChannelId),
 		MessageHash:            messageHash,
 		Signature:              message.Signature.Signature,
 		Sender:                 messages.ConvertAddress(message.Signature.Sender),
-		ChainId:                typing.ChainID(message.ChainId.ChainId),
+		ChainId:                common.ChainID(message.ChainId.ChainId),
 		PublicKey:              message.Signature.Publickey,
 	}
 

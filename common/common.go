@@ -1,25 +1,18 @@
-package typing
+package common
 
 import (
 	"bytes"
-	"container/list"
 	"errors"
 	"strconv"
 
+	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/utils/jsonext"
 )
-
-const ADDR_LEN = 20
-const HASH_LEN = 32
-
-type Address [ADDR_LEN]byte
-
-var ADDRESS_EMPTY = Address{}
 
 func AddressEqual(address1 Address, address2 Address) bool {
 	result := true
 
-	for i := 0; i < 20; i++ {
+	for i := 0; i < constants.ADDR_LEN; i++ {
 		if address1[i] != address2[i] {
 			result = false
 			break
@@ -32,7 +25,7 @@ func AddressEqual(address1 Address, address2 Address) bool {
 func Keccak256Compare(one *Keccak256, two *Keccak256) int {
 	result := 0
 
-	for i := 0; i < 32; i++ {
+	for i := 0; i < constants.HASH_LEN; i++ {
 		if one[i] > two[i] {
 			result = 1
 			break
@@ -45,8 +38,6 @@ func Keccak256Compare(one *Keccak256, two *Keccak256) int {
 	return result
 }
 
-type Keccak256Slice []Keccak256
-
 func (p Keccak256Slice) Len() int {
 	return len(p)
 }
@@ -57,8 +48,6 @@ func (p Keccak256Slice) Less(i, j int) bool {
 	} else {
 		return false
 	}
-
-	return true
 }
 
 func (p Keccak256Slice) Swap(i, j int) {
@@ -84,10 +73,10 @@ func (self PaymentNetworkID) MarshalText() (text []byte, err error) {
 	var e bytes.Buffer
 
 	e.WriteByte('[')
-	for i := 0; i < ADDR_LEN; i++ {
+	for i := 0; i < constants.ADDR_LEN; i++ {
 		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
 		e.Write(b)
-		if i < ADDR_LEN-1 {
+		if i < constants.ADDR_LEN-1 {
 			e.WriteByte(' ')
 		}
 
@@ -101,7 +90,7 @@ func (self *PaymentNetworkID) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
-	for i := 0; i < ADDR_LEN; i++ {
+	for i := 0; i < constants.ADDR_LEN; i++ {
 		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
 			startIdx++
 		}
@@ -138,10 +127,10 @@ func (self TokenNetworkID) MarshalText() (text []byte, err error) {
 	var e bytes.Buffer
 
 	e.WriteByte('[')
-	for i := 0; i < ADDR_LEN; i++ {
+	for i := 0; i < constants.ADDR_LEN; i++ {
 		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
 		e.Write(b)
-		if i < ADDR_LEN-1 {
+		if i < constants.ADDR_LEN-1 {
 			e.WriteByte(' ')
 		}
 
@@ -155,7 +144,7 @@ func (self *TokenNetworkID) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
-	for i := 0; i < ADDR_LEN; i++ {
+	for i := 0; i < constants.ADDR_LEN; i++ {
 		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
 			startIdx++
 		}
@@ -192,10 +181,10 @@ func (self Address) MarshalText() (text []byte, err error) {
 	var e bytes.Buffer
 
 	e.WriteByte('[')
-	for i := 0; i < ADDR_LEN; i++ {
+	for i := 0; i < constants.ADDR_LEN; i++ {
 		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
 		e.Write(b)
-		if i < ADDR_LEN-1 {
+		if i < constants.ADDR_LEN-1 {
 			e.WriteByte(' ')
 		}
 
@@ -209,7 +198,7 @@ func (self *Address) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
-	for i := 0; i < ADDR_LEN; i++ {
+	for i := 0; i < constants.ADDR_LEN; i++ {
 		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
 			startIdx++
 		}
@@ -246,10 +235,10 @@ func (self TokenAddress) MarshalText() (text []byte, err error) {
 	var e bytes.Buffer
 
 	e.WriteByte('[')
-	for i := 0; i < ADDR_LEN; i++ {
+	for i := 0; i < constants.ADDR_LEN; i++ {
 		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
 		e.Write(b)
-		if i < ADDR_LEN-1 {
+		if i < constants.ADDR_LEN-1 {
 			e.WriteByte(' ')
 		}
 
@@ -263,7 +252,7 @@ func (self *TokenAddress) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
-	for i := 0; i < ADDR_LEN; i++ {
+	for i := 0; i < constants.ADDR_LEN; i++ {
 		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
 			startIdx++
 		}
@@ -300,10 +289,10 @@ func (self SecretHash) MarshalText() (text []byte, err error) {
 	var e bytes.Buffer
 
 	e.WriteByte('[')
-	for i := 0; i < HASH_LEN; i++ {
+	for i := 0; i < constants.HASH_LEN; i++ {
 		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
 		e.Write(b)
-		if i < HASH_LEN-1 {
+		if i < constants.HASH_LEN-1 {
 			e.WriteByte(' ')
 		}
 
@@ -317,7 +306,7 @@ func (self *SecretHash) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
-	for i := 0; i < HASH_LEN; i++ {
+	for i := 0; i < constants.HASH_LEN; i++ {
 		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
 			startIdx++
 		}
@@ -368,73 +357,3 @@ func LocksrootEmpty(a Locksroot) bool {
 
 	return true
 }
-
-type AddressHex string
-
-type BlockExpiration int
-
-type Balance uint64
-
-type BalanceHash []byte
-
-type BlockGasLimit int
-
-type BlockGasPrice int
-
-type BlockHash []byte
-
-type BlockHeight uint32
-
-type BlockTimeout int
-
-type ChannelID uint32
-
-type ChannelState int
-
-type InitiatorAddress [ADDR_LEN]byte
-
-type Locksroot [HASH_LEN]byte
-
-type LockHash [HASH_LEN]byte
-
-type MerkleTreeLeaves list.List
-
-type MessageID int64
-
-type Nonce int
-
-type AdditionalHash []byte
-
-type NetworkTimeout float64
-
-type PaymentID int
-
-type PaymentAmount uint64
-
-type PaymentNetworkID [20]byte
-
-type ChainID int
-
-type Keccak256 [32]byte
-
-type TokenAddress [ADDR_LEN]byte
-
-type TokenNetworkAddress [ADDR_LEN]byte
-
-type TokenNetworkID [20]byte
-
-type TokenAmount uint64
-
-type TransferID []byte
-
-type Secret []byte
-
-type SecretHash [HASH_LEN]byte
-
-type SecretRegistryAddress []byte
-
-type Signature []byte
-
-type TransactionHash []byte
-
-type PubKey []byte

@@ -1,0 +1,90 @@
+package common
+
+import (
+	"container/list"
+
+	"github.com/oniio/oniChannel/common/constants"
+)
+
+type PaymentType int
+
+const (
+	PAYMENT_DIRECT PaymentType = iota
+	PAYMENT_MEDIATED
+)
+
+type Address [constants.ADDR_LEN]byte
+
+var ADDRESS_EMPTY = Address{}
+
+type Keccak256Slice []Keccak256
+
+type AddressHex string
+
+type BlockExpiration int
+
+type Balance uint64
+
+type BalanceHash []byte
+
+type BlockGasLimit int
+
+type BlockGasPrice int
+
+type BlockHash []byte
+
+type BlockHeight uint32
+
+type BlockTimeout int
+
+type ChannelID uint32
+
+type ChannelState int
+
+type InitiatorAddress [constants.ADDR_LEN]byte
+
+type Locksroot [constants.HASH_LEN]byte
+
+type LockHash [constants.HASH_LEN]byte
+
+type MerkleTreeLeaves list.List
+
+type MessageID int64
+
+type Nonce int
+
+type AdditionalHash []byte
+
+type NetworkTimeout float64
+
+type PaymentID int
+
+type PaymentAmount uint64
+
+type PaymentNetworkID [20]byte
+
+type ChainID int
+
+type Keccak256 [32]byte
+
+type TokenAddress [constants.ADDR_LEN]byte
+
+type TokenNetworkAddress [constants.ADDR_LEN]byte
+
+type TokenNetworkID [20]byte
+
+type TokenAmount uint64
+
+type TransferID []byte
+
+type Secret []byte
+
+type SecretHash [constants.HASH_LEN]byte
+
+type SecretRegistryAddress []byte
+
+type Signature []byte
+
+type TransactionHash []byte
+
+type PubKey []byte

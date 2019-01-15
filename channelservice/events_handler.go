@@ -1,40 +1,40 @@
 package channelservice
 
 import (
+	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/network/proxies"
 	"github.com/oniio/oniChannel/transfer"
-	"github.com/oniio/oniChannel/typing"
 )
 
 //NOTE, Event here come from blockchain filter
 //Not the Event from transfer dir!
 func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 
-	var transactionHash typing.TransactionHash
+	var transactionHash common.TransactionHash
 
 	var isParticipant bool
 
-	participant1 := event["participant1"].(typing.Address)
-	participant2 := event["participant2"].(typing.Address)
-	channelIdentifier := event["channelID"].(typing.ChannelID)
-	blockNumber := event["blockHeight"].(typing.BlockHeight)
+	participant1 := event["participant1"].(common.Address)
+	participant2 := event["participant2"].(common.Address)
+	channelIdentifier := event["channelID"].(common.ChannelID)
+	blockNumber := event["blockHeight"].(common.BlockHeight)
 
-	if typing.AddressEqual(self.address, participant1) || self.address == participant2 {
+	if common.AddressEqual(self.address, participant1) || self.address == participant2 {
 		isParticipant = true
 	}
 
-	tokenNetworkIdentifier := typing.TokenNetworkID{}
+	tokenNetworkIdentifier := common.TokenNetworkID{}
 	if isParticipant {
 
-		channelProxy := self.chain.PaymentChannel(typing.Address(tokenNetworkIdentifier), channelIdentifier, event)
+		channelProxy := self.chain.PaymentChannel(common.Address(tokenNetworkIdentifier), channelIdentifier, event)
 
 		//[TODO] get revealTime from channel.config[reveal_timeout]
-		var revealTimeout typing.BlockHeight
+		var revealTimeout common.BlockHeight
 
-		tokenAddress := typing.TokenAddress{}
-		defaultRegister := typing.PaymentNetworkID{}
+		tokenAddress := common.TokenAddress{}
+		defaultRegister := common.PaymentNetworkID{}
 		channelState := GetChannelState(tokenAddress, defaultRegister,
-			typing.TokenNetworkAddress(tokenNetworkIdentifier), revealTimeout, channelProxy, blockNumber)
+			common.TokenNetworkAddress(tokenNetworkIdentifier), revealTimeout, channelProxy, blockNumber)
 
 		newChannel := &transfer.ContractReceiveChannelNew{
 			transfer.ContractReceiveStateChange{transactionHash, blockNumber},
@@ -55,15 +55,15 @@ func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 
 func (self ChannelService) HandleChannelNewBalance(event map[string]interface{}) {
 
-	var transactionHash typing.TransactionHash
+	var transactionHash common.TransactionHash
 	var isParticipant bool
 
-	participantAddress := event["participant"].(typing.Address)
-	channelIdentifier := event["channelID"].(typing.ChannelID)
-	depositBlockHeight := event["blockHeight"].(typing.BlockHeight)
-	totalDeposit := event["totalDeposit"].(typing.TokenAmount)
+	participantAddress := event["participant"].(common.Address)
+	channelIdentifier := event["channelID"].(common.ChannelID)
+	depositBlockHeight := event["blockHeight"].(common.BlockHeight)
+	totalDeposit := event["totalDeposit"].(common.TokenAmount)
 
-	tokenNetworkIdentifier := typing.TokenNetworkID{}
+	tokenNetworkIdentifier := common.TokenNetworkID{}
 
 	previousChannelState := transfer.GetChannelStateByTokenNetworkIdentifier(
 		self.StateFromChannel(), tokenNetworkIdentifier, channelIdentifier)
@@ -113,16 +113,16 @@ func (self ChannelService) HandleChannelNewBalance(event map[string]interface{})
 
 func (self ChannelService) HandleChannelClose(event map[string]interface{}) {
 
-	tokenNetworkIdentifier := typing.TokenNetworkID{}
+	tokenNetworkIdentifier := common.TokenNetworkID{}
 
-	var channelIdentifier typing.ChannelID
-	var transactionHash typing.TransactionHash
-	var blockNumber typing.BlockHeight
-	var closingParticipant typing.Address
+	var channelIdentifier common.ChannelID
+	var transactionHash common.TransactionHash
+	var blockNumber common.BlockHeight
+	var closingParticipant common.Address
 
-	closingParticipant = event["closingParticipant"].(typing.Address)
-	channelIdentifier = event["channelID"].(typing.ChannelID)
-	blockNumber = event["blockHeight"].(typing.BlockHeight)
+	closingParticipant = event["closingParticipant"].(common.Address)
+	channelIdentifier = event["channelID"].(common.ChannelID)
+	blockNumber = event["blockHeight"].(common.BlockHeight)
 
 	chainState := self.StateFromChannel()
 	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(chainState,
@@ -141,14 +141,14 @@ func (self ChannelService) HandleChannelClose(event map[string]interface{}) {
 
 func (self ChannelService) HandleChannelUpdateTransfer(event map[string]interface{}) {
 
-	var transactionHash typing.TransactionHash
+	var transactionHash common.TransactionHash
 
-	channelIdentifier := event["channelID"].(typing.ChannelID)
-	blockNumber := event["blockHeight"].(typing.BlockHeight)
-	nonce := event["nonce"].(typing.Nonce)
+	channelIdentifier := event["channelID"].(common.ChannelID)
+	blockNumber := event["blockHeight"].(common.BlockHeight)
+	nonce := event["nonce"].(common.Nonce)
 
 	chainState := self.StateFromChannel()
-	tokenNetworkIdentifier := typing.TokenNetworkID{}
+	tokenNetworkIdentifier := common.TokenNetworkID{}
 	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(chainState,
 		tokenNetworkIdentifier, channelIdentifier)
 
@@ -164,12 +164,12 @@ func (self ChannelService) HandleChannelUpdateTransfer(event map[string]interfac
 }
 
 func (self ChannelService) HandleChannelSettled(event map[string]interface{}) {
-	tokenNetworkIdentifier := typing.TokenNetworkID{}
+	tokenNetworkIdentifier := common.TokenNetworkID{}
 
-	var transactionHash typing.TransactionHash
+	var transactionHash common.TransactionHash
 
-	channelIdentifier := event["channelID"].(typing.ChannelID)
-	blockNumber := event["blockHeight"].(typing.BlockHeight)
+	channelIdentifier := event["channelID"].(common.ChannelID)
+	blockNumber := event["blockHeight"].(common.BlockHeight)
 
 	chainState := self.StateFromChannel()
 	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(chainState,
@@ -219,9 +219,9 @@ func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 
 	return
 }
-func GetChannelState(tokenAddress typing.TokenAddress, paymentNetworkIdentifier typing.PaymentNetworkID,
-	tokenNetworkAddress typing.TokenNetworkAddress, revealTimeout typing.BlockHeight,
-	paymentChannelProxy *proxies.PaymentChannel, openedBlockHeight typing.BlockHeight) *transfer.NettingChannelState {
+func GetChannelState(tokenAddress common.TokenAddress, paymentNetworkIdentifier common.PaymentNetworkID,
+	tokenNetworkAddress common.TokenNetworkAddress, revealTimeout common.BlockHeight,
+	paymentChannelProxy *proxies.PaymentChannel, openedBlockHeight common.BlockHeight) *transfer.NettingChannelState {
 
 	channelDetails := paymentChannelProxy.Detail()
 	ourState := transfer.NewNettingChannelEndState()
@@ -245,9 +245,9 @@ func GetChannelState(tokenAddress typing.TokenAddress, paymentNetworkIdentifier 
 	channel := &transfer.NettingChannelState{
 		Identifier:               identifier,
 		ChainId:                  0,
-		TokenAddress:             typing.Address(tokenAddress),
+		TokenAddress:             common.Address(tokenAddress),
 		PaymentNetworkIdentifier: paymentNetworkIdentifier,
-		TokenNetworkIdentifier:   typing.TokenNetworkID(tokenNetworkAddress),
+		TokenNetworkIdentifier:   common.TokenNetworkID(tokenNetworkAddress),
 		RevealTimeout:            revealTimeout,
 		SettleTimeout:            settleTimeout,
 		OurState:                 ourState,
@@ -269,7 +269,7 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 		case "participant2":
 			fallthrough
 		case "closingParticipant":
-			var address typing.Address
+			var address common.Address
 
 			for index, data := range value.([]interface{}) {
 				value := data.(float64)
@@ -278,15 +278,15 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 
 			events[item] = address
 		case "channelID":
-			events[item] = typing.ChannelID(value.(float64))
+			events[item] = common.ChannelID(value.(float64))
 		case "blockHeight":
 			fallthrough
 		case "settleTimeout":
-			events[item] = typing.BlockHeight(value.(float64))
+			events[item] = common.BlockHeight(value.(float64))
 		case "totalDeposit":
-			events[item] = typing.TokenAmount(value.(float64))
+			events[item] = common.TokenAmount(value.(float64))
 		case "nonce":
-			events[item] = typing.Nonce(value.(float64))
+			events[item] = common.Nonce(value.(float64))
 		}
 	}
 	return events

@@ -1,12 +1,12 @@
 package storage
 
 import (
+	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/transfer"
-	"github.com/oniio/oniChannel/typing"
 )
 
-func ChannelStateUntilStateChange(storage *SQLiteStorage, paymentNetworkIdentifier typing.PaymentNetworkID,
-	tokenAddress typing.TokenAddress, channelIdentifier typing.ChannelID,
+func ChannelStateUntilStateChange(storage *SQLiteStorage, paymentNetworkIdentifier common.PaymentNetworkID,
+	tokenAddress common.TokenAddress, channelIdentifier common.ChannelID,
 	stateChangeIdentifier interface{}) *transfer.NettingChannelState {
 
 	wal := RestoreToStateChange(transfer.StateTransition, storage, stateChangeIdentifier)

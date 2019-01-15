@@ -12,9 +12,9 @@ import (
 	sig "github.com/oniio/oniChain/core/signature"
 	"github.com/oniio/oniChain/core/types"
 	"github.com/oniio/oniChain/crypto/keypair"
+	"github.com/oniio/oniChannel/common"
+	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/transfer"
-	"github.com/oniio/oniChannel/typing"
-	"github.com/oniio/oniChannel/utils"
 )
 
 type SignedMessageInterface interface {
@@ -47,17 +47,17 @@ func (this *EnvelopeMessage) DataToSign(data []byte) []byte {
 
 	copy(addr[:], this.TokenNetworkAddress.TokenNetworkAddress)
 
-	tokenNetworkAddr := typing.TokenNetworkAddress(addr)
-	chainId := typing.ChainID(int(this.ChainId.ChainId))
-	channelId := typing.ChannelID(int(this.ChannelIdentifier.ChannelId))
+	tokenNetworkAddr := common.TokenNetworkAddress(addr)
+	chainId := common.ChainID(int(this.ChainId.ChainId))
+	channelId := common.ChannelID(int(this.ChannelIdentifier.ChannelId))
 
 	balanceHash := transfer.HashBalanceData(
-		typing.TokenAmount(this.TransferredAmount.TokenAmount),
-		typing.TokenAmount(this.LockedAmount.TokenAmount),
+		common.TokenAmount(this.TransferredAmount.TokenAmount),
+		common.TokenAmount(this.LockedAmount.TokenAmount),
 		ConvertLocksroot(this.Locksroot),
 	)
 
-	nonce := typing.Nonce(this.Nonce)
+	nonce := common.Nonce(this.Nonce)
 	addtionalHash := MessageHash(data)
 
 	return transfer.PackBalanceProof(nonce, balanceHash, addtionalHash, channelId, tokenNetworkAddr, chainId, 1)
@@ -205,8 +205,8 @@ func GetPublicKey(message SignedMessageInterface) (keypair.PublicKey, error) {
 	return pubKey, nil
 }
 
-func GetSender(message SignedMessageInterface) (typing.Address, error) {
-	var sender typing.Address
+func GetSender(message SignedMessageInterface) (common.Address, error) {
+	var sender common.Address
 	var senderBuf []byte
 
 	switch message.(type) {
@@ -220,7 +220,7 @@ func GetSender(message SignedMessageInterface) (typing.Address, error) {
 		return sender, fmt.Errorf("Unknow message type to GetSender")
 	}
 
-	if len(senderBuf) != typing.ADDR_LEN {
+	if len(senderBuf) != constants.ADDR_LEN {
 		return sender, fmt.Errorf("invalid sender length")
 	}
 
@@ -263,11 +263,11 @@ func Verify(data []byte, message SignedMessageInterface) error {
 	}
 
 	address := types.AddressFromPubKey(pubKey)
-	if sender != typing.Address(address) {
+	if sender != common.Address(address) {
 		return fmt.Errorf("sender and public key not match")
 	}
 
-	err = utils.VerifySignature(pubKey, data, signature)
+	err = common.VerifySignature(pubKey, data, signature)
 	if err != nil {
 		return err
 	}

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/oniio/oniChannel/typing"
-	"github.com/oniio/oniChannel/utils"
+	"github.com/oniio/oniChannel/common"
+	"github.com/oniio/oniChannel/common/constants"
 )
 
 func Min(x, y uint64) uint64 {
@@ -25,13 +25,13 @@ func Max(x, y uint64) uint64 {
 }
 
 type BalanceProofData struct {
-	locksroot         typing.Locksroot
-	nonce             typing.Nonce
-	transferredAmount typing.TokenAmount
-	lockedAmount      typing.TokenAmount
+	locksroot         common.Locksroot
+	nonce             common.Nonce
+	transferredAmount common.TokenAmount
+	lockedAmount      common.TokenAmount
 }
 
-func compareLocksroot(one typing.Locksroot, two typing.Locksroot) bool {
+func compareLocksroot(one common.Locksroot, two common.Locksroot) bool {
 	result := true
 
 	if len(one) != len(two) {
@@ -49,7 +49,7 @@ func compareLocksroot(one typing.Locksroot, two typing.Locksroot) bool {
 	return result
 }
 
-func isDepositConfirmed(channelState *NettingChannelState, blockNumber typing.BlockHeight) bool {
+func isDepositConfirmed(channelState *NettingChannelState, blockNumber common.BlockHeight) bool {
 	if len(channelState.DepositTransactionQueue) == 0 {
 		return false
 	}
@@ -58,8 +58,8 @@ func isDepositConfirmed(channelState *NettingChannelState, blockNumber typing.Bl
 	return result
 }
 
-func IsTransactionConfirmed(transactionBlockHeight typing.BlockHeight, blockchainBlockHeight typing.BlockHeight) bool {
-	confirmationBlock := transactionBlockHeight + (typing.BlockHeight)(utils.DefaultNumberOfConfirmationsBlock)
+func IsTransactionConfirmed(transactionBlockHeight common.BlockHeight, blockchainBlockHeight common.BlockHeight) bool {
+	confirmationBlock := transactionBlockHeight + (common.BlockHeight)(constants.COUNT_OF_CONFIRM_BLOCK)
 	return blockchainBlockHeight > confirmationBlock
 }
 
@@ -68,7 +68,7 @@ func IsBalanceProofSafeForOnchainOperations(balanceProof *BalanceProofSignedStat
 	return totalAmount <= math.MaxUint64
 }
 
-func IsValidAmount(endState *NettingChannelEndState, amount typing.TokenAmount) bool {
+func IsValidAmount(endState *NettingChannelEndState, amount common.TokenAmount) bool {
 	balanceProofData := getCurrentBalanceproof(endState)
 	currentTransferredAmount := balanceProofData.transferredAmount
 	currentLockedAmount := balanceProofData.lockedAmount
@@ -78,37 +78,37 @@ func IsValidAmount(endState *NettingChannelEndState, amount typing.TokenAmount) 
 	return transferredAmountAfterUnlock <= math.MaxUint64
 }
 
-func IsValidSignature(balanceProof *BalanceProofSignedState, senderAddress typing.Address) (bool, string) {
+func IsValidSignature(balanceProof *BalanceProofSignedState, senderAddress common.Address) (bool, string) {
 
 	//[TODO] find similar ONT function for
 	// to_canonical_address(eth_recover(data=data_that_was_signed, signature=balance_proof.signature))
-	var signerAddress typing.Address
+	var signerAddress common.Address
 
 	balanceHash := HashBalanceData(
 		balanceProof.TransferredAmount,
 		balanceProof.LockedAmount,
 		balanceProof.LocksRoot)
 
-	dataThatWasSigned := PackBalanceProof(typing.Nonce(balanceProof.Nonce), balanceHash, typing.AdditionalHash(balanceProof.MessageHash[:]),
-		balanceProof.ChannelIdentifier, typing.TokenNetworkAddress(balanceProof.TokenNetworkIdentifier), balanceProof.ChainId, 1)
+	dataThatWasSigned := PackBalanceProof(common.Nonce(balanceProof.Nonce), balanceHash, common.AdditionalHash(balanceProof.MessageHash[:]),
+		balanceProof.ChannelIdentifier, common.TokenNetworkAddress(balanceProof.TokenNetworkIdentifier), balanceProof.ChainId, 1)
 
 	if dataThatWasSigned == nil {
 		return false, string("Signature invalid, could not be recovered")
 	}
 
-	pubKey, err := utils.GetPublicKey(balanceProof.PublicKey)
+	pubKey, err := common.GetPublicKey(balanceProof.PublicKey)
 	if err != nil {
 		return false, string("Failed to get public key from balance proof")
 	}
 
-	err = utils.VerifySignature(pubKey, dataThatWasSigned, balanceProof.Signature)
+	err = common.VerifySignature(pubKey, dataThatWasSigned, balanceProof.Signature)
 	if err != nil {
 		return false, string("Signature invalid, could not be recovered")
 	}
 
-	signerAddress = utils.GetAddressFromPubKey(pubKey)
+	signerAddress = common.GetAddressFromPubKey(pubKey)
 
-	if typing.AddressEqual(senderAddress, signerAddress) == true {
+	if common.AddressEqual(senderAddress, signerAddress) == true {
 		return true, "success"
 	} else {
 		return false, string("Signature was valid but the expected address does not match.")
@@ -134,7 +134,7 @@ func IsBalanceProofUsableOnchain(
 		msg := fmt.Sprintf("channel_identifier does not match. expected:%d got:%d",
 			channelState.Identifier, receivedBalanceProof.ChannelIdentifier)
 		return false, msg
-	} else if typing.AddressEqual(typing.Address(receivedBalanceProof.TokenNetworkIdentifier), typing.Address(channelState.TokenNetworkIdentifier)) == false {
+	} else if common.AddressEqual(common.Address(receivedBalanceProof.TokenNetworkIdentifier), common.Address(channelState.TokenNetworkIdentifier)) == false {
 		msg := fmt.Sprintf("token_network_identifier does not match. expected:%d got:%d",
 			channelState.TokenNetworkIdentifier, receivedBalanceProof.TokenNetworkIdentifier)
 		return false, msg
@@ -205,17 +205,17 @@ func IsValidDirecttransfer(directTransfer *ReceiveTransferDirect, channelState *
 	}
 }
 
-func getAmountLocked(end_state *NettingChannelEndState) typing.Balance {
-	var totalPending, totalUnclaimed, totalUnclaimedOnchain typing.TokenAmount
+func getAmountLocked(end_state *NettingChannelEndState) common.Balance {
+	var totalPending, totalUnclaimed, totalUnclaimedOnchain common.TokenAmount
 
-	var result typing.Balance
-	result = (typing.Balance)(totalPending + totalUnclaimed + totalUnclaimedOnchain)
+	var result common.Balance
+	result = (common.Balance)(totalPending + totalUnclaimed + totalUnclaimedOnchain)
 	return result
 }
 
-func getBalance(sender *NettingChannelEndState, receiver *NettingChannelEndState) typing.Balance {
+func getBalance(sender *NettingChannelEndState, receiver *NettingChannelEndState) common.Balance {
 
-	var senderTransferredAmount, receiverTransferredAmount typing.TokenAmount
+	var senderTransferredAmount, receiverTransferredAmount common.TokenAmount
 
 	if sender.BalanceProof != nil {
 		senderTransferredAmount = sender.BalanceProof.TransferredAmount
@@ -226,24 +226,24 @@ func getBalance(sender *NettingChannelEndState, receiver *NettingChannelEndState
 	}
 
 	result := sender.ContractBalance - senderTransferredAmount + receiverTransferredAmount
-	return (typing.Balance)(result)
+	return (common.Balance)(result)
 
 }
 
 func getCurrentBalanceproof(endState *NettingChannelEndState) BalanceProofData {
-	var locksroot typing.Locksroot
-	var nonce typing.Nonce
-	var transferredAmount, lockedAmount typing.TokenAmount
+	var locksroot common.Locksroot
+	var nonce common.Nonce
+	var transferredAmount, lockedAmount common.TokenAmount
 
 	balanceProof := endState.BalanceProof
 
 	if balanceProof != nil {
 		locksroot = balanceProof.LocksRoot
-		nonce = (typing.Nonce)(balanceProof.Nonce)
+		nonce = (common.Nonce)(balanceProof.Nonce)
 		transferredAmount = balanceProof.TransferredAmount
-		lockedAmount = (typing.TokenAmount)(getAmountLocked(endState))
+		lockedAmount = (common.TokenAmount)(getAmountLocked(endState))
 	} else {
-		locksroot = typing.Locksroot{}
+		locksroot = common.Locksroot{}
 		nonce = 0
 		transferredAmount = 0
 		lockedAmount = 0
@@ -252,7 +252,7 @@ func getCurrentBalanceproof(endState *NettingChannelEndState) BalanceProofData {
 	return BalanceProofData{locksroot, nonce, transferredAmount, lockedAmount}
 }
 
-func getDistributable(sender *NettingChannelEndState, receiver *NettingChannelEndState) typing.TokenAmount {
+func getDistributable(sender *NettingChannelEndState, receiver *NettingChannelEndState) common.TokenAmount {
 	balanceProofData := getCurrentBalanceproof(sender)
 
 	transferredAmount := balanceProofData.transferredAmount
@@ -266,18 +266,18 @@ func getDistributable(sender *NettingChannelEndState, receiver *NettingChannelEn
 	)
 
 	result := Min(overflowLimit, (uint64)(distributable))
-	return (typing.TokenAmount)(result)
+	return (common.TokenAmount)(result)
 }
 
-func get_next_nonce(endState *NettingChannelEndState) typing.Nonce {
+func get_next_nonce(endState *NettingChannelEndState) common.Nonce {
 	if endState.BalanceProof != nil {
-		return (typing.Nonce)(endState.BalanceProof.Nonce + 1)
+		return (common.Nonce)(endState.BalanceProof.Nonce + 1)
 	}
 
 	return 1
 }
 
-func getNextNonce(endState *NettingChannelEndState) typing.Nonce {
+func getNextNonce(endState *NettingChannelEndState) common.Nonce {
 	if endState.BalanceProof != nil {
 		return endState.BalanceProof.Nonce + 1
 	}
@@ -330,7 +330,7 @@ func GetStatus(channelState *NettingChannelState) string {
 	return result
 }
 
-func setClosed(channelState *NettingChannelState, blockNumber typing.BlockHeight) {
+func setClosed(channelState *NettingChannelState, blockNumber common.BlockHeight) {
 	if channelState.CloseTransaction == nil {
 		channelState.CloseTransaction = &TransactionExecutionStatus{
 			0,
@@ -342,7 +342,7 @@ func setClosed(channelState *NettingChannelState, blockNumber typing.BlockHeight
 	}
 }
 
-func setSettled(channelState *NettingChannelState, blockNumber typing.BlockHeight) {
+func setSettled(channelState *NettingChannelState, blockNumber common.BlockHeight) {
 	if channelState.SettleTransaction == nil {
 		channelState.SettleTransaction = &TransactionExecutionStatus{
 			0,
@@ -354,29 +354,29 @@ func setSettled(channelState *NettingChannelState, blockNumber typing.BlockHeigh
 	}
 }
 
-func updateContractBalance(endState *NettingChannelEndState, contractBalance typing.Balance) {
-	if contractBalance > (typing.Balance)(endState.ContractBalance) {
-		endState.ContractBalance = (typing.TokenAmount)(contractBalance)
+func updateContractBalance(endState *NettingChannelEndState, contractBalance common.Balance) {
+	if contractBalance > (common.Balance)(endState.ContractBalance) {
+		endState.ContractBalance = (common.TokenAmount)(contractBalance)
 	}
 }
 
-func computeMerkletreeWith(merkletree *MerkleTreeState, lockhash typing.LockHash) *MerkleTreeState {
+func computeMerkletreeWith(merkletree *MerkleTreeState, lockhash common.LockHash) *MerkleTreeState {
 	var result *MerkleTreeState
 
 	leaves := merkletree.Layers[0]
 	found := false
 	for i := 0; i < len(leaves); i++ {
-		temp := typing.Keccak256(lockhash)
-		if typing.Keccak256Compare(&leaves[i], &temp) == 0 {
+		temp := common.Keccak256(lockhash)
+		if common.Keccak256Compare(&leaves[i], &temp) == 0 {
 			found = true
 			break
 		}
 	}
 
 	if found == false {
-		newLeaves := make([]typing.Keccak256, len(leaves)+1)
+		newLeaves := make([]common.Keccak256, len(leaves)+1)
 		copy(newLeaves, newLeaves)
-		newLeaves = append(newLeaves, typing.Keccak256(lockhash))
+		newLeaves = append(newLeaves, common.Keccak256(lockhash))
 
 		newLayers := computeLayers(newLeaves)
 		result = new(MerkleTreeState)
@@ -386,22 +386,22 @@ func computeMerkletreeWith(merkletree *MerkleTreeState, lockhash typing.LockHash
 	return result
 }
 
-func computeMerkletreeWithout(merkletree *MerkleTreeState, lockhash typing.LockHash) *MerkleTreeState {
+func computeMerkletreeWithout(merkletree *MerkleTreeState, lockhash common.LockHash) *MerkleTreeState {
 	var result *MerkleTreeState
 	var i int
 
 	leaves := merkletree.Layers[0]
 	found := false
 	for i = 0; i < len(leaves); i++ {
-		temp := typing.Keccak256(lockhash)
-		if typing.Keccak256Compare(&leaves[i], &temp) == 0 {
+		temp := common.Keccak256(lockhash)
+		if common.Keccak256Compare(&leaves[i], &temp) == 0 {
 			found = true
 			break
 		}
 	}
 
 	if found == false {
-		newLeaves := []typing.Keccak256{}
+		newLeaves := []common.Keccak256{}
 		newLeaves = append(newLeaves, leaves[0:i]...)
 		if i+1 < len(leaves) {
 			newLeaves = append(newLeaves, leaves[i+1:]...)
@@ -421,13 +421,13 @@ func computeMerkletreeWithout(merkletree *MerkleTreeState, lockhash typing.LockH
 	return result
 }
 
-func createSendDirectTransfer(channelState *NettingChannelState, amount typing.PaymentAmount,
-	messageIdentifier typing.MessageID, paymentIdentifier typing.PaymentID) *SendDirectTransfer {
+func createSendDirectTransfer(channelState *NettingChannelState, amount common.PaymentAmount,
+	messageIdentifier common.MessageID, paymentIdentifier common.PaymentID) *SendDirectTransfer {
 
 	ourState := channelState.OurState
 	partnerState := channelState.PartnerState
 
-	if typing.TokenAmount(amount) > getDistributable(ourState, partnerState) {
+	if common.TokenAmount(amount) > getDistributable(ourState, partnerState) {
 		return nil
 	}
 
@@ -437,15 +437,15 @@ func createSendDirectTransfer(channelState *NettingChannelState, amount typing.P
 
 	ourBalanceProof := channelState.OurState.BalanceProof
 
-	var transferAmount typing.TokenAmount
-	var locksroot typing.Locksroot
+	var transferAmount common.TokenAmount
+	var locksroot common.Locksroot
 
 	if ourBalanceProof != nil {
-		transferAmount = typing.TokenAmount(amount) + ourBalanceProof.TransferredAmount
+		transferAmount = common.TokenAmount(amount) + ourBalanceProof.TransferredAmount
 		locksroot = ourBalanceProof.LocksRoot
 	} else {
-		transferAmount = typing.TokenAmount(amount)
-		locksroot = typing.Locksroot{}
+		transferAmount = common.TokenAmount(amount)
+		locksroot = common.Locksroot{}
 	}
 
 	nonce := getNextNonce(ourState)
@@ -455,21 +455,21 @@ func createSendDirectTransfer(channelState *NettingChannelState, amount typing.P
 	balanceProof := &BalanceProofUnsignedState{
 		nonce,
 		transferAmount,
-		typing.TokenAmount(lockedAmount),
+		common.TokenAmount(lockedAmount),
 		locksroot,
 		channelState.TokenNetworkIdentifier,
 		channelState.Identifier,
 		channelState.ChainId}
 
 	sendDirectTransfer := SendDirectTransfer{
-		SendMessageEvent{typing.Address(recipient), channelState.Identifier, messageIdentifier},
-		paymentIdentifier, balanceProof, typing.TokenAddress(channelState.TokenAddress)}
+		SendMessageEvent{common.Address(recipient), channelState.Identifier, messageIdentifier},
+		paymentIdentifier, balanceProof, common.TokenAddress(channelState.TokenAddress)}
 
 	return &sendDirectTransfer
 }
 
-func sendDirectTransfer(channelState *NettingChannelState, amount typing.PaymentAmount,
-	messageIdentifier typing.MessageID, paymentIdentifier typing.PaymentID) *SendDirectTransfer {
+func sendDirectTransfer(channelState *NettingChannelState, amount common.PaymentAmount,
+	messageIdentifier common.MessageID, paymentIdentifier common.PaymentID) *SendDirectTransfer {
 
 	directTransfer := createSendDirectTransfer(
 		channelState,
@@ -492,7 +492,7 @@ func sendDirectTransfer(channelState *NettingChannelState, amount typing.Payment
 	return directTransfer
 }
 
-func EventsForClose(channelState *NettingChannelState, blockNumber typing.BlockHeight) *list.List {
+func EventsForClose(channelState *NettingChannelState, blockNumber common.BlockHeight) *list.List {
 	events := list.New()
 
 	status := GetStatus(channelState)
@@ -501,7 +501,7 @@ func EventsForClose(channelState *NettingChannelState, blockNumber typing.BlockH
 			blockNumber, 0, ""}
 
 		closeEvent := &ContractSendChannelClose{ContractSendEvent{},
-			channelState.Identifier, typing.TokenAddress(channelState.TokenAddress),
+			channelState.Identifier, common.TokenAddress(channelState.TokenAddress),
 			channelState.TokenNetworkIdentifier, channelState.PartnerState.BalanceProof}
 
 		events.PushBack(closeEvent)
@@ -515,7 +515,7 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 
 	events := list.New()
 
-	amount := typing.TokenAmount(stateChange.Amount)
+	amount := common.TokenAmount(stateChange.Amount)
 	paymentIdentifier := stateChange.PaymentIdentifier
 	targetAddress := stateChange.ReceiverAddress
 	distributableAmount := getDistributable(channelState.OurState, channelState.PartnerState)
@@ -543,20 +543,20 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 
 	if isOpen && isValid && canPay {
 		messageIdentifier := GetMsgID()
-		directTransfer := sendDirectTransfer(channelState, typing.PaymentAmount(amount), messageIdentifier, paymentIdentifier)
+		directTransfer := sendDirectTransfer(channelState, common.PaymentAmount(amount), messageIdentifier, paymentIdentifier)
 		events.PushBack(directTransfer)
 	} else {
 		if isOpen == false {
 			failure := &EventPaymentSentFailed{channelState.PaymentNetworkIdentifier,
 				channelState.TokenNetworkIdentifier, paymentIdentifier,
-				typing.Address(targetAddress), "Channel is not opened"}
+				common.Address(targetAddress), "Channel is not opened"}
 
 			events.PushBack(failure)
 		} else if isValid == false {
 			msg := fmt.Sprintf("Payment amount is invalid. Transfer %d", amount)
 			failure := &EventPaymentSentFailed{channelState.PaymentNetworkIdentifier,
 				channelState.TokenNetworkIdentifier, paymentIdentifier,
-				typing.Address(targetAddress), msg}
+				common.Address(targetAddress), msg}
 
 			events.PushBack(failure)
 		} else if canPay == false {
@@ -565,7 +565,7 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 
 			failure := &EventPaymentSentFailed{channelState.PaymentNetworkIdentifier,
 				channelState.TokenNetworkIdentifier, paymentIdentifier,
-				typing.Address(targetAddress), msg}
+				common.Address(targetAddress), msg}
 
 			events.PushBack(failure)
 		}
@@ -575,7 +575,7 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 }
 
 func handleActionClose(channelState *NettingChannelState, close *ActionChannelClose,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 
 	events := EventsForClose(channelState, blockNumber)
 	return TransitionResult{channelState, events}
@@ -602,10 +602,10 @@ func handleReceiveDirecttransfer(channelState *NettingChannelState,
 			channelState.TokenNetworkIdentifier,
 			directTransfer.PaymentIdentifier,
 			transferAmount,
-			typing.InitiatorAddress(channelState.PartnerState.Address)}
+			common.InitiatorAddress(channelState.PartnerState.Address)}
 
 		sendProcessed := new(SendProcessed)
-		sendProcessed.Recipient = typing.Address(directTransfer.BalanceProof.Sender)
+		sendProcessed.Recipient = common.Address(directTransfer.BalanceProof.Sender)
 		sendProcessed.ChannelIdentifier = 0
 		sendProcessed.MessageIdentifier = directTransfer.MessageIdentifier
 
@@ -623,7 +623,7 @@ func handleReceiveDirecttransfer(channelState *NettingChannelState,
 }
 
 func handleBlock(channelState *NettingChannelState, stateChange *Block,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 
 	events := list.New()
 
@@ -636,7 +636,7 @@ func handleBlock(channelState *NettingChannelState, stateChange *Block,
 				stateChange.BlockHeight, 0, ""}
 
 			event := &ContractSendChannelSettle{ContractSendEvent{}, channelState.Identifier,
-				typing.TokenNetworkAddress(channelState.TokenNetworkIdentifier)}
+				common.TokenNetworkAddress(channelState.TokenNetworkIdentifier)}
 
 			events.PushBack(event)
 		}
@@ -668,7 +668,7 @@ func handleChannelClosed(channelState *NettingChannelState, stateChange *Contrac
 		balanceProof := channelState.PartnerState.BalanceProof
 		callUpdate := false
 
-		if typing.AddressEqual(stateChange.TransactionFrom, channelState.OurState.Address) == false &&
+		if common.AddressEqual(stateChange.TransactionFrom, channelState.OurState.Address) == false &&
 			balanceProof != nil && channelState.UpdateTransaction == nil {
 			callUpdate = true
 		}
@@ -676,7 +676,7 @@ func handleChannelClosed(channelState *NettingChannelState, stateChange *Contrac
 		if callUpdate {
 			expiration := stateChange.BlockHeight + channelState.SettleTimeout
 			update := &ContractSendChannelUpdateTransfer{
-				ContractSendExpirableEvent{ContractSendEvent{}, typing.BlockExpiration(expiration)},
+				ContractSendExpirableEvent{ContractSendEvent{}, common.BlockExpiration(expiration)},
 				channelState.Identifier, channelState.TokenNetworkIdentifier, balanceProof}
 
 			channelState.UpdateTransaction = &TransactionExecutionStatus{stateChange.BlockHeight,
@@ -691,7 +691,7 @@ func handleChannelClosed(channelState *NettingChannelState, stateChange *Contrac
 
 func handleChannelUpdatedTransfer(channelState *NettingChannelState,
 	stateChange *ContractReceiveUpdateTransfer,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 
 	if stateChange.ChannelIdentifier == channelState.Identifier {
 		channelState.UpdateTransaction = &TransactionExecutionStatus{
@@ -703,7 +703,7 @@ func handleChannelUpdatedTransfer(channelState *NettingChannelState,
 
 func handleChannelSettled(channelState *NettingChannelState,
 	stateChange *ContractReceiveChannelSettled,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 
 	events := list.New()
 
@@ -714,12 +714,12 @@ func handleChannelSettled(channelState *NettingChannelState,
 			isSettlePending = true
 		}
 
-		merkleTreeLeaves := []typing.Keccak256{}
+		merkleTreeLeaves := []common.Keccak256{}
 
 		//[TODO] support getBatchUnlock when support unlock
 		if isSettlePending == false && merkleTreeLeaves != nil && len(merkleTreeLeaves) != 0 {
 			onChainUnlock := &ContractSendChannelBatchUnlock{
-				ContractSendEvent{}, typing.TokenAddress(channelState.TokenAddress),
+				ContractSendEvent{}, common.TokenAddress(channelState.TokenAddress),
 				channelState.TokenNetworkIdentifier, channelState.Identifier,
 				channelState.PartnerState.Address}
 
@@ -738,7 +738,7 @@ func handleChannelSettled(channelState *NettingChannelState,
 
 func handleChannelNewbalance(channelState *NettingChannelState,
 	stateChange *ContractReceiveChannelNewBalance,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 
 	depositTransaction := stateChange.DepositTransaction
 
@@ -757,17 +757,17 @@ func applyChannelNewbalance(channelState *NettingChannelState,
 	participantAddress := depositTransaction.ParticipantAddress
 	contractBalance := depositTransaction.ContractBalance
 
-	if typing.AddressEqual(participantAddress, channelState.OurState.Address) {
-		updateContractBalance(channelState.OurState, typing.Balance(contractBalance))
-	} else if typing.AddressEqual(participantAddress, channelState.PartnerState.Address) {
-		updateContractBalance(channelState.PartnerState, typing.Balance(contractBalance))
+	if common.AddressEqual(participantAddress, channelState.OurState.Address) {
+		updateContractBalance(channelState.OurState, common.Balance(contractBalance))
+	} else if common.AddressEqual(participantAddress, channelState.PartnerState.Address) {
+		updateContractBalance(channelState.PartnerState, common.Balance(contractBalance))
 	}
 
 	return
 }
 
 func StateTransitionForChannel(channelState *NettingChannelState, stateChange StateChange,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 
 	events := list.New()
 	iteration := TransitionResult{channelState, events}

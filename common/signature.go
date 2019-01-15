@@ -1,4 +1,4 @@
-package utils
+package common
 
 import (
 	"errors"
@@ -7,7 +7,6 @@ import (
 	"github.com/oniio/oniChain/core/types"
 	"github.com/oniio/oniChain/crypto/keypair"
 	s "github.com/oniio/oniChain/crypto/signature"
-	"github.com/oniio/oniChannel/typing"
 )
 
 func VerifySignature(pubKey keypair.PublicKey, data []byte, signature []byte) error {
@@ -23,10 +22,10 @@ func VerifySignature(pubKey keypair.PublicKey, data []byte, signature []byte) er
 	return nil
 }
 
-func GetAddressFromPubKey(pubKey keypair.PublicKey) typing.Address {
+func GetAddressFromPubKey(pubKey keypair.PublicKey) Address {
 	address := types.AddressFromPubKey(pubKey)
 
-	return typing.Address(address)
+	return Address(address)
 }
 
 func GetPublicKey(pubKeyBuf []byte) (keypair.PublicKey, error) {

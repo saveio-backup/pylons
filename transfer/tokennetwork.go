@@ -4,11 +4,11 @@ import (
 	"container/list"
 	"reflect"
 
-	"github.com/oniio/oniChannel/typing"
+	"github.com/oniio/oniChannel/common"
 )
 
-func GetChannelIdentifier(stateChange StateChange) typing.ChannelID {
-	var result typing.ChannelID
+func GetChannelIdentifier(stateChange StateChange) common.ChannelID {
+	var result common.ChannelID
 
 	switch stateChange.(type) {
 	case *ActionChannelClose:
@@ -31,9 +31,9 @@ func GetChannelIdentifier(stateChange StateChange) typing.ChannelID {
 	return result
 }
 
-func GetSenderAndMessageIdentifier(stateChange StateChange) (typing.Address, typing.MessageID) {
-	var sender typing.Address
-	var messgeId typing.MessageID
+func GetSenderAndMessageIdentifier(stateChange StateChange) (common.Address, common.MessageID) {
+	var sender common.Address
+	var messgeId common.MessageID
 
 	switch stateChange.(type) {
 	case *ReceiveTransferDirect:
@@ -114,7 +114,7 @@ func GetContractReceiveStateChange(stateChange StateChange) *ContractReceiveStat
 }
 
 func subdispatchToChannelById(tokenNetworkState *TokenNetworkState,
-	stateChange StateChange, blockNumber typing.BlockHeight) TransitionResult {
+	stateChange StateChange, blockNumber common.BlockHeight) TransitionResult {
 
 	events := list.New()
 
@@ -130,7 +130,7 @@ func subdispatchToChannelById(tokenNetworkState *TokenNetworkState,
 			blockNumber)
 
 		if tokenNetworkState.partnerAddressesToChannels[channelState.PartnerState.Address] == nil {
-			tokenNetworkState.partnerAddressesToChannels[channelState.PartnerState.Address] = make(map[typing.ChannelID]*NettingChannelState)
+			tokenNetworkState.partnerAddressesToChannels[channelState.PartnerState.Address] = make(map[common.ChannelID]*NettingChannelState)
 		}
 		partnerToChannels := tokenNetworkState.partnerAddressesToChannels[channelState.PartnerState.Address]
 
@@ -149,7 +149,7 @@ func subdispatchToChannelById(tokenNetworkState *TokenNetworkState,
 
 func handleChannelClose(tokenNetworkState *TokenNetworkState,
 	stateChange StateChange,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 	return subdispatchToChannelById(
 		tokenNetworkState,
 		stateChange,
@@ -175,7 +175,7 @@ func handleChannelNew(tokenNetworkState *TokenNetworkState,
 
 		_, ok := tokenNetworkState.partnerAddressesToChannels[partnerAddress]
 		if ok == false {
-			tokenNetworkState.partnerAddressesToChannels[partnerAddress] = make(map[typing.ChannelID]*NettingChannelState)
+			tokenNetworkState.partnerAddressesToChannels[partnerAddress] = make(map[common.ChannelID]*NettingChannelState)
 		}
 
 		tokenNetworkState.partnerAddressesToChannels[partnerAddress][channelIdentifier] = channelState
@@ -187,7 +187,7 @@ func handleChannelNew(tokenNetworkState *TokenNetworkState,
 
 func handleBalance(tokenNetworkState *TokenNetworkState,
 	stateChange StateChange,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 	return subdispatchToChannelById(
 		tokenNetworkState,
 		stateChange,
@@ -196,7 +196,7 @@ func handleBalance(tokenNetworkState *TokenNetworkState,
 
 func handleClosed(tokenNetworkState *TokenNetworkState,
 	stateChange StateChange,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 
 	//[TODO] remove channel from TokenNetworkGraphState when support routing
 	return subdispatchToChannelById(
@@ -207,7 +207,7 @@ func handleClosed(tokenNetworkState *TokenNetworkState,
 
 func handleSettled(tokenNetworkState *TokenNetworkState,
 	stateChange StateChange,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 
 	return subdispatchToChannelById(
 		tokenNetworkState,
@@ -217,7 +217,7 @@ func handleSettled(tokenNetworkState *TokenNetworkState,
 
 func handleUpdatedTransfer(tokenNetworkState *TokenNetworkState,
 	stateChange StateChange,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 
 	return subdispatchToChannelById(
 		tokenNetworkState,
@@ -225,9 +225,9 @@ func handleUpdatedTransfer(tokenNetworkState *TokenNetworkState,
 		blockNumber)
 }
 
-func handleActionTransferDirect(paymentNetworkIdentifier typing.PaymentNetworkID,
+func handleActionTransferDirect(paymentNetworkIdentifier common.PaymentNetworkID,
 	tokenNetworkState *TokenNetworkState, stateChange *ActionTransferDirect,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 
 	events := list.New()
 
@@ -249,7 +249,7 @@ func handleActionTransferDirect(paymentNetworkIdentifier typing.PaymentNetworkID
 			paymentNetworkIdentifier,
 			stateChange.TokenNetworkIdentifier,
 			stateChange.PaymentIdentifier,
-			typing.Address(receiverAddress),
+			common.Address(receiverAddress),
 			"Unknown partner channel"}
 
 		events.PushBack(failure)
@@ -260,7 +260,7 @@ func handleActionTransferDirect(paymentNetworkIdentifier typing.PaymentNetworkID
 
 func handleReceiveTransferDirect(tokenNetworkState *TokenNetworkState,
 	stateChange *ReceiveTransferDirect,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 
 	events := list.New()
 
@@ -276,9 +276,9 @@ func handleReceiveTransferDirect(tokenNetworkState *TokenNetworkState,
 	return TransitionResult{tokenNetworkState, events}
 }
 
-func stateTransitionForNetwork(paymentNetworkIdentifier typing.PaymentNetworkID,
+func stateTransitionForNetwork(paymentNetworkIdentifier common.PaymentNetworkID,
 	tokenNetworkState *TokenNetworkState, stateChange StateChange,
-	blockNumber typing.BlockHeight) TransitionResult {
+	blockNumber common.BlockHeight) TransitionResult {
 
 	iteration := TransitionResult{}
 

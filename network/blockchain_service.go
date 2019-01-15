@@ -6,15 +6,14 @@ import (
 	chainsdk "github.com/oniio/oniChain-go-sdk"
 	chnsdk "github.com/oniio/oniChain-go-sdk/channel"
 	"github.com/oniio/oniChain/account"
-	"github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChain/core/types"
+	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/network/proxies"
-	"github.com/oniio/oniChannel/typing"
 )
 
 type BlockchainService struct {
-	Address       typing.Address
+	Address       common.Address
 	Account       *account.Account
 	mutex         sync.Mutex
 	ChainClient   *chainsdk.Chain
@@ -22,7 +21,7 @@ type BlockchainService struct {
 	currentHeight uint32
 
 	tokenNetwork               *proxies.TokenNetwork
-	identifierToPaymentChannel map[typing.ChannelID]*proxies.PaymentChannel
+	identifierToPaymentChannel map[common.ChannelID]*proxies.PaymentChannel
 
 	discoveryCreateLock      sync.Mutex
 	tokenNetworkCreateLock   sync.Mutex
@@ -36,7 +35,7 @@ func NewBlockchainService(clientType string, url string, account *account.Accoun
 	}
 
 	this := &BlockchainService{}
-	this.identifierToPaymentChannel = make(map[typing.ChannelID]*proxies.PaymentChannel)
+	this.identifierToPaymentChannel = make(map[common.ChannelID]*proxies.PaymentChannel)
 
 	this.ChainClient = chainsdk.NewChain()
 	switch clientType {
@@ -64,7 +63,7 @@ func NewBlockchainService(clientType string, url string, account *account.Accoun
 	this.ChannelClient = this.ChainClient.Native.Channel
 	log.Info("blockchain service link to", url)
 	this.currentHeight, _ = this.BlockHeight()
-	this.Address = typing.Address(account.Address)
+	this.Address = common.Address(account.Address)
 	return this
 }
 
@@ -99,14 +98,13 @@ func (this *BlockchainService) GetBlock(param interface{}) (*types.Block, error)
 	default:
 		return nil, nil
 	}
-	return nil, nil
 }
 
 func (this *BlockchainService) SecretRegistry(address common.Address) {
 
 }
 
-func (this *BlockchainService) NewTokenNetwork(address typing.Address) *proxies.TokenNetwork {
+func (this *BlockchainService) NewTokenNetwork(address common.Address) *proxies.TokenNetwork {
 	this.tokenNetworkCreateLock.Lock()
 	defer this.tokenNetworkCreateLock.Unlock()
 
@@ -118,8 +116,8 @@ func (this *BlockchainService) NewTokenNetwork(address typing.Address) *proxies.
 	return this.tokenNetwork
 }
 
-func (this *BlockchainService) PaymentChannel(tokenNetworkAddress typing.Address,
-	channelId typing.ChannelID, args map[string]interface{}) *proxies.PaymentChannel {
+func (this *BlockchainService) PaymentChannel(tokenNetworkAddress common.Address,
+	channelId common.ChannelID, args map[string]interface{}) *proxies.PaymentChannel {
 
 	this.paymentChannelCreateLock.Lock()
 	defer this.paymentChannelCreateLock.Unlock()

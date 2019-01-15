@@ -4,10 +4,10 @@ import (
 	sdkutils "github.com/oniio/oniChain-go-sdk/utils"
 	"github.com/oniio/oniChain/crypto/keypair"
 
+	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/network/transport/messages"
 	"github.com/oniio/oniChannel/storage"
 	"github.com/oniio/oniChannel/transfer"
-	"github.com/oniio/oniChannel/typing"
 )
 
 type ChannelEventHandler struct {
@@ -54,7 +54,7 @@ func (self ChannelEventHandler) HandleSendDirecttransfer(channel *ChannelService
 		}
 
 		queueId := &transfer.QueueIdentifier{
-			Recipient:         typing.Address(sendDirectTransfer.Recipient),
+			Recipient:         common.Address(sendDirectTransfer.Recipient),
 			ChannelIdentifier: sendDirectTransfer.ChannelIdentifier,
 		}
 
@@ -73,7 +73,7 @@ func (self ChannelEventHandler) HandleSendProcessed(channel *ChannelService, pro
 		}
 
 		queueId := &transfer.QueueIdentifier{
-			Recipient:         typing.Address(processedEvent.Recipient),
+			Recipient:         common.Address(processedEvent.Recipient),
 			ChannelIdentifier: processedEvent.ChannelIdentifier,
 		}
 
@@ -84,7 +84,7 @@ func (self ChannelEventHandler) HandleSendProcessed(channel *ChannelService, pro
 }
 
 func (self ChannelEventHandler) HandlePaymentSentSuccess(channel *ChannelService, paymentSentSuccessEvent *transfer.EventPaymentSentSuccess) {
-	target := typing.Address(paymentSentSuccessEvent.Target)
+	target := common.Address(paymentSentSuccessEvent.Target)
 	identifier := paymentSentSuccessEvent.Identifier
 
 	paymentStatus, exist := channel.GetPaymentStatus(target, identifier)
@@ -100,7 +100,7 @@ func (self ChannelEventHandler) HandlePaymentSentSuccess(channel *ChannelService
 }
 
 func (self ChannelEventHandler) HandlePaymentSentFailed(channel *ChannelService, paymentSentFailedEvent *transfer.EventPaymentSentFailed) {
-	target := typing.Address(paymentSentFailedEvent.Target)
+	target := common.Address(paymentSentFailedEvent.Target)
 	identifier := paymentSentFailedEvent.Identifier
 
 	paymentStatus, exist := channel.GetPaymentStatus(target, identifier)
@@ -122,11 +122,11 @@ func (self ChannelEventHandler) HandlePaymentReceivedSuccess(channel *ChannelSer
 }
 
 func (self ChannelEventHandler) HandleContractSendChannelClose(channel *ChannelService, channelCloseEvent *transfer.ContractSendChannelClose) {
-	var nonce typing.Nonce
-	var balanceHash typing.BalanceHash
-	var signature typing.Signature
-	var messageHash typing.Keccak256
-	var publicKey typing.PubKey
+	var nonce common.Nonce
+	var balanceHash common.BalanceHash
+	var signature common.Signature
+	var messageHash common.Keccak256
+	var publicKey common.PubKey
 
 	balanceProof := channelCloseEvent.BalanceProof
 
@@ -148,9 +148,9 @@ func (self ChannelEventHandler) HandleContractSendChannelClose(channel *ChannelS
 		panic("error in HandleContractSendChannelClose, cannot get paymentchannel args")
 	}
 
-	channelProxy := channel.chain.PaymentChannel(typing.Address{}, channelCloseEvent.ChannelIdentifier, args)
+	channelProxy := channel.chain.PaymentChannel(common.Address{}, channelCloseEvent.ChannelIdentifier, args)
 
-	channelProxy.Close(nonce, balanceHash, typing.AdditionalHash(messageHash[:]), signature, publicKey)
+	channelProxy.Close(nonce, balanceHash, common.AdditionalHash(messageHash[:]), signature, publicKey)
 }
 
 func (self ChannelEventHandler) HandelContractSendChannelUpdate(channel *ChannelService, channelUpdateEvent *transfer.ContractSendChannelUpdateTransfer) {
@@ -162,7 +162,7 @@ func (self ChannelEventHandler) HandelContractSendChannelUpdate(channel *Channel
 			panic("error in HandleContractSendChannelClose, cannot get paymentchannel args")
 		}
 
-		channelProxy := channel.chain.PaymentChannel(typing.Address{}, channelUpdateEvent.ChannelIdentifier, args)
+		channelProxy := channel.chain.PaymentChannel(common.Address{}, channelUpdateEvent.ChannelIdentifier, args)
 
 		balanceHash := transfer.HashBalanceData(
 			balanceProof.TransferredAmount,
@@ -171,12 +171,12 @@ func (self ChannelEventHandler) HandelContractSendChannelUpdate(channel *Channel
 		)
 
 		nonClosingData := transfer.PackBalanceProofUpdate(
-			balanceProof.Nonce, balanceHash, typing.AdditionalHash(balanceProof.MessageHash[:]),
-			balanceProof.ChannelIdentifier, typing.TokenNetworkAddress(balanceProof.TokenNetworkIdentifier),
+			balanceProof.Nonce, balanceHash, common.AdditionalHash(balanceProof.MessageHash[:]),
+			balanceProof.ChannelIdentifier, common.TokenNetworkAddress(balanceProof.TokenNetworkIdentifier),
 			balanceProof.ChainId, balanceProof.Signature)
 
-		var ourSignature typing.Signature
-		var nonClosePubkey typing.PubKey
+		var ourSignature common.Signature
+		var nonClosePubkey common.PubKey
 
 		ourSignature, err := sdkutils.Sign(channel.Account, nonClosingData)
 		if err != nil {
@@ -186,29 +186,29 @@ func (self ChannelEventHandler) HandelContractSendChannelUpdate(channel *Channel
 		nonClosePubkey = keypair.SerializePublicKey(channel.Account.PubKey())
 
 		channelProxy.UpdateTransfer(
-			balanceProof.Nonce, balanceHash, typing.AdditionalHash(balanceProof.MessageHash[:]),
+			balanceProof.Nonce, balanceHash, common.AdditionalHash(balanceProof.MessageHash[:]),
 			balanceProof.Signature, ourSignature,
 			balanceProof.PublicKey, nonClosePubkey)
 	}
 }
 
 func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *ChannelService, channelSettleEvent *transfer.ContractSendChannelSettle) {
-	var ourTransferredAmount typing.TokenAmount
-	var ourLockedAmount typing.TokenAmount
-	var ourLocksroot typing.Locksroot
-	var partnerTransferredAmount typing.TokenAmount
-	var partnerLockedAmount typing.TokenAmount
-	var partnerLocksroot typing.Locksroot
+	var ourTransferredAmount common.TokenAmount
+	var ourLockedAmount common.TokenAmount
+	var ourLocksroot common.Locksroot
+	var partnerTransferredAmount common.TokenAmount
+	var partnerLockedAmount common.TokenAmount
+	var partnerLocksroot common.Locksroot
 	var ourBalanceProof *transfer.BalanceProofUnsignedState
 	var partnerBalanceProof *transfer.BalanceProofSignedState
 
-	var chainID typing.ChainID
+	var chainID common.ChainID
 
-	args := channel.GetPaymentChannelArgs(typing.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier), channelSettleEvent.ChannelIdentifier)
+	args := channel.GetPaymentChannelArgs(common.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier), channelSettleEvent.ChannelIdentifier)
 	if args == nil {
 		panic("error in HandleContractSendChannelClose, cannot get paymentchannel args")
 	}
-	channelProxy := channel.chain.PaymentChannel(typing.Address{}, channelSettleEvent.ChannelIdentifier, args)
+	channelProxy := channel.chain.PaymentChannel(common.Address{}, channelSettleEvent.ChannelIdentifier, args)
 
 	participanatsDetails := channelProxy.TokenNetwork.DetailParticipants(channelProxy.Participant1, channelProxy.Participant2, channelSettleEvent.ChannelIdentifier)
 
@@ -220,7 +220,7 @@ func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *Channel
 	ourBalanceHash := participanatsDetails.OurDetails.BalanceHash
 	if len(ourBalanceHash) != 0 {
 		ourBalanceProof = storage.GetLatestKnownBalanceProofFromEvents(
-			channel.Wal.Storage, chainID, typing.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier),
+			channel.Wal.Storage, chainID, common.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier),
 			channelSettleEvent.ChannelIdentifier, ourBalanceHash)
 	}
 
@@ -233,7 +233,7 @@ func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *Channel
 	partnerBalanceHash := participanatsDetails.PartnerDetails.BalanceHash
 	if len(partnerBalanceHash) != 0 {
 		partnerBalanceProof = storage.GetLatestKnownBalanceProofFromStateChanges(
-			channel.Wal.Storage, chainID, typing.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier),
+			channel.Wal.Storage, chainID, common.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier),
 			channelSettleEvent.ChannelIdentifier, partnerBalanceHash, participanatsDetails.PartnerDetails.Address)
 	}
 

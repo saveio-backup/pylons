@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 
-	"github.com/oniio/oniChannel/typing"
+	"github.com/oniio/oniChannel/common"
 )
 
 func BytesToUint64(data []byte) uint64 {
@@ -21,10 +21,10 @@ func Uint64ToBytes(n uint64) []byte {
 	return bytesBuffer.Bytes()
 }
 
-func HashBalanceData(transferredAmount typing.TokenAmount,
-	lockedAmount typing.TokenAmount, locksroot typing.Locksroot) []byte {
+func HashBalanceData(transferredAmount common.TokenAmount,
+	lockedAmount common.TokenAmount, locksroot common.Locksroot) []byte {
 
-	empty := typing.Locksroot{}
+	empty := common.Locksroot{}
 
 	if transferredAmount == 0 && lockedAmount == 0 && compareLocksroot(locksroot, empty) == true {
 		return empty[:]

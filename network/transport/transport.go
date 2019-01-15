@@ -9,9 +9,9 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/network/transport/messages"
 	"github.com/oniio/oniChannel/transfer"
-	"github.com/oniio/oniChannel/typing"
 	"github.com/oniio/oniP2p/crypto"
 	"github.com/oniio/oniP2p/crypto/ed25519"
 	"github.com/oniio/oniP2p/network"
@@ -53,7 +53,7 @@ type ChannelServiceInterface interface {
 
 // for test purpose
 type Discoverer interface {
-	Get(nodeAddress typing.Address) string
+	Get(nodeAddress common.Address) string
 }
 
 type Transport struct {
@@ -231,7 +231,7 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 	return nil
 }
 
-func (this *Transport) GetAddressCacheValue(address typing.Address) string {
+func (this *Transport) GetAddressCacheValue(address common.Address) string {
 	if this.addressToHostPortCache == nil {
 		return ""
 	}
@@ -242,7 +242,7 @@ func (this *Transport) GetAddressCacheValue(address typing.Address) string {
 	return ""
 }
 
-func (this *Transport) SaveAddressCache(address typing.Address, hostPort string) bool {
+func (this *Transport) SaveAddressCache(address common.Address, hostPort string) bool {
 	if this.addressToHostPortCache == nil {
 		var err error
 		this.addressToHostPortCache, err = lru.NewARC(ADDRESS_CACHE_SIZE)
@@ -257,7 +257,7 @@ func (this *Transport) SaveAddressCache(address typing.Address, hostPort string)
 	return true
 }
 
-func (this *Transport) GetHostPortFromAddress(recipient typing.Address) string {
+func (this *Transport) GetHostPortFromAddress(recipient common.Address) string {
 	hostPort := this.GetAddressCacheValue(recipient)
 	if hostPort == "" {
 		// no cache, retrive hostPort from discovery contract
@@ -269,7 +269,7 @@ func (this *Transport) GetHostPortFromAddress(recipient typing.Address) string {
 	return address
 }
 
-func (this *Transport) StartHealthCheck(address typing.Address) {
+func (this *Transport) StartHealthCheck(address common.Address) {
 	// transport not started yet, dont try to connect
 	if this.net == nil {
 		return
@@ -293,7 +293,7 @@ func (this *Transport) StartHealthCheck(address typing.Address) {
 	this.Connect(nodeAddress)
 }
 
-func (this *Transport) SetNodeNetworkState(address typing.Address, state string) {
+func (this *Transport) SetNodeNetworkState(address common.Address, state string) {
 	stateChange := &transfer.ActionChangeNodeNetworkState{
 		NodeAddress:  address,
 		NetworkState: state,
@@ -316,7 +316,7 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 		this.ChannelService.OnMessage(message, from)
 	}
 
-	var address typing.Address
+	var address common.Address
 	var msgID *messages.MessageID
 
 	switch message.(type) {
@@ -397,7 +397,7 @@ func (this *Transport) syncPeerState() {
 			if !ok {
 				continue
 			}
-			this.SetNodeNetworkState(address.(typing.Address), nodeNetworkState)
+			this.SetNodeNetworkState(address.(common.Address), nodeNetworkState)
 		case <-this.kill:
 			break
 		}

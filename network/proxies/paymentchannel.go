@@ -5,31 +5,31 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/oniio/oniChannel/typing"
+	"github.com/oniio/oniChannel/common"
 )
 
 type PaymentChannel struct {
 	TokenNetwork      *TokenNetwork
-	channelIdentifier typing.ChannelID
-	Participant1      typing.Address
-	Participant2      typing.Address
-	openBlockHeight   typing.BlockHeight
-	settleTimeout     typing.BlockHeight
-	closeBlockHeight  typing.BlockHeight
+	channelIdentifier common.ChannelID
+	Participant1      common.Address
+	Participant2      common.Address
+	openBlockHeight   common.BlockHeight
+	settleTimeout     common.BlockHeight
+	closeBlockHeight  common.BlockHeight
 }
 
-func NewPaymentChannel(tokenNetwork *TokenNetwork, channelIdentifier typing.ChannelID, args map[string]interface{}) (*PaymentChannel, error) {
-	var participant1, participant2 typing.Address
+func NewPaymentChannel(tokenNetwork *TokenNetwork, channelIdentifier common.ChannelID, args map[string]interface{}) (*PaymentChannel, error) {
+	var participant1, participant2 common.Address
 
 	//[NOTE] only new opened channel will really execute this function.
 	//existing PaymentChannel for existed channel should be found in BlockchainService
 
 	self := new(PaymentChannel)
 	if v, exist := args["participant1"]; exist {
-		participant1 = v.(typing.Address)
+		participant1 = v.(common.Address)
 	}
 	if v, exist := args["participant2"]; exist {
-		participant2 = v.(typing.Address)
+		participant2 = v.(common.Address)
 	}
 
 	if tokenNetwork.nodeAddress != participant1 && tokenNetwork.nodeAddress != participant2 {
@@ -41,10 +41,10 @@ func NewPaymentChannel(tokenNetwork *TokenNetwork, channelIdentifier typing.Chan
 	}
 
 	if v, exist := args["blockHeight"]; exist {
-		self.openBlockHeight = v.(typing.BlockHeight)
+		self.openBlockHeight = v.(common.BlockHeight)
 	}
 	if v, exist := args["settleTimeout"]; exist {
-		self.settleTimeout = v.(typing.BlockHeight)
+		self.settleTimeout = v.(common.BlockHeight)
 	}
 
 	self.channelIdentifier = channelIdentifier
@@ -56,7 +56,7 @@ func NewPaymentChannel(tokenNetwork *TokenNetwork, channelIdentifier typing.Chan
 	return self, nil
 }
 
-func (self *PaymentChannel) GetChannelId() typing.ChannelID {
+func (self *PaymentChannel) GetChannelId() common.ChannelID {
 	return self.channelIdentifier
 }
 
@@ -66,7 +66,7 @@ func (self *PaymentChannel) LockOrRaise() *sync.Mutex {
 	return opLock
 }
 
-func (self *PaymentChannel) tokenAddress() typing.Address {
+func (self *PaymentChannel) tokenAddress() common.Address {
 	return self.TokenNetwork.TokenAddress()
 }
 
@@ -75,11 +75,11 @@ func (self *PaymentChannel) Detail() *ChannelDetails {
 }
 
 //Should be set when open channel, should NOT get it by filter log
-func (self PaymentChannel) SettleTimeout() typing.BlockHeight {
+func (self PaymentChannel) SettleTimeout() common.BlockHeight {
 	return self.settleTimeout
 }
 
-func (self *PaymentChannel) CloseBlockHeight() typing.BlockHeight {
+func (self *PaymentChannel) CloseBlockHeight() common.BlockHeight {
 
 	//[NOTE] should not care about close block number!
 	// can get it by fitler log if needed
@@ -101,7 +101,7 @@ func (self *PaymentChannel) Settled() bool {
 		self.channelIdentifier)
 }
 
-func (self *PaymentChannel) ClosingAddress() typing.Address {
+func (self *PaymentChannel) ClosingAddress() common.Address {
 	return self.TokenNetwork.ClosingAddress(self.Participant1, self.Participant2,
 		self.channelIdentifier)
 }
@@ -111,7 +111,7 @@ func (self *PaymentChannel) CanTransfer() bool {
 		self.channelIdentifier)
 }
 
-func (self *PaymentChannel) SetTotalDeposit(totalDeposit typing.TokenAmount) {
+func (self *PaymentChannel) SetTotalDeposit(totalDeposit common.TokenAmount) {
 
 	self.TokenNetwork.SetTotalDeposit(self.channelIdentifier, totalDeposit,
 		self.Participant2)
@@ -119,8 +119,8 @@ func (self *PaymentChannel) SetTotalDeposit(totalDeposit typing.TokenAmount) {
 	return
 }
 
-func (self *PaymentChannel) Close(nonce typing.Nonce, balanceHash typing.BalanceHash,
-	additionalHash typing.AdditionalHash, signature typing.Signature, pubKey typing.PubKey) {
+func (self *PaymentChannel) Close(nonce common.Nonce, balanceHash common.BalanceHash,
+	additionalHash common.AdditionalHash, signature common.Signature, pubKey common.PubKey) {
 
 	self.TokenNetwork.Close(self.channelIdentifier, self.Participant2,
 		balanceHash, nonce, additionalHash, signature, pubKey)
@@ -128,9 +128,9 @@ func (self *PaymentChannel) Close(nonce typing.Nonce, balanceHash typing.Balance
 	return
 }
 
-func (self *PaymentChannel) UpdateTransfer(nonce typing.Nonce, balanceHash typing.BalanceHash,
-	additionalHash typing.AdditionalHash, partnerSignature typing.Signature,
-	signature typing.Signature, closePubkey, nonClosePubkey typing.PubKey) {
+func (self *PaymentChannel) UpdateTransfer(nonce common.Nonce, balanceHash common.BalanceHash,
+	additionalHash common.AdditionalHash, partnerSignature common.Signature,
+	signature common.Signature, closePubkey, nonClosePubkey common.PubKey) {
 
 	self.TokenNetwork.updateTransfer(self.channelIdentifier, self.Participant2,
 		balanceHash, nonce, additionalHash, partnerSignature, signature, closePubkey, nonClosePubkey)
@@ -143,8 +143,8 @@ func (self *PaymentChannel) Unlock(merkleTreeLeaves *list.List) {
 	return
 }
 
-func (self *PaymentChannel) Settle(transferredAmount typing.TokenAmount, lockedAmount typing.TokenAmount, locksroot typing.Locksroot,
-	partnerTransferredAmount typing.TokenAmount, partnerLockedAmount typing.TokenAmount, partnerLocksroot typing.Locksroot) {
+func (self *PaymentChannel) Settle(transferredAmount common.TokenAmount, lockedAmount common.TokenAmount, locksroot common.Locksroot,
+	partnerTransferredAmount common.TokenAmount, partnerLockedAmount common.TokenAmount, partnerLocksroot common.Locksroot) {
 
 	self.TokenNetwork.settle(self.channelIdentifier, transferredAmount, lockedAmount,
 		locksroot, self.Participant2, partnerTransferredAmount, partnerLockedAmount, partnerLocksroot)
@@ -153,13 +153,13 @@ func (self *PaymentChannel) Settle(transferredAmount typing.TokenAmount, lockedA
 
 }
 
-func (self *PaymentChannel) GetGasBalance() (typing.TokenAmount, error) {
+func (self *PaymentChannel) GetGasBalance() (common.TokenAmount, error) {
 	return self.TokenNetwork.GetGasBalance()
 }
 
 //Not needed
-func (self PaymentChannel) AllEventsFilter(fromBlock typing.BlockHeight,
-	toBlock typing.BlockHeight) {
+func (self PaymentChannel) AllEventsFilter(fromBlock common.BlockHeight,
+	toBlock common.BlockHeight) {
 
 	return
 }

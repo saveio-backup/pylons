@@ -6,12 +6,12 @@ import (
 	"sort"
 	"time"
 
-	"github.com/oniio/oniChannel/typing"
+	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/utils/jsonext"
 )
 
-type SecretHashToLock map[typing.SecretHash]HashTimeLockState
-type SecretHashToPartialUnlockProof map[typing.SecretHash]UnlockPartialProofState
+type SecretHashToLock map[common.SecretHash]HashTimeLockState
+type SecretHashToPartialUnlockProof map[common.SecretHash]UnlockPartialProofState
 type QueueIdsToQueuesType map[QueueIdentifier][]Event
 
 const ChannelStateClosed string = "closed"
@@ -28,10 +28,10 @@ const NetworkUnknown string = "unknown"
 const NetworkUnreachable string = "unreachable"
 const NetworkReachable string = "reachable"
 
-func GetMsgID() typing.MessageID {
+func GetMsgID() common.MessageID {
 	rand.Seed(time.Now().UnixNano())
 	messageId := rand.Int63n(math.MaxInt64)
-	return typing.MessageID(messageId)
+	return common.MessageID(messageId)
 }
 
 type TransactionOrderHeap []TransactionOrder
@@ -61,27 +61,27 @@ func (h *TransactionOrderHeap) Pop() TransactionOrder {
 }
 
 type InitiatorTask struct {
-	TokenNetworkIdentifier typing.TokenNetworkID
+	TokenNetworkIdentifier common.TokenNetworkID
 	ManagerState           State
 }
 
 type MediatorTask struct {
-	TokenNetworkIdentifier typing.TokenNetworkID
+	TokenNetworkIdentifier common.TokenNetworkID
 	MediatorState          State
 }
 
 type TargetTask struct {
-	TokenNetworkIdentifier typing.TokenNetworkID
-	ChannelIdentifier      typing.ChannelID
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
 	TargetState            State
 }
 
 type ChainState struct {
-	BlockHeight                  typing.BlockHeight
-	ChainId                      typing.ChainID
-	IdentifiersToPaymentnetworks map[typing.PaymentNetworkID]*PaymentNetworkState
-	NodeAddressesToNetworkstates map[typing.Address]string
-	Address                      typing.Address
+	BlockHeight                  common.BlockHeight
+	ChainId                      common.ChainID
+	IdentifiersToPaymentnetworks map[common.PaymentNetworkID]*PaymentNetworkState
+	NodeAddressesToNetworkstates map[common.Address]string
+	Address                      common.Address
 	PaymentMapping               PaymentMappingState
 	PendingTransactions          []Event
 	QueueIdsToQueues             QueueIdsToQueuesType
@@ -90,9 +90,9 @@ type ChainState struct {
 func NewChainState() *ChainState {
 	result := new(ChainState)
 
-	result.IdentifiersToPaymentnetworks = make(map[typing.PaymentNetworkID]*PaymentNetworkState)
-	result.NodeAddressesToNetworkstates = make(map[typing.Address]string)
-	result.PaymentMapping.SecrethashesToTask = make(map[typing.SecretHash]State)
+	result.IdentifiersToPaymentnetworks = make(map[common.PaymentNetworkID]*PaymentNetworkState)
+	result.NodeAddressesToNetworkstates = make(map[common.Address]string)
+	result.PaymentMapping.SecrethashesToTask = make(map[common.SecretHash]State)
 	result.PendingTransactions = []Event{}
 	result.QueueIdsToQueues = make(QueueIdsToQueuesType)
 
@@ -124,20 +124,20 @@ func DeepCopy(src State) *ChainState {
 }
 
 type PaymentNetworkState struct {
-	Address                         typing.PaymentNetworkID
-	TokenIdentifiersToTokenNetworks map[typing.TokenNetworkID]*TokenNetworkState
-	tokenAddressesToTokenNetworks   map[typing.TokenAddress]*TokenNetworkState
+	Address                         common.PaymentNetworkID
+	TokenIdentifiersToTokenNetworks map[common.TokenNetworkID]*TokenNetworkState
+	tokenAddressesToTokenNetworks   map[common.TokenAddress]*TokenNetworkState
 }
 
-func (self *PaymentNetworkState) GetAddress() typing.Address {
-	return typing.Address(self.Address)
+func (self *PaymentNetworkState) GetAddress() common.Address {
+	return common.Address(self.Address)
 }
 
 func NewPaymentNetworkState() *PaymentNetworkState {
 	result := new(PaymentNetworkState)
 
-	result.TokenIdentifiersToTokenNetworks = make(map[typing.TokenNetworkID]*TokenNetworkState)
-	result.tokenAddressesToTokenNetworks = make(map[typing.TokenAddress]*TokenNetworkState)
+	result.TokenIdentifiersToTokenNetworks = make(map[common.TokenNetworkID]*TokenNetworkState)
+	result.tokenAddressesToTokenNetworks = make(map[common.TokenAddress]*TokenNetworkState)
 
 	return result
 }
@@ -145,7 +145,7 @@ func NewPaymentNetworkState() *PaymentNetworkState {
 //Adjust TokenNetworkState in TokenIdentifiersToTokenNetworks
 //rebuild tokenAddressesToTokenNetworks
 func (self *PaymentNetworkState) AdjustPaymentNetworkState() {
-	self.tokenAddressesToTokenNetworks = make(map[typing.TokenAddress]*TokenNetworkState)
+	self.tokenAddressesToTokenNetworks = make(map[common.TokenAddress]*TokenNetworkState)
 
 	for _, v := range self.TokenIdentifiersToTokenNetworks {
 		v.AdjustTokenNetworkState()
@@ -156,31 +156,31 @@ func (self *PaymentNetworkState) AdjustPaymentNetworkState() {
 }
 
 type TokenNetworkState struct {
-	Address                      typing.TokenNetworkID
-	TokenAddress                 typing.TokenAddress
+	Address                      common.TokenNetworkID
+	TokenAddress                 common.TokenAddress
 	NetworkGraph                 *TokenNetworkGraphState
-	ChannelIdentifiersToChannels map[typing.ChannelID]*NettingChannelState
-	partnerAddressesToChannels   map[typing.Address]map[typing.ChannelID]*NettingChannelState
+	ChannelIdentifiersToChannels map[common.ChannelID]*NettingChannelState
+	partnerAddressesToChannels   map[common.Address]map[common.ChannelID]*NettingChannelState
 }
 
 func NewTokenNetworkState() *TokenNetworkState {
 	result := new(TokenNetworkState)
-	result.ChannelIdentifiersToChannels = make(map[typing.ChannelID]*NettingChannelState)
-	result.partnerAddressesToChannels = make(map[typing.Address]map[typing.ChannelID]*NettingChannelState)
+	result.ChannelIdentifiersToChannels = make(map[common.ChannelID]*NettingChannelState)
+	result.partnerAddressesToChannels = make(map[common.Address]map[common.ChannelID]*NettingChannelState)
 
 	return result
 }
 
-func (self *TokenNetworkState) GetTokenAddress() typing.TokenAddress {
+func (self *TokenNetworkState) GetTokenAddress() common.TokenAddress {
 	return self.TokenAddress
 }
 
 //rebuild partnerAddressesToChannels
 func (self *TokenNetworkState) AdjustTokenNetworkState() {
-	self.partnerAddressesToChannels = make(map[typing.Address]map[typing.ChannelID]*NettingChannelState)
+	self.partnerAddressesToChannels = make(map[common.Address]map[common.ChannelID]*NettingChannelState)
 	for _, v := range self.ChannelIdentifiersToChannels {
 		if self.partnerAddressesToChannels[v.PartnerState.Address] == nil {
-			self.partnerAddressesToChannels[v.PartnerState.Address] = make(map[typing.ChannelID]*NettingChannelState)
+			self.partnerAddressesToChannels[v.PartnerState.Address] = make(map[common.ChannelID]*NettingChannelState)
 		}
 		self.partnerAddressesToChannels[v.PartnerState.Address][v.Identifier] = v
 	}
@@ -193,79 +193,79 @@ type TokenNetworkGraphState struct {
 }
 
 type PaymentMappingState struct {
-	SecrethashesToTask map[typing.SecretHash]State
+	SecrethashesToTask map[common.SecretHash]State
 }
 
 type RouteState struct {
-	NodeAddress       typing.Address
-	ChannelIdentifier typing.ChannelID
+	NodeAddress       common.Address
+	ChannelIdentifier common.ChannelID
 }
 
 type BalanceProofUnsignedState struct {
-	Nonce                  typing.Nonce
-	TransferredAmount      typing.TokenAmount
-	LockedAmount           typing.TokenAmount
-	LocksRoot              typing.Locksroot
-	TokenNetworkIdentifier typing.TokenNetworkID
-	ChannelIdentifier      typing.ChannelID
-	ChainId                typing.ChainID
+	Nonce                  common.Nonce
+	TransferredAmount      common.TokenAmount
+	LockedAmount           common.TokenAmount
+	LocksRoot              common.Locksroot
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	ChainId                common.ChainID
 }
 
 type BalanceProofSignedState struct {
-	Nonce                  typing.Nonce
-	TransferredAmount      typing.TokenAmount
-	LockedAmount           typing.TokenAmount
-	LocksRoot              typing.Locksroot
-	TokenNetworkIdentifier typing.TokenNetworkID
-	ChannelIdentifier      typing.ChannelID
-	MessageHash            typing.Keccak256
-	Signature              typing.Signature
-	Sender                 typing.Address
-	ChainId                typing.ChainID
-	PublicKey              typing.PubKey
+	Nonce                  common.Nonce
+	TransferredAmount      common.TokenAmount
+	LockedAmount           common.TokenAmount
+	LocksRoot              common.Locksroot
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	MessageHash            common.Keccak256
+	Signature              common.Signature
+	Sender                 common.Address
+	ChainId                common.ChainID
+	PublicKey              common.PubKey
 }
 
 type HashTimeLockState struct {
-	Amount     typing.TokenAmount
-	Expiration typing.BlockHeight
-	Secrethash typing.Keccak256
+	Amount     common.TokenAmount
+	Expiration common.BlockHeight
+	Secrethash common.Keccak256
 	Encoded    []byte
-	Lockhash   typing.LockHash
+	Lockhash   common.LockHash
 }
 
 type UnlockPartialProofState struct {
 	Lock   HashTimeLockState
-	Secret typing.Secret
+	Secret common.Secret
 }
 
 type UnlockProofState struct {
-	MerkelProof []typing.Keccak256
+	MerkelProof []common.Keccak256
 	LockEncoded []byte
-	Secret      typing.Secret
+	Secret      common.Secret
 }
 
 type TransactionExecutionStatus struct {
-	StartedBlockHeight  typing.BlockHeight
-	FinishedBlockHeight typing.BlockHeight
+	StartedBlockHeight  common.BlockHeight
+	FinishedBlockHeight common.BlockHeight
 	Result              string
 }
 
 type MerkleTreeState struct {
-	Layers [][]typing.Keccak256
+	Layers [][]common.Keccak256
 }
 
 func (self *MerkleTreeState) init() {
 
-	self.Layers = append(self.Layers, []typing.Keccak256{})
-	self.Layers = append(self.Layers, []typing.Keccak256{})
+	self.Layers = append(self.Layers, []common.Keccak256{})
+	self.Layers = append(self.Layers, []common.Keccak256{})
 
-	emptyRoot := typing.Keccak256{}
+	emptyRoot := common.Keccak256{}
 	self.Layers[1] = append(self.Layers[1], emptyRoot)
 }
 
 type NettingChannelEndState struct {
-	Address                            typing.Address
-	ContractBalance                    typing.TokenAmount
+	Address                            common.Address
+	ContractBalance                    common.TokenAmount
 	SecretHashesToLockedlocks          SecretHashToLock
 	SecretHashesToUnlockedlocks        SecretHashToPartialUnlockProof
 	SecretHashesToOnchainUnlockedlocks SecretHashToPartialUnlockProof
@@ -273,12 +273,12 @@ type NettingChannelEndState struct {
 	BalanceProof                       *BalanceProofSignedState
 }
 
-func (self *NettingChannelEndState) GetContractBalance() typing.TokenAmount {
+func (self *NettingChannelEndState) GetContractBalance() common.TokenAmount {
 	return self.ContractBalance
 }
 
-func (self *NettingChannelEndState) GetGasBalance() typing.TokenAmount {
-	var amount typing.TokenAmount
+func (self *NettingChannelEndState) GetGasBalance() common.TokenAmount {
+	var amount common.TokenAmount
 
 	// the balanceProof could be nil in following cases:
 	// outState.BalanceProof is nil when no payment has been sent
@@ -290,7 +290,7 @@ func (self *NettingChannelEndState) GetGasBalance() typing.TokenAmount {
 	return amount
 }
 
-func (self *NettingChannelEndState) GetAddress() typing.Address {
+func (self *NettingChannelEndState) GetAddress() common.Address {
 	return self.Address
 }
 
@@ -309,13 +309,13 @@ func NewNettingChannelEndState() *NettingChannelEndState {
 }
 
 type NettingChannelState struct {
-	Identifier               typing.ChannelID
-	ChainId                  typing.ChainID
-	TokenAddress             typing.Address
-	PaymentNetworkIdentifier typing.PaymentNetworkID
-	TokenNetworkIdentifier   typing.TokenNetworkID
-	RevealTimeout            typing.BlockHeight
-	SettleTimeout            typing.BlockHeight
+	Identifier               common.ChannelID
+	ChainId                  common.ChainID
+	TokenAddress             common.Address
+	PaymentNetworkIdentifier common.PaymentNetworkID
+	TokenNetworkIdentifier   common.TokenNetworkID
+	RevealTimeout            common.BlockHeight
+	SettleTimeout            common.BlockHeight
 	OurState                 *NettingChannelEndState
 	PartnerState             *NettingChannelEndState
 	DepositTransactionQueue  TransactionOrderHeap
@@ -326,7 +326,7 @@ type NettingChannelState struct {
 	OurUnlockTransaction     *TransactionExecutionStatus
 }
 
-func (self *NettingChannelState) GetIdentifier() typing.ChannelID {
+func (self *NettingChannelState) GetIdentifier() common.ChannelID {
 	return self.Identifier
 }
 
@@ -339,12 +339,12 @@ func (self *NettingChannelState) GetChannelEndState(side int) *NettingChannelEnd
 }
 
 type TransactionChannelNewBalance struct {
-	ParticipantAddress typing.Address
-	ContractBalance    typing.TokenAmount
-	DepositBlockHeight typing.BlockHeight
+	ParticipantAddress common.Address
+	ContractBalance    common.TokenAmount
+	DepositBlockHeight common.BlockHeight
 }
 
 type TransactionOrder struct {
-	BlockHeight typing.BlockHeight
+	BlockHeight common.BlockHeight
 	Transaction TransactionChannelNewBalance
 }

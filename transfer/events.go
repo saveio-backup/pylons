@@ -1,77 +1,77 @@
 package transfer
 
 import (
-	"github.com/oniio/oniChannel/typing"
+	"github.com/oniio/oniChannel/common"
 )
 
 type ContractSendChannelClose struct {
 	ContractSendEvent
-	ChannelIdentifier      typing.ChannelID
-	TokenAddress           typing.TokenAddress
-	TokenNetworkIdentifier typing.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	TokenAddress           common.TokenAddress
+	TokenNetworkIdentifier common.TokenNetworkID
 	BalanceProof           *BalanceProofSignedState
 }
 
 type ContractSendChannelSettle struct {
 	ContractSendEvent
-	ChannelIdentifier      typing.ChannelID
-	TokenNetworkIdentifier typing.TokenNetworkAddress
+	ChannelIdentifier      common.ChannelID
+	TokenNetworkIdentifier common.TokenNetworkAddress
 }
 
 type ContractSendChannelUpdateTransfer struct {
 	ContractSendExpirableEvent
-	ChannelIdentifier      typing.ChannelID
-	TokenNetworkIdentifier typing.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	TokenNetworkIdentifier common.TokenNetworkID
 	BalanceProof           *BalanceProofSignedState
 }
 
 type ContractSendChannelBatchUnlock struct {
 	ContractSendEvent
-	TokenAddress           typing.TokenAddress
-	TokenNetworkIdentifier typing.TokenNetworkID
-	ChannelIdentifier      typing.ChannelID
-	Participant            typing.Address
+	TokenAddress           common.TokenAddress
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	Participant            common.Address
 }
 
 type ContractSendSecretReveal struct {
 	ContractSendExpirableEvent
-	Secret typing.Secret
+	Secret common.Secret
 }
 
 type EventPaymentSentSuccess struct {
-	PaymentNetworkIdentifier typing.PaymentNetworkID
-	TokenNetworkIdentifier   typing.TokenNetworkID
-	Identifier               typing.PaymentID
-	Amount                   typing.TokenAmount
-	Target                   typing.Address
+	PaymentNetworkIdentifier common.PaymentNetworkID
+	TokenNetworkIdentifier   common.TokenNetworkID
+	Identifier               common.PaymentID
+	Amount                   common.TokenAmount
+	Target                   common.Address
 }
 
 type EventPaymentSentFailed struct {
-	PaymentNetworkIdentifier typing.PaymentNetworkID
-	TokenNetworkIdentifier   typing.TokenNetworkID
-	Identifier               typing.PaymentID
-	Target                   typing.Address
+	PaymentNetworkIdentifier common.PaymentNetworkID
+	TokenNetworkIdentifier   common.TokenNetworkID
+	Identifier               common.PaymentID
+	Target                   common.Address
 	Reason                   string
 }
 
 type EventPaymentReceivedSuccess struct {
-	PaymentNetworkIdentifier typing.PaymentNetworkID
-	TokenNetworkIdentifier   typing.TokenNetworkID
-	Identifier               typing.PaymentID
-	Amount                   typing.TokenAmount
-	Initiator                typing.InitiatorAddress
+	PaymentNetworkIdentifier common.PaymentNetworkID
+	TokenNetworkIdentifier   common.TokenNetworkID
+	Identifier               common.PaymentID
+	Amount                   common.TokenAmount
+	Initiator                common.InitiatorAddress
 }
 
 type EventTransferReceivedInvalidDirectTransfer struct {
-	Identifier typing.PaymentID
+	Identifier common.PaymentID
 	Reason     string
 }
 
 type SendDirectTransfer struct {
 	SendMessageEvent
-	PaymentIdentifier typing.PaymentID
+	PaymentIdentifier common.PaymentID
 	BalanceProof      *BalanceProofUnsignedState
-	TokenAddress      typing.TokenAddress
+	TokenAddress      common.TokenAddress
 }
 
 type SendProcessed struct {
