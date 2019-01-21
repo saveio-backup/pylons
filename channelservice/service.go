@@ -205,7 +205,7 @@ func (self *ChannelService) Start() error {
 		log.Error("run alarm call back failed:", err)
 		return err
 	}
-	// start the transport layer, pass channel service for message hanlding and signing
+	// start the transport layer, pass channel service for message handling and signing
 	err = self.transport.Start(self)
 	if err != nil {
 		log.Error("transport layer start failed:", err)
