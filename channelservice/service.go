@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/oniio/oniChain-go-sdk/ong"
 	"github.com/oniio/oniChain/account"
 	comm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
@@ -38,8 +39,8 @@ type ChannelService struct {
 	targetsToIndentifierToStatues map[common.Address]*sync.Map
 	ReceiveNotificationChannels   map[chan *transfer.EventPaymentReceivedSuccess]struct{}
 
-	address common.Address
-
+	address            common.Address
+	mircoAddress       common.Address
 	dispatchEventsLock sync.Mutex
 	eventPollLock      sync.Mutex
 	databasePath       string
@@ -74,6 +75,7 @@ func NewChannelService(chain *network.BlockchainService,
 	queryStartBlock common.BlockHeight,
 	transport *transport.Transport,
 	//defaultSecretRegistry SecretRegistry,
+	defaultRegistryAddress common.Address,
 	channel_event_handler *ChannelEventHandler,
 	messageHandler *MessageHandler,
 	config map[string]string) *ChannelService {
@@ -85,6 +87,7 @@ func NewChannelService(chain *network.BlockchainService,
 
 	self.chain = chain
 	self.queryStartBlock = queryStartBlock
+	self.mircoAddress = defaultRegistryAddress
 	//self.defaultSecretRegistry = defaultSecretRegistry
 	self.config = config
 	self.Account = chain.GetAccount()
@@ -100,30 +103,31 @@ func NewChannelService(chain *network.BlockchainService,
 	self.transport = transport
 	self.alarm = NewAlarmTask(chain)
 
-	if _, exist := config["database_path"]; exist == false {
-		self.databasePath = ":memory:"
-		self.databaseDir = ""
+	if _, exist := config["DBPath"]; exist == false {
+		self.setDefaultDBPath()
 	} else {
-		self.databasePath = config["database_path"]
+		self.databasePath = config["DBPath"]
 		if self.databasePath == "." {
-			fullname, err := GetFullDatabasePath()
-			if err == nil {
-				databaseDir := filepath.Dir(self.databasePath)
-				os.Mkdir(databaseDir, os.ModeDir)
-				self.databasePath = fullname
-				self.databaseDir = databaseDir
-				log.Info("database set to", fullname)
-			} else {
-				self.databasePath = ":memory:"
-				self.databaseDir = ""
-				log.Warn("use memory database")
-			}
+			self.setDefaultDBPath()
 		}
 	}
 
 	return self
 }
-
+func (self *ChannelService) setDefaultDBPath() {
+	fullname, err := GetFullDatabasePath()
+	if err == nil {
+		databaseDir := filepath.Dir(self.databasePath)
+		os.Mkdir(databaseDir, os.ModeDir)
+		self.databasePath = fullname
+		self.databaseDir = databaseDir
+		log.Info("database set to", fullname)
+	} else {
+		self.databasePath = ":memory:"
+		self.databaseDir = ""
+		log.Warn("get full db path failed,use memory database")
+	}
+}
 func (self *ChannelService) Start() error {
 	// register to Endpoint contract
 	var addr comm.Address
@@ -184,6 +188,7 @@ func (self *ChannelService) Start() error {
 		self.HandleStateChange(stateChange)
 
 		paymentNetwork := transfer.NewPaymentNetworkState()
+		paymentNetwork.Address = common.PaymentNetworkID(self.address)
 		stateChange = &transfer.ContractReceiveNewPaymentNetwork{
 			transfer.ContractReceiveStateChange{common.TransactionHash{}, lastLogBlockHeight}, paymentNetwork}
 		self.HandleStateChange(stateChange)
@@ -191,6 +196,7 @@ func (self *ChannelService) Start() error {
 
 	} else {
 		lastLogBlockHeight = transfer.GetBlockHeight(self.StateFromChannel())
+		log.Infof("Restored state from WAL,last log BlockHeight=%d", lastLogBlockHeight)
 	}
 
 	stateChangeQty := self.Wal.Storage.CountStateChanges()
@@ -567,26 +573,33 @@ func (self *ChannelService) tokenNetworkLeave(registryAddress common.PaymentNetw
 	return connectionManager.Leave(registryAddress)
 }
 
-func (self *ChannelService) ChannelOpen(registryAddress common.PaymentNetworkID,
-	tokenAddress common.TokenAddress, partnerAddress common.Address,
-	settleTimeout common.BlockTimeout, retryTimeout common.NetworkTimeout) common.ChannelID {
+func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
+	partnerAddress common.Address) common.ChannelID {
 
 	chainState := self.StateFromChannel()
-	channelState := transfer.GetChannelStateFor(chainState, registryAddress,
+	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.mircoAddress),
 		tokenAddress, partnerAddress)
-
+	regAddr, _ := comm.AddressParseFromBytes(self.address[:])
+	patAddr, _ := comm.AddressParseFromBytes(partnerAddress[:])
 	if channelState != nil {
+
+		log.Infof("channel between %s and %s already setup", regAddr.ToBase58(), patAddr.ToBase58())
 		return channelState.Identifier
 	}
 
-	tokenNetwork := self.chain.NewTokenNetwork(common.Address{})
-	tokenNetwork.NewNettingChannel(partnerAddress, int(settleTimeout))
-
-	WaitForNewChannel(self, registryAddress, tokenAddress, partnerAddress,
-		float32(retryTimeout))
-
-	channelState = transfer.GetChannelStateFor(self.StateFromChannel(), registryAddress, tokenAddress, partnerAddress)
-
+	tokenNetwork := self.chain.NewTokenNetwork(common.Address(ong.ONG_CONTRACT_ADDRESS))
+	id := tokenNetwork.NewNettingChannel(partnerAddress, constants.SETTLE_TIMEOUT)
+	if id == 0 {
+		return id
+	}
+	log.Info("wait for new channel ")
+	channelState = WaitForNewChannel(self, common.PaymentNetworkID(self.mircoAddress), common.TokenAddress(ong.ONG_CONTRACT_ADDRESS), partnerAddress,
+		float32(constants.OPEN_CHANNEL_RETRY_TIMEOUT), constants.OPEN_CHANNEL_RETRY_TIMES)
+	if channelState == nil {
+		log.Error("setup channel timeout")
+		return 0
+	}
+	log.Infof("new channel between %s and %s has setup, channel ID = %d", regAddr.ToBase58(), patAddr.ToBase58(), channelState.Identifier)
 	return channelState.Identifier
 
 }
@@ -745,7 +758,7 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 		return nil, fmt.Errorf("target address is invalid")
 	}
 	//Only one payment network
-	paymentNetworkIdentifier := common.PaymentNetworkID{}
+	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
 	tokenAddress := common.TokenAddress(sc_utils.OngContractAddress)
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(
 		self.StateFromChannel(),

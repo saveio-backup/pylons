@@ -8,6 +8,7 @@ import (
 	"github.com/oniio/oniChain/account"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChain/crypto/keypair"
+	"github.com/oniio/oniChain/smartcontract/service/native/utils"
 	ch "github.com/oniio/oniChannel/channelservice"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/network"
@@ -82,6 +83,7 @@ func NewChannelService(config *ChannelConfig, account *account.Account) (*Channe
 		blockChainService,
 		common.BlockHeight(startBlock),
 		transport,
+		common.Address(utils.MicroPayContractAddress),
 		new(ch.ChannelEventHandler),
 		new(ch.MessageHandler),
 		option)

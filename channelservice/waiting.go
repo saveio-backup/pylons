@@ -25,22 +25,26 @@ func WaitForBlock(channel *ChannelService, blockNumber common.BlockHeight,
 	return
 }
 
-func WaitForNewChannel(channel *ChannelService, paymentNetworkId common.PaymentNetworkID,
-	tokenAddress common.TokenAddress, partnerAddress common.Address, retryTimeout float32) {
+func WaitForNewChannel(channel *ChannelService, paymentNetworkID common.PaymentNetworkID,
+	tokenAddress common.TokenAddress, partnerAddress common.Address, retryTimeout float32, retryTimes int) *transfer.NettingChannelState {
 
 	var channelState *transfer.NettingChannelState
 
 	chainState := channel.StateFromChannel()
-	channelState = transfer.GetChannelStateFor(chainState, paymentNetworkId, tokenAddress,
+	channelState = transfer.GetChannelStateFor(chainState, paymentNetworkID, tokenAddress,
 		partnerAddress)
-
+	count := 0
 	for channelState == nil {
+		if count >= retryTimes {
+			return nil
+		}
 		time.Sleep(time.Duration(retryTimeout*1000) * time.Millisecond)
-		channelState = transfer.GetChannelStateFor(channel.StateFromChannel(), paymentNetworkId, tokenAddress,
+		channelState = transfer.GetChannelStateFor(channel.StateFromChannel(), paymentNetworkID, tokenAddress,
 			partnerAddress)
+		count++
 	}
 
-	return
+	return channelState
 }
 
 func addressEqual(address1 common.Address, address2 common.Address) bool {

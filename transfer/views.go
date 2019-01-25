@@ -109,11 +109,11 @@ func GetOurCapacityForTokenNetwork(
 }
 
 func GetPaymentNetworkIdentifiers(
-	chainState ChainState) *list.List {
+	chainState *ChainState) []common.PaymentNetworkID {
 
-	result := list.New()
+	result := make([]common.PaymentNetworkID, 0)
 	for k := range chainState.IdentifiersToPaymentnetworks {
-		result.PushBack(k)
+		result = append(result, k)
 	}
 
 	return result
@@ -222,12 +222,10 @@ func GetTokenNetworkByTokenAddress(chainState *ChainState,
 	paymentNetworkId common.PaymentNetworkID,
 	tokenAddress common.TokenAddress) *TokenNetworkState {
 
-	//Hack! Since we only have one TokenNetworkState!!
-	paymentNetwork := chainState.IdentifiersToPaymentnetworks[common.PaymentNetworkID{}]
+	paymentNetwork := chainState.IdentifiersToPaymentnetworks[paymentNetworkId]
 	if paymentNetwork != nil {
-		return paymentNetwork.tokenAddressesToTokenNetworks[common.TokenAddress{}]
+		return paymentNetwork.tokenAddressesToTokenNetworks[tokenAddress]
 	}
-
 	return nil
 }
 

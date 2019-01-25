@@ -76,7 +76,7 @@ func (self *ConnectionManager) connect(funds common.TokenAmount,
 	if qtyNetworkChannels == 0 {
 		bootstrapAddr := getBootstrapAddress()
 
-		self.channel.ChannelOpen(common.PaymentNetworkID(self.registryAddress), self.tokenAddress, bootstrapAddr, 0, 0.5)
+		self.channel.OpenChannel(self.tokenAddress, bootstrapAddr)
 	} else {
 		self.openChannels()
 	}
@@ -163,7 +163,7 @@ func (self *ConnectionManager) findNewPartners() *list.List {
 
 func (self *ConnectionManager) JoinPartner(partner common.Address) {
 
-	self.channel.ChannelOpen(common.PaymentNetworkID(self.registryAddress), self.tokenAddress, partner, 0, 0.5)
+	self.channel.OpenChannel(self.tokenAddress, partner)
 
 	self.channel.SetTotalChannelDeposit(common.PaymentNetworkID(self.registryAddress), self.tokenAddress,
 		partner, self.initialFundingPerPartner(), 0.5)

@@ -59,10 +59,10 @@ type TokenNetwork struct {
 
 func NewTokenNetwork(
 	chainClient *chainsdk.Chain,
-	ManagerAddress common.Address) *TokenNetwork {
+	tokenAddress common.Address) *TokenNetwork {
 	self := new(TokenNetwork)
 
-	self.Address = ManagerAddress
+	self.Address = tokenAddress
 	self.ChainClient = chainClient
 	self.ChannelClient = chainClient.Native.Channel
 	self.nodeAddress = common.Address(self.ChannelClient.DefAcc.Address)
@@ -95,9 +95,7 @@ func (self *TokenNetwork) getOperationLock(partner common.Address) *sync.Mutex {
 }
 
 func (self *TokenNetwork) TokenAddress() common.Address {
-	var result common.Address
-
-	return result
+	return self.Address
 }
 
 func (self *TokenNetwork) NewNettingChannel(partner common.Address, settleTimeout int) common.ChannelID {
