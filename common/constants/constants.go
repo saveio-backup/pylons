@@ -8,4 +8,5 @@ const (
 	OPEN_CHANNEL_RETRY_TIMEOUT  int = 1
 	OPEN_CHANNEL_RETRY_TIMES    int = 10
 	SETTLE_TIMEOUT              int = 10000000
+	ALARM_INTERVAL              int = 3000
 )

@@ -66,7 +66,7 @@ func logCurrentBalance(channel *ch.Channel, target common.Address) {
 			channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(common.Address(utils.MicroPayContractAddress)),
 				common.TokenAddress(ong.ONG_CONTRACT_ADDRESS), target)
 			if channelState == nil {
-				log.Info("channel haven`t setup")
+				log.Info("test channel haven`t setup")
 				break
 			}
 			state := channelState.GetChannelEndState(0)

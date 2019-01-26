@@ -420,7 +420,7 @@ func (self *ChannelService) CloseAndSettle() {
 	self.LeaveAllTokenNetwork()
 
 	if len(self.tokennetworkidsToConnectionmanagers) > 0 {
-		WaitForSettleAllChannels(self, self.alarm.GetSleepTime())
+		WaitForSettleAllChannels(self, self.alarm.Getinterval())
 	}
 
 	return

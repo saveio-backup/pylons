@@ -6,6 +6,7 @@ import (
 
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
+	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/network"
 )
 
@@ -15,7 +16,7 @@ type AlarmTask struct {
 	chainId         int
 	lastBlockHeight common.BlockHeight
 	stopEvent       chan int
-	sleepTime       int
+	interval        int
 }
 
 type AlarmTaskCallback func(blockNumber common.BlockHeight, blockHash common.BlockHash)
@@ -24,9 +25,15 @@ func NewAlarmTask(chain *network.BlockchainService) *AlarmTask {
 	self := new(AlarmTask)
 
 	self.chain = chain
-	self.chainId = 0
+	if id, err := chain.ChainClient.GetNetworkId(); err != nil {
+		log.Error("get network id failed, set chain id = 0")
+		self.chainId = 0
+	} else {
+		self.chainId = int(id)
+	}
+
 	self.lastBlockHeight = 0
-	self.sleepTime = 500
+	self.interval = constants.ALARM_INTERVAL
 	self.stopEvent = make(chan int)
 
 	return self
@@ -48,13 +55,13 @@ func (self *AlarmTask) LoopUntilStop() {
 	var lastBlockHeight, latestBlockHeight common.BlockHeight
 	var blockHash common.BlockHash
 	var err error
-	sleepTime := self.sleepTime
+	interval := self.interval
 
 	for {
 		select {
 		case <-self.stopEvent:
 			break
-		case <-time.After(time.Duration(sleepTime) * time.Millisecond):
+		case <-time.After(time.Duration(interval) * time.Millisecond):
 			lastBlockHeight = self.lastBlockHeight
 			//[TODO] use BlockchainService.GetBlock to get latestBlockHeight
 			//and blockHash
@@ -117,6 +124,6 @@ func (self *AlarmTask) Stop() {
 	self.stopEvent <- 0
 }
 
-func (self *AlarmTask) GetSleepTime() float32 {
-	return float32(self.sleepTime)
+func (self *AlarmTask) Getinterval() float32 {
+	return float32(self.interval)
 }
