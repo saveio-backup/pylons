@@ -28,11 +28,8 @@ func (t *TestChannel) Sign(message interface{}) error {
 func (t *TestChannel) HandleStateChange(stateChange transfer.StateChange) *list.List {
 	return nil
 }
-
-type TestMsgHandler struct {
-	sync.Mutex
-	counter   int
-	transport *Transport
+func (t *TestChannel) Get(nodeAddress common.Address) string {
+	return ""
 }
 
 var node1AccountAddress = [20]byte{1}
@@ -43,17 +40,6 @@ var addressToIPMap = map[[20]byte]string{
 	node1AccountAddress: "127.0.0.1:3001",
 	node2AccountAddress: "127.0.0.1:3002",
 	node3AccountAddress: "127.0.0.1:3003",
-}
-
-type TestDiscoverer struct{}
-
-func (t *TestDiscoverer) Get(nodeAddress common.Address) string {
-	address, ok := addressToIPMap[nodeAddress]
-	if !ok {
-		return ""
-	}
-
-	return address
 }
 
 func CheckConnectedNodes(peerMap *sync.Map, expected []string) error {

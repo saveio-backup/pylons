@@ -251,7 +251,7 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 	//take snapshot
 	newSnapShotGroup := self.Wal.Storage.CountStateChanges() / constants.SNAPSHOT_STATE_CHANGE_COUNT
 	if newSnapShotGroup > self.snapshotGroup {
-		log.Debug("storing snapshot, snapshot id = ", newSnapShotGroup)
+		log.Info("storing snapshot, snapshot id = ", newSnapShotGroup)
 		self.Wal.Snapshot()
 		self.snapshotGroup = newSnapShotGroup
 	}
@@ -592,7 +592,7 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 	if id == 0 {
 		return id
 	}
-	log.Info("wait for new channel ")
+	log.Info("wait for new channel ... ")
 	channelState = WaitForNewChannel(self, common.PaymentNetworkID(self.mircoAddress), common.TokenAddress(ong.ONG_CONTRACT_ADDRESS), partnerAddress,
 		float32(constants.OPEN_CHANNEL_RETRY_TIMEOUT), constants.OPEN_CHANNEL_RETRY_TIMES)
 	if channelState == nil {
@@ -836,7 +836,21 @@ func (self *ChannelService) GetInternalEventsWithTimestamps(limit int, offset in
 	return self.Wal.Storage.GetEventsWithTimestamps(limit, offset)
 
 }
-
+func (self *ChannelService) Get(nodeAddress common.Address) string {
+	info, err := self.chain.ChannelClient.GetEndpointByAddress(comm.Address(nodeAddress))
+	regAddr, _ := comm.AddressParseFromBytes(nodeAddress[:])
+	if err != nil {
+		log.Warnf("get %s reg info err: %s", regAddr.ToBase58(), err.Error())
+		return ""
+	}
+	if info == nil {
+		log.Warnf("node %s haven`t been registed", regAddr.ToBase58())
+		return ""
+	}
+	nodeAddr := string(info.IP) + ":" + string(info.Port)
+	log.Infof("node %s reg addr : %s", regAddr.ToBase58(), nodeAddr)
+	return nodeAddr
+}
 func GetFullDatabasePath() (string, error) {
 	file, err := exec.LookPath(os.Args[0])
 	if err != nil {

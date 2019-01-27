@@ -3,12 +3,14 @@ package transport
 import (
 	"container/list"
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/network/transport/messages"
 	"github.com/oniio/oniChannel/transfer"
@@ -49,9 +51,9 @@ type ChannelServiceInterface interface {
 	OnMessage(proto.Message, string)
 	Sign(message interface{}) error
 	HandleStateChange(stateChange transfer.StateChange) *list.List
+	Get(nodeAddress common.Address) string
 }
 
-// for test purpose
 type Discoverer interface {
 	Get(nodeAddress common.Address) string
 }
@@ -61,7 +63,6 @@ type Transport struct {
 
 	//protocol could be Tcp, Kcp
 	protocol               string
-	discovery              Discoverer
 	address                string
 	mappingAddress         string
 	keys                   *crypto.KeyPair
@@ -222,6 +223,9 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 	msg := item.(*QueueItem).message
 
 	address := this.GetHostPortFromAddress(queueId.Recipient)
+	if address == "" {
+		return errors.New("no valid address to send message")
+	}
 	this.addressQueueMap.LoadOrStore(address, queue)
 	err := this.Send(address, msg)
 	if err != nil {
@@ -260,8 +264,12 @@ func (this *Transport) SaveAddressCache(address common.Address, hostPort string)
 func (this *Transport) GetHostPortFromAddress(recipient common.Address) string {
 	hostPort := this.GetAddressCacheValue(recipient)
 	if hostPort == "" {
-		// no cache, retrive hostPort from discovery contract
-		hostPort = this.discovery.Get(recipient)
+		hostPort = this.ChannelService.Get(recipient)
+		if hostPort == "" {
+			log.Error("can`t get reg address")
+			return ""
+		}
+
 		this.SaveAddressCache(recipient, hostPort)
 	}
 
@@ -276,7 +284,10 @@ func (this *Transport) StartHealthCheck(address common.Address) {
 	}
 
 	nodeAddress := this.GetHostPortFromAddress(address)
-
+	if nodeAddress == "" {
+		log.Error("node address invalid,can`t chech health")
+		return
+	}
 	_, ok := this.activePeers.Load(nodeAddress)
 	if ok {
 		// node is active, no need to connect
@@ -337,6 +348,10 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 	err := this.ChannelService.Sign(deliveredMessage)
 	if err == nil {
 		nodeAddress := this.GetHostPortFromAddress(address)
+		if nodeAddress == "" {
+			log.Error("node address invalid,can`t send message")
+			return
+		}
 		this.Send(nodeAddress, deliveredMessage)
 	}
 }

@@ -25,3 +25,8 @@ _testmain.go
 *.prof
 
 channel
+*.db
+*.db-shm
+*.db-wal
+main
+client

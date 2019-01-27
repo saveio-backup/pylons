@@ -22,11 +22,11 @@ var (
 	WALLET_PWD  = []byte("123456")
 )
 var testConfig = &ch.ChannelConfig{
-	ClientType:     "rpc",
-	ChainNodeURL:   "http://127.0.0.1:20336",
-	ListenAddress:  "127.0.0.1:3001",
-	MappingAddress: "10.0.1.105:3001",
-	Protocol:       "tcp",
+	ClientType:    "rpc",
+	ChainNodeURL:  "http://127.0.0.1:20336",
+	ListenAddress: "127.0.0.1:3001",
+	//MappingAddress: "10.0.1.105:3001",
+	Protocol: "tcp",
 }
 
 func main() {
@@ -53,7 +53,7 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	target, _ := chaincomm.AddressFromHexString("Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
+	target, _ := chaincomm.AddressFromHexString("AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
 	go logCurrentBalance(channel, common.Address(target))
 	waitToExit()
 }
@@ -66,7 +66,7 @@ func logCurrentBalance(channel *ch.Channel, target common.Address) {
 			channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(common.Address(utils.MicroPayContractAddress)),
 				common.TokenAddress(ong.ONG_CONTRACT_ADDRESS), target)
 			if channelState == nil {
-				log.Info("test channel haven`t setup")
+				log.Infof("test channel with %s haven`t setup", "AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
 				break
 			}
 			state := channelState.GetChannelEndState(0)

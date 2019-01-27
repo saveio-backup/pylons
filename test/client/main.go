@@ -22,11 +22,11 @@ var (
 	WALLET_PWD  = []byte("123")
 )
 var testConfig = &ch.ChannelConfig{
-	ClientType:     "rpc",
-	ChainNodeURL:   "http://127.0.0.1:20336",
-	ListenAddress:  "127.0.0.1:3000",
-	MappingAddress: "10.0.1.105:3000",
-	Protocol:       "tcp",
+	ClientType:    "rpc",
+	ChainNodeURL:  "http://127.0.0.1:20336",
+	ListenAddress: "127.0.0.1:3000",
+	//MappingAddress: "10.0.1.105:3000",
+	Protocol: "tcp",
 }
 
 func main() {
