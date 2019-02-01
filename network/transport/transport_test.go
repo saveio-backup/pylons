@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	protocol  = "tcp"
+	protocol  = "udp"
 	node1Addr = "127.0.0.1:3001"
 	node2Addr = "127.0.0.1:3002"
 	node3Addr = "127.0.0.1:3003"

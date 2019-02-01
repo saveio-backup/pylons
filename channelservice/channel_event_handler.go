@@ -148,7 +148,7 @@ func (self ChannelEventHandler) HandleContractSendChannelClose(channel *ChannelS
 		panic("error in HandleContractSendChannelClose, cannot get paymentchannel args")
 	}
 
-	channelProxy := channel.chain.PaymentChannel(common.Address{}, channelCloseEvent.ChannelIdentifier, args)
+	channelProxy := channel.chain.PaymentChannel(common.Address(channelCloseEvent.TokenNetworkIdentifier), channelCloseEvent.ChannelIdentifier, args)
 
 	channelProxy.Close(nonce, balanceHash, common.AdditionalHash(messageHash[:]), signature, publicKey)
 }
@@ -162,7 +162,7 @@ func (self ChannelEventHandler) HandelContractSendChannelUpdate(channel *Channel
 			panic("error in HandleContractSendChannelClose, cannot get paymentchannel args")
 		}
 
-		channelProxy := channel.chain.PaymentChannel(common.Address{}, channelUpdateEvent.ChannelIdentifier, args)
+		channelProxy := channel.chain.PaymentChannel(common.Address(channelUpdateEvent.TokenNetworkIdentifier), channelUpdateEvent.ChannelIdentifier, args)
 
 		balanceHash := transfer.HashBalanceData(
 			balanceProof.TransferredAmount,
@@ -208,7 +208,7 @@ func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *Channel
 	if args == nil {
 		panic("error in HandleContractSendChannelClose, cannot get paymentchannel args")
 	}
-	channelProxy := channel.chain.PaymentChannel(common.Address{}, channelSettleEvent.ChannelIdentifier, args)
+	channelProxy := channel.chain.PaymentChannel(common.Address(channelSettleEvent.TokenNetworkIdentifier), channelSettleEvent.ChannelIdentifier, args)
 
 	participanatsDetails := channelProxy.TokenNetwork.DetailParticipants(channelProxy.Participant1, channelProxy.Participant2, channelSettleEvent.ChannelIdentifier)
 

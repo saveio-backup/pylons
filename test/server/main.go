@@ -26,7 +26,8 @@ var testConfig = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3001",
 	//MappingAddress: "10.0.1.105:3001",
-	Protocol: "tcp",
+	Protocol:      "tcp",
+	RevealTimeout: "1000",
 }
 
 func main() {
@@ -53,7 +54,7 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	target, _ := chaincomm.AddressFromHexString("AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
+	target, _ := chaincomm.AddressFromBase58("AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
 	go logCurrentBalance(channel, common.Address(target))
 	waitToExit()
 }
@@ -66,11 +67,13 @@ func logCurrentBalance(channel *ch.Channel, target common.Address) {
 			channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(common.Address(utils.MicroPayContractAddress)),
 				common.TokenAddress(ong.ONG_CONTRACT_ADDRESS), target)
 			if channelState == nil {
-				log.Infof("test channel with %s haven`t setup", "AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
+				log.Infof("test channel with %s haven`t been connected", "AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
 				break
 			}
 			state := channelState.GetChannelEndState(0)
-			log.Infof("current balance = %d, transfer balance = %d", state.ContractBalance, state.GetGasBalance())
+			log.Infof("current balance = %d, transfer balance = %d", state.GetContractBalance(), state.GetGasBalance())
+			state = channelState.GetChannelEndState(1)
+			log.Infof("partner balance = %d, transfer balance = %d", state.GetContractBalance(), state.GetGasBalance())
 		}
 	}
 }

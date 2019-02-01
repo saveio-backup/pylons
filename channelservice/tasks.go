@@ -63,8 +63,6 @@ func (self *AlarmTask) LoopUntilStop() {
 			break
 		case <-time.After(time.Duration(interval) * time.Millisecond):
 			lastBlockHeight = self.lastBlockHeight
-			//[TODO] use BlockchainService.GetBlock to get latestBlockHeight
-			//and blockHash
 			latestBlockHeight, blockHash, err = self.GetLatestBlock()
 			if err != nil {
 				fmt.Println(err)
@@ -73,7 +71,7 @@ func (self *AlarmTask) LoopUntilStop() {
 
 			if latestBlockHeight != lastBlockHeight {
 				if latestBlockHeight > lastBlockHeight+1 {
-					fmt.Printf("Missing block(s), latest Block number %d, last Block number %d\n", latestBlockHeight, lastBlockHeight)
+					log.Infof("missing block(s), latest Block number %d, last Block number %d", latestBlockHeight, lastBlockHeight)
 				}
 				self.runCallbacks(latestBlockHeight, blockHash)
 			}
@@ -111,7 +109,7 @@ func (self *AlarmTask) FirstRun() error {
 
 func (self *AlarmTask) runCallbacks(latestBlockHeight common.BlockHeight, blockHash common.BlockHash) {
 
-	log.Infof("RunCallbacks for Block %d\n", latestBlockHeight)
+	log.Infof("process block %d", latestBlockHeight)
 
 	for _, f := range self.callbacks {
 		f(latestBlockHeight, blockHash)

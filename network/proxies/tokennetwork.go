@@ -3,7 +3,7 @@ package proxies
 import (
 	"bytes"
 	"container/list"
-	"fmt"
+	"errors"
 	"strconv"
 	"sync"
 	"time"
@@ -40,8 +40,8 @@ type ParticipantsDetails struct {
 }
 
 type ChannelDetails struct {
-	chainId          common.ChainID
-	channelData      *ChannelData
+	ChainId          common.ChainID
+	ChannelData      *ChannelData
 	ParticipantsData *ParticipantsDetails
 }
 
@@ -117,11 +117,14 @@ func (self *TokenNetwork) NewNettingChannel(partner common.Address, settleTimeou
 		self.openChannelTransactions[partner] = newOpenChannelTransaction
 		self.openLock.Unlock()
 
-		txHash := self.newNettingChannel(partner, settleTimeout)
-		fmt.Printf("new netting tx:%s\n", txHash)
+		txHash, err := self.newNettingChannel(partner, settleTimeout)
+		if err != nil {
+			log.Errorf("create channel txn failed", err.Error())
+			return 0
+		}
 		confirmed, err := self.ChainClient.PollForTxConfirmed(time.Duration(60)*time.Second, txHash)
 		if err != nil || !confirmed {
-			log.Errorf("The new netting channel tx failed", err)
+			log.Errorf("poll new netting channel tx failed", err.Error())
 			return 0
 		}
 
@@ -141,12 +144,15 @@ func (self *TokenNetwork) NewNettingChannel(partner common.Address, settleTimeou
 	return channelIdentifier
 }
 
-func (self *TokenNetwork) newNettingChannel(partner common.Address, settleTimeout int) []byte {
+func (self *TokenNetwork) newNettingChannel(partner common.Address, settleTimeout int) ([]byte, error) {
 	hash, err := self.ChannelClient.OpenChannel(comm.Address(self.nodeAddress), comm.Address(partner), uint64(settleTimeout))
+	regAddr, _ := comm.AddressParseFromBytes(self.nodeAddress[:])
+	patAddr, _ := comm.AddressParseFromBytes(partner[:])
 	if err != nil {
-		log.Errorf("new netting channel err:%s", err)
+		log.Errorf("create new channel between failed:%s", regAddr.ToBase58(), patAddr.ToBase58(), err.Error())
+		return nil, err
 	}
-	return hash
+	return hash, nil
 }
 
 func (self *TokenNetwork) inspectChannelIdentifier(participant1 common.Address,
@@ -258,8 +264,13 @@ func (self *TokenNetwork) detail(participant1 common.Address,
 	participantsData := self.DetailParticipants(participant1, participant2, channelIdentifier)
 
 	channelDetails := new(ChannelDetails)
-	channelDetails.chainId = 0
-	channelDetails.channelData = channelData
+	id, err := self.ChainClient.GetNetworkId()
+	if err != nil {
+		log.Warn("get network id failed,id set to 0", err)
+		id = 0
+	}
+	channelDetails.ChainId = common.ChainID(id)
+	channelDetails.ChannelData = channelData
 	channelDetails.ParticipantsData = participantsData
 
 	return channelDetails
@@ -334,12 +345,12 @@ func (self *TokenNetwork) GetGasBalance() (common.TokenAmount, error) {
 }
 
 func (self *TokenNetwork) SetTotalDeposit(channelIdentifier common.ChannelID,
-	totalDeposit common.TokenAmount, partner common.Address) {
+	totalDeposit common.TokenAmount, partner common.Address) error {
 
 	var opLock *sync.Mutex
 
 	if !self.CheckForOutdatedChannel(self.nodeAddress, partner, channelIdentifier) {
-		return
+		return errors.New("channel outdated")
 	}
 
 	opLock = self.getOperationLock(partner)
@@ -351,38 +362,44 @@ func (self *TokenNetwork) SetTotalDeposit(channelIdentifier common.ChannelID,
 	defer self.depositLock.Unlock()
 
 	detail := self.detailParticipant(channelIdentifier, self.nodeAddress, partner)
+
 	currentDeposit := detail.Deposit
 	amountToDeposit := totalDeposit - currentDeposit
 
 	if totalDeposit <= currentDeposit {
-		log.Errorf("SetTotalDeposit failed, Current total deposit %d is already larger than the requested total deposit amount %d",
+		log.Warnf("current total deposit %d is already larger than the requested total deposit amount %d, skip",
 			currentDeposit, totalDeposit)
-		return
+		return nil
 	}
 
 	//call native api to get balance of wallet!
 	currentBalance, err := self.GetGasBalance()
-
+	if err != nil {
+		return err
+	}
 	if currentBalance < amountToDeposit {
 		log.Errorf("SetTotalDeposit failed, new_total_deposit - previous_total_deposit = %d can not be larger than the available balance %d",
 			amountToDeposit, currentBalance)
-		return
+		return errors.New("current balance not enough")
 	}
 
 	txHash, err := self.ChannelClient.SetTotalDeposit(uint64(channelIdentifier), comm.Address(self.nodeAddress), comm.Address(partner), uint64(totalDeposit))
 	if err != nil {
 		log.Errorf("SetTotalDeposit err:%s", err)
-		return
+		return err
 	}
 	log.Infof("SetTotalDeposit tx hash:%v\n", txHash)
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("SetTotalDeposit  WaitForGenerateBlock err:%s", err)
-		self.checkChannelStateForDeposit(self.nodeAddress, partner, channelIdentifier, totalDeposit)
-		return
+		ret, nerr := self.checkChannelStateForDeposit(self.nodeAddress, partner, channelIdentifier, totalDeposit)
+		if !ret {
+			return nerr
+		}
+		return err
 	}
 
-	return
+	return nil
 }
 
 func (self *TokenNetwork) Close(channelIdentifier common.ChannelID, partner common.Address,
@@ -653,23 +670,23 @@ func (self *TokenNetwork) checkChannelStateForClose(participant1 common.Address,
 
 func (self *TokenNetwork) checkChannelStateForDeposit(participant1 common.Address,
 	participant2 common.Address, channelIdentifier common.ChannelID,
-	depositAmount common.TokenAmount) bool {
+	depositAmount common.TokenAmount) (bool, error) {
 
 	participantDetails := self.DetailParticipants(participant1, participant2,
 		channelIdentifier)
 
 	channelState := self.getChannelState(self.nodeAddress, participant2, channelIdentifier)
 	if channelState == micropayment.NonExistent || channelState == micropayment.Removed {
-		return false
+		return false, errors.New("channel does not exist")
 	} else if channelState == micropayment.Settled {
-		return false
+		return false, errors.New("deposit is not possible due to channel being settled")
 	} else if channelState == micropayment.Closed {
-		return false
+		return false, errors.New("channel is already closed")
 	} else if participantDetails.OurDetails.Deposit < depositAmount {
-		return false
+		return false, errors.New("deposit amount did not increase after deposit transaction")
 	}
 
-	return true
+	return false, nil
 }
 
 func (self *TokenNetwork) checkChannelStateForWithdraw(participant1 common.Address,

@@ -142,8 +142,9 @@ func (self *ChannelService) Start() error {
 		log.Fatal("check endpoint info failed:", err)
 		return err
 	}
-	log.Info("this account haven`t registered, begin registering...")
+
 	if info == nil {
+		log.Info("this account haven`t registered, begin registering...")
 		txHash, err := self.chain.ChannelClient.RegisterPaymentEndPoint([]byte(self.config["host"]), []byte(self.config["port"]), addr)
 		if err != nil {
 			log.Fatal("register endpoint service failed:", err)
@@ -168,8 +169,6 @@ func (self *ChannelService) Start() error {
 	if self.Wal.StateManager.CurrentState == nil {
 
 		var stateChange transfer.StateChange
-
-		lastLogBlockHeight = 0
 		networkId, err := self.chain.ChainClient.GetNetworkId()
 		if err != nil {
 			log.Error("get network id failed:", err)
@@ -188,7 +187,7 @@ func (self *ChannelService) Start() error {
 		self.HandleStateChange(stateChange)
 
 		paymentNetwork := transfer.NewPaymentNetworkState()
-		paymentNetwork.Address = common.PaymentNetworkID(self.address)
+		paymentNetwork.Address = common.PaymentNetworkID(sc_utils.MicroPayContractAddress)
 		stateChange = &transfer.ContractReceiveNewPaymentNetwork{
 			transfer.ContractReceiveStateChange{common.TransactionHash{}, lastLogBlockHeight}, paymentNetwork}
 		self.HandleStateChange(stateChange)
@@ -448,11 +447,12 @@ func (self *ChannelService) StateFromChannel() *transfer.ChainState {
 }
 
 func (self *ChannelService) InitializeTokenNetwork() {
-	//Simulate EVENT_TOKEN_NETWORK_CREATED block chain event to
-	// initialize the only one TokenNetworkState!!
 
 	tokenNetworkState := transfer.NewTokenNetworkState()
-	newTokenNetwork := &transfer.ContractReceiveNewTokenNetwork{TokenNetwork: tokenNetworkState}
+	tokenNetworkState.Address = common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
+	tokenNetworkState.TokenAddress = common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+	newTokenNetwork := &transfer.ContractReceiveNewTokenNetwork{PaymentNetworkIdentifier: common.PaymentNetworkID(sc_utils.MicroPayContractAddress),
+		TokenNetwork: tokenNetworkState}
 
 	self.HandleStateChange(newTokenNetwork)
 }
@@ -576,24 +576,29 @@ func (self *ChannelService) tokenNetworkLeave(registryAddress common.PaymentNetw
 func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 	partnerAddress common.Address) common.ChannelID {
 
-	chainState := self.StateFromChannel()
-	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.mircoAddress),
-		tokenAddress, partnerAddress)
+	id, err := self.chain.ChannelClient.GetChannelIdentifier(comm.Address(self.address), comm.Address(partnerAddress))
+	if err != nil {
+		log.Error("get channel identifier failed ", err)
+		return 0
+	}
 	regAddr, _ := comm.AddressParseFromBytes(self.address[:])
 	patAddr, _ := comm.AddressParseFromBytes(partnerAddress[:])
-	if channelState != nil {
-
+	if id != 0 {
 		log.Infof("channel between %s and %s already setup", regAddr.ToBase58(), patAddr.ToBase58())
-		return channelState.Identifier
+		return common.ChannelID(id)
+	}
+	if id == 0 {
+		log.Infof("channel between %s and %s haven`t setup. start to create new one", regAddr.ToBase58(), patAddr.ToBase58())
 	}
 
 	tokenNetwork := self.chain.NewTokenNetwork(common.Address(ong.ONG_CONTRACT_ADDRESS))
-	id := tokenNetwork.NewNettingChannel(partnerAddress, constants.SETTLE_TIMEOUT)
-	if id == 0 {
-		return id
+	channelId := tokenNetwork.NewNettingChannel(partnerAddress, constants.SETTLE_TIMEOUT)
+	if channelId == 0 {
+		log.Error("open channel failed")
+		return 0
 	}
 	log.Info("wait for new channel ... ")
-	channelState = WaitForNewChannel(self, common.PaymentNetworkID(self.mircoAddress), common.TokenAddress(ong.ONG_CONTRACT_ADDRESS), partnerAddress,
+	channelState := WaitForNewChannel(self, common.PaymentNetworkID(self.mircoAddress), common.TokenAddress(ong.ONG_CONTRACT_ADDRESS), partnerAddress,
 		float32(constants.OPEN_CHANNEL_RETRY_TIMEOUT), constants.OPEN_CHANNEL_RETRY_TIMES)
 	if channelState == nil {
 		log.Error("setup channel timeout")
@@ -604,39 +609,44 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 
 }
 
-func (self *ChannelService) SetTotalChannelDeposit(registryAddress common.PaymentNetworkID,
-	tokenAddress common.TokenAddress, partnerAddress common.Address, totalDeposit common.TokenAmount,
-	retryTimeout common.NetworkTimeout) {
+func (self *ChannelService) SetTotalChannelDeposit(tokenAddress common.TokenAddress, partnerAddress common.Address, totalDeposit common.TokenAmount) error {
 
 	chainState := self.StateFromChannel()
-	channelState := transfer.GetChannelStateFor(chainState, registryAddress, tokenAddress, partnerAddress)
+	partAddr, _ := comm.AddressParseFromBytes(partnerAddress[:])
+	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.mircoAddress), tokenAddress, partnerAddress)
 	if channelState == nil {
-		return
+		log.Errorf("deposit failed, can not find specific channel with %s", partAddr.ToBase58())
+		return errors.New("can not find specific channel")
 	}
 
 	args := self.GetPaymentArgs(channelState)
 	if args == nil {
-		panic("error in HandleContractSendChannelClose, cannot get paymentchannel args")
+		log.Error("can not get payment channel args")
+		return errors.New("can not get payment channel args")
 	}
 
-	channelProxy := self.chain.PaymentChannel(common.Address{}, channelState.Identifier, args)
+	channelProxy := self.chain.PaymentChannel(common.Address(tokenAddress), channelState.Identifier, args)
 
 	balance, err := channelProxy.GetGasBalance()
 	if err != nil {
-		return
+		return err
 	}
 
 	addednum := totalDeposit - channelState.OurState.ContractBalance
 	if balance < addednum {
-		return
+		return errors.New("gas balance not enough")
 	}
 
-	channelProxy.SetTotalDeposit(totalDeposit)
+	err = channelProxy.SetTotalDeposit(totalDeposit)
+	if err != nil {
+		return err
+	}
 	targetAddress := self.address
-	WaitForParticipantNewBalance(self, registryAddress, tokenAddress, partnerAddress,
-		targetAddress, totalDeposit, float32(retryTimeout))
+	log.Info("wait for balance updated...")
+	WaitForParticipantNewBalance(self, common.PaymentNetworkID(self.mircoAddress), tokenAddress, partnerAddress,
+		targetAddress, totalDeposit, constants.DEPOSIT_RETRY_TIMEOUT)
 
-	return
+	return nil
 }
 
 func (self *ChannelService) ChannelClose(registryAddress common.PaymentNetworkID,
@@ -757,13 +767,10 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 		log.Error("target address is invalid:", target)
 		return nil, fmt.Errorf("target address is invalid")
 	}
-	//Only one payment network
+
 	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
 	tokenAddress := common.TokenAddress(sc_utils.OngContractAddress)
-	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(
-		self.StateFromChannel(),
-		paymentNetworkIdentifier,
-		tokenAddress)
+	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(self.StateFromChannel(), paymentNetworkIdentifier, tokenAddress)
 	self.transport.StartHealthCheck(common.Address(target))
 
 	if identifier == common.PaymentID(0) {
@@ -848,7 +855,7 @@ func (self *ChannelService) Get(nodeAddress common.Address) string {
 		return ""
 	}
 	nodeAddr := string(info.IP) + ":" + string(info.Port)
-	log.Infof("node %s reg addr : %s", regAddr.ToBase58(), nodeAddr)
+	log.Infof("peer %s registe address: %s", regAddr.ToBase58(), nodeAddr)
 	return nodeAddr
 }
 func GetFullDatabasePath() (string, error) {

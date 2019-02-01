@@ -2,7 +2,6 @@ package channelservice
 
 import (
 	"container/list"
-	"errors"
 	"time"
 
 	"github.com/oniio/oniChannel/common"
@@ -47,53 +46,25 @@ func WaitForNewChannel(channel *ChannelService, paymentNetworkID common.PaymentN
 	return channelState
 }
 
-func addressEqual(address1 common.Address, address2 common.Address) bool {
-	result := true
-
-	for i := 0; i < 20; i++ {
-		if address1[i] != address2[i] {
-			result = false
-			break
-		}
-	}
-
-	return result
-}
-
 func WaitForParticipantNewBalance(channel *ChannelService, paymentNetworkId common.PaymentNetworkID,
 	tokenAddress common.TokenAddress, partnerAddress common.Address, targetAddress common.Address,
 	targetBalance common.TokenAmount, retryTimeout float32) error {
 
-	balance := func(channelState *transfer.NettingChannelState) (common.TokenAmount, error) {
-		var result common.TokenAmount
-
-		ourState := channelState.GetChannelEndState(0)
-		partnerState := channelState.GetChannelEndState(1)
-
-		if addressEqual(targetAddress, channel.address) {
-			result = ourState.GetContractBalance()
-		} else if addressEqual(partnerAddress, channel.address) {
-			result = partnerState.GetContractBalance()
-		} else {
-			return 0, errors.New("Target Address must be one of the channel participants!")
-		}
-
-		return result, nil
-	}
-
 	chainState := channel.StateFromChannel()
-
 	var channelState *transfer.NettingChannelState
 	channelState = transfer.GetChannelStateFor(chainState, paymentNetworkId, tokenAddress,
 		partnerAddress)
-
 	for {
 		if channelState == nil {
+
 			time.Sleep(time.Duration(retryTimeout*1000) * time.Millisecond)
 			channelState = transfer.GetChannelStateFor(channel.StateFromChannel(), paymentNetworkId, tokenAddress,
 				partnerAddress)
 		} else {
-			currentBalance, _ := balance(channelState)
+			currentBalance, err := channelState.GetContractBalance(channel.address, targetAddress, partnerAddress)
+			if err != nil {
+				return err
+			}
 			if currentBalance < targetBalance {
 				time.Sleep(time.Duration(retryTimeout*1000) * time.Millisecond)
 				channelState = transfer.GetChannelStateFor(channel.StateFromChannel(), paymentNetworkId, tokenAddress,
@@ -108,24 +79,7 @@ func WaitForParticipantNewBalance(channel *ChannelService, paymentNetworkId comm
 
 func WaitForPaymentBalance(channel *ChannelService, paymentNetworkId common.PaymentNetworkID,
 	tokenAddress common.TokenAddress, partnerAddress common.Address, targetAddress common.Address,
-	targetBalance common.TokenAmount, retryTimeout float32) {
-
-	balance := func(channelState *transfer.NettingChannelState) (common.TokenAmount, error) {
-		var result common.TokenAmount
-
-		ourState := channelState.GetChannelEndState(0)
-		partnerState := channelState.GetChannelEndState(1)
-
-		if addressEqual(targetAddress, channel.address) {
-			result = partnerState.GetGasBalance()
-		} else if addressEqual(partnerAddress, channel.address) {
-			result = ourState.GetGasBalance()
-		} else {
-			return 0, errors.New("Target Address must be one of the channel participants!")
-		}
-
-		return result, nil
-	}
+	targetBalance common.TokenAmount, retryTimeout float32) error {
 
 	chainState := channel.StateFromChannel()
 	var channelState *transfer.NettingChannelState
@@ -139,7 +93,10 @@ func WaitForPaymentBalance(channel *ChannelService, paymentNetworkId common.Paym
 				partnerAddress)
 		} else {
 
-			currentBalance, _ := balance(channelState)
+			currentBalance, err := channelState.GetGasBalance(channel.address, targetAddress, partnerAddress)
+			if err != nil {
+				return err
+			}
 			if currentBalance < targetBalance {
 				time.Sleep(time.Duration(retryTimeout*1000) * time.Millisecond)
 				channelState = transfer.GetChannelStateFor(channel.StateFromChannel(), paymentNetworkId, tokenAddress,
@@ -150,7 +107,7 @@ func WaitForPaymentBalance(channel *ChannelService, paymentNetworkId common.Paym
 		}
 	}
 
-	return
+	return nil
 }
 
 func WaitForClose(channel *ChannelService, paymentNetworkId common.PaymentNetworkID,

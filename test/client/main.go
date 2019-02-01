@@ -26,7 +26,8 @@ var testConfig = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3000",
 	//MappingAddress: "10.0.1.105:3000",
-	Protocol: "tcp",
+	Protocol:      "tcp",
+	RevealTimeout: "1000",
 }
 
 func main() {
@@ -55,11 +56,29 @@ func main() {
 	}
 
 	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
-	target, _ := chaincomm.AddressFromHexString("Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
+	target, _ := chaincomm.AddressFromBase58("Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
 
 	channelID := channel.Service.OpenChannel(tokenAddress, common.Address(target))
-
+	depositAmount := common.TokenAmount(1000000)
 	if channelID != 0 {
+		log.Infof("start to deposit %d token to channel", depositAmount)
+		err = channel.Service.SetTotalChannelDeposit(tokenAddress, common.Address(target), depositAmount)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		log.Info("deposit successful")
+		for {
+			log.Info(transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target)))
+			if transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target)) == transfer.NetworkReachable {
+				log.Info("peer connect successful")
+				break
+			}
+			log.Info("wait for peer connect ...")
+			<-time.After(time.Duration(3000) * time.Millisecond)
+		}
+
+		log.Info("begin direct transfer test...")
 		go loopTest(channel, 1000, common.Address(target), 10, 1000)
 	} else {
 		log.Fatal("setup channel failed, exit")
@@ -71,6 +90,7 @@ func main() {
 func loopTest(channel *ch.Channel, amount int, target common.Address, times, interval int) {
 	for index := 0; index < times; index++ {
 		<-time.After(time.Duration(interval) * time.Millisecond)
+		log.Infof("direct transfer %f ong to %s", float32(amount)/1000000000, "Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
 		channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(index))
 	}
 }
@@ -83,11 +103,13 @@ func logCurrentBalance(channel *ch.Channel, target common.Address) {
 			channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(common.Address(utils.MicroPayContractAddress)),
 				common.TokenAddress(ong.ONG_CONTRACT_ADDRESS), target)
 			if channelState == nil {
-				log.Info("test channel haven`t setup")
+				log.Infof("test channel with %s haven`t been connected", "Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
 				break
 			}
 			state := channelState.GetChannelEndState(0)
-			log.Infof("current balance = %d, transfer balance = %d", state.ContractBalance, state.GetGasBalance())
+			log.Infof("current balance = %d, transfer balance = %d", state.GetContractBalance(), state.GetGasBalance())
+			state = channelState.GetChannelEndState(1)
+			log.Infof("partner balance = %d, transfer balance = %d", state.GetContractBalance(), state.GetGasBalance())
 		}
 	}
 }

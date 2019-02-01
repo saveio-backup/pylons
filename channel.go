@@ -33,7 +33,8 @@ type ChannelConfig struct {
 	Protocol       string // tcp or kcp
 	MappingAddress string // ip + port, used to register in Endpoint contract when use address mapping
 
-	DBPath string
+	DBPath        string
+	RevealTimeout string
 }
 
 func DefaultChannelConfig() *ChannelConfig {
@@ -74,9 +75,10 @@ func NewChannelService(config *ChannelConfig, account *account.Account) (*Channe
 
 	// construct the option map
 	option := map[string]string{
-		"database_path": config.DBPath,
-		"host":          h,
-		"port":          p,
+		"database_path":  config.DBPath,
+		"host":           h,
+		"port":           p,
+		"reveal_timeout": config.RevealTimeout,
 	}
 
 	service := ch.NewChannelService(

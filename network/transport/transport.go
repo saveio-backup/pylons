@@ -266,11 +266,11 @@ func (this *Transport) GetHostPortFromAddress(recipient common.Address) string {
 	if hostPort == "" {
 		hostPort = this.ChannelService.Get(recipient)
 		if hostPort == "" {
-			log.Error("can`t get reg address")
+			log.Error("can`t get host and port of reg address")
 			return ""
 		}
 
-		this.SaveAddressCache(recipient, hostPort)
+		this.SaveAddressCache(recipient, this.protocol+"://"+hostPort)
 	}
 
 	address := this.protocol + "://" + hostPort
@@ -285,7 +285,7 @@ func (this *Transport) StartHealthCheck(address common.Address) {
 
 	nodeAddress := this.GetHostPortFromAddress(address)
 	if nodeAddress == "" {
-		log.Error("node address invalid,can`t chech health")
+		log.Error("node address invalid,can`t check health")
 		return
 	}
 	_, ok := this.activePeers.Load(nodeAddress)
@@ -301,6 +301,7 @@ func (this *Transport) StartHealthCheck(address common.Address) {
 	}
 
 	this.addressForHealthCheck.Store(nodeAddress, struct{}{})
+	this.SetNodeNetworkState(address, transfer.NetworkUnreachable) //default value before connect
 	this.Connect(nodeAddress)
 }
 
@@ -407,8 +408,8 @@ func (this *Transport) syncPeerState() {
 			}
 
 			this.addressForHealthCheck.Delete(state.Address)
-
 			address, ok := this.hostPortToAddress.Load(state.Address)
+
 			if !ok {
 				continue
 			}

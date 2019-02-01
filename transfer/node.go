@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"reflect"
 
+	sc_utils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
 )
 
@@ -131,9 +132,9 @@ func maybeAddTokennetwork(
 
 	if paymentNetworkState == nil {
 		paymentNetworkState = NewPaymentNetworkState()
+		paymentNetworkState.Address = common.PaymentNetworkID(sc_utils.MicroPayContractAddress)
 		paymentNetworkState.TokenIdentifiersToTokenNetworks[tokenNetworkState.Address] = tokenNetworkState
 		paymentNetworkState.tokenAddressesToTokenNetworks[tokenNetworkState.TokenAddress] = tokenNetworkState
-
 		chainState.IdentifiersToPaymentnetworks[paymentNetworkIdentifier] = paymentNetworkState
 	}
 
@@ -228,14 +229,19 @@ func handleChainInit(
 
 func handleTokenNetworkAction(
 	chainState *ChainState,
-	stateChange StateChange) TransitionResult {
+	stateChange StateChange,
+	tokenNetworkId common.TokenNetworkID) TransitionResult {
 
 	events := list.New()
 
-	tokenNetworkState := GetTokenNetworkByIdentifier(chainState, common.TokenNetworkID{})
-	paymentNetworkState := GetTokenNetworkRegistryByTokenNetworkIdentifier(
-		chainState, common.TokenNetworkID{})
+	tokenNetworkState := GetTokenNetworkByIdentifier(chainState, tokenNetworkId)
 
+	paymentNetworkState := GetTokenNetworkRegistryByTokenNetworkIdentifier(
+		chainState, tokenNetworkId)
+
+	if paymentNetworkState == nil {
+		return TransitionResult{}
+	}
 	paymentNetworkId := paymentNetworkState.Address
 
 	if tokenNetworkState != nil {
@@ -245,10 +251,10 @@ func handleTokenNetworkAction(
 		if reflect.ValueOf(iteration.NewState).IsNil() {
 
 			paymentNetworkState = searchPaymentNetworkByTokenNetworkId(
-				chainState, common.TokenNetworkID{})
+				chainState, tokenNetworkId)
 
-			delete(paymentNetworkState.tokenAddressesToTokenNetworks, common.TokenAddress{})
-			delete(paymentNetworkState.TokenIdentifiersToTokenNetworks, common.TokenNetworkID{})
+			delete(paymentNetworkState.tokenAddressesToTokenNetworks, common.TokenAddress(tokenNetworkId))
+			delete(paymentNetworkState.TokenIdentifiersToTokenNetworks, tokenNetworkId)
 		}
 
 		events = iteration.Events
@@ -273,7 +279,7 @@ func handleContractReceiveChannelClosed(
 		}
 	}
 
-	return handleTokenNetworkAction(chainState, stateChange)
+	return handleTokenNetworkAction(chainState, stateChange, stateChange.TokenNetworkIdentifier)
 }
 
 func handleDelivered(
@@ -346,7 +352,6 @@ func handleNewPaymentNetwork(
 func handleTokenadded(
 	chainState *ChainState,
 	stateChange *ContractReceiveNewTokenNetwork) TransitionResult {
-
 	events := list.New()
 	maybeAddTokennetwork(
 		chainState,
@@ -394,7 +399,6 @@ func handleStateChangeForNode(chainStateArg State, stateChange StateChange) Tran
 	chainState := chainStateArg.(*ChainState)
 	events := list.New()
 	iteration := TransitionResult{chainState, events}
-
 	switch stateChange.(type) {
 	case *Block:
 		block, _ := stateChange.(*Block)
@@ -406,19 +410,26 @@ func handleStateChangeForNode(chainStateArg State, stateChange StateChange) Tran
 		actionNewTokenNetwork, _ := stateChange.(*ActionNewTokenNetwork)
 		iteration = handleNewTokenNetwork(chainState, actionNewTokenNetwork)
 	case *ActionChannelClose:
-		iteration = handleTokenNetworkAction(chainState, stateChange)
+		actionChannelClose, _ := stateChange.(*ActionChannelClose)
+		iteration = handleTokenNetworkAction(chainState, stateChange, actionChannelClose.TokenNetworkIdentifier)
 	case *ActionTransferDirect:
-		iteration = handleTokenNetworkAction(chainState, stateChange)
+		actionTransferDirect, _ := stateChange.(*ActionTransferDirect)
+		iteration = handleTokenNetworkAction(chainState, stateChange, actionTransferDirect.TokenNetworkIdentifier)
 	case *ContractReceiveChannelNew:
-		iteration = handleTokenNetworkAction(chainState, stateChange)
+		contractReceiveChannelNew, _ := stateChange.(*ContractReceiveChannelNew)
+		iteration = handleTokenNetworkAction(chainState, stateChange, contractReceiveChannelNew.TokenNetworkIdentifier)
 	case *ContractReceiveChannelNewBalance:
-		iteration = handleTokenNetworkAction(chainState, stateChange)
+		contractReceiveChannelNewBalance, _ := stateChange.(*ContractReceiveChannelNewBalance)
+		iteration = handleTokenNetworkAction(chainState, stateChange, contractReceiveChannelNewBalance.TokenNetworkIdentifier)
 	case *ContractReceiveChannelSettled:
-		iteration = handleTokenNetworkAction(chainState, stateChange)
+		contractReceiveChannelSettled, _ := stateChange.(*ContractReceiveChannelSettled)
+		iteration = handleTokenNetworkAction(chainState, stateChange, contractReceiveChannelSettled.TokenNetworkIdentifier)
 	case *ContractReceiveUpdateTransfer:
-		iteration = handleTokenNetworkAction(chainState, stateChange)
+		contractReceiveUpdateTransfer, _ := stateChange.(*ContractReceiveUpdateTransfer)
+		iteration = handleTokenNetworkAction(chainState, stateChange, contractReceiveUpdateTransfer.TokenNetworkIdentifier)
 	case *ReceiveTransferDirect:
-		iteration = handleTokenNetworkAction(chainState, stateChange)
+		receiveTransferDirect, _ := stateChange.(*ReceiveTransferDirect)
+		iteration = handleTokenNetworkAction(chainState, stateChange, receiveTransferDirect.TokenNetworkIdentifier)
 	case *ActionChangeNodeNetworkState:
 		actionChangeNodeNetworkState, _ := stateChange.(*ActionChangeNodeNetworkState)
 		iteration = handleNodeChangeNetworkState(chainState, actionChangeNodeNetworkState)
@@ -560,11 +571,11 @@ func updateQueues(iteration TransitionResult, stateChange StateChange) {
 }
 
 func StateTransition(chainState State, stateChange StateChange) TransitionResult {
-
+	//fmt.Printf("in StateTransition chainState %+v stateChange = %+v\n", chainState, stateChange)
 	iteration := handleStateChangeForNode(chainState, stateChange)
-
+	//fmt.Printf("in StateTransition iteration NewState = %+v\n", iteration.NewState)
 	updateQueues(iteration, stateChange)
-
+	//fmt.Printf("updateQueues iteration NewState = %+v\n", iteration.NewState)
 	return iteration
 }
 

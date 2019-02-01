@@ -1,7 +1,14 @@
 package channelservice
 
 import (
+	"strconv"
+
+	"github.com/oniio/oniChain-go-sdk/ong"
+	comm "github.com/oniio/oniChain/common"
+	"github.com/oniio/oniChain/common/log"
+	sc_utils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
+	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/network/proxies"
 	"github.com/oniio/oniChannel/transfer"
 )
@@ -18,22 +25,37 @@ func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 	participant2 := event["participant2"].(common.Address)
 	channelIdentifier := event["channelID"].(common.ChannelID)
 	blockNumber := event["blockHeight"].(common.BlockHeight)
+	part1, _ := comm.AddressParseFromBytes(participant1[:])
+	part2, _ := comm.AddressParseFromBytes(participant2[:])
 
+	log.Infof("HandleChannelNew participant1 = %s", part1.ToBase58())
+	log.Infof("HandleChannelNew participant2 = %s", part2.ToBase58())
+	log.Infof("HandleChannelNew channelIdentifier = %d", channelIdentifier)
+	log.Infof("HandleChannelNew blockNumber = %d", blockNumber)
 	if common.AddressEqual(self.address, participant1) || self.address == participant2 {
 		isParticipant = true
 	}
 
-	tokenNetworkIdentifier := common.TokenNetworkID{}
+	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
 	if isParticipant {
 
 		channelProxy := self.chain.PaymentChannel(common.Address(tokenNetworkIdentifier), channelIdentifier, event)
-
-		//[TODO] get revealTime from channel.config[reveal_timeout]
 		var revealTimeout common.BlockHeight
+		if _, exist := self.config["reveal_timeout"]; exist == false {
+			revealTimeout = common.BlockHeight(constants.DEFAULT_REVEAL_TIMEOUT)
+		} else {
+			rt := self.config["reveal_timeout"]
+			if ret, err := strconv.Atoi(rt); err != nil {
+				log.Warn("reveal timeout invalid in channel config %s, use default value %d", rt, constants.DEFAULT_REVEAL_TIMEOUT)
+				revealTimeout = common.BlockHeight(constants.DEFAULT_REVEAL_TIMEOUT)
+			} else {
+				revealTimeout = common.BlockHeight(ret)
+			}
 
-		tokenAddress := common.TokenAddress{}
-		defaultRegister := common.PaymentNetworkID{}
-		channelState := GetChannelState(tokenAddress, defaultRegister,
+		}
+		tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+		defaultRegister := common.PaymentNetworkID(sc_utils.MicroPayContractAddress)
+		channelState := SetupChannelState(tokenAddress, defaultRegister,
 			common.TokenNetworkAddress(tokenNetworkIdentifier), revealTimeout, channelProxy, blockNumber)
 
 		newChannel := &transfer.ContractReceiveChannelNew{
@@ -62,8 +84,12 @@ func (self ChannelService) HandleChannelNewBalance(event map[string]interface{})
 	channelIdentifier := event["channelID"].(common.ChannelID)
 	depositBlockHeight := event["blockHeight"].(common.BlockHeight)
 	totalDeposit := event["totalDeposit"].(common.TokenAmount)
-
-	tokenNetworkIdentifier := common.TokenNetworkID{}
+	part, _ := comm.AddressParseFromBytes(participantAddress[:])
+	log.Infof("HandleChannelNewBalance participant = %s", part.ToBase58())
+	log.Infof("HandleChannelNewBalance channelID = %s", channelIdentifier)
+	log.Infof("HandleChannelNewBalance blockHeight = %d", depositBlockHeight)
+	log.Infof("HandleChannelNewBalance totalDeposit = %d", totalDeposit)
+	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
 
 	previousChannelState := transfer.GetChannelStateByTokenNetworkIdentifier(
 		self.StateFromChannel(), tokenNetworkIdentifier, channelIdentifier)
@@ -204,7 +230,7 @@ func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 	eventName = event["eventName"].(string)
 
 	events := ParseEvent(event)
-
+	log.Info(events)
 	if eventName == "chanOpened" {
 		channel.HandleChannelNew(events)
 	} else if eventName == "ChannelClose" {
@@ -219,7 +245,7 @@ func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 
 	return
 }
-func GetChannelState(tokenAddress common.TokenAddress, paymentNetworkIdentifier common.PaymentNetworkID,
+func SetupChannelState(tokenAddress common.TokenAddress, paymentNetworkIdentifier common.PaymentNetworkID,
 	tokenNetworkAddress common.TokenNetworkAddress, revealTimeout common.BlockHeight,
 	paymentChannelProxy *proxies.PaymentChannel, openedBlockHeight common.BlockHeight) *transfer.NettingChannelState {
 
@@ -244,7 +270,7 @@ func GetChannelState(tokenAddress common.TokenAddress, paymentNetworkIdentifier 
 
 	channel := &transfer.NettingChannelState{
 		Identifier:               identifier,
-		ChainId:                  0,
+		ChainId:                  channelDetails.ChainId,
 		TokenAddress:             common.Address(tokenAddress),
 		PaymentNetworkIdentifier: paymentNetworkIdentifier,
 		TokenNetworkIdentifier:   common.TokenNetworkID(tokenNetworkAddress),

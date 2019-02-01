@@ -103,8 +103,7 @@ func (self *ConnectionManager) JoinChannel(partnerAddress common.Address,
 	//Currently, only router will join channel! Just use same deposit with partner.
 	//Can add policy function later
 	joiningFunds = partnerDeposit
-	self.channel.SetTotalChannelDeposit(common.PaymentNetworkID(self.registryAddress), self.tokenAddress,
-		partnerAddress, joiningFunds, 0.5)
+	self.channel.SetTotalChannelDeposit(self.tokenAddress, partnerAddress, joiningFunds)
 
 	return
 }
@@ -165,8 +164,7 @@ func (self *ConnectionManager) JoinPartner(partner common.Address) {
 
 	self.channel.OpenChannel(self.tokenAddress, partner)
 
-	self.channel.SetTotalChannelDeposit(common.PaymentNetworkID(self.registryAddress), self.tokenAddress,
-		partner, self.initialFundingPerPartner(), 0.5)
+	self.channel.SetTotalChannelDeposit(self.tokenAddress, partner, self.initialFundingPerPartner())
 
 	self.wg.Done()
 	return

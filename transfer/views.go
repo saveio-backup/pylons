@@ -2,8 +2,10 @@ package transfer
 
 import (
 	"container/list"
+	"fmt"
 	"sort"
 
+	sc_utils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
 )
 
@@ -13,7 +15,9 @@ func GetNeigbours(chainState *ChainState) []common.Address {
 	for _, p := range chainState.IdentifiersToPaymentnetworks {
 		for _, t := range p.TokenIdentifiersToTokenNetworks {
 			for _, c := range t.ChannelIdentifiersToChannels {
-				addr = append(addr, c.PartnerState.Address)
+				if !common.AddressEqual(c.PartnerState.Address, common.Address{}) {
+					addr = append(addr, c.PartnerState.Address)
+				}
 			}
 		}
 	}
@@ -59,7 +63,7 @@ func GetNetworkStatuses(chainState *ChainState) *map[common.Address]string {
 
 func GetNodeNetworkStatus(chainState *ChainState, nodeAddress common.Address) string {
 	result, exist := chainState.NodeAddressesToNetworkstates[nodeAddress]
-
+	fmt.Printf("%+v\n", chainState.NodeAddressesToNetworkstates)
 	if !exist {
 		result = NetworkUnknown
 	}
@@ -137,7 +141,6 @@ func GetTokenNetworkIdentifierByTokenAddress(
 	chainState *ChainState,
 	paymentNetworkId common.PaymentNetworkID,
 	tokenAddress common.TokenAddress) common.TokenNetworkID {
-
 	tokenNetworkState := GetTokenNetworkByTokenAddress(
 		chainState,
 		paymentNetworkId,
@@ -221,8 +224,12 @@ func TotalTokenNetworkChannels(
 func GetTokenNetworkByTokenAddress(chainState *ChainState,
 	paymentNetworkId common.PaymentNetworkID,
 	tokenAddress common.TokenAddress) *TokenNetworkState {
+	//log.Info("paymentNetworkId = ", paymentNetworkId)
+	//log.Info("chainState.IdentifiersToPaymentnetworks = ", chainState.IdentifiersToPaymentnetworks)
 
 	paymentNetwork := chainState.IdentifiersToPaymentnetworks[paymentNetworkId]
+	//log.Info("paymentNetwork = ", paymentNetwork)
+	//Info("tokenAddressesToTokenNetworks = ", paymentNetwork.tokenAddressesToTokenNetworks)
 	if paymentNetwork != nil {
 		return paymentNetwork.tokenAddressesToTokenNetworks[tokenAddress]
 	}
@@ -232,13 +239,13 @@ func GetTokenNetworkByTokenAddress(chainState *ChainState,
 func GetTokenNetworkByIdentifier(
 	chainState *ChainState,
 	tokenNetworkId common.TokenNetworkID) *TokenNetworkState {
-
-	var tokenNetworkState *TokenNetworkState
-
-	paymentNetworkState := chainState.IdentifiersToPaymentnetworks[common.PaymentNetworkID{}]
-	tokenNetworkState = paymentNetworkState.TokenIdentifiersToTokenNetworks[common.TokenNetworkID{}]
-
-	return tokenNetworkState
+	//fmt.Printf("chainState.IdentifiersToPaymentnetworks = %+v\n", chainState.IdentifiersToPaymentnetworks)
+	paymentNetworkState := chainState.IdentifiersToPaymentnetworks[common.PaymentNetworkID(sc_utils.MicroPayContractAddress)]
+	//fmt.Printf("paymentNetworkState = %+v\n", paymentNetworkState)
+	if paymentNetworkState == nil {
+		return nil
+	}
+	return paymentNetworkState.TokenIdentifiersToTokenNetworks[tokenNetworkId]
 }
 
 func GetChannelStateFor(chainState *ChainState,

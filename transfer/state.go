@@ -1,6 +1,7 @@
 package transfer
 
 import (
+	"errors"
 	"math"
 	"math/rand"
 	"sort"
@@ -338,6 +339,38 @@ func (self *NettingChannelState) GetChannelEndState(side int) *NettingChannelEnd
 	}
 }
 
+func (self *NettingChannelState) GetContractBalance(ownAddress common.Address, targetAddress common.Address, partnerAddress common.Address) (common.TokenAmount, error) {
+	var result common.TokenAmount
+
+	ourState := self.GetChannelEndState(0)
+	partnerState := self.GetChannelEndState(1)
+
+	if addressEqual(targetAddress, ownAddress) {
+		result = ourState.GetContractBalance()
+	} else if addressEqual(partnerAddress, ownAddress) {
+		result = partnerState.GetContractBalance()
+	} else {
+		return 0, errors.New("target address must be one of the channel participants!")
+	}
+	return result, nil
+}
+
+func (self *NettingChannelState) GetGasBalance(ownAddress common.Address, targetAddress common.Address, partnerAddress common.Address) (common.TokenAmount, error) {
+	var result common.TokenAmount
+
+	ourState := self.GetChannelEndState(0)
+	partnerState := self.GetChannelEndState(1)
+
+	if addressEqual(targetAddress, ownAddress) {
+		result = ourState.GetGasBalance()
+	} else if addressEqual(partnerAddress, ownAddress) {
+		result = partnerState.GetGasBalance()
+	} else {
+		return 0, errors.New("target address must be one of the channel participants!")
+	}
+	return result, nil
+}
+
 type TransactionChannelNewBalance struct {
 	ParticipantAddress common.Address
 	ContractBalance    common.TokenAmount
@@ -347,4 +380,17 @@ type TransactionChannelNewBalance struct {
 type TransactionOrder struct {
 	BlockHeight common.BlockHeight
 	Transaction TransactionChannelNewBalance
+}
+
+func addressEqual(address1 common.Address, address2 common.Address) bool {
+	result := true
+
+	for i := 0; i < 20; i++ {
+		if address1[i] != address2[i] {
+			result = false
+			break
+		}
+	}
+
+	return result
 }
