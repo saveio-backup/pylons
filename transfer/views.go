@@ -2,7 +2,6 @@ package transfer
 
 import (
 	"container/list"
-	"fmt"
 	"sort"
 
 	sc_utils "github.com/oniio/oniChain/smartcontract/service/native/utils"
@@ -63,7 +62,6 @@ func GetNetworkStatuses(chainState *ChainState) *map[common.Address]string {
 
 func GetNodeNetworkStatus(chainState *ChainState, nodeAddress common.Address) string {
 	result, exist := chainState.NodeAddressesToNetworkstates[nodeAddress]
-	fmt.Printf("%+v\n", chainState.NodeAddressesToNetworkstates)
 	if !exist {
 		result = NetworkUnknown
 	}

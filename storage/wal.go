@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"reflect"
 	"sync"
+	"time"
 
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/transfer"
@@ -63,14 +64,14 @@ func (self *WriteAheadLog) LogAndDispatch(stateChange transfer.StateChange) *lis
 	self.dbLock.Lock()
 	defer self.dbLock.Unlock()
 
-	//stateChangeId := self.Storage.writeStateChange(stateChange)
-	//self.StateChangeId = stateChangeId
+	stateChangeId := self.Storage.writeStateChange(stateChange)
+	self.StateChangeId = stateChangeId
 
 	events := self.StateManager.Dispatch(stateChange)
 
-	//t := time.Now()
-	//timestamp := t.UTC().String()
-	//self.Storage.writeEvents(stateChangeId, events, timestamp)
+	t := time.Now()
+	timestamp := t.UTC().String()
+	self.Storage.writeEvents(stateChangeId, events, timestamp)
 
 	return events
 }

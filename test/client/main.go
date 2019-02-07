@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
@@ -69,12 +70,12 @@ func main() {
 		}
 		log.Info("deposit successful")
 		for {
-			log.Info(transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target)))
-			if transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target)) == transfer.NetworkReachable {
+			state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
+			if state == transfer.NetworkReachable {
 				log.Info("peer connect successful")
 				break
 			}
-			log.Info("wait for peer connect ...")
+			log.Infof("peer state = %s wait for connect ...", state)
 			<-time.After(time.Duration(3000) * time.Millisecond)
 		}
 
@@ -89,9 +90,10 @@ func main() {
 }
 func loopTest(channel *ch.Channel, amount int, target common.Address, times, interval int) {
 	for index := 0; index < times; index++ {
+		r := rand.NewSource(time.Now().UnixNano())
 		<-time.After(time.Duration(interval) * time.Millisecond)
 		log.Infof("direct transfer %f ong to %s", float32(amount)/1000000000, "Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
-		channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(index))
+		channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(r.Int63()))
 	}
 }
 func logCurrentBalance(channel *ch.Channel, target common.Address) {

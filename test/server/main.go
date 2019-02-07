@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
@@ -55,8 +56,28 @@ func main() {
 		return
 	}
 	target, _ := chaincomm.AddressFromBase58("AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
+	for {
+		state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
+		if state == transfer.NetworkReachable {
+			log.Info("peer connect successful")
+			break
+		}
+		log.Infof("peer state = %s wait for connect ...", state)
+		<-time.After(time.Duration(3000) * time.Millisecond)
+	}
+
+	log.Info("begin direct transfer test...")
+	go loopTest(channel, 1000, common.Address(target), 10, 1000)
 	go logCurrentBalance(channel, common.Address(target))
 	waitToExit()
+}
+func loopTest(channel *ch.Channel, amount int, target common.Address, times, interval int) {
+	for index := 0; index < times; index++ {
+		r := rand.NewSource(time.Now().UnixNano())
+		<-time.After(time.Duration(interval) * time.Millisecond)
+		log.Infof("direct transfer %f ong to %s", float32(amount)/1000000000, "AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
+		channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(r.Int63()))
+	}
 }
 func logCurrentBalance(channel *ch.Channel, target common.Address) {
 	ticker := time.NewTicker(config.DEFAULT_GEN_BLOCK_TIME * time.Second)

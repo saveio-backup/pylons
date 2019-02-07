@@ -1,6 +1,7 @@
 package channelservice
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -83,7 +84,7 @@ func (self *AlarmTask) GetLatestBlock() (common.BlockHeight, common.BlockHash, e
 	blockNumber, err := self.chain.BlockHeight()
 	latestBlockHeight := common.BlockHeight(blockNumber)
 	if err != nil {
-		return 0, nil, fmt.Errorf("GetBlockHeight error")
+		return 0, nil, errors.New("get chain block height error")
 	}
 
 	header, _ := self.chain.GetBlock(blockNumber)

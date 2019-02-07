@@ -52,6 +52,7 @@ type ChannelServiceInterface interface {
 	Sign(message interface{}) error
 	HandleStateChange(stateChange transfer.StateChange) *list.List
 	Get(nodeAddress common.Address) string
+	StateFromChannel() *transfer.ChainState
 }
 
 type Discoverer interface {
@@ -301,17 +302,15 @@ func (this *Transport) StartHealthCheck(address common.Address) {
 	}
 
 	this.addressForHealthCheck.Store(nodeAddress, struct{}{})
-	this.SetNodeNetworkState(address, transfer.NetworkUnreachable) //default value before connect
+	//this.SetNodeNetworkState(address, transfer.NetworkUnreachable) //default value before connect
 	this.Connect(nodeAddress)
 }
 
 func (this *Transport) SetNodeNetworkState(address common.Address, state string) {
-	stateChange := &transfer.ActionChangeNodeNetworkState{
-		NodeAddress:  address,
-		NetworkState: state,
+	chainState := this.ChannelService.StateFromChannel()
+	if chainState != nil {
+		chainState.NodeAddressesToNetworkstates[address] = state
 	}
-
-	this.ChannelService.HandleStateChange(stateChange)
 }
 
 func (this *Transport) Receive(message proto.Message, from string) {
