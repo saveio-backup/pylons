@@ -17,7 +17,6 @@ type Queue struct {
 	tail        *Node
 	length      uint32
 	capacity    uint32
-	DataCh      chan struct{}
 	DeliverChan chan *messages.MessageID
 }
 
@@ -27,7 +26,6 @@ func NewQueue(cap uint32) *Queue {
 		tail:        nil,
 		capacity:    cap,
 		length:      0,
-		DataCh:      make(chan struct{}, 1),
 		DeliverChan: make(chan *messages.MessageID),
 	}
 	return q
@@ -41,12 +39,7 @@ func (q *Queue) Len() uint32 {
 }
 func (q *Queue) Push(data interface{}) bool {
 	q.Lock()
-	defer func() {
-		if q.length == 1 {
-			q.DataCh <- struct{}{}
-		}
-		q.Unlock()
-	}()
+	defer q.Unlock()
 
 	if q.length == q.capacity {
 		return false

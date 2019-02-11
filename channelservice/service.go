@@ -145,13 +145,13 @@ func (self *ChannelService) Start() error {
 
 	if info == nil {
 		log.Info("this account haven`t registered, begin registering...")
-		txHash, err := self.chain.ChannelClient.RegisterPaymentEndPoint([]byte(self.config["host"]), []byte(self.config["port"]), addr)
+		txHash, err := self.chain.ChannelClient.RegisterPaymentEndPoint([]byte(self.config["protocol"]), []byte(self.config["host"]), []byte(self.config["port"]), addr)
 		if err != nil {
 			log.Fatal("register endpoint service failed:", err)
 			return err
 		}
 		log.Info("wait for the confirmation of transaction...")
-		_, err = self.chain.ChainClient.PollForTxConfirmed(time.Duration(15)*time.Second, txHash)
+		_, err = self.chain.ChainClient.PollForTxConfirmed(time.Duration(constants.POLL_FOR_COMFIRMED)*time.Second, txHash)
 		if err != nil {
 			log.Error("poll transaction failed:", err)
 			return err
@@ -244,7 +244,7 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 	eventList := self.Wal.LogAndDispatch(stateChange)
 	for e := eventList.Front(); e != nil; e = e.Next() {
 		temp := e.Value
-
+		fmt.Printf("temp = %+v\n", temp)
 		self.channelEventHandler.OnChannelEvent(self, temp.(transfer.Event))
 	}
 	//take snapshot
@@ -281,7 +281,8 @@ func (self *ChannelService) InitializeTransactionsQueues(chainState *transfer.Ch
 	}
 }
 
-func (self *ChannelService) RegisterPaymentStatus(target common.Address, identifier common.PaymentID, paymentType common.PaymentType, amount common.TokenAmount, tokenNetworkIdentifier common.TokenNetworkID) {
+func (self *ChannelService) RegisterPaymentStatus(target common.Address, identifier common.PaymentID, paymentType common.PaymentType,
+	amount common.TokenAmount, tokenNetworkIdentifier common.TokenNetworkID) *PaymentStatus {
 	status := &PaymentStatus{
 		paymentType:            paymentType,
 		paymentIdentifier:      identifier,
@@ -298,6 +299,7 @@ func (self *ChannelService) RegisterPaymentStatus(target common.Address, identif
 		payments.Store(identifier, status)
 		self.targetsToIndentifierToStatues[common.Address(target)] = payments
 	}
+	return status
 }
 
 func (self *ChannelService) GetPaymentStatus(target common.Address, identifier common.PaymentID) (status *PaymentStatus, exist bool) {
@@ -383,7 +385,7 @@ func (self *ChannelService) OnMessage(message proto.Message, from string) {
 func (self *ChannelService) Sign(message interface{}) error {
 	_, ok := message.(messages.SignedMessageInterface)
 	if !ok {
-		return fmt.Errorf("message need no signature")
+		return errors.New("invalid message to sign")
 	}
 
 	err := messages.Sign(self.Account, message.(messages.SignedMessageInterface))
@@ -780,8 +782,9 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 	paymentStatus, exist := self.GetPaymentStatus(common.Address(target), identifier)
 	if exist {
 		if !paymentStatus.Match(common.PAYMENT_DIRECT, tokenNetworkIdentifier, amount) {
-			return nil, fmt.Errorf("Another payment with same id is in flight")
+			return nil, errors.New("Another payment with same id is in flight")
 		}
+		log.Warn("payment already existd:")
 		return paymentStatus.paymentDone, nil
 	}
 
@@ -792,8 +795,8 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 		Amount:                 amount,
 	}
 
-	self.RegisterPaymentStatus(target, identifier, common.PAYMENT_DIRECT, amount, tokenNetworkIdentifier)
-	paymentStatus, _ = self.GetPaymentStatus(common.Address(target), identifier)
+	paymentStatus = self.RegisterPaymentStatus(target, identifier, common.PAYMENT_DIRECT, amount, tokenNetworkIdentifier)
+	//paymentStatus, _ = self.GetPaymentStatus(common.Address(target), identifier)
 
 	self.HandleStateChange(directTransfer)
 
@@ -854,7 +857,7 @@ func (self *ChannelService) Get(nodeAddress common.Address) string {
 		log.Warnf("node %s haven`t been registed", regAddr.ToBase58())
 		return ""
 	}
-	nodeAddr := string(info.IP) + ":" + string(info.Port)
+	nodeAddr := string(info.Protocol) + "://" + string(info.IP) + ":" + string(info.Port)
 	log.Infof("peer %s registe address: %s", regAddr.ToBase58(), nodeAddr)
 	return nodeAddr
 }

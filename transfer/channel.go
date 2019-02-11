@@ -269,14 +269,6 @@ func getDistributable(sender *NettingChannelEndState, receiver *NettingChannelEn
 	return (common.TokenAmount)(result)
 }
 
-func get_next_nonce(endState *NettingChannelEndState) common.Nonce {
-	if endState.BalanceProof != nil {
-		return (common.Nonce)(endState.BalanceProof.Nonce + 1)
-	}
-
-	return 1
-}
-
 func getNextNonce(endState *NettingChannelEndState) common.Nonce {
 	if endState.BalanceProof != nil {
 		return endState.BalanceProof.Nonce + 1
@@ -540,7 +532,6 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 	if amount <= distributableAmount {
 		canPay = true
 	}
-
 	if isOpen && isValid && canPay {
 		messageIdentifier := GetMsgID()
 		directTransfer := sendDirectTransfer(channelState, common.PaymentAmount(amount), messageIdentifier, paymentIdentifier)
@@ -570,7 +561,6 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 			events.PushBack(failure)
 		}
 	}
-
 	return TransitionResult{channelState, events}
 }
 

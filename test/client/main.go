@@ -72,7 +72,7 @@ func main() {
 		for {
 			state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
 			if state == transfer.NetworkReachable {
-				log.Info("peer connect successful")
+				log.Info("connect peer Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC successful")
 				break
 			}
 			log.Infof("peer state = %s wait for connect ...", state)
@@ -92,8 +92,19 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times, int
 	for index := 0; index < times; index++ {
 		r := rand.NewSource(time.Now().UnixNano())
 		<-time.After(time.Duration(interval) * time.Millisecond)
-		log.Infof("direct transfer %f ong to %s", float32(amount)/1000000000, "Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
-		channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(r.Int63()))
+
+		status, err := channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(r.Int63()))
+		if err != nil {
+			log.Error("direct tranfer failed:", err)
+			break
+		}
+		log.Info("wait for payment status update...")
+		ret := <-status
+		if !ret {
+			log.Error("payment failed:")
+			break
+		}
+		log.Infof("direct transfer %f ong to %s successfully", float32(amount)/1000000000, "Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
 	}
 }
 func logCurrentBalance(channel *ch.Channel, target common.Address) {

@@ -84,11 +84,7 @@ func (self ChannelService) HandleChannelNewBalance(event map[string]interface{})
 	channelIdentifier := event["channelID"].(common.ChannelID)
 	depositBlockHeight := event["blockHeight"].(common.BlockHeight)
 	totalDeposit := event["totalDeposit"].(common.TokenAmount)
-	part, _ := comm.AddressParseFromBytes(participantAddress[:])
-	log.Infof("HandleChannelNewBalance participant = %s", part.ToBase58())
-	log.Infof("HandleChannelNewBalance channelID = %s", channelIdentifier)
-	log.Infof("HandleChannelNewBalance blockHeight = %d", depositBlockHeight)
-	log.Infof("HandleChannelNewBalance totalDeposit = %d", totalDeposit)
+
 	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
 
 	previousChannelState := transfer.GetChannelStateByTokenNetworkIdentifier(

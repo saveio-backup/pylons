@@ -12,6 +12,7 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
+	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/network/transport/messages"
 	"github.com/oniio/oniChannel/transfer"
 	"github.com/oniio/oniP2p/crypto"
@@ -132,16 +133,14 @@ func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Me
 	var msgID *messages.MessageID
 
 	q := this.GetQueue(queueId)
-
 	switch msg.(type) {
 	case *messages.DirectTransfer:
 		msgID = (msg.(*messages.DirectTransfer)).MessageIdentifier
 	case *messages.Processed:
 		msgID = (msg.(*messages.Processed)).MessageIdentifier
 	default:
-		fmt.Errorf("Unknown message type to send async")
+		return fmt.Errorf("Unknown message type to send async")
 	}
-
 	ok := q.Push(&QueueItem{
 		message:   msg,
 		messageId: msgID,
@@ -164,7 +163,7 @@ func (this *Transport) GetQueue(queueId *transfer.QueueIdentifier) *Queue {
 }
 
 func (this *Transport) InitQueue(queueId *transfer.QueueIdentifier) *Queue {
-	q := NewQueue(1000)
+	q := NewQueue(constants.MAX_MSG_QUEUE)
 
 	this.messageQueues.Store(*queueId, q)
 
@@ -181,17 +180,17 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 
 	for {
 		select {
-		case <-queue.DataCh:
-			t.Reset(interval * time.Second)
-			this.PeekAndSend(queue, queueId)
-		// handle timeout retry
 		case <-t.C:
+			t.Reset(interval * time.Second)
 			if queue.Len() == 0 {
 				continue
 			}
-
-			t.Reset(interval * time.Second)
-			this.PeekAndSend(queue, queueId)
+			err := this.PeekAndSend(queue, queueId)
+			if err != nil {
+				log.Error("send message failed:", err)
+				t.Stop()
+				break
+			}
 		case msgId := <-queue.DeliverChan:
 			data, _ := queue.Peek()
 			if data == nil {
@@ -270,11 +269,10 @@ func (this *Transport) GetHostPortFromAddress(recipient common.Address) string {
 			log.Error("can`t get host and port of reg address")
 			return ""
 		}
-
-		this.SaveAddressCache(recipient, this.protocol+"://"+hostPort)
+		this.SaveAddressCache(recipient, hostPort)
 	}
 
-	address := this.protocol + "://" + hostPort
+	address := hostPort
 	return address
 }
 

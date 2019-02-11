@@ -76,6 +76,7 @@ func NewChannelService(config *ChannelConfig, account *account.Account) (*Channe
 	// construct the option map
 	option := map[string]string{
 		"database_path":  config.DBPath,
+		"protocol":       config.Protocol,
 		"host":           h,
 		"port":           p,
 		"reveal_timeout": config.RevealTimeout,

@@ -4,6 +4,7 @@ import (
 	sdkutils "github.com/oniio/oniChain-go-sdk/utils"
 	"github.com/oniio/oniChain/crypto/keypair"
 
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/network/transport/messages"
 	"github.com/oniio/oniChannel/storage"
@@ -58,7 +59,10 @@ func (self ChannelEventHandler) HandleSendDirecttransfer(channel *ChannelService
 			ChannelIdentifier: sendDirectTransfer.ChannelIdentifier,
 		}
 
-		channel.transport.SendAsync(queueId, message)
+		ret := channel.transport.SendAsync(queueId, message)
+		if ret != nil {
+			log.Error("send msg failed:", ret)
+		}
 	}
 
 	return

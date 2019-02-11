@@ -2,7 +2,6 @@ package channelservice
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/oniio/oniChain/common/log"
@@ -66,7 +65,7 @@ func (self *AlarmTask) LoopUntilStop() {
 			lastBlockHeight = self.lastBlockHeight
 			latestBlockHeight, blockHash, err = self.GetLatestBlock()
 			if err != nil {
-				fmt.Println(err)
+				log.Error(err)
 				continue
 			}
 
