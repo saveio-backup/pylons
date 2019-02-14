@@ -176,12 +176,11 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 	//t := time.NewTicker(3 * time.Second)
 	var interval time.Duration = 3
 
-	t := time.NewTimer(interval * time.Second)
+	t := time.NewTicker(interval * time.Second)
 
 	for {
 		select {
 		case <-t.C:
-			t.Reset(interval * time.Second)
 			if queue.Len() == 0 {
 				continue
 			}
@@ -192,20 +191,21 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 				break
 			}
 		case msgId := <-queue.DeliverChan:
+
 			data, _ := queue.Peek()
 			if data == nil {
 				continue
 			}
 			item := data.(*QueueItem)
-
+			log.Infof("msgId %d queue.DeliverChan %d", msgId.MessageId, item.messageId.MessageId)
 			if msgId.MessageId == item.messageId.MessageId {
+				log.Info("msgId.MessageId == item.messageId.MessageId====popup ", msgId.MessageId)
 				queue.Pop()
-				t.Stop()
 
 				if queue.Len() != 0 {
-					t.Reset(interval * time.Second)
 					this.PeekAndSend(queue, queueId)
 				}
+
 			}
 		case <-this.kill:
 			t.Stop()
@@ -324,6 +324,7 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 	if this.ChannelService != nil {
 		this.ChannelService.OnMessage(message, from)
 	}
+	//log.Info("ReceiveMessage")
 
 	var address common.Address
 	var msgID *messages.MessageID
@@ -333,10 +334,12 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 		msg := message.(*messages.DirectTransfer)
 		address = messages.ConvertAddress(msg.EnvelopeMessage.Signature.Sender)
 		msgID = msg.MessageIdentifier
+		//fmt.Printf("DirectTransfer = %+v\n", msg)
 	case *messages.Processed:
 		msg := message.(*messages.Processed)
 		address = messages.ConvertAddress(msg.Signature.Sender)
 		msgID = msg.MessageIdentifier
+		//fmt.Printf("Processed = %+v\n", msg)
 	}
 
 	deliveredMessage := &messages.Delivered{
@@ -350,6 +353,7 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 			log.Error("node address invalid,can`t send message")
 			return
 		}
+		log.Info("send deliveredMessage")
 		this.Send(nodeAddress, deliveredMessage)
 	}
 }
@@ -366,6 +370,7 @@ func (this *Transport) ReceiveDelivered(message proto.Message, from string) {
 	}
 
 	queue.(*Queue).DeliverChan <- msg.DeliveredMessageIdentifier
+	log.Info("ReceiveDelivered for", msg.DeliveredMessageIdentifier)
 }
 
 func (this *Transport) Send(address string, message proto.Message) error {
@@ -382,7 +387,6 @@ func (this *Transport) Send(address string, message proto.Message) error {
 	if err != nil {
 		return fmt.Errorf("failed to send message to %s", address)
 	}
-
 	return nil
 }
 

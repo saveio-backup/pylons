@@ -240,11 +240,9 @@ func (self *ChannelService) AddPendingRoutine() {
 }
 
 func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) *list.List {
-
 	eventList := self.Wal.LogAndDispatch(stateChange)
 	for e := eventList.Front(); e != nil; e = e.Next() {
 		temp := e.Value
-		fmt.Printf("temp = %+v\n", temp)
 		self.channelEventHandler.OnChannelEvent(self, temp.(transfer.Event))
 	}
 	//take snapshot

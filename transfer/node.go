@@ -285,7 +285,6 @@ func handleContractReceiveChannelClosed(
 func handleDelivered(
 	chainState *ChainState,
 	stateChange *ReceiveDelivered) TransitionResult {
-
 	queueid := QueueIdentifier{stateChange.Sender, 0}
 	inplaceDeleteMessageQueue(chainState, stateChange, queueid)
 
@@ -373,7 +372,7 @@ func handleProcessed(
 		for i := 0; i < len; i++ {
 			message := GetSenderMessageEvent(v[i])
 			sender, messageId := GetSenderAndMessageIdentifier(stateChange)
-
+			//fmt.Printf("handleProcessed = %+v\n", message)
 			if message.MessageIdentifier == messageId && common.AddressEqual(common.Address(message.Recipient), sender) {
 				if message, ok := v[i].(*SendDirectTransfer); ok {
 					channelState := GetChannelStateByTokenNetworkAndPartner(chainState,

@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"github.com/oniio/oniChain-go-sdk/ong"
-	comm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
 	sc_utils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
@@ -25,13 +24,7 @@ func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 	participant2 := event["participant2"].(common.Address)
 	channelIdentifier := event["channelID"].(common.ChannelID)
 	blockNumber := event["blockHeight"].(common.BlockHeight)
-	part1, _ := comm.AddressParseFromBytes(participant1[:])
-	part2, _ := comm.AddressParseFromBytes(participant2[:])
 
-	log.Infof("HandleChannelNew participant1 = %s", part1.ToBase58())
-	log.Infof("HandleChannelNew participant2 = %s", part2.ToBase58())
-	log.Infof("HandleChannelNew channelIdentifier = %d", channelIdentifier)
-	log.Infof("HandleChannelNew blockNumber = %d", blockNumber)
 	if common.AddressEqual(self.address, participant1) || self.address == participant2 {
 		isParticipant = true
 	}

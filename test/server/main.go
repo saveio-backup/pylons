@@ -67,7 +67,7 @@ func main() {
 	}
 
 	log.Info("begin direct transfer test...")
-	go loopTest(channel, 1000, common.Address(target), 10, 1000)
+	//go loopTest(channel, 1000, common.Address(target), 10, 1000)
 	go logCurrentBalance(channel, common.Address(target))
 	waitToExit()
 }

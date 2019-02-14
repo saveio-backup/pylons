@@ -75,7 +75,6 @@ func (self ChannelEventHandler) HandleSendProcessed(channel *ChannelService, pro
 		if err != nil {
 			return
 		}
-
 		queueId := &transfer.QueueIdentifier{
 			Recipient:         common.Address(processedEvent.Recipient),
 			ChannelIdentifier: processedEvent.ChannelIdentifier,
@@ -97,7 +96,7 @@ func (self ChannelEventHandler) HandlePaymentSentSuccess(channel *ChannelService
 	}
 
 	channel.RemovePaymentStatus(target, identifier)
-
+	//log.Info("set paymentDone to true")
 	paymentStatus.paymentDone <- true
 
 	return
@@ -113,7 +112,7 @@ func (self ChannelEventHandler) HandlePaymentSentFailed(channel *ChannelService,
 	}
 
 	channel.RemovePaymentStatus(target, identifier)
-
+	//log.Info("set paymentDone to false")
 	paymentStatus.paymentDone <- false
 
 	return
