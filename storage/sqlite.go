@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"database/sql"
 	"fmt"
+	"log"
 	"strconv"
 	"sync"
 
@@ -32,11 +33,13 @@ func assertSqliteVersion() bool {
 type SQLiteStorage struct {
 	conn      *sql.DB
 	writeLock sync.Mutex
+	StateSync sync.WaitGroup
 }
 
 func NewSQLiteStorage(databasePath string) (*SQLiteStorage, error) {
 	self := new(SQLiteStorage)
-
+	self.writeLock.Lock()
+	defer self.writeLock.Unlock()
 	conn, err := sql.Open("sqlite3", databasePath)
 	if err != nil {
 		return nil, err
@@ -85,7 +88,8 @@ func (self *SQLiteStorage) getVersion() int {
 	var version int
 
 	version = ChannelDbVersion
-
+	self.writeLock.Lock()
+	defer self.writeLock.Unlock()
 	stmt, err := self.conn.Prepare("SELECT value FROM settings WHERE name=?")
 	if err != nil {
 		return ChannelDbVersion
@@ -112,30 +116,52 @@ func (self *SQLiteStorage) getVersion() int {
 }
 
 func (self *SQLiteStorage) CountStateChanges() int {
-	rows, _ := self.conn.Query("SELECT COUNT(1) FROM state_changes")
+	self.writeLock.Lock()
+	defer self.writeLock.Unlock()
+	var count int
+	stmt, err := self.conn.Prepare("SELECT seq FROM sqlite_sequence WHERE name=?")
+	if err != nil {
+		return 0
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query("state_changes")
+	if err != nil {
+		return 1
+	}
 	defer rows.Close()
 
-	count := 0
+	var countStr string
 	for rows.Next() {
-		rows.Scan(&count)
+		err = rows.Scan(&countStr)
+		if err != nil {
+			return 2
+		}
+		count, err = strconv.Atoi(countStr)
+		break
 	}
 
 	return count
 }
 
-func (self *SQLiteStorage) writeStateChange(stateChange transfer.StateChange) int {
+func (self *SQLiteStorage) writeStateChange(stateChange transfer.StateChange, stateChangeId *int) {
 	serializedData, _ := jsonext.Marshal(stateChange)
-
+	self.StateSync.Add(1)
 	self.writeLock.Lock()
 	defer self.writeLock.Unlock()
 
-	stmt, _ := self.conn.Prepare("INSERT INTO state_changes(data) VALUES(?)")
+	stmt, err := self.conn.Prepare("INSERT INTO state_changes(data) VALUES(?)")
+	if err != nil {
+		log.Fatalln(err)
+	}
 	defer stmt.Close()
 
 	sqlRes, _ := stmt.Exec(serializedData)
 
 	lastRowId, _ := sqlRes.LastInsertId()
-	return int(lastRowId)
+
+	*stateChangeId = int(lastRowId)
+	self.StateSync.Done()
 }
 
 func (self *SQLiteStorage) writeStateSnapshot(stateChangeId int, snapshot transfer.State) int {
@@ -168,6 +194,8 @@ func (self *SQLiteStorage) writeEvents(stateChangeId int, events *list.List, log
 }
 
 func (self *SQLiteStorage) getLatestStateSnapshot() (int, transfer.State) {
+	self.writeLock.Lock()
+	defer self.writeLock.Unlock()
 	rows, _ := self.conn.Query("SELECT statechange_id, data from state_snapshot ORDER BY identifier DESC LIMIT 1")
 	defer rows.Close()
 
@@ -193,7 +221,8 @@ func (self *SQLiteStorage) getLatestStateSnapshot() (int, transfer.State) {
 func (self *SQLiteStorage) getSnapshotClosestToStateChange(stateChangeId interface{}) (int, transfer.State) {
 	var rows *sql.Rows
 	var realStateChangeId int
-
+	self.writeLock.Lock()
+	defer self.writeLock.Unlock()
 	latest := false
 	switch stateChangeId.(type) {
 	case string:
@@ -237,7 +266,8 @@ func (self *SQLiteStorage) GetLatestEventByDataField(filters map[string]interfac
 
 	var finalWhereClause string
 	var rows *sql.Rows
-
+	self.writeLock.Lock()
+	defer self.writeLock.Unlock()
 	first := true
 
 	len := len(filters)
@@ -320,7 +350,8 @@ func (self *SQLiteStorage) GetLatestEventsByDataField(filters map[string]interfa
 
 	finalQuerySql := fmt.Sprintf("%v%v%v", "SELECT identifier, source_statechange_id, data FROM state_events WHERE ",
 		finalWhereClause, "ORDER BY identifier DESC")
-
+	self.writeLock.Lock()
+	defer self.writeLock.Unlock()
 	stmt, _ := self.conn.Prepare(finalQuerySql)
 	defer stmt.Close()
 
@@ -382,7 +413,8 @@ func (self *SQLiteStorage) GetLatestStateChangeByDataField(filters map[string]in
 
 	finalQuerySql := fmt.Sprintf("%v%v%v", "SELECT identifier, data FROM state_changes WHERE ",
 		finalWhereClause, "ORDER BY identifier DESC LIMIT 1")
-
+	self.writeLock.Lock()
+	defer self.writeLock.Unlock()
 	stmt, _ := self.conn.Prepare(finalQuerySql)
 	defer stmt.Close()
 
@@ -441,7 +473,8 @@ func (self *SQLiteStorage) GetLatestStateChangesByDataField(filters map[string]i
 
 	finalQuerySql := fmt.Sprintf("%v%v%v", "SELECT identifier, data FROM state_changes WHERE ",
 		finalWhereClause, "ORDER BY identifier DESC")
-
+	self.writeLock.Lock()
+	defer self.writeLock.Unlock()
 	stmt, _ := self.conn.Prepare(finalQuerySql)
 	defer stmt.Close()
 
@@ -490,7 +523,8 @@ func (self *SQLiteStorage) getStateChangesByIdentifier(fromIdentifier interface{
 	case int:
 		realFromIdentifier = fromIdentifier.(int)
 	}
-
+	self.writeLock.Lock()
+	defer self.writeLock.Unlock()
 	if fromLatest == true {
 		rows, _ = self.conn.Query("SELECT identifier FROM state_changes ORDER BY identifier DESC LIMIT 1")
 
@@ -542,7 +576,8 @@ func (self *SQLiteStorage) queryEvents(limit int, offset int) *sql.Rows {
 
 func (self *SQLiteStorage) GetEventsWithTimestamps(limit int, offset int) *list.List {
 	result := list.New()
-
+	self.writeLock.Lock()
+	defer self.writeLock.Unlock()
 	rows := self.queryEvents(limit, offset)
 	if rows == nil {
 		return result
@@ -571,7 +606,8 @@ func (self *SQLiteStorage) GetEventsWithTimestamps(limit int, offset int) *list.
 
 func (self *SQLiteStorage) GetEvents(limit int, offset int) *list.List {
 	result := list.New()
-
+	self.writeLock.Lock()
+	defer self.writeLock.Unlock()
 	rows := self.queryEvents(limit, offset)
 	if rows == nil {
 		return result

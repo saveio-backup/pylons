@@ -246,6 +246,8 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 		self.channelEventHandler.OnChannelEvent(self, temp.(transfer.Event))
 	}
 	//take snapshot
+	self.dispatchEventsLock.Lock()
+	defer self.dispatchEventsLock.Unlock()
 	newSnapShotGroup := self.Wal.Storage.CountStateChanges() / constants.SNAPSHOT_STATE_CHANGE_COUNT
 	if newSnapShotGroup > self.snapshotGroup {
 		log.Info("storing snapshot, snapshot id = ", newSnapShotGroup)

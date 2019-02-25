@@ -173,17 +173,21 @@ func (this *Transport) InitQueue(queueId *transfer.QueueIdentifier) *Queue {
 }
 
 func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier) {
-	//t := time.NewTicker(3 * time.Second)
 	var interval time.Duration = 3
 
-	t := time.NewTicker(interval * time.Second)
+	t := time.NewTimer(interval * time.Second)
 
 	for {
 		select {
+		case <-queue.DataCh:
+			t.Reset(interval * time.Second)
+			this.PeekAndSend(queue, queueId)
+		// handle timeout retry
 		case <-t.C:
 			if queue.Len() == 0 {
 				continue
 			}
+			t.Reset(interval * time.Second)
 			err := this.PeekAndSend(queue, queueId)
 			if err != nil {
 				log.Error("send message failed:", err)
@@ -197,15 +201,15 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 				continue
 			}
 			item := data.(*QueueItem)
-			log.Infof("msgId %d queue.DeliverChan %d", msgId.MessageId, item.messageId.MessageId)
+			//log.Infof("msgId %d queue.DeliverChan %d", msgId.MessageId, item.messageId.MessageId)
 			if msgId.MessageId == item.messageId.MessageId {
-				log.Info("msgId.MessageId == item.messageId.MessageId====popup ", msgId.MessageId)
+				//log.Info("msgId.MessageId == item.messageId.MessageId====popup ", msgId.MessageId)
 				queue.Pop()
-
+				t.Stop()
 				if queue.Len() != 0 {
+					t.Reset(interval * time.Second)
 					this.PeekAndSend(queue, queueId)
 				}
-
 			}
 		case <-this.kill:
 			t.Stop()
@@ -353,7 +357,7 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 			log.Error("node address invalid,can`t send message")
 			return
 		}
-		log.Info("send deliveredMessage")
+		//log.Info("send deliveredMessage")
 		this.Send(nodeAddress, deliveredMessage)
 	}
 }
@@ -370,7 +374,7 @@ func (this *Transport) ReceiveDelivered(message proto.Message, from string) {
 	}
 
 	queue.(*Queue).DeliverChan <- msg.DeliveredMessageIdentifier
-	log.Info("ReceiveDelivered for", msg.DeliveredMessageIdentifier)
+	//log.Info("ReceiveDelivered for", msg.DeliveredMessageIdentifier)
 }
 
 func (this *Transport) Send(address string, message proto.Message) error {

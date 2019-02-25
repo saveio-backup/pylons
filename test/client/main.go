@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
 	"math/rand"
 	"os"
 	"os/signal"
+	"runtime/pprof"
 	"syscall"
 	"time"
 
@@ -30,9 +32,20 @@ var testConfig = &ch.ChannelConfig{
 	Protocol:      "tcp",
 	RevealTimeout: "1000",
 }
+var f *os.File
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func main() {
 	log.InitLog(0, log.Stdout)
+	flag.Parse()
+	if *cpuprofile != "" {
+		cupf, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(cupf)
+		defer pprof.StopCPUProfile()
+	}
 	wallet, err := wallet.OpenWallet(WALLET_PATH)
 	if err != nil {
 		log.Fatal("wallet.Open error:%s", err)
@@ -78,37 +91,51 @@ func main() {
 			log.Infof("peer state = %s wait for connect ...", state)
 			<-time.After(time.Duration(3000) * time.Millisecond)
 		}
-
 		log.Info("begin direct transfer test...")
-		go loopTest(channel, 1000, common.Address(target), 10, 1000)
+		go loopTest(channel, 1, common.Address(target), 10000, 0)
 	} else {
 		log.Fatal("setup channel failed, exit")
 		return
 	}
 	go logCurrentBalance(channel, common.Address(target))
+
 	waitToExit()
 }
 func loopTest(channel *ch.Channel, amount int, target common.Address, times, interval int) {
+	f, err := os.Create("heap.prof")
+	if err != nil {
+		log.Fatal(err)
+	}
+	r := rand.NewSource(time.Now().UnixNano())
 	for index := 0; index < times; index++ {
-		r := rand.NewSource(time.Now().UnixNano())
-		<-time.After(time.Duration(interval) * time.Millisecond)
+		if interval > 0 {
+			<-time.After(time.Duration(interval) * time.Millisecond)
+		}
 
+		state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
+		if state != transfer.NetworkReachable {
+			log.Error("peer Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC is not reachable ")
+			break
+		}
 		status, err := channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(r.Int63()))
 		if err != nil {
 			log.Error("direct tranfer failed:", err)
 			break
 		}
-		log.Info("wait for payment status update...")
+		//log.Info("wait for payment status update...")
 		ret := <-status
 		if !ret {
-			log.Error("payment failed:")
+			log.Error("payment failed")
 			break
 		}
-		log.Infof("direct transfer %f ong to %s successfully", float32(amount)/1000000000, "Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
+		//log.Infof("direct transfer %f ong to %s successfully", float32(amount)/1000000000, "Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
 	}
+	pprof.WriteHeapProfile(f)
+	f.Close()
 }
 func logCurrentBalance(channel *ch.Channel, target common.Address) {
 	ticker := time.NewTicker(config.DEFAULT_GEN_BLOCK_TIME * time.Second)
+
 	for {
 		select {
 		case <-ticker.C:

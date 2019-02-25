@@ -2,7 +2,7 @@ package constants
 
 const (
 	COUNT_OF_CONFIRM_BLOCK      int     = 0
-	SNAPSHOT_STATE_CHANGE_COUNT int     = 500
+	SNAPSHOT_STATE_CHANGE_COUNT int     = 5000
 	ADDR_LEN                    int     = 20
 	HASH_LEN                    int     = 32
 	POLL_FOR_COMFIRMED          int     = 15
