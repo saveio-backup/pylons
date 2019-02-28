@@ -64,13 +64,13 @@ func (self *WriteAheadLog) LogAndDispatch(stateChange transfer.StateChange) *lis
 	self.dbLock.Lock()
 	defer self.dbLock.Unlock()
 	self.Storage.StateSync.Wait()
-	go self.Storage.writeStateChange(stateChange, &self.StateChangeId)
-
+	self.Storage.writeStateChange(stateChange, &self.StateChangeId)
 	events := self.StateManager.Dispatch(stateChange)
 
+	self.Storage.EventSync.Wait()
 	t := time.Now()
 	timestamp := t.UTC().String()
-	self.Storage.writeEvents(self.StateChangeId, events, timestamp)
+	go self.Storage.writeEvents(self.StateChangeId, events, timestamp)
 
 	return events
 }

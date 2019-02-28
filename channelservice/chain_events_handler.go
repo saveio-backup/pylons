@@ -219,7 +219,7 @@ func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 	eventName = event["eventName"].(string)
 
 	events := ParseEvent(event)
-	log.Info(events)
+
 	if eventName == "chanOpened" {
 		channel.HandleChannelNew(events)
 	} else if eventName == "ChannelClose" {

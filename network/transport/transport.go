@@ -318,9 +318,9 @@ func (this *Transport) SetNodeNetworkState(address common.Address, state string)
 func (this *Transport) Receive(message proto.Message, from string) {
 	switch message.(type) {
 	case *messages.Delivered:
-		this.ReceiveDelivered(message, from)
+		go this.ReceiveDelivered(message, from)
 	default:
-		this.ReceiveMessage(message, from)
+		go this.ReceiveMessage(message, from)
 	}
 }
 

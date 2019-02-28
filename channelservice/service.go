@@ -198,7 +198,7 @@ func (self *ChannelService) Start() error {
 		log.Infof("Restored state from WAL,last log BlockHeight=%d", lastLogBlockHeight)
 	}
 
-	stateChangeQty := self.Wal.Storage.CountStateChanges()
+	stateChangeQty := self.Wal.StateChangeId
 	self.snapshotGroup = stateChangeQty / constants.SNAPSHOT_STATE_CHANGE_COUNT
 	log.Info("db setup done")
 	//set filter start block 	number
@@ -246,9 +246,8 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 		self.channelEventHandler.OnChannelEvent(self, temp.(transfer.Event))
 	}
 	//take snapshot
-	self.dispatchEventsLock.Lock()
-	defer self.dispatchEventsLock.Unlock()
-	newSnapShotGroup := self.Wal.Storage.CountStateChanges() / constants.SNAPSHOT_STATE_CHANGE_COUNT
+
+	newSnapShotGroup := self.Wal.StateChangeId / constants.SNAPSHOT_STATE_CHANGE_COUNT
 	if newSnapShotGroup > self.snapshotGroup {
 		log.Info("storing snapshot, snapshot id = ", newSnapShotGroup)
 		self.Wal.Snapshot()
@@ -651,21 +650,20 @@ func (self *ChannelService) SetTotalChannelDeposit(tokenAddress common.TokenAddr
 	return nil
 }
 
-func (self *ChannelService) ChannelClose(registryAddress common.PaymentNetworkID,
-	tokenAddress common.TokenAddress, partnerAddress common.Address,
+func (self *ChannelService) ChannelClose(tokenAddress common.TokenAddress, partnerAddress common.Address,
 	retryTimeout common.NetworkTimeout) {
 
 	addressList := list.New()
 	addressList.PushBack(partnerAddress)
 
-	self.ChannelBatchClose(registryAddress, tokenAddress, addressList, retryTimeout)
+	self.ChannelBatchClose(tokenAddress, addressList, retryTimeout)
 	return
 }
 
-func (self *ChannelService) ChannelBatchClose(registryAddress common.PaymentNetworkID,
-	tokenAddress common.TokenAddress, partnerAddress *list.List, retryTimeout common.NetworkTimeout) {
+func (self *ChannelService) ChannelBatchClose(tokenAddress common.TokenAddress, partnerAddress *list.List, retryTimeout common.NetworkTimeout) {
 
 	chainState := self.StateFromChannel()
+	registryAddress := common.PaymentNetworkID(self.mircoAddress)
 	channelsToClose := transfer.FilterChannelsByPartnerAddress(chainState, registryAddress,
 		tokenAddress, partnerAddress)
 

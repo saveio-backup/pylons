@@ -89,10 +89,7 @@ func main() {
 }
 
 func loopTest(channel *ch.Channel, amount int, target common.Address, times, interval int) {
-	f, err := os.Create("heap.prof")
-	if err != nil {
-		log.Fatal(err)
-	}
+
 	r := rand.NewSource(time.Now().UnixNano())
 	for index := 0; index < times; index++ {
 		if interval > 0 {
@@ -114,10 +111,9 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times, int
 			log.Error("payment failed:")
 			break
 		}
-		//log.Infof("direct transfer %f ong to %s successfully", float32(amount)/1000000000, "AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
 	}
-	pprof.WriteHeapProfile(f)
-	f.Close()
+	log.Info("direct transfer test done")
+
 }
 func logCurrentBalance(channel *ch.Channel, target common.Address) {
 	ticker := time.NewTicker(config.DEFAULT_GEN_BLOCK_TIME * time.Second)

@@ -20,17 +20,28 @@ const DbCreateSnapshot string = `CREATE TABLE IF NOT EXISTS state_snapshot (iden
 data JSON, FOREIGN KEY(statechange_id) REFERENCES state_changes(identifier));`
 
 const DbCreateStateEvents string = `CREATE TABLE IF NOT EXISTS state_events (identifier INTEGER PRIMARY KEY,
-source_statechange_id INTEGER NOT NULL, log_time TEXT, data JSON, FOREIGN KEY(source_statechange_id) REFERENCES state_changes(identifier));`
+source_statechange_id INTEGER NOT NULL, log_time TEXT, data JSON);`
 
-const DbScriptCreateTables string = `PRAGMA foreign_keys=off;
+const stateDbScriptCreateTables string = `PRAGMA foreign_keys=off;
 BEGIN TRANSACTION;
-%s%s%s%s
+%s%s%s
+COMMIT;
+PRAGMA foreign_keys=on;
+`
+const eventDbScriptCreateTables string = `PRAGMA foreign_keys=off;
+BEGIN TRANSACTION;
+%s%s
 COMMIT;
 PRAGMA foreign_keys=on;
 `
 
-func GetDbScriptCreateTables() string {
-	sqlStmt := fmt.Sprintf(DbScriptCreateTables, DbCreateSettings, DbCreateStateChanges, DbCreateSnapshot, DbCreateStateEvents)
+func GetStateCreateTables() string {
+	sqlStmt := fmt.Sprintf(stateDbScriptCreateTables, DbCreateSettings, DbCreateStateChanges, DbCreateSnapshot)
+
+	return sqlStmt
+}
+func GetEventCreateTables() string {
+	sqlStmt := fmt.Sprintf(eventDbScriptCreateTables, DbCreateSettings, DbCreateStateEvents)
 
 	return sqlStmt
 }
