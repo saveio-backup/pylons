@@ -3,9 +3,10 @@ package transfer
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/oniio/oniChannel/common"
 	"reflect"
-	"github.com/daseinio/x-dsp/log"
+
+	"github.com/oniio/oniChain/common/log"
+	"github.com/oniio/oniChannel/common"
 )
 
 const MaximumPendingTransfers int = 160

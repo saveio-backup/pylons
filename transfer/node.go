@@ -3,9 +3,9 @@ package transfer
 import (
 	"reflect"
 
+	"github.com/oniio/oniChain/common/log"
 	sc_utils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
-	"github.com/daseinio/x-dsp/log"
 )
 
 func getNetworks(chainState *ChainState, paymentNetworkIdentifier common.PaymentNetworkID,
@@ -356,7 +356,7 @@ func handleChainInit(chainState *ChainState, stateChange *ActionInitChain) *Tran
 		result.BlockHeight = stateChange.BlockHeight
 		result.Address = stateChange.OurAddress
 		result.ChainId = stateChange.ChainId
-		return &TransitionResult{NewState:result, Events: nil}
+		return &TransitionResult{NewState: result, Events: nil}
 	}
 	return &TransitionResult{NewState: chainState, Events: nil}
 }

@@ -3,8 +3,8 @@ package transfer
 import (
 	"reflect"
 
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
-	"github.com/daseinio/x-dsp/log"
 )
 
 func GetChannelIdentifier(stateChange StateChange) common.ChannelID {

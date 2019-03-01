@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/common/constants"
-	"github.com/daseinio/x-dsp/log"
 )
 
 func Min(x, y uint64) uint64 {
@@ -606,11 +606,11 @@ func ValidLockedTransferCheck(channelState *NettingChannelState, senderState *Ne
 func getAmountLocked(endState *NettingChannelEndState) common.Balance {
 	var totalPending, totalUnclaimed, totalUnclaimedOnChain common.TokenAmount
 
-	for _, lock := range endState.SecretHashesToLockedLocks{
+	for _, lock := range endState.SecretHashesToLockedLocks {
 		totalPending = totalPending + lock.Amount
 	}
 	log.Debug("[getAmountLocked] totalPending: ", totalPending)
-	for _, unLock := range endState.SecretHashesToUnLockedLocks{
+	for _, unLock := range endState.SecretHashesToUnLockedLocks {
 		totalUnclaimed = totalPending + unLock.Lock.Amount
 	}
 	log.Debug("[getAmountLocked] totalUnclaimed: ", totalUnclaimed)

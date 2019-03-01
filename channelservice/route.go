@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	chainComm "github.com/oniio/oniChain/common"
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/transfer"
-	"github.com/daseinio/x-dsp/log"
 )
 
 func GetBestRoutes(chainState *transfer.ChainState, tokenNetworkId common.TokenNetworkID,

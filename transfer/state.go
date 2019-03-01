@@ -9,8 +9,8 @@ import (
 	"time"
 
 	chainComm "github.com/oniio/oniChain/common"
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
-	"github.com/daseinio/x-dsp/log"
 )
 
 type SecretHashToLock map[common.SecretHash]*HashTimeLockState
@@ -125,7 +125,6 @@ func DeepCopy(src State) *ChainState {
 	//
 	//return result
 
-
 	if src == nil {
 		return nil
 	} else if chainState, ok := src.(*ChainState); ok {
@@ -133,7 +132,6 @@ func DeepCopy(src State) *ChainState {
 		value.ChainId = chainState.ChainId
 		value.Address = chainState.Address
 		value.BlockHeight = chainState.BlockHeight
-		
 
 		value.IdentifiersToPaymentnetworks = make(map[common.PaymentNetworkID]*PaymentNetworkState)
 		for id, state := range chainState.IdentifiersToPaymentnetworks {
@@ -161,7 +159,7 @@ func DeepCopy(src State) *ChainState {
 }
 
 type PaymentNetworkState struct {
-	Address                         common.PaymentNetworkID
+	Address                          common.PaymentNetworkID
 	TokenIdentifiersToTokenNetworks  map[common.TokenNetworkID]*TokenNetworkState
 	TokenAddressesToTokenIdentifiers map[common.TokenAddress]common.TokenNetworkID
 }
