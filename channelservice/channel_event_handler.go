@@ -1,10 +1,11 @@
 package channelservice
 
 import (
-	sdkutils "github.com/oniio/oniChain-go-sdk/utils"
-	"github.com/oniio/oniChain/crypto/keypair"
+	"reflect"
 
+	sdkutils "github.com/oniio/oniChain-go-sdk/utils"
 	"github.com/oniio/oniChain/common/log"
+	"github.com/oniio/oniChain/crypto/keypair"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/network/transport/messages"
 	"github.com/oniio/oniChannel/storage"
@@ -15,7 +16,7 @@ type ChannelEventHandler struct {
 }
 
 func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event transfer.Event) {
-
+	log.Debug("[OnChannelEvent]  type: ", reflect.TypeOf(event).String())
 	switch event.(type) {
 	case *transfer.SendDirectTransfer:
 		sendDirectTransfer := event.(*transfer.SendDirectTransfer)
@@ -41,7 +42,20 @@ func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event tr
 	case *transfer.ContractSendChannelSettle:
 		contractSendChannelSettle := event.(*transfer.ContractSendChannelSettle)
 		self.HandleContractSendChannelSettle(channel, contractSendChannelSettle)
+	case *transfer.SendLockedTransfer:
+		sendLockedTransfer := event.(*transfer.SendLockedTransfer)
+		self.HandleSendLockedTransfer(channel, sendLockedTransfer)
+	case *transfer.SendSecretReveal:
+		sendSecretReveal := event.(*transfer.SendSecretReveal)
+		self.HandleSendSecretReveal(channel, sendSecretReveal)
+	case *transfer.SendBalanceProof:
+		sendBalanceProof := event.(*transfer.SendBalanceProof)
+		self.HandleSendBalanceProof(channel, sendBalanceProof)
+	case *transfer.SendSecretRequest:
+		sendSecretRequest := event.(*transfer.SendSecretRequest)
+		self.HandleSendSecretRequest(channel, sendSecretRequest)
 	default:
+		log.Warn("[OnChannelEvent] Not known type: ", reflect.TypeOf(event).String())
 	}
 	return
 }
@@ -81,6 +95,8 @@ func (self ChannelEventHandler) HandleSendProcessed(channel *ChannelService, pro
 		}
 
 		channel.transport.SendAsync(queueId, message)
+	} else {
+		log.Warn("[HandleSendProcessed] Message is nil")
 	}
 
 	return
@@ -249,4 +265,83 @@ func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *Channel
 	channelProxy.Settle(
 		ourTransferredAmount, ourLockedAmount, ourLocksroot,
 		partnerTransferredAmount, partnerLockedAmount, partnerLocksroot)
+}
+
+func (self ChannelEventHandler) HandleSendLockedTransfer(channel *ChannelService, sendLockedTransfer *transfer.SendLockedTransfer) {
+	mediatedTransferMessage := messages.MessageFromSendEvent(sendLockedTransfer)
+	if mediatedTransferMessage != nil {
+		err := channel.Sign(mediatedTransferMessage)
+		if err != nil {
+			log.Error("[HandleSendLockedTransfer] ", err.Error())
+			return
+		}
+
+		queueId := &transfer.QueueIdentifier{
+			Recipient:         common.Address(sendLockedTransfer.Recipient),
+			ChannelIdentifier: sendLockedTransfer.ChannelIdentifier,
+		}
+		channel.transport.SendAsync(queueId, mediatedTransferMessage)
+	} else {
+		log.Warn("[HandleSendLockedTransfer] Message is nil")
+	}
+	return
+}
+
+func (self ChannelEventHandler) HandleSendSecretReveal(channel *ChannelService, revealSecretEvent *transfer.SendSecretReveal) {
+	revealSecretMessage := messages.MessageFromSendEvent(revealSecretEvent)
+	if revealSecretMessage != nil {
+		err := channel.Sign(revealSecretMessage)
+		if err != nil {
+			log.Error("[HandleSendSecretReveal] ", err.Error())
+			return
+		}
+
+		queueId := &transfer.QueueIdentifier{
+			Recipient:         common.Address(revealSecretEvent.Recipient),
+			ChannelIdentifier: revealSecretEvent.ChannelIdentifier,
+		}
+		channel.transport.SendAsync(queueId, revealSecretMessage)
+	} else {
+		log.Warn("[HandleSendSecretReveal] Message is nil")
+	}
+	return
+}
+
+func (self ChannelEventHandler) HandleSendBalanceProof(channel *ChannelService, balanceProofEvent *transfer.SendBalanceProof) {
+	unlockMessage := messages.MessageFromSendEvent(balanceProofEvent)
+	if unlockMessage != nil {
+		err := channel.Sign(unlockMessage)
+		if err != nil {
+			log.Error("[HandleSendBalanceProof] ", err.Error())
+			return
+		}
+		queueId := &transfer.QueueIdentifier{
+			Recipient:         common.Address(balanceProofEvent.Recipient),
+			ChannelIdentifier: balanceProofEvent.ChannelIdentifier,
+		}
+		channel.transport.SendAsync(queueId, unlockMessage)
+	} else {
+		log.Warn("[HandleSendBalanceProof] Message is nil")
+	}
+	return
+
+}
+
+func (self ChannelEventHandler) HandleSendSecretRequest(channel *ChannelService, secretRequestEvent *transfer.SendSecretRequest) {
+	secretRequestMessage := messages.MessageFromSendEvent(secretRequestEvent)
+	if secretRequestMessage != nil {
+		err := channel.Sign(secretRequestMessage)
+		if err != nil {
+			log.Error("[HandleSendSecretRequest] ", err.Error())
+			return
+		}
+		queueId := &transfer.QueueIdentifier{
+			Recipient:         common.Address(secretRequestEvent.Recipient),
+			ChannelIdentifier: secretRequestEvent.ChannelIdentifier,
+		}
+		channel.transport.SendAsync(queueId, secretRequestMessage)
+	} else {
+		log.Warn("[HandleSendSecretRequest] Message is nil")
+	}
+	return
 }

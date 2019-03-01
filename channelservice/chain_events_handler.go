@@ -15,7 +15,6 @@ import (
 //NOTE, Event here come from blockchain filter
 //Not the Event from transfer dir!
 func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
-
 	var transactionHash common.TransactionHash
 
 	var isParticipant bool
@@ -25,10 +24,9 @@ func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 	channelIdentifier := event["channelID"].(common.ChannelID)
 	blockNumber := event["blockHeight"].(common.BlockHeight)
 
-	if common.AddressEqual(self.address, participant1) || self.address == participant2 {
+	if common.AddressEqual(self.address, participant1) || common.AddressEqual(self.address, participant2) {
 		isParticipant = true
 	}
-
 	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
 	if isParticipant {
 
@@ -62,9 +60,22 @@ func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 		self.transport.StartHealthCheck(partnerAddress)
 
 	} else {
-		//[TODO] generate ContractReceiveRouteNew when supporting route
+		newRoute := &transfer.ContractReceiveRouteNew{
+			ContractReceiveStateChange: transfer.ContractReceiveStateChange{
+				TransactionHash: transactionHash,
+				BlockHeight:     blockNumber,
+			},
+			TokenNetworkIdentifier: tokenNetworkIdentifier,
+			ChannelIdentifier:      channelIdentifier,
+			Participant1:           participant1,
+			Participant2:           participant2,
+		}
+		self.HandleStateChange(newRoute)
 	}
-
+	//todo
+	//connectionManager := self.ConnectionManagerForTokenNetwork(tokenNetworkIdentifier)
+	//retryConnect := gevent.spawn(connectionManager.RetryConnect)
+	//self.AddPendingRoutine(retryConnect)
 	return
 }
 
@@ -151,6 +162,15 @@ func (self ChannelService) HandleChannelClose(event map[string]interface{}) {
 		self.HandleStateChange(channelClosed)
 	} else {
 		//[TODO] generate ContractReceiveRouteClosed when supporting route
+		channelClosed := &transfer.ContractReceiveRouteClosed{
+			ContractReceiveStateChange: transfer.ContractReceiveStateChange{
+				TransactionHash: transactionHash,
+				BlockHeight:     blockNumber,
+			},
+			TokenNetworkIdentifier: tokenNetworkIdentifier,
+			ChannelIdentifier:      channelIdentifier,
+		}
+		self.HandleStateChange(channelClosed)
 	}
 }
 
@@ -202,11 +222,48 @@ func (self ChannelService) HandleChannelSettled(event map[string]interface{}) {
 }
 
 func (self ChannelService) HandleChannelBatchUnlock(event map[string]interface{}) {
-	return
+	tokenNetworkIdentifier := common.TokenNetworkID{}
+
+	transactionHash := event["transactionHash"].(common.TransactionHash)
+	blockNumber := event["blockHeight"].(common.BlockHeight)
+	//channelIdentifier := event["channelID"].(common.ChannelID)
+	participant := event["participant"].(common.Address)
+	partner := event["partner"].(common.Address)
+	locksRoot := event["partner"].(common.Locksroot)
+	unlockedAmount := event["unlockedAmount"].(common.TokenAmount)
+	returnedTokens := event["returnedTokens"].(common.TokenAmount)
+
+	unlockStateChange := &transfer.ContractReceiveChannelBatchUnlock{
+		ContractReceiveStateChange: transfer.ContractReceiveStateChange{
+			TransactionHash: transactionHash,
+			BlockHeight:     blockNumber,
+		},
+		TokenNetworkIdentifier: tokenNetworkIdentifier,
+		Participant:            participant,
+		Partner:                partner,
+		Locksroot:              locksRoot,
+		UnlockedAmount:         unlockedAmount,
+		ReturnedTokens:         returnedTokens,
+	}
+	self.HandleStateChange(unlockStateChange)
 }
 
 func (self ChannelService) HandleSecretRevealed(event map[string]interface{}) {
-	return
+	secretRegistryAddress := event["secretRegistryAddress"].(common.SecretRegistryAddress)
+	transactionHash := event["transactionHash"].(common.TransactionHash)
+	blockNumber := event["blockHeight"].(common.BlockHeight)
+	secretHash := event["secretHash"].(common.SecretHash)
+	secret := event["secret"].(common.Secret)
+	registeredSecretStateChange := &transfer.ContractReceiveSecretReveal{
+		ContractReceiveStateChange: transfer.ContractReceiveStateChange{
+			TransactionHash: transactionHash,
+			BlockHeight:     blockNumber,
+		},
+		SecretRegistryAddress: secretRegistryAddress,
+		SecretHash:            secretHash,
+		Secret:                secret,
+	}
+	self.HandleStateChange(registeredSecretStateChange)
 }
 
 func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
@@ -263,8 +320,8 @@ func SetupChannelState(tokenAddress common.TokenAddress, paymentNetworkIdentifie
 		TokenAddress:             common.Address(tokenAddress),
 		PaymentNetworkIdentifier: paymentNetworkIdentifier,
 		TokenNetworkIdentifier:   common.TokenNetworkID(tokenNetworkAddress),
-		RevealTimeout:            revealTimeout,
-		SettleTimeout:            settleTimeout,
+		RevealTimeout:            common.BlockTimeout(revealTimeout),
+		SettleTimeout:            common.BlockTimeout(settleTimeout),
 		OurState:                 ourState,
 		PartnerState:             partnerState,
 		OpenTransaction:          openTransaction}

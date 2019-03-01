@@ -12,8 +12,8 @@ func ConvertAddress(addr *Address) common.Address {
 }
 
 func ConvertLocksroot(lock *Locksroot) common.Locksroot {
-	var locksroot common.Locksroot
+	var locksRoot common.Locksroot
 
-	copy(locksroot[:], lock.Locksroot[:32])
-	return locksroot
+	copy(locksRoot[:], lock.Locksroot[:32])
+	return locksRoot
 }

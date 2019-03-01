@@ -1,18 +1,20 @@
 package transfer
 
 import (
+	"bytes"
 	"errors"
 	"math"
 	"math/rand"
 	"sort"
 	"time"
 
+	chainComm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChannel/common"
-	"github.com/oniio/oniChannel/utils/jsonext"
+	"github.com/daseinio/x-dsp/log"
 )
 
-type SecretHashToLock map[common.SecretHash]HashTimeLockState
-type SecretHashToPartialUnlockProof map[common.SecretHash]UnlockPartialProofState
+type SecretHashToLock map[common.SecretHash]*HashTimeLockState
+type SecretHashToPartialUnlockProof map[common.SecretHash]*UnlockPartialProofState
 type QueueIdsToQueuesType map[QueueIdentifier][]Event
 
 const ChannelStateClosed string = "closed"
@@ -93,7 +95,7 @@ func NewChainState() *ChainState {
 
 	result.IdentifiersToPaymentnetworks = make(map[common.PaymentNetworkID]*PaymentNetworkState)
 	result.NodeAddressesToNetworkstates = make(map[common.Address]string)
-	result.PaymentMapping.SecrethashesToTask = make(map[common.SecretHash]State)
+	result.PaymentMapping.SecretHashesToTask = make(map[common.SecretHash]State)
 	result.PendingTransactions = []Event{}
 	result.QueueIdsToQueues = make(QueueIdsToQueuesType)
 
@@ -110,24 +112,58 @@ func (self *ChainState) AdjustChainState() {
 }
 
 func DeepCopy(src State) *ChainState {
-	var result *ChainState
+	//var result *ChainState
+	//
+	//if src == nil {
+	//	return nil
+	//} else if chainState, ok := src.(*ChainState); ok {
+	//	serializedData, _ := jsonext.Marshal(chainState)
+	//	res, _ := jsonext.UnmarshalExt(serializedData, nil, CreateObjectByClassId)
+	//	result, _ = res.(*ChainState)
+	//	result.AdjustChainState()
+	//}
+	//
+	//return result
+
 
 	if src == nil {
 		return nil
 	} else if chainState, ok := src.(*ChainState); ok {
-		serializedData, _ := jsonext.Marshal(chainState)
-		res, _ := jsonext.UnmarshalExt(serializedData, nil, CreateObjectByClassId)
-		result, _ = res.(*ChainState)
-		result.AdjustChainState()
-	}
+		var value ChainState
+		value.ChainId = chainState.ChainId
+		value.Address = chainState.Address
+		value.BlockHeight = chainState.BlockHeight
+		
 
-	return result
+		value.IdentifiersToPaymentnetworks = make(map[common.PaymentNetworkID]*PaymentNetworkState)
+		for id, state := range chainState.IdentifiersToPaymentnetworks {
+			value.IdentifiersToPaymentnetworks[id] = state
+		}
+		value.NodeAddressesToNetworkstates = make(map[common.Address]string)
+		for addr, state := range chainState.NodeAddressesToNetworkstates {
+			value.NodeAddressesToNetworkstates[addr] = state
+		}
+		value.PaymentMapping.SecretHashesToTask = make(map[common.SecretHash]State)
+		for hash, itf := range chainState.PaymentMapping.SecretHashesToTask {
+			value.PaymentMapping.SecretHashesToTask[hash] = itf
+		}
+		for i := 0; i < len(chainState.PendingTransactions); i++ {
+			value.PendingTransactions = append(value.PendingTransactions, chainState.PendingTransactions[i])
+		}
+
+		value.QueueIdsToQueues = make(map[QueueIdentifier][]Event)
+		for k, v := range chainState.QueueIdsToQueues {
+			value.QueueIdsToQueues[k] = v
+		}
+		return &value
+	}
+	return nil
 }
 
 type PaymentNetworkState struct {
 	Address                         common.PaymentNetworkID
-	TokenIdentifiersToTokenNetworks map[common.TokenNetworkID]*TokenNetworkState
-	tokenAddressesToTokenNetworks   map[common.TokenAddress]*TokenNetworkState
+	TokenIdentifiersToTokenNetworks  map[common.TokenNetworkID]*TokenNetworkState
+	TokenAddressesToTokenIdentifiers map[common.TokenAddress]common.TokenNetworkID
 }
 
 func (self *PaymentNetworkState) GetAddress() common.Address {
@@ -138,7 +174,7 @@ func NewPaymentNetworkState() *PaymentNetworkState {
 	result := new(PaymentNetworkState)
 
 	result.TokenIdentifiersToTokenNetworks = make(map[common.TokenNetworkID]*TokenNetworkState)
-	result.tokenAddressesToTokenNetworks = make(map[common.TokenAddress]*TokenNetworkState)
+	result.TokenAddressesToTokenIdentifiers = make(map[common.TokenAddress]common.TokenNetworkID)
 
 	return result
 }
@@ -146,55 +182,100 @@ func NewPaymentNetworkState() *PaymentNetworkState {
 //Adjust TokenNetworkState in TokenIdentifiersToTokenNetworks
 //rebuild tokenAddressesToTokenNetworks
 func (self *PaymentNetworkState) AdjustPaymentNetworkState() {
-	self.tokenAddressesToTokenNetworks = make(map[common.TokenAddress]*TokenNetworkState)
+	self.TokenAddressesToTokenIdentifiers = make(map[common.TokenAddress]common.TokenNetworkID)
 
 	for _, v := range self.TokenIdentifiersToTokenNetworks {
 		v.AdjustTokenNetworkState()
-		self.tokenAddressesToTokenNetworks[v.TokenAddress] = v
+		self.TokenAddressesToTokenIdentifiers[v.TokenAddress] = v.Address
 	}
-
 	return
+}
+
+type TokenNetworkGraph struct {
+	NetworkGraphName string
+	Nodes            []Node
+	Edges            []Edge
+	Expected         SPT
 }
 
 type TokenNetworkState struct {
 	Address                      common.TokenNetworkID
 	TokenAddress                 common.TokenAddress
-	NetworkGraph                 *TokenNetworkGraphState
+	NetworkGraph                 *TokenNetworkGraph
 	ChannelIdentifiersToChannels map[common.ChannelID]*NettingChannelState
-	partnerAddressesToChannels   map[common.Address]map[common.ChannelID]*NettingChannelState
+	PartnerAddressesToChannels   map[common.Address]map[common.ChannelID]*NettingChannelState
 }
 
-func NewTokenNetworkState() *TokenNetworkState {
-	result := new(TokenNetworkState)
+func NewTokenNetworkState(localAddr common.Address) *TokenNetworkState {
+	result := &TokenNetworkState{}
 	result.ChannelIdentifiersToChannels = make(map[common.ChannelID]*NettingChannelState)
-	result.partnerAddressesToChannels = make(map[common.Address]map[common.ChannelID]*NettingChannelState)
+	result.PartnerAddressesToChannels = make(map[common.Address]map[common.ChannelID]*NettingChannelState)
+	result.NetworkGraph = &TokenNetworkGraph{}
 
+	localNode := chainComm.Address(localAddr)
+	result.NetworkGraph.Nodes = append(result.NetworkGraph.Nodes, Node{Name: localNode.ToBase58()})
 	return result
+}
+
+func (self *TokenNetworkState) AddRoute(addr1 common.Address, addr2 common.Address, channelId common.ChannelID) {
+	node1 := chainComm.Address(addr1)
+	node2 := chainComm.Address(addr2)
+	log.Infof("[AddRoute], addr1: %v addr2: %v", node1.ToBase58(), node2.ToBase58())
+	self.NetworkGraph.Nodes = append(self.NetworkGraph.Nodes, Node{Name: node1.ToBase58()})
+	self.NetworkGraph.Nodes = append(self.NetworkGraph.Nodes, Node{Name: node2.ToBase58()})
+
+	edge1 := Edge{NodeA: Node{Name: node1.ToBase58()}, NodeB: Node{Name: node2.ToBase58()}, Distance: 1}
+	edge2 := Edge{NodeA: Node{Name: node2.ToBase58()}, NodeB: Node{Name: node1.ToBase58()}, Distance: 1}
+
+	self.NetworkGraph.Edges = append(self.NetworkGraph.Edges, edge1)
+	self.NetworkGraph.Edges = append(self.NetworkGraph.Edges, edge2)
+}
+
+func (self *TokenNetworkState) DelRoute(channelId common.ChannelID) {
+	//networkGraphState := self.NetworkGraph
+	//if _, ok := networkGraphState.ChannelIdentifierToParticipants[channelId]; ok {
+	//	participants := networkGraphState.ChannelIdentifierToParticipants[channelId]
+	//
+	//	p1 := networkGraphState.NodeAddressesToNodeId[participants[1]]
+	//	networkGraphState.NodeIdToNodeAddresses[p1] = participants[1]
+	//	delete(networkGraphState.NodeIdToNodeAddresses, p1)
+	//	delete(networkGraphState.NodeAddressesToNodeId, participants[1])
+	//
+	//
+	//	p2 := networkGraphState.NodeAddressesToNodeId[participants[2]]
+	//	networkGraphState.NodeIdToNodeAddresses[p2] = participants[2]
+	//	delete(networkGraphState.NodeIdToNodeAddresses, p2)
+	//	delete(networkGraphState.NodeAddressesToNodeId, participants[2])
+	//
+	//	networkGraphState.Graph().(graph.EdgeRemover).RemoveEdge(p1, p2)
+	//	networkGraphState.Graph().(graph.EdgeRemover).RemoveEdge(p2, p1)
+	//	delete(networkGraphState.ChannelIdentifierToParticipants, channelId)
+	//
+	//	oAddr1 := chainComm.Address(participants[1])
+	//	oAddr2 := chainComm.Address(participants[2])
+	//	fmt.Println("[DelRoute]:", oAddr1.ToBase58(), oAddr2.ToBase58())
+	//}
 }
 
 func (self *TokenNetworkState) GetTokenAddress() common.TokenAddress {
 	return self.TokenAddress
 }
 
-//rebuild partnerAddressesToChannels
+//rebuild PartnerAddressesToChannels
 func (self *TokenNetworkState) AdjustTokenNetworkState() {
-	self.partnerAddressesToChannels = make(map[common.Address]map[common.ChannelID]*NettingChannelState)
+	self.PartnerAddressesToChannels = make(map[common.Address]map[common.ChannelID]*NettingChannelState)
 	for _, v := range self.ChannelIdentifiersToChannels {
-		if self.partnerAddressesToChannels[v.PartnerState.Address] == nil {
-			self.partnerAddressesToChannels[v.PartnerState.Address] = make(map[common.ChannelID]*NettingChannelState)
+		if self.PartnerAddressesToChannels[v.PartnerState.Address] == nil {
+			self.PartnerAddressesToChannels[v.PartnerState.Address] = make(map[common.ChannelID]*NettingChannelState)
 		}
-		self.partnerAddressesToChannels[v.PartnerState.Address][v.Identifier] = v
+		self.PartnerAddressesToChannels[v.PartnerState.Address][v.Identifier] = v
 	}
 
 	return
 }
 
-type TokenNetworkGraphState struct {
-	//[TODO] introduce Graph struct!
-}
-
 type PaymentMappingState struct {
-	SecrethashesToTask map[common.SecretHash]State
+	SecretHashesToTask map[common.SecretHash]State
 }
 
 type RouteState struct {
@@ -229,18 +310,30 @@ type BalanceProofSignedState struct {
 type HashTimeLockState struct {
 	Amount     common.TokenAmount
 	Expiration common.BlockHeight
-	Secrethash common.Keccak256
+	SecretHash common.Keccak256
 	Encoded    []byte
-	Lockhash   common.LockHash
+	LockHash   common.LockHash
+}
+
+func (self *HashTimeLockState) CalcLockHash() common.LockHash {
+	buf := new(bytes.Buffer)
+	log.Debug("[CalcLockHash]: ", self.Amount, self.Expiration, self.SecretHash)
+	buf.Write(Uint64ToBytes(uint64(self.Amount)))
+	buf.Write(Uint64ToBytes(uint64(self.Expiration)))
+	buf.Write(self.SecretHash[:])
+
+	encoded := buf.Bytes()
+	hash := common.LockHash(common.GetHash(encoded))
+	return hash
 }
 
 type UnlockPartialProofState struct {
-	Lock   HashTimeLockState
+	Lock   *HashTimeLockState
 	Secret common.Secret
 }
 
 type UnlockProofState struct {
-	MerkelProof []common.Keccak256
+	MerkleProof []common.Keccak256
 	LockEncoded []byte
 	Secret      common.Secret
 }
@@ -267,10 +360,10 @@ func (self *MerkleTreeState) init() {
 type NettingChannelEndState struct {
 	Address                            common.Address
 	ContractBalance                    common.TokenAmount
-	SecretHashesToLockedlocks          SecretHashToLock
-	SecretHashesToUnlockedlocks        SecretHashToPartialUnlockProof
-	SecretHashesToOnchainUnlockedlocks SecretHashToPartialUnlockProof
-	Merkletree                         *MerkleTreeState
+	SecretHashesToLockedLocks          SecretHashToLock
+	SecretHashesToUnLockedLocks        SecretHashToPartialUnlockProof
+	SecretHashesToOnChainUnLockedLocks SecretHashToPartialUnlockProof
+	MerkleTree                         *MerkleTreeState
 	BalanceProof                       *BalanceProofSignedState
 }
 
@@ -284,8 +377,14 @@ func (self *NettingChannelEndState) GetGasBalance() common.TokenAmount {
 	// the balanceProof could be nil in following cases:
 	// outState.BalanceProof is nil when no payment has been sent
 	// partnetState.BalanceProof is nil when no payment has been received
+	//if self.BalanceProof != nil {
+	//	return self.BalanceProof.TransferredAmount
+	//}
+
 	if self.BalanceProof != nil {
-		return self.BalanceProof.TransferredAmount
+		return self.ContractBalance - self.BalanceProof.TransferredAmount
+	} else {
+		return self.ContractBalance
 	}
 
 	return amount
@@ -298,13 +397,13 @@ func (self *NettingChannelEndState) GetAddress() common.Address {
 func NewNettingChannelEndState() *NettingChannelEndState {
 	result := new(NettingChannelEndState)
 
-	result.SecretHashesToLockedlocks = make(SecretHashToLock)
-	result.SecretHashesToUnlockedlocks = make(SecretHashToPartialUnlockProof)
-	result.SecretHashesToOnchainUnlockedlocks = make(SecretHashToPartialUnlockProof)
+	result.SecretHashesToLockedLocks = make(SecretHashToLock)
+	result.SecretHashesToUnLockedLocks = make(SecretHashToPartialUnlockProof)
+	result.SecretHashesToOnChainUnLockedLocks = make(SecretHashToPartialUnlockProof)
 
 	//Construct empty merkle tree with No leaves and empty root!
-	result.Merkletree = new(MerkleTreeState)
-	result.Merkletree.init()
+	result.MerkleTree = new(MerkleTreeState)
+	result.MerkleTree.init()
 
 	return result
 }
@@ -315,8 +414,8 @@ type NettingChannelState struct {
 	TokenAddress             common.Address
 	PaymentNetworkIdentifier common.PaymentNetworkID
 	TokenNetworkIdentifier   common.TokenNetworkID
-	RevealTimeout            common.BlockHeight
-	SettleTimeout            common.BlockHeight
+	RevealTimeout            common.BlockTimeout
+	SettleTimeout            common.BlockTimeout
 	OurState                 *NettingChannelEndState
 	PartnerState             *NettingChannelEndState
 	DepositTransactionQueue  TransactionOrderHeap
@@ -393,4 +492,79 @@ func addressEqual(address1 common.Address, address2 common.Address) bool {
 	}
 
 	return result
+}
+
+//-----------------------------------------------------------------
+
+type InitiatorPaymentState struct {
+	Initiator         *InitiatorTransferState
+	CancelledChannels []common.ChannelID
+}
+
+type InitiatorTransferState struct {
+	TransferDescription   *TransferDescriptionWithSecretState
+	ChannelIdentifier     common.ChannelID
+	Transfer              *LockedTransferUnsignedState
+	RevealSecret          *SendSecretReveal
+	ReceivedSecretRequest bool
+}
+
+type WaitingTransferState struct {
+	Transfer *LockedTransferSignedState
+	State    string
+}
+
+type MediatorTransferState struct {
+	SecretHash      common.SecretHash
+	Secret          common.Secret
+	TransfersPair   []*MediationPairState
+	WaitingTransfer *WaitingTransferState
+}
+
+//initial value for State should be set to "secret_request"
+//other valid value are "reveal_secret", "expired"
+type TargetTransferState struct {
+	Route    *RouteState
+	Transfer *LockedTransferSignedState
+	Secret   *common.Secret
+	State    string
+}
+
+type LockedTransferUnsignedState struct {
+	PaymentIdentifier common.PaymentID
+	Token             common.Address
+	BalanceProof      *BalanceProofUnsignedState
+	Lock              *HashTimeLockState
+	Initiator         common.Address
+	Target            common.Address
+}
+
+type LockedTransferSignedState struct {
+	MessageIdentifier common.MessageID
+	PaymentIdentifier common.PaymentID
+	Token             common.Address
+	BalanceProof      *BalanceProofSignedState
+	Lock              *HashTimeLockState
+	Initiator         common.InitiatorAddress
+	Target            common.Address
+}
+
+//NOTE, need calcuate SecretHash based on Secret in construct func
+type TransferDescriptionWithSecretState struct {
+	PaymentNetworkIdentifier common.PaymentNetworkID
+	PaymentIdentifier        common.PaymentID
+	Amount                   common.TokenAmount
+	TokenNetworkIdentifier   common.TokenNetworkID
+	Initiator                common.Address
+	Target                   common.Address
+	Secret                   common.Secret
+	SecretHash               common.SecretHash
+}
+
+type MediationPairState struct {
+	PayeeAddress  common.Address
+	PayeeTransfer *LockedTransferUnsignedState
+	PayeeState    string
+	PayerTransfer *LockedTransferSignedState
+	PayerState    string
 }

@@ -90,7 +90,7 @@ type ContractReceiveNewTokenNetwork struct {
 type ContractReceiveSecretReveal struct {
 	ContractReceiveStateChange
 	SecretRegistryAddress common.SecretRegistryAddress
-	Secrethash            common.SecretHash
+	SecretHash            common.SecretHash
 	Secret                common.Secret
 }
 
@@ -137,8 +137,8 @@ type ReceiveUnlock struct {
 	AuthenticatedSenderStateChange
 	MessageIdentifier common.MessageID
 	Secret            common.Secret
-	secrethash        common.SecretHash
-	BalanceProof      BalanceProofSignedState
+	SecretHash        common.SecretHash
+	BalanceProof      *BalanceProofSignedState
 }
 
 type ReceiveDelivered struct {
@@ -149,4 +149,71 @@ type ReceiveDelivered struct {
 type ReceiveProcessed struct {
 	AuthenticatedSenderStateChange
 	MessageIdentifier common.MessageID
+}
+
+//------------------------------------------------
+
+type BalanceProofStateChange struct {
+	AuthenticatedSenderStateChange
+	BalanceProof *BalanceProofSignedState
+}
+
+type ActionInitInitiator struct {
+	TransferDescription *TransferDescriptionWithSecretState
+	Routes              []RouteState
+}
+
+type ActionInitMediator struct {
+	Routes       []RouteState
+	FromRoute    *RouteState
+	FromTransfer *LockedTransferSignedState
+}
+
+//NOTO 'balance_proof': self.balance_proof wirte to json!
+//don't need use same logic, just change the json query string!
+type ActionInitTarget struct {
+	Route    *RouteState
+	Transfer *LockedTransferSignedState
+}
+
+type ActionCancelRoute struct {
+	RegistryAddress   common.Address
+	ChannelIdentifier common.ChannelID
+	Routes            []RouteState
+}
+
+type ReceiveLockExpired struct {
+	BalanceProof      *BalanceProofSignedState
+	SecretHash        common.SecretHash
+	MessageIdentifier common.MessageID
+}
+
+type ReceiveSecretRequest struct {
+	PaymentIdentifier common.PaymentID
+	Amount            common.PaymentAmount
+	Expiration        common.BlockExpiration
+	SecretHash        common.SecretHash
+	Sender            common.Address
+	MessageIdentifier common.MessageID
+}
+
+//Need calculte Secret hash when construct this struct.
+type ReceiveSecretReveal struct {
+	Secret            common.Secret
+	Sender            common.Address
+	MessageIdentifier common.MessageID
+}
+
+//Need calculte Secret hash when construct this struct.
+type ReceiveTransferRefundCancelRoute struct {
+	Transfer   *LockedTransferSignedState
+	Routes     []RouteState
+	SecretHash common.SecretHash
+	Secret     common.Secret
+}
+
+type ReceiveTransferRefund struct {
+	BalanceProofStateChange
+	Transfer *LockedTransferSignedState
+	Routes   []RouteState
 }

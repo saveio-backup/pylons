@@ -1,15 +1,14 @@
 package transfer
 
 import (
-	"container/list"
 	"reflect"
 
 	sc_utils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
+	"github.com/daseinio/x-dsp/log"
 )
 
-func getNetworks(chainState *ChainState,
-	paymentNetworkIdentifier common.PaymentNetworkID,
+func getNetworks(chainState *ChainState, paymentNetworkIdentifier common.PaymentNetworkID,
 	tokenAddress common.TokenAddress) (*PaymentNetworkState, *TokenNetworkState) {
 
 	var tokenNetworkState *TokenNetworkState
@@ -17,138 +16,286 @@ func getNetworks(chainState *ChainState,
 	paymentNetworkState := chainState.IdentifiersToPaymentnetworks[paymentNetworkIdentifier]
 
 	if paymentNetworkState != nil {
-		tokenNetworkState = paymentNetworkState.tokenAddressesToTokenNetworks[tokenAddress]
+		if tokenNetworkId, ok := paymentNetworkState.TokenAddressesToTokenIdentifiers[tokenAddress]; ok {
+			tokenNetworkState = paymentNetworkState.TokenIdentifiersToTokenNetworks[tokenNetworkId]
+		}
 	}
 
 	return paymentNetworkState, tokenNetworkState
 }
 
-func getTokenNetworkByTokenAddress(
-	chainState *ChainState,
-	paymentNetworkIdentifier common.PaymentNetworkID,
+func getTokenNetworkByTokenAddress(chainState *ChainState, paymentNetworkIdentifier common.PaymentNetworkID,
 	tokenAddress common.TokenAddress) *TokenNetworkState {
 
-	_, tokenNetworkState := getNetworks(
-		chainState,
-		paymentNetworkIdentifier,
-		tokenAddress,
-	)
+	_, tokenNetworkState := getNetworks(chainState, paymentNetworkIdentifier, tokenAddress)
 
 	return tokenNetworkState
 }
 
-func subdispatchToAllChannels(
-	chainState *ChainState,
-	stateChange StateChange,
+func subDispatchToAllChannels(chainState *ChainState, stateChange StateChange,
 	blockNumber common.BlockHeight) TransitionResult {
-
-	events := list.New()
-
+	var events []Event
 	for _, v := range chainState.IdentifiersToPaymentnetworks {
-		for _, v2 := range v.tokenAddressesToTokenNetworks {
+		for _, v2 := range v.TokenIdentifiersToTokenNetworks {
 			for _, v3 := range v2.ChannelIdentifiersToChannels {
 				result := StateTransitionForChannel(v3, stateChange, blockNumber)
-				events.PushBackList(result.Events)
+				events = append(events, result.Events...)
 			}
 		}
 	}
+	return TransitionResult{NewState: chainState, Events: events}
+}
 
+func subDispatchToAllLockedTransfers(chainState *ChainState, stateChange StateChange) TransitionResult {
+	var events []Event
+	for k := range chainState.PaymentMapping.SecretHashesToTask {
+		result := subDispatchToPaymentTask(chainState, stateChange, k)
+		events = append(events, result.Events...)
+	}
 	return TransitionResult{chainState, events}
 }
 
-func subdispatchToAllLockedTransfers(
-	chainState *ChainState,
-	stateChange StateChange) TransitionResult {
-	events := list.New()
+func subDispatchToPaymentTask(chainState *ChainState, stateChange StateChange,
+	secretHash common.SecretHash) *TransitionResult {
 
-	for k := range chainState.PaymentMapping.SecrethashesToTask {
-		result := subdispatchToPaymenttask(chainState, stateChange, k)
-		events.PushBackList(result.Events)
+	blockNumber := chainState.BlockHeight
+	subTask := chainState.PaymentMapping.SecretHashesToTask[secretHash]
+	var events []Event
+	var subIteration *TransitionResult
+
+	if subTask != nil {
+		log.Debug("[subDispatchToPaymentTask] subTask Type: ", reflect.TypeOf(subTask).String())
+		log.Debug("[subDispatchToPaymentTask] stateChange Type: ", reflect.TypeOf(stateChange).String())
+		log.Debug("[subDispatchToPaymentTask] secretHash: ", secretHash)
+
+		if reflect.TypeOf(subTask).String() == "*transfer.InitiatorTask" {
+			log.Info("-------------------------------")
+			iSubTask := subTask.(*InitiatorTask)
+			tokenNetworkIdentifier := iSubTask.TokenNetworkIdentifier
+			tokenNetworkState := GetTokenNetworkByIdentifier(chainState, tokenNetworkIdentifier)
+			if tokenNetworkState != nil {
+				ms := iSubTask.ManagerState.(*InitiatorTransferState)
+				paymentState := &InitiatorPaymentState{
+					Initiator: ms,
+				}
+				subIteration = ImStateTransition(paymentState, stateChange,
+					tokenNetworkState.ChannelIdentifiersToChannels, blockNumber)
+				events = subIteration.Events
+				for _, e := range events {
+					log.Debug("[subDispatchToPaymentTask]:", reflect.TypeOf(e).String())
+				}
+			} else {
+				log.Warn("[subDispatchToPaymentTask] tokenNetworkState is nil")
+			}
+		} else if reflect.TypeOf(subTask).String() == "*transfer.MediatorTask" {
+			mSubTask := subTask.(*MediatorTask)
+			tokenNetworkIdentifier := mSubTask.TokenNetworkIdentifier
+			tokenNetworkState := GetTokenNetworkByIdentifier(chainState, tokenNetworkIdentifier)
+			if tokenNetworkState != nil {
+				ms := mSubTask.MediatorState.(*MediatorTransferState)
+				subIteration, err := MdStateTransition(ms, stateChange,
+					tokenNetworkState.ChannelIdentifiersToChannels, blockNumber)
+				if err != nil {
+					log.Error("MdStateTransition Err: ", err.Error())
+				}
+				events = subIteration.Events
+			}
+		} else if reflect.TypeOf(subTask).String() == "*transfer.TargetTask" {
+			tSubTask := subTask.(*TargetTask)
+			tokenNetworkIdentifier := tSubTask.TokenNetworkIdentifier
+			channelIdentifier := tSubTask.ChannelIdentifier
+
+			channelState := GetChannelStateByTokenNetworkIdentifier(chainState,
+				tokenNetworkIdentifier, channelIdentifier)
+
+			if channelState != nil {
+				subIteration = TgStateTransition(tSubTask.TargetState.(*TargetTransferState),
+					stateChange, channelState, blockNumber)
+				events = subIteration.Events
+			}
+		} else {
+			log.Errorf("[subDispatchToPaymentTask] Unknown subTask type")
+		}
+
+		if subIteration != nil && subIteration.NewState == nil {
+			log.Debug("[subDispatchToPaymentTask] delete SecretHashesToTask")
+			delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
+		}
 	}
 
-	return TransitionResult{chainState, events}
+	return &TransitionResult{NewState: chainState, Events: events}
 }
 
-//[TODO] handle InitiatorTask, MediatorTask, TargetTask when supporting route
-func subdispatchToPaymenttask(
-	chainState *ChainState,
-	stateChange StateChange,
-	secrethash common.SecretHash) TransitionResult {
+func subDispatchInitiatorTask(chainState *ChainState, stateChange StateChange,
+	tokenNetworkIdentifier common.TokenNetworkID, secretHash common.SecretHash) *TransitionResult {
 
-	events := list.New()
+	blockNumber := chainState.BlockHeight
+	subTask := chainState.PaymentMapping.SecretHashesToTask[secretHash]
 
-	return TransitionResult{chainState, events}
+	var isValidSubTask bool
+	var managerState *InitiatorPaymentState
+
+	if subTask == nil {
+		isValidSubTask = true
+		managerState = nil
+	} else if subTask != nil && reflect.TypeOf(subTask).String() == "*transfer.InitiatorTask" {
+		initTask := subTask.(*InitiatorTask)
+		isValidSubTask = tokenNetworkIdentifier == initTask.TokenNetworkIdentifier
+		managerState = initTask.ManagerState.(*InitiatorPaymentState)
+	} else {
+		isValidSubTask = false
+	}
+
+	var events []Event
+	if isValidSubTask {
+		tokenNetworkState := GetTokenNetworkByIdentifier(chainState, tokenNetworkIdentifier)
+		iteration := ImStateTransition(managerState, stateChange,
+			tokenNetworkState.ChannelIdentifiersToChannels, blockNumber)
+
+		events = append(events, iteration.Events...)
+		if iteration.NewState != nil {
+			subTask = &InitiatorTask{
+				TokenNetworkIdentifier: tokenNetworkIdentifier,
+				ManagerState:           iteration.NewState,
+			}
+			chainState.PaymentMapping.SecretHashesToTask[secretHash] = subTask
+		} else if _, ok := chainState.PaymentMapping.SecretHashesToTask[secretHash]; ok {
+			delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
+		}
+	}
+	return &TransitionResult{NewState: chainState, Events: events}
 }
 
-//[TODO] handle InitiatorTask when supporting route
-func subdispatchInitiatortask(
-	chainState *ChainState,
-	stateChange StateChange,
-	tokenNetworkIdentifier common.TokenNetworkID,
-	secrethash common.SecretHash) TransitionResult {
+func subDispatchMediatorTask(chainState *ChainState, stateChange StateChange,
+	tokenNetworkIdentifier common.TokenNetworkID, secretHash common.SecretHash) *TransitionResult {
 
-	events := list.New()
+	blockNumber := chainState.BlockHeight
+	subTask := chainState.PaymentMapping.SecretHashesToTask[secretHash]
+	log.Debug("\n[subDispatchMediatorTask] secretHash:", secretHash)
 
-	return TransitionResult{chainState, events}
+	if subTask == nil {
+		log.Warn("[subDispatchMediatorTask] subTask == nil")
+	}
+	var isValidSubTask bool
+	var mediatorState *MediatorTransferState
+	if subTask == nil {
+		isValidSubTask = true
+		mediatorState = nil
+	} else if subTask != nil && reflect.TypeOf(subTask).String() == "*transfer.MediatorTask" {
+		mTask := subTask.(*MediatorTask)
+		isValidSubTask = tokenNetworkIdentifier == mTask.TokenNetworkIdentifier
+		mediatorState = mTask.MediatorState.(*MediatorTransferState)
+		log.Debug("[subDispatchMediatorTask] Secret: ", mediatorState.Secret)
+	} else {
+		isValidSubTask = false
+	}
+
+	if isValidSubTask {
+		log.Debug("[subDispatchMediatorTask] isValidSubTask == true")
+	}
+
+	var events []Event
+	if isValidSubTask {
+		tokenNetworkState := GetTokenNetworkByIdentifier(chainState, tokenNetworkIdentifier)
+		iteration, err := MdStateTransition(mediatorState, stateChange,
+			tokenNetworkState.ChannelIdentifiersToChannels, blockNumber)
+		if err != nil {
+			log.Error("[subDispatchMediatorTask] MdStateTransition: ", err.Error())
+		}
+		events = iteration.Events
+
+		if iteration.NewState != nil {
+			subTask = &MediatorTask{
+				TokenNetworkIdentifier: tokenNetworkIdentifier,
+				MediatorState:          iteration.NewState,
+			}
+			chainState.PaymentMapping.SecretHashesToTask[secretHash] = subTask
+			log.Debug("[subDispatchMediatorTask] iteration.NewState")
+		} else if _, ok := chainState.PaymentMapping.SecretHashesToTask[secretHash]; ok {
+			log.Debug("[subDispatchMediatorTask] delete SecretHashesToTask")
+			delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
+		}
+	}
+
+	return &TransitionResult{NewState: chainState, Events: events}
 }
 
-////[TODO] handle MediatorTask when supporting route
-func subdispatchMediatortask(
-	chainState *ChainState,
-	stateChange StateChange,
-	tokenNetworkIdentifier common.TokenNetworkID,
-	secrethash common.SecretHash) TransitionResult {
+func subDispatchTargetTask(chainState *ChainState, stateChange StateChange,
+	tokenNetworkIdentifier common.TokenNetworkID, channelIdentifier common.ChannelID,
+	secretHash common.SecretHash) *TransitionResult {
 
-	events := list.New()
+	blockNumber := chainState.BlockHeight
+	subTask := chainState.PaymentMapping.SecretHashesToTask[secretHash]
 
-	return TransitionResult{chainState, events}
+	var isValidSubTask bool
+	var targetState *TargetTransferState
+
+	if subTask == nil {
+		isValidSubTask = true
+		targetState = nil
+	} else if subTask != nil && reflect.TypeOf(subTask).String() == "*transfer.TargetTask" {
+		tTask := subTask.(*TargetTask)
+		isValidSubTask = tokenNetworkIdentifier == tTask.TokenNetworkIdentifier
+		targetState = tTask.TargetState.(*TargetTransferState)
+	} else {
+		isValidSubTask = false
+	}
+
+	var events []Event
+	var channelState *NettingChannelState
+	if isValidSubTask {
+		channelState = GetChannelStateByTokenNetworkIdentifier(chainState,
+			tokenNetworkIdentifier, channelIdentifier)
+	}
+
+	if channelState != nil {
+		iteration := TgStateTransition(targetState, stateChange, channelState, blockNumber)
+		if iteration == nil {
+			return &TransitionResult{NewState: chainState, Events: nil}
+		} else {
+			events = iteration.Events
+			if iteration.NewState != nil {
+				subTask = &TargetTask{
+					TokenNetworkIdentifier: tokenNetworkIdentifier,
+					ChannelIdentifier:      channelIdentifier,
+					TargetState:            iteration.NewState,
+				}
+				chainState.PaymentMapping.SecretHashesToTask[secretHash] = subTask
+			} else if _, ok := chainState.PaymentMapping.SecretHashesToTask[secretHash]; ok {
+				log.Debug("[subDispatchTargetTask] delete SecretHashesToTask")
+				delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
+			}
+		}
+	}
+	return &TransitionResult{NewState: chainState, Events: events}
 }
 
-//[TODO] handle TargetTask when supporting route
-func subdispatchTargettask(
-	chainState *ChainState,
-	stateChange StateChange,
-	tokenNetworkIdentifier common.TokenNetworkID,
-	channelIdentifier common.ChannelID,
-	secrethash common.SecretHash) TransitionResult {
-
-	events := list.New()
-
-	return TransitionResult{chainState, events}
-}
-
-func maybeAddTokennetwork(
-	chainState *ChainState,
-	paymentNetworkIdentifier common.PaymentNetworkID,
+func maybeAddTokenNetwork(chainState *ChainState, paymentNetworkIdentifier common.PaymentNetworkID,
 	tokenNetworkState *TokenNetworkState) {
 
 	tokenNetworkIdentifier := tokenNetworkState.Address
 	tokenAddress := tokenNetworkState.TokenAddress
 
-	paymentNetworkState, tokenNetworkStatePrevious := getNetworks(
-		chainState,
-		paymentNetworkIdentifier,
-		tokenAddress)
+	paymentNetworkState, tokenNetworkStatePrevious := getNetworks(chainState,
+		paymentNetworkIdentifier, tokenAddress)
 
 	if paymentNetworkState == nil {
 		paymentNetworkState = NewPaymentNetworkState()
 		paymentNetworkState.Address = common.PaymentNetworkID(sc_utils.MicroPayContractAddress)
-		paymentNetworkState.TokenIdentifiersToTokenNetworks[tokenNetworkState.Address] = tokenNetworkState
-		paymentNetworkState.tokenAddressesToTokenNetworks[tokenNetworkState.TokenAddress] = tokenNetworkState
+		paymentNetworkState.TokenIdentifiersToTokenNetworks[tokenNetworkIdentifier] = tokenNetworkState
+		paymentNetworkState.TokenAddressesToTokenIdentifiers[tokenAddress] = tokenNetworkState.Address
+
 		chainState.IdentifiersToPaymentnetworks[paymentNetworkIdentifier] = paymentNetworkState
 	}
 
 	if tokenNetworkStatePrevious == nil {
 		paymentNetworkState.TokenIdentifiersToTokenNetworks[tokenNetworkIdentifier] = tokenNetworkState
-		paymentNetworkState.tokenAddressesToTokenNetworks[tokenAddress] = tokenNetworkState
+		paymentNetworkState.TokenAddressesToTokenIdentifiers[tokenAddress] = tokenNetworkIdentifier
 	}
-
 	return
 }
 
-func inplaceDeleteMessageQueue(
-	chainState *ChainState,
-	stateChange StateChange,
+func inplaceDeleteMessageQueue(chainState *ChainState, stateChange StateChange,
 	queueid QueueIdentifier) {
 
 	queue, ok := chainState.QueueIdsToQueues[queueid]
@@ -167,9 +314,7 @@ func inplaceDeleteMessageQueue(
 	return
 }
 
-func inplaceDeleteMessage(
-	messageQueue []Event,
-	stateChange StateChange) []Event {
+func inplaceDeleteMessage(messageQueue []Event, stateChange StateChange) []Event {
 
 	if messageQueue == nil {
 		return messageQueue
@@ -190,82 +335,61 @@ func inplaceDeleteMessage(
 	return messageQueue
 }
 
-func handleBlockForNode(
-	chainState *ChainState,
-	stateChange *Block) TransitionResult {
-
-	events := list.New()
+func handleBlockForNode(chainState *ChainState, stateChange *Block) *TransitionResult {
+	var events []Event
 
 	blockNumber := stateChange.BlockHeight
 	chainState.BlockHeight = blockNumber
 
-	channelsResult := subdispatchToAllChannels(
-		chainState,
-		stateChange,
-		blockNumber)
+	channelsResult := subDispatchToAllChannels(chainState, stateChange, blockNumber)
+	transfersResult := subDispatchToAllLockedTransfers(chainState, stateChange)
 
-	transfersResult := subdispatchToAllLockedTransfers(
-		chainState,
-		stateChange)
+	events = append(events, channelsResult.Events...)
+	events = append(events, transfersResult.Events...)
 
-	events.PushBackList(channelsResult.Events)
-	events.PushBackList(transfersResult.Events)
-
-	return TransitionResult{chainState, events}
+	return &TransitionResult{chainState, events}
 }
 
-func handleChainInit(
-	chainState *ChainState,
-	stateChange *ActionInitChain) TransitionResult {
-
-	result := NewChainState()
-	result.BlockHeight = stateChange.BlockHeight
-	result.Address = stateChange.OurAddress
-	result.ChainId = stateChange.ChainId
-
-	events := list.New()
-	return TransitionResult{result, events}
+func handleChainInit(chainState *ChainState, stateChange *ActionInitChain) *TransitionResult {
+	if chainState == nil {
+		result := NewChainState()
+		result.BlockHeight = stateChange.BlockHeight
+		result.Address = stateChange.OurAddress
+		result.ChainId = stateChange.ChainId
+		return &TransitionResult{NewState:result, Events: nil}
+	}
+	return &TransitionResult{NewState: chainState, Events: nil}
 }
 
-func handleTokenNetworkAction(
-	chainState *ChainState,
-	stateChange StateChange,
-	tokenNetworkId common.TokenNetworkID) TransitionResult {
+func handleTokenNetworkAction(chainState *ChainState, stateChange StateChange,
+	tokenNetworkId common.TokenNetworkID) *TransitionResult {
 
-	events := list.New()
-
+	var events []Event
 	tokenNetworkState := GetTokenNetworkByIdentifier(chainState, tokenNetworkId)
-
 	paymentNetworkState := GetTokenNetworkRegistryByTokenNetworkIdentifier(
 		chainState, tokenNetworkId)
-
 	if paymentNetworkState == nil {
-		return TransitionResult{}
+		return &TransitionResult{}
 	}
 	paymentNetworkId := paymentNetworkState.Address
 
 	if tokenNetworkState != nil {
 		iteration := stateTransitionForNetwork(paymentNetworkId, tokenNetworkState,
 			stateChange, chainState.BlockHeight)
-
 		if reflect.ValueOf(iteration.NewState).IsNil() {
-
 			paymentNetworkState = searchPaymentNetworkByTokenNetworkId(
 				chainState, tokenNetworkId)
 
-			delete(paymentNetworkState.tokenAddressesToTokenNetworks, common.TokenAddress(tokenNetworkId))
+			delete(paymentNetworkState.TokenAddressesToTokenIdentifiers, tokenNetworkState.TokenAddress)
 			delete(paymentNetworkState.TokenIdentifiersToTokenNetworks, tokenNetworkId)
 		}
-
 		events = iteration.Events
 	}
-
-	return TransitionResult{chainState, events}
+	return &TransitionResult{NewState: chainState, Events: events}
 }
 
-func handleContractReceiveChannelClosed(
-	chainState *ChainState,
-	stateChange *ContractReceiveChannelClosed) TransitionResult {
+func handleContractReceiveChannelClosed(chainState *ChainState,
+	stateChange *ContractReceiveChannelClosed) *TransitionResult {
 
 	channelId := GetChannelIdentifier(stateChange)
 	channelState := GetChannelStateByTokenNetworkIdentifier(
@@ -282,90 +406,98 @@ func handleContractReceiveChannelClosed(
 	return handleTokenNetworkAction(chainState, stateChange, stateChange.TokenNetworkIdentifier)
 }
 
-func handleDelivered(
-	chainState *ChainState,
-	stateChange *ReceiveDelivered) TransitionResult {
-	queueid := QueueIdentifier{stateChange.Sender, 0}
-	inplaceDeleteMessageQueue(chainState, stateChange, queueid)
+func handleDelivered(chainState *ChainState, stateChange *ReceiveDelivered) *TransitionResult {
+	queueId := QueueIdentifier{stateChange.Sender, 0}
+	inplaceDeleteMessageQueue(chainState, stateChange, queueId)
 
-	return TransitionResult{chainState, list.New()}
+	return &TransitionResult{chainState, nil}
 }
 
-func handleNewTokenNetwork(
-	chainState *ChainState,
-	stateChange *ActionNewTokenNetwork) TransitionResult {
+func handleNewTokenNetwork(chainState *ChainState, stateChange *ActionNewTokenNetwork) *TransitionResult {
 
 	tokenNetworkState := stateChange.TokenNetwork
 	paymentNetworkIdentifier := stateChange.PaymentNetworkIdentifier
 
-	maybeAddTokennetwork(
-		chainState,
-		paymentNetworkIdentifier,
-		tokenNetworkState)
-
-	events := list.New()
-	return TransitionResult{chainState, events}
+	maybeAddTokenNetwork(chainState, paymentNetworkIdentifier, tokenNetworkState)
+	return &TransitionResult{chainState, nil}
 }
 
-func handleNodeChangeNetworkState(
-	chainState *ChainState,
-	stateChange *ActionChangeNodeNetworkState) TransitionResult {
-	events := list.New()
+func handleNodeChangeNetworkState(chainState *ChainState,
+	stateChange *ActionChangeNodeNetworkState) *TransitionResult {
 
 	nodeAddress := stateChange.NodeAddress
 	networkState := stateChange.NetworkState
 	chainState.NodeAddressesToNetworkstates[nodeAddress] = networkState
 
-	return TransitionResult{chainState, events}
+	return &TransitionResult{chainState, nil}
 }
 
-func handleLeaveAllNetworks(chainState *ChainState) TransitionResult {
-	events := list.New()
+func handleLeaveAllNetworks(chainState *ChainState) *TransitionResult {
+	var events []Event
 
 	for _, v := range chainState.IdentifiersToPaymentnetworks {
-		for _, v := range v.tokenAddressesToTokenNetworks {
+		for _, v := range v.TokenIdentifiersToTokenNetworks {
 			result := getChannelsCloseEvents(chainState, v)
-			events.PushBackList(result)
+			events = append(events, result...)
 		}
 	}
 
-	return TransitionResult{chainState, events}
+	return &TransitionResult{NewState: chainState, Events: events}
 }
 
-func handleNewPaymentNetwork(
-	chainState *ChainState,
-	stateChange *ContractReceiveNewPaymentNetwork) TransitionResult {
-	events := list.New()
+func handleNewPaymentNetwork(chainState *ChainState,
+	stateChange *ContractReceiveNewPaymentNetwork) *TransitionResult {
+	var events []Event
 
 	paymentNetwork := stateChange.PaymentNetwork
 	paymentNetworkIdentifier := paymentNetwork.Address
 
 	_, ok := chainState.IdentifiersToPaymentnetworks[paymentNetworkIdentifier]
-	if ok == false {
+	if !ok {
 		chainState.IdentifiersToPaymentnetworks[paymentNetworkIdentifier] = paymentNetwork
 	}
 
-	return TransitionResult{chainState, events}
+	return &TransitionResult{chainState, events}
 }
 
-func handleTokenadded(
-	chainState *ChainState,
-	stateChange *ContractReceiveNewTokenNetwork) TransitionResult {
-	events := list.New()
-	maybeAddTokennetwork(
-		chainState,
-		stateChange.PaymentNetworkIdentifier,
-		stateChange.TokenNetwork)
-
-	return TransitionResult{chainState, events}
+func handleTokenadded(chainState *ChainState, stateChange *ContractReceiveNewTokenNetwork) *TransitionResult {
+	maybeAddTokenNetwork(chainState, stateChange.PaymentNetworkIdentifier, stateChange.TokenNetwork)
+	return &TransitionResult{chainState, nil}
 }
 
-func handleProcessed(
-	chainState *ChainState,
-	stateChange *ReceiveProcessed) TransitionResult {
+func handleSecretReveal(chainState *ChainState, stateChange *ReceiveSecretReveal) *TransitionResult {
+	secretHash := common.GetHash(stateChange.Secret)
+	return subDispatchToPaymentTask(chainState, stateChange, secretHash)
+}
 
-	events := list.New()
+func handleInitInitiator(chainState *ChainState, stateChange *ActionInitInitiator) *TransitionResult {
+	transferDesc := stateChange.TransferDescription
+	secretHash := transferDesc.SecretHash
+	return subDispatchInitiatorTask(chainState, stateChange, transferDesc.TokenNetworkIdentifier, secretHash)
+}
 
+func handleInitMediator(chainState *ChainState, stateChange *ActionInitMediator) *TransitionResult {
+	transfer := stateChange.FromTransfer
+	secretHash := common.SecretHash(transfer.Lock.SecretHash)
+	tokenNetworkIdentifier := transfer.BalanceProof.TokenNetworkIdentifier
+	return subDispatchMediatorTask(chainState, stateChange, tokenNetworkIdentifier, secretHash)
+}
+
+func handleInitTarget(chainState *ChainState, stateChange *ActionInitTarget) *TransitionResult {
+	transfer := stateChange.Transfer
+	secretHash := common.SecretHash(transfer.Lock.SecretHash)
+	channelIdentifier := transfer.BalanceProof.ChannelIdentifier
+	tokenNetworkIdentifier := transfer.BalanceProof.TokenNetworkIdentifier
+	return subDispatchTargetTask(chainState, stateChange, tokenNetworkIdentifier, channelIdentifier, secretHash)
+}
+
+func handleReceiveSecretRequest(chainState *ChainState, stateChange *ReceiveSecretRequest) *TransitionResult {
+	secretHash := stateChange.SecretHash
+	return subDispatchToPaymentTask(chainState, stateChange, secretHash)
+}
+
+func handleProcessed(chainState *ChainState, stateChange *ReceiveProcessed) *TransitionResult {
+	var events []Event
 	for _, v := range chainState.QueueIdsToQueues {
 		len := len(v)
 
@@ -378,26 +510,34 @@ func handleProcessed(
 					channelState := GetChannelStateByTokenNetworkAndPartner(chainState,
 						message.BalanceProof.TokenNetworkIdentifier, common.Address(message.Recipient))
 
-					events.PushBack(&EventPaymentSentSuccess{channelState.PaymentNetworkIdentifier,
-						channelState.TokenNetworkIdentifier, message.PaymentIdentifier,
-						message.BalanceProof.TransferredAmount, message.Recipient})
+					paySuccess := &EventPaymentSentSuccess{
+						PaymentNetworkIdentifier: channelState.PaymentNetworkIdentifier,
+						TokenNetworkIdentifier:   channelState.TokenNetworkIdentifier,
+						Identifier:               message.PaymentIdentifier,
+						Amount:                   message.BalanceProof.TransferredAmount,
+						Target:                   message.Recipient,
+					}
+					events = append(events, paySuccess)
 				}
 			}
-
 		}
 	}
 
 	for k := range chainState.QueueIdsToQueues {
 		inplaceDeleteMessageQueue(chainState, stateChange, k)
 	}
-	return TransitionResult{chainState, events}
+	return &TransitionResult{chainState, events}
 }
 
-func handleStateChangeForNode(chainStateArg State, stateChange StateChange) TransitionResult {
+func handleReceiveUnlock(chainState *ChainState, stateChange *ReceiveUnlock) *TransitionResult {
+	secretHash := stateChange.SecretHash
+	return subDispatchToPaymentTask(chainState, stateChange, secretHash)
+}
 
+func handleStateChangeForNode(chainStateArg State, stateChange StateChange) *TransitionResult {
 	chainState := chainStateArg.(*ChainState)
-	events := list.New()
-	iteration := TransitionResult{chainState, events}
+
+	var iteration *TransitionResult
 	switch stateChange.(type) {
 	case *Block:
 		block, _ := stateChange.(*Block)
@@ -408,6 +548,15 @@ func handleStateChangeForNode(chainStateArg State, stateChange StateChange) Tran
 	case *ActionNewTokenNetwork:
 		actionNewTokenNetwork, _ := stateChange.(*ActionNewTokenNetwork)
 		iteration = handleNewTokenNetwork(chainState, actionNewTokenNetwork)
+	case *ActionInitInitiator:
+		actionInitInitiator, _ := stateChange.(*ActionInitInitiator)
+		iteration = handleInitInitiator(chainState, actionInitInitiator)
+	case *ActionInitMediator:
+		actionInitMediator, _ := stateChange.(*ActionInitMediator)
+		iteration = handleInitMediator(chainState, actionInitMediator)
+	case *ActionInitTarget:
+		actionInitTarget, _ := stateChange.(*ActionInitTarget)
+		iteration = handleInitTarget(chainState, actionInitTarget)
 	case *ActionChannelClose:
 		actionChannelClose, _ := stateChange.(*ActionChannelClose)
 		iteration = handleTokenNetworkAction(chainState, stateChange, actionChannelClose.TokenNetworkIdentifier)
@@ -422,6 +571,12 @@ func handleStateChangeForNode(chainStateArg State, stateChange StateChange) Tran
 		iteration = handleTokenNetworkAction(chainState, stateChange, contractReceiveChannelNewBalance.TokenNetworkIdentifier)
 	case *ContractReceiveChannelSettled:
 		contractReceiveChannelSettled, _ := stateChange.(*ContractReceiveChannelSettled)
+		iteration = handleTokenNetworkAction(chainState, stateChange, contractReceiveChannelSettled.TokenNetworkIdentifier)
+	case *ContractReceiveRouteNew:
+		contractReceiveChannelSettled := stateChange.(*ContractReceiveRouteNew)
+		iteration = handleTokenNetworkAction(chainState, stateChange, contractReceiveChannelSettled.TokenNetworkIdentifier)
+	case *ContractReceiveRouteClosed:
+		contractReceiveChannelSettled := stateChange.(*ContractReceiveRouteClosed)
 		iteration = handleTokenNetworkAction(chainState, stateChange, contractReceiveChannelSettled.TokenNetworkIdentifier)
 	case *ContractReceiveUpdateTransfer:
 		contractReceiveUpdateTransfer, _ := stateChange.(*ContractReceiveUpdateTransfer)
@@ -449,6 +604,18 @@ func handleStateChangeForNode(chainStateArg State, stateChange StateChange) Tran
 	case *ReceiveProcessed:
 		receiveProcessed, _ := stateChange.(*ReceiveProcessed)
 		iteration = handleProcessed(chainState, receiveProcessed)
+	case *ReceiveSecretReveal:
+		receiveSecretReveal, _ := stateChange.(*ReceiveSecretReveal)
+		iteration = handleSecretReveal(chainState, receiveSecretReveal)
+	case *ReceiveSecretRequest:
+		receiveSecretRequest, _ := stateChange.(*ReceiveSecretRequest)
+		iteration = handleReceiveSecretRequest(chainState, receiveSecretRequest)
+	case *ReceiveUnlock:
+		receiveUnlock, _ := stateChange.(*ReceiveUnlock)
+		iteration = handleReceiveUnlock(chainState, receiveUnlock)
+	default:
+		log.Warn("[node.handleStateChangeForNode] unknown stateChange Type: ",
+			reflect.TypeOf(stateChange).String())
 	}
 
 	return iteration
@@ -535,10 +702,9 @@ func isTransactionPending(chainState *ChainState, transaction Event, stateChange
 	}
 }
 
-func updateQueues(iteration TransitionResult, stateChange StateChange) {
-
+func updateQueues(iteration *TransitionResult, stateChange StateChange) {
+	var events []Event
 	chainState := iteration.NewState.(*ChainState)
-
 	if GetContractReceiveStateChange(stateChange) != nil {
 		var newPendingTransactions []Event
 
@@ -552,48 +718,57 @@ func updateQueues(iteration TransitionResult, stateChange StateChange) {
 		chainState.PendingTransactions = newPendingTransactions
 	}
 
-	for e := iteration.Events.Front(); e != nil; e = e.Next() {
-		if v, ok := e.Value.(Event); ok {
-			event := GetSenderMessageEvent(v)
-			if event != nil {
-				queueIdentifier := QueueIdentifier{common.Address(event.Recipient), event.ChannelIdentifier}
-				chainState.QueueIdsToQueues[queueIdentifier] = append(chainState.QueueIdsToQueues[queueIdentifier], v)
-			}
+	for _, e := range iteration.Events {
+		event := GetSenderMessageEvent(e)
+		if event != nil {
+			queueIdentifier := QueueIdentifier{common.Address(event.Recipient), event.ChannelIdentifier}
+			events = chainState.QueueIdsToQueues[queueIdentifier]
+			events = append(events, e)
+			chainState.QueueIdsToQueues[queueIdentifier] = events
+		}
 
-			if GetContractSendEvent(v) != nil {
-				chainState.PendingTransactions = append(chainState.PendingTransactions, v)
-			}
+		if GetContractSendEvent(e) != nil {
+			chainState.PendingTransactions = append(chainState.PendingTransactions, e)
 		}
 	}
 
+	if chainState != nil {
+		if chainState.QueueIdsToQueues != nil {
+			for _, v := range chainState.QueueIdsToQueues {
+				l := len(v)
+				for i := 0; i < l; i++ {
+					e := v[i]
+					log.Debug("[updateQueues] QueueIdsToQueues:", reflect.TypeOf(e).String())
+				}
+
+			}
+		}
+	}
 	return
+
 }
 
-func StateTransition(chainState State, stateChange StateChange) TransitionResult {
-	//fmt.Printf("in StateTransition chainState %+v stateChange = %+v\n", chainState, stateChange)
+func StateTransition(chainState State, stateChange StateChange) *TransitionResult {
 	iteration := handleStateChangeForNode(chainState, stateChange)
-	//fmt.Printf("in StateTransition iteration NewState = %+v\n", iteration.NewState)
+	for _, e := range iteration.Events {
+		log.Debug("[node.StateTransition]:", reflect.TypeOf(e).String())
+	}
 	updateQueues(iteration, stateChange)
-	//fmt.Printf("updateQueues iteration NewState = %+v\n", iteration.NewState)
 	return iteration
 }
 
-func getChannelsCloseEvents(
-	chainState *ChainState,
-	tokenNetworkState *TokenNetworkState) *list.List {
-	events := list.New()
-
+func getChannelsCloseEvents(chainState *ChainState, tokenNetworkState *TokenNetworkState) []Event {
+	var events []Event
 	excludeStates := make(map[string]int)
 	excludeStates[ChannelStateUnusable] = 0
-	for _, v := range tokenNetworkState.partnerAddressesToChannels {
+	for _, v := range tokenNetworkState.PartnerAddressesToChannels {
 		filteredChannelStates := FilterChannelsByStatus(v, excludeStates)
 
 		for e := filteredChannelStates.Front(); e != nil; e = e.Next() {
 			channelState := e.Value.(*NettingChannelState)
 			eventsForClose := EventsForClose(channelState, chainState.BlockHeight)
-			events.PushBackList(eventsForClose)
+			events = append(events, eventsForClose...)
 		}
 	}
-
 	return events
 }

@@ -1,7 +1,6 @@
 package transport
 
 import (
-	"container/list"
 	"context"
 	"errors"
 	"fmt"
@@ -9,7 +8,8 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	lru "github.com/hashicorp/golang-lru"
+	"github.com/hashicorp/golang-lru"
+	chainComm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/common/constants"
@@ -21,6 +21,7 @@ import (
 	"github.com/oniio/oniP2p/network/addressmap"
 	"github.com/oniio/oniP2p/network/keepalive"
 	"github.com/oniio/oniP2p/types/opcode"
+	"reflect"
 )
 
 const ADDRESS_CACHE_SIZE = 50
@@ -51,7 +52,7 @@ var opcodes = map[opcode.Opcode]proto.Message{
 type ChannelServiceInterface interface {
 	OnMessage(proto.Message, string)
 	Sign(message interface{}) error
-	HandleStateChange(stateChange transfer.StateChange) *list.List
+	HandleStateChange(stateChange transfer.StateChange) []transfer.Event
 	Get(nodeAddress common.Address) string
 	StateFromChannel() *transfer.ChainState
 }
@@ -132,13 +133,24 @@ func (this *Transport) SetKeys(keys *crypto.KeyPair) {
 func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Message) error {
 	var msgID *messages.MessageID
 
+	rec := chainComm.Address(queueId.Recipient)
+	log.Debug("[SendAsync] %v, TO: %v.", reflect.TypeOf(msg).String(), rec.ToBase58())
 	q := this.GetQueue(queueId)
 	switch msg.(type) {
 	case *messages.DirectTransfer:
 		msgID = (msg.(*messages.DirectTransfer)).MessageIdentifier
 	case *messages.Processed:
 		msgID = (msg.(*messages.Processed)).MessageIdentifier
+	case *messages.LockedTransfer:
+		msgID = (msg.(*messages.LockedTransfer)).BaseMessage.MessageIdentifier
+	case *messages.SecretRequest:
+		msgID = (msg.(*messages.SecretRequest)).MessageIdentifier
+	case *messages.RevealSecret:
+		msgID = (msg.(*messages.RevealSecret)).MessageIdentifier
+	case *messages.Secret:
+		msgID = (msg.(*messages.Secret)).MessageIdentifier
 	default:
+		log.Error("[SendAsync] Unknown message type to send async")
 		return fmt.Errorf("Unknown message type to send async")
 	}
 	ok := q.Push(&QueueItem{
@@ -316,6 +328,7 @@ func (this *Transport) SetNodeNetworkState(address common.Address, state string)
 }
 
 func (this *Transport) Receive(message proto.Message, from string) {
+	log.Debug("[NetComponent] Receive: ", reflect.TypeOf(message).String(), " From: ", from)
 	switch message.(type) {
 	case *messages.Delivered:
 		go this.ReceiveDelivered(message, from)
@@ -325,6 +338,8 @@ func (this *Transport) Receive(message proto.Message, from string) {
 }
 
 func (this *Transport) ReceiveMessage(message proto.Message, from string) {
+	log.Debug("[ReceiveMessage] %v from: %v", reflect.TypeOf(message).String(), from)
+
 	if this.ChannelService != nil {
 		this.ChannelService.OnMessage(message, from)
 	}
@@ -338,27 +353,48 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 		msg := message.(*messages.DirectTransfer)
 		address = messages.ConvertAddress(msg.EnvelopeMessage.Signature.Sender)
 		msgID = msg.MessageIdentifier
-		//fmt.Printf("DirectTransfer = %+v\n", msg)
 	case *messages.Processed:
 		msg := message.(*messages.Processed)
 		address = messages.ConvertAddress(msg.Signature.Sender)
 		msgID = msg.MessageIdentifier
-		//fmt.Printf("Processed = %+v\n", msg)
+	case *messages.LockedTransfer:
+		msg := message.(*messages.LockedTransfer)
+		address = messages.ConvertAddress(msg.BaseMessage.EnvelopeMessage.Signature.Sender)
+		msgID = msg.BaseMessage.MessageIdentifier
+	case *messages.SecretRequest:
+		msg := message.(*messages.SecretRequest)
+		address = messages.ConvertAddress(msg.Signature.Sender)
+		msgID = msg.MessageIdentifier
+	case *messages.RevealSecret:
+		msg := message.(*messages.RevealSecret)
+		address = messages.ConvertAddress(msg.Signature.Sender)
+		msgID = msg.MessageIdentifier
+	case *messages.Secret:
+		msg := message.(*messages.Secret)
+		address = messages.ConvertAddress(msg.EnvelopeMessage.Signature.Sender)
+		msgID = msg.MessageIdentifier
+	default:
+		log.Warn("[ReceiveMessage] unkown Msg type: ", reflect.TypeOf(message).String())
 	}
 
 	deliveredMessage := &messages.Delivered{
 		DeliveredMessageIdentifier: msgID,
 	}
 
+	var nodeAddress string
 	err := this.ChannelService.Sign(deliveredMessage)
 	if err == nil {
-		nodeAddress := this.GetHostPortFromAddress(address)
-		if nodeAddress == "" {
-			log.Error("node address invalid,can`t send message")
-			return
+		if address != common.EmptyAddress {
+			nodeAddress = this.GetHostPortFromAddress(address)
+		} else {
+			nodeAddress = this.protocol + "://" + from
 		}
-		//log.Info("send deliveredMessage")
+		log.Debugf("[ReceiveMessage] Send (%v) deliveredMessage from: %v",
+			reflect.TypeOf(message).String(), nodeAddress)
 		this.Send(nodeAddress, deliveredMessage)
+	} else {
+		log.Errorf("[ReceiveMessage] (%v) deliveredMessage Sign error: ", err.Error(),
+			reflect.TypeOf(message).String(), nodeAddress)
 	}
 }
 func (this *Transport) ReceiveDelivered(message proto.Message, from string) {

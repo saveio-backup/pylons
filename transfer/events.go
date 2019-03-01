@@ -19,7 +19,7 @@ type ContractSendChannelSettle struct {
 }
 
 type ContractSendChannelUpdateTransfer struct {
-	ContractSendExpirableEvent
+	ContractSendExpireAbleEvent
 	ChannelIdentifier      common.ChannelID
 	TokenNetworkIdentifier common.TokenNetworkID
 	BalanceProof           *BalanceProofSignedState
@@ -34,7 +34,7 @@ type ContractSendChannelBatchUnlock struct {
 }
 
 type ContractSendSecretReveal struct {
-	ContractSendExpirableEvent
+	ContractSendExpireAbleEvent
 	Secret common.Secret
 }
 
@@ -74,6 +74,114 @@ type SendDirectTransfer struct {
 	TokenAddress      common.TokenAddress
 }
 
+type EventInvalidReceivedUnlock struct {
+	SecretHash common.SecretHash
+	Reason     string
+}
+
 type SendProcessed struct {
 	SendMessageEvent
 }
+
+type EventInvalidReceivedTransferRefund struct {
+	PaymentIdentifier common.PaymentID
+	Reason            string
+}
+
+type EventInvalidReceivedLockExpired struct {
+	SecretHash common.SecretHash
+	Reason     string
+}
+
+type EventInvalidReceivedLockedTransfer struct {
+	PaymentIdentifier common.PaymentID
+	Reason            string
+}
+
+//-------------------------------------------------------------------------------------------------
+
+type SendLockExpired struct {
+	SendMessageEvent
+	BalanceProof *BalanceProofUnsignedState
+	SecretHash   common.SecretHash
+}
+
+type SendLockedTransfer struct {
+	SendMessageEvent
+	Transfer *LockedTransferUnsignedState
+}
+
+//NOTE, need caculate SecretHash based on Secret when construct SendSecretReveal!
+type SendSecretReveal struct {
+	SendMessageEvent
+	Secret     common.Secret
+	SecretHash common.SecretHash
+}
+
+//NOTE, need caculate SecretHash based on Secret when construct SendSecretReveal!
+type SendBalanceProof struct {
+	SendMessageEvent
+	PaymentIdentifier common.PaymentID
+	TokenAddress      common.TokenAddress
+	Secret            common.Secret
+	SecretHash        common.SecretHash
+	BalanceProof      *BalanceProofUnsignedState
+}
+
+type SendSecretRequest struct {
+	SendMessageEvent
+	PaymentIdentifier common.PaymentID
+	Amount            common.TokenAmount
+	Expiration        common.BlockExpiration
+	SecretHash        common.SecretHash
+}
+
+//NOTE, 'balance_proof': self.transfer.balance_proof is skipped.
+//sqlite may query the transfer.balance_proof field of json object! need work around it!
+type SendRefundTransfer struct {
+	SendMessageEvent
+	Transfer *LockedTransferUnsignedState
+}
+
+type EventUnlockSuccess struct {
+	Identifier common.PaymentID
+	SecretHash common.SecretHash
+}
+
+type EventUnlockFailed struct {
+	Identifier common.PaymentID
+	SecretHash common.SecretHash
+	Reason     string
+}
+
+type EventUnlockClaimSuccess struct {
+	Identifier common.PaymentID
+	SecretHash common.SecretHash
+}
+
+type EventUnlockClaimFailed struct {
+	Identifier common.PaymentID
+	SecretHash common.SecretHash
+	Reason     string
+}
+
+type EventUnexpectedSecretReveal struct {
+	SecretHash common.SecretHash
+	Reason     string
+}
+
+//-------------------------------------------------------------------------------------------------
+
+func RefundFromSendmediated(sendLockedTransferEvent *SendLockedTransfer) *SendRefundTransfer {
+	sendRefundTransfer := &SendRefundTransfer{
+		SendMessageEvent: SendMessageEvent{
+			Recipient:         sendLockedTransferEvent.Recipient,
+			ChannelIdentifier: sendLockedTransferEvent.ChannelIdentifier,
+			MessageIdentifier: sendLockedTransferEvent.MessageIdentifier,
+		},
+		Transfer: sendLockedTransferEvent.Transfer,
+	}
+	return sendRefundTransfer
+}
+
+//-------------------------------------------------------------------------------------------------

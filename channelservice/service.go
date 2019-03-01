@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"bytes"
 	"github.com/gogo/protobuf/proto"
 	"github.com/oniio/oniChain-go-sdk/ong"
 	"github.com/oniio/oniChain/account"
@@ -25,6 +26,7 @@ import (
 	"github.com/oniio/oniChannel/network/transport/messages"
 	"github.com/oniio/oniChannel/storage"
 	"github.com/oniio/oniChannel/transfer"
+	"reflect"
 )
 
 type ChannelService struct {
@@ -189,7 +191,12 @@ func (self *ChannelService) Start() error {
 		paymentNetwork := transfer.NewPaymentNetworkState()
 		paymentNetwork.Address = common.PaymentNetworkID(sc_utils.MicroPayContractAddress)
 		stateChange = &transfer.ContractReceiveNewPaymentNetwork{
-			transfer.ContractReceiveStateChange{common.TransactionHash{}, lastLogBlockHeight}, paymentNetwork}
+			ContractReceiveStateChange: transfer.ContractReceiveStateChange{
+				TransactionHash: common.TransactionHash{},
+				BlockHeight:     lastLogBlockHeight,
+			},
+			PaymentNetwork: paymentNetwork,
+		}
 		self.HandleStateChange(stateChange)
 		self.InitializeTokenNetwork()
 
@@ -239,11 +246,12 @@ func (self *ChannelService) AddPendingRoutine() {
 
 }
 
-func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) *list.List {
+func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) []transfer.Event {
+	log.Debug("[HandleStateChange]", reflect.TypeOf(stateChange).String())
 	eventList := self.Wal.LogAndDispatch(stateChange)
-	for e := eventList.Front(); e != nil; e = e.Next() {
-		temp := e.Value
-		self.channelEventHandler.OnChannelEvent(self, temp.(transfer.Event))
+	for _, e := range eventList {
+		log.Debug("[HandleStateChange] Range Events: ", reflect.TypeOf(e).String(), "nimbusEventHandler.OnNimbusEvent")
+		self.channelEventHandler.OnChannelEvent(self, e.(transfer.Event))
 	}
 	//take snapshot
 
@@ -449,7 +457,7 @@ func (self *ChannelService) StateFromChannel() *transfer.ChainState {
 
 func (self *ChannelService) InitializeTokenNetwork() {
 
-	tokenNetworkState := transfer.NewTokenNetworkState()
+	tokenNetworkState := transfer.NewTokenNetworkState(self.address)
 	tokenNetworkState.Address = common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
 	tokenNetworkState.TokenAddress = common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
 	newTokenNetwork := &transfer.ContractReceiveNewTokenNetwork{PaymentNetworkIdentifier: common.PaymentNetworkID(sc_utils.MicroPayContractAddress),
@@ -529,16 +537,15 @@ func (self *ChannelService) Address() common.Address {
 	return self.address
 }
 
-func (self *ChannelService) GetChannel(
-	registryAddress common.PaymentNetworkID,
-	tokenAddress *common.TokenAddress,
+func (self *ChannelService) GetChannel(registryAddress common.PaymentNetworkID, tokenAddress *common.TokenAddress,
 	partnerAddress *common.Address) *transfer.NettingChannelState {
 
 	var result *transfer.NettingChannelState
-
 	channelList := self.GetChannelList(registryAddress, tokenAddress, partnerAddress)
 	if channelList.Len() != 0 {
 		result = channelList.Back().Value.(*transfer.NettingChannelState)
+	} else {
+		log.Info("[GetChannelList] Len = 0")
 	}
 
 	return result
@@ -606,6 +613,10 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 		return 0
 	}
 	log.Infof("new channel between %s and %s has setup, channel ID = %d", regAddr.ToBase58(), patAddr.ToBase58(), channelState.Identifier)
+
+	chainState := self.StateFromChannel()
+	tokenNetworkState := transfer.GetTokenNetworkByIdentifier(chainState, channelState.TokenNetworkIdentifier)
+	tokenNetworkState.AddRoute(self.Address(), partnerAddress, channelState.Identifier)
 	return channelState.Identifier
 
 }
@@ -657,6 +668,15 @@ func (self *ChannelService) ChannelClose(tokenAddress common.TokenAddress, partn
 	addressList.PushBack(partnerAddress)
 
 	self.ChannelBatchClose(tokenAddress, addressList, retryTimeout)
+
+	chainState := self.StateFromChannel()
+	registryAddress := common.PaymentNetworkID(self.mircoAddress)
+	channelState := transfer.GetChannelStateFor(chainState, registryAddress, tokenAddress, partnerAddress)
+	if channelState != nil {
+		return
+	}
+	tokenNetworkState := transfer.GetTokenNetworkByIdentifier(chainState, channelState.TokenNetworkIdentifier)
+	tokenNetworkState.DelRoute(channelState.Identifier)
 	return
 }
 
@@ -706,11 +726,13 @@ func (self *ChannelService) GetChannelList(registryAddress common.PaymentNetwork
 	chainState := self.StateFromChannel()
 
 	if tokenAddress != nil && partnerAddress != nil {
-		channelState := transfer.GetChannelStateFor(chainState,
-			registryAddress, *tokenAddress, *partnerAddress)
+		channelState := transfer.GetChannelStateFor(chainState, registryAddress,
+			*tokenAddress, *partnerAddress)
 
 		if channelState != nil {
 			result.PushBack(channelState)
+		} else {
+			log.Info("[GetChannelList] channelState == nil")
 		}
 	} else if tokenAddress != nil {
 		result = transfer.ListChannelStateForTokenNetwork(chainState, registryAddress,
@@ -770,7 +792,8 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 
 	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
 	tokenAddress := common.TokenAddress(sc_utils.OngContractAddress)
-	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(self.StateFromChannel(), paymentNetworkIdentifier, tokenAddress)
+	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(self.StateFromChannel(),
+		paymentNetworkIdentifier, tokenAddress)
 	self.transport.StartHealthCheck(common.Address(target))
 
 	if identifier == common.PaymentID(0) {
@@ -800,6 +823,149 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 
 	return paymentStatus.paymentDone, nil
 
+}
+
+func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkID,
+	tokenAddress common.TokenAddress, amount common.TokenAmount, target common.Address,
+	identifier common.PaymentID) (chan bool, error) {
+
+	if target == common.ADDRESS_EMPTY {
+		log.Error("target address is invalid:", target)
+		return nil, fmt.Errorf("target address is invalid")
+	}
+	if amount <= 0 {
+		log.Error("amount negative:", amount)
+		return nil, fmt.Errorf("amount negative ")
+	}
+
+	chainState := self.StateFromChannel()
+
+	//TODO: check validTokens
+	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
+	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(
+		chainState, paymentNetworkIdentifier, tokenAddress)
+
+	secret := common.SecretRandom(constants.SECRET_LEN)
+	log.Info("[MediaTransfer] Secret: ", secret)
+	//TODO: check secret used
+
+	//asyncResult, err := self.StartMediatedTransferWithSecret(tokenNetworkIdentifier,
+	//	amount, target, identifier, secret)
+
+	self.transport.StartHealthCheck(target)
+	if identifier == common.PaymentID(0) {
+		identifier = CreateDefaultIdentifier()
+	}
+
+	//with self.payment_identifier_lock:
+	paymentStatus, exist := self.GetPaymentStatus(target, identifier)
+	if exist {
+		paymentStatusMatches := paymentStatus.Match(common.PAYMENT_MEDIATED, tokenNetworkIdentifier, amount)
+		if !paymentStatusMatches {
+			return nil, fmt.Errorf("Another payment with the same id is in flight. ")
+		}
+		return paymentStatus.paymentDone, nil
+	}
+
+	asyncDone := make(chan bool)
+	paymentStatus = &PaymentStatus{
+		paymentType:            common.PAYMENT_MEDIATED,
+		paymentIdentifier:      identifier,
+		amount:                 amount,
+		tokenNetworkIdentifier: tokenNetworkIdentifier,
+		paymentDone:            asyncDone,
+	}
+
+	payments := new(sync.Map)
+	payments.Store(identifier, paymentStatus)
+	self.targetsToIndentifierToStatues[target] = payments
+
+	actionInitInitiator, err := self.InitiatorInit(identifier, amount,
+		secret, tokenNetworkIdentifier, target)
+	if err != nil {
+		log.Error("[MediaTransfer]:", err.Error())
+		return nil, err
+	}
+	if actionInitInitiator.TransferDescription == nil {
+		log.Warn("MediaTransfer transferDescription == nil ")
+	}
+	//# Dispatch the state change even if there are no routes to create the
+	//# wal entry.
+	self.HandleStateChange(actionInitInitiator)
+	return paymentStatus.paymentDone, nil
+}
+
+func (self *ChannelService) InitiatorInit(transferIdentifier common.PaymentID,
+	transferAmount common.TokenAmount, transferSecret common.Secret,
+	tokenNetworkIdentifier common.TokenNetworkID,
+	targetAddress common.Address) (*transfer.ActionInitInitiator, error) {
+
+	if 0 == bytes.Compare(transferSecret, common.EmptySecretHash[:]) {
+		return nil, fmt.Errorf("Should never end up initiating transfer with Secret 0x0 ")
+	}
+
+	secretHash := common.GetHash(transferSecret)
+	log.Debug("[InitiatorInit] secretHash: ", secretHash)
+	transferState := &transfer.TransferDescriptionWithSecretState{
+		PaymentNetworkIdentifier: common.PaymentNetworkID{},
+		PaymentIdentifier:        transferIdentifier,
+		Amount:                   transferAmount,
+		TokenNetworkIdentifier:   tokenNetworkIdentifier,
+		Initiator:                self.address,
+		Target:                   targetAddress,
+		Secret:                   transferSecret,
+		SecretHash:               secretHash,
+	}
+
+	var previousAddress common.Address
+	chainState := self.StateFromChannel()
+	routes, err := GetBestRoutes(chainState, tokenNetworkIdentifier, self.address,
+		targetAddress, transferAmount, previousAddress)
+	if err != nil {
+		return nil, err
+	}
+	initInitiatorStateChange := &transfer.ActionInitInitiator{
+		TransferDescription: transferState,
+		Routes:              routes,
+	}
+	return initInitiatorStateChange, nil
+}
+
+func (self *ChannelService) MediatorInit(lockedTransfer *messages.LockedTransfer) *transfer.ActionInitMediator {
+	var initiatorAddr common.Address
+	copy(initiatorAddr[:], lockedTransfer.Initiator.Address)
+
+	fromTransfer := LockedTransferSignedFromMessage(lockedTransfer)
+
+	chainState := self.StateFromChannel()
+	routes, _ := GetBestRoutes(chainState, fromTransfer.BalanceProof.TokenNetworkIdentifier,
+		self.address, common.Address(fromTransfer.Target), fromTransfer.Lock.Amount, initiatorAddr)
+	fromRoute := &transfer.RouteState{
+		NodeAddress:       initiatorAddr,
+		ChannelIdentifier: fromTransfer.BalanceProof.ChannelIdentifier,
+	}
+	initMediatorStateChange := &transfer.ActionInitMediator{
+		Routes:       routes,
+		FromRoute:    fromRoute,
+		FromTransfer: fromTransfer,
+	}
+	return initMediatorStateChange
+}
+
+func (self *ChannelService) TargetInit(lockedTransfer *messages.LockedTransfer) *transfer.ActionInitTarget {
+	var sender common.Address
+	copy(sender[:], lockedTransfer.BaseMessage.EnvelopeMessage.Signature.Sender.Address)
+
+	fromTransfer := LockedTransferSignedFromMessage(lockedTransfer)
+	fromRoute := &transfer.RouteState{
+		NodeAddress:       sender,
+		ChannelIdentifier: fromTransfer.BalanceProof.ChannelIdentifier,
+	}
+	initTargetStateChange := &transfer.ActionInitTarget{
+		Route:    fromRoute,
+		Transfer: fromTransfer,
+	}
+	return initTargetStateChange
 }
 
 func (self *ChannelService) GetEventsPaymentHistoryWithTimestamps(tokenAddress common.TokenAddress,
@@ -844,6 +1010,7 @@ func (self *ChannelService) GetInternalEventsWithTimestamps(limit int, offset in
 	return self.Wal.Storage.GetEventsWithTimestamps(limit, offset)
 
 }
+
 func (self *ChannelService) Get(nodeAddress common.Address) string {
 	info, err := self.chain.ChannelClient.GetEndpointByAddress(comm.Address(nodeAddress))
 	regAddr, _ := comm.AddressParseFromBytes(nodeAddress[:])
@@ -859,6 +1026,7 @@ func (self *ChannelService) Get(nodeAddress common.Address) string {
 	log.Infof("peer %s registe address: %s", regAddr.ToBase58(), nodeAddr)
 	return nodeAddr
 }
+
 func GetFullDatabasePath() (string, error) {
 	file, err := exec.LookPath(os.Args[0])
 	if err != nil {

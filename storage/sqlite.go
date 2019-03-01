@@ -191,7 +191,7 @@ func (self *SQLiteStorage) writeStateSnapshot(stateChangeId int, snapshot transf
 	return int(lastRowId)
 }
 
-func (self *SQLiteStorage) writeEvents(stateChangeId int, events *list.List, logTime string) {
+func (self *SQLiteStorage) writeEvents(stateChangeId int, events []transfer.Event, logTime string) {
 	self.EventSync.Add(1)
 	self.writeEventLock.Lock()
 	defer self.writeEventLock.Unlock()
@@ -202,8 +202,8 @@ func (self *SQLiteStorage) writeEvents(stateChangeId int, events *list.List, log
 	}
 	defer stmt.Close()
 
-	for e := events.Front(); e != nil; e = e.Next() {
-		serializedData, _ := jsonext.Marshal(e.Value.(transfer.Event))
+	for _, e := range events {
+		serializedData, _ := jsonext.Marshal(e)
 		stmt.Exec(stateChangeId, logTime, serializedData)
 	}
 	self.EventSync.Done()

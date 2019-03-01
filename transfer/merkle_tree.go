@@ -21,7 +21,7 @@ func HashPair(first common.Keccak256, second common.Keccak256) common.Keccak256 
 	}
 
 	if common.Keccak256Compare(&first, &first) > 0 {
-		data := []byte{}
+		var data []byte
 
 		data = append(data, first[:]...)
 		data = append(data, second[:]...)
@@ -44,7 +44,7 @@ func computeLayers(elements []common.Keccak256) [][]common.Keccak256 {
 
 	layer := leaves
 	for len(layer) > 1 {
-		newLayer := []common.Keccak256{}
+		var newLayer []common.Keccak256
 
 		len := len(layer)
 		for i := 0; i < len; i += 2 {
@@ -113,13 +113,13 @@ func validateProof(proof []common.Keccak256, root common.Keccak256, leafElement 
 	}
 }
 
-func merkelRoot(merkletree [][]common.Keccak256) common.Keccak256 {
-	levelNum := len(merkletree)
+func MerkleRoot(merkleTree [][]common.Keccak256) common.Keccak256 {
+	levelNum := len(merkleTree)
 	if levelNum == 0 {
 		return common.Keccak256{}
 	}
 
-	rootLevel := merkletree[levelNum-1]
+	rootLevel := merkleTree[levelNum-1]
 	if len(rootLevel) == 0 {
 		return common.Keccak256{}
 	}
@@ -128,10 +128,10 @@ func merkelRoot(merkletree [][]common.Keccak256) common.Keccak256 {
 
 }
 
-func merkelLeveasFromPackedData(packedData []byte) []common.Keccak256 {
+func merkleLeveasFromPackedData(packedData []byte) []common.Keccak256 {
 	numberOfBytes := len(packedData)
 
-	leaves := []common.Keccak256{}
+	var leaves []common.Keccak256
 
 	//[TODO] check if 96 = len of leave
 	for i := 0; i < numberOfBytes; i = i + 96 {

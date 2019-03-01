@@ -538,7 +538,7 @@ func (self *TokenNetwork) unlock(channelIdentifier common.ChannelID, partner com
 }
 
 func (self *TokenNetwork) settle(channelIdentifier common.ChannelID, transferredAmount common.TokenAmount,
-	lockedAmount common.TokenAmount, locksroot common.Locksroot, partner common.Address,
+	lockedAmount common.TokenAmount, locksRoot common.Locksroot, partner common.Address,
 	partnerTransferredAmount common.TokenAmount, partnerLockedAmount common.TokenAmount, partnerLocksroot common.Locksroot) {
 
 	var opLock *sync.Mutex
@@ -557,13 +557,13 @@ func (self *TokenNetwork) settle(channelIdentifier common.ChannelID, transferred
 	ourBpIsLarger := ourMaximum > partnerMaximum
 	var txHash []byte
 	var err error
-	var locksrootSlice []byte
+	var locksRootSlice []byte
 	var partnerLocksrootSlice []byte
 
-	if common.LocksrootEmpty(locksroot) {
-		locksrootSlice = nil
+	if common.LocksrootEmpty(locksRoot) {
+		locksRootSlice = nil
 	} else {
-		locksrootSlice = locksroot[:]
+		locksRootSlice = locksRoot[:]
 	}
 
 	if common.LocksrootEmpty(partnerLocksroot) {
@@ -582,7 +582,7 @@ func (self *TokenNetwork) settle(channelIdentifier common.ChannelID, transferred
 			comm.Address(self.nodeAddress),
 			uint64(transferredAmount),
 			uint64(lockedAmount),
-			locksrootSlice,
+			locksRootSlice,
 		)
 
 	} else {
@@ -591,7 +591,7 @@ func (self *TokenNetwork) settle(channelIdentifier common.ChannelID, transferred
 			comm.Address(self.nodeAddress),
 			uint64(transferredAmount),
 			uint64(lockedAmount),
-			locksrootSlice,
+			locksRootSlice,
 			comm.Address(partner),
 			uint64(partnerTransferredAmount),
 			uint64(partnerLockedAmount),

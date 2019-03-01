@@ -140,11 +140,11 @@ func (self *PaymentChannel) Unlock(merkleTreeLeaves *list.List) {
 	return
 }
 
-func (self *PaymentChannel) Settle(transferredAmount common.TokenAmount, lockedAmount common.TokenAmount, locksroot common.Locksroot,
+func (self *PaymentChannel) Settle(transferredAmount common.TokenAmount, lockedAmount common.TokenAmount, locksRoot common.Locksroot,
 	partnerTransferredAmount common.TokenAmount, partnerLockedAmount common.TokenAmount, partnerLocksroot common.Locksroot) {
 
 	self.TokenNetwork.settle(self.channelIdentifier, transferredAmount, lockedAmount,
-		locksroot, self.Participant2, partnerTransferredAmount, partnerLockedAmount, partnerLocksroot)
+		locksRoot, self.Participant2, partnerTransferredAmount, partnerLockedAmount, partnerLocksroot)
 
 	return
 

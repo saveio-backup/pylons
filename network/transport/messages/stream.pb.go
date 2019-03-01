@@ -114,7 +114,7 @@ func (m *TokenAmount) GetTokenAmount() uint64 {
 }
 
 type Locksroot struct {
-	Locksroot []byte `protobuf:"bytes,1,opt,name=locksroot,proto3" json:"locksroot,omitempty"`
+	Locksroot []byte `protobuf:"bytes,1,opt,name=locksRoot,proto3" json:"locksRoot,omitempty"`
 }
 
 func (m *Locksroot) Reset()      { *m = Locksroot{} }
@@ -546,7 +546,7 @@ func (m *Address) GetAddress() []byte {
 type HashTimeLock struct {
 	Amount     *PaymentAmount   `protobuf:"bytes,1,opt,name=amount" json:"amount,omitempty"`
 	Expiration *BlockExpiration `protobuf:"bytes,2,opt,name=expiration" json:"expiration,omitempty"`
-	Secrethash *SecretHash      `protobuf:"bytes,3,opt,name=secrethash" json:"secrethash,omitempty"`
+	SecretHash *SecretHash      `protobuf:"bytes,3,opt,name=secrethash" json:"secrethash,omitempty"`
 }
 
 func (m *HashTimeLock) Reset()      { *m = HashTimeLock{} }
@@ -595,9 +595,9 @@ func (m *HashTimeLock) GetExpiration() *BlockExpiration {
 	return nil
 }
 
-func (m *HashTimeLock) GetSecrethash() *SecretHash {
+func (m *HashTimeLock) GetSecretHash() *SecretHash {
 	if m != nil {
-		return m.Secrethash
+		return m.SecretHash
 	}
 	return nil
 }
@@ -670,7 +670,7 @@ type EnvelopeMessage struct {
 	Nonce               uint64               `protobuf:"varint,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	TransferredAmount   *TokenAmount         `protobuf:"bytes,3,opt,name=transferred_amount,json=transferredAmount" json:"transferred_amount,omitempty"`
 	LockedAmount        *TokenAmount         `protobuf:"bytes,4,opt,name=locked_amount,json=lockedAmount" json:"locked_amount,omitempty"`
-	Locksroot           *Locksroot           `protobuf:"bytes,5,opt,name=locksroot" json:"locksroot,omitempty"`
+	Locksroot           *Locksroot           `protobuf:"bytes,5,opt,name=locksRoot" json:"locksRoot,omitempty"`
 	ChannelIdentifier   *ChannelID           `protobuf:"bytes,6,opt,name=channel_identifier,json=channelIdentifier" json:"channel_identifier,omitempty"`
 	TokenNetworkAddress *TokenNetworkAddress `protobuf:"bytes,7,opt,name=token_network_address,json=tokenNetworkAddress" json:"token_network_address,omitempty"`
 	Signature           *SignedMessage       `protobuf:"bytes,8,opt,name=signature" json:"signature,omitempty"`
@@ -872,7 +872,7 @@ func (m *Delivered) GetSignature() *SignedMessage {
 type SecretRequest struct {
 	MessageIdentifier *MessageID       `protobuf:"bytes,1,opt,name=message_identifier,json=messageIdentifier" json:"message_identifier,omitempty"`
 	PaymentIdentifier *PaymentID       `protobuf:"bytes,2,opt,name=payment_identifier,json=paymentIdentifier" json:"payment_identifier,omitempty"`
-	Secrethash        *SecretHash      `protobuf:"bytes,3,opt,name=secrethash" json:"secrethash,omitempty"`
+	SecretHash        *SecretHash      `protobuf:"bytes,3,opt,name=secrethash" json:"secrethash,omitempty"`
 	Amount            *TokenAmount     `protobuf:"bytes,4,opt,name=amount" json:"amount,omitempty"`
 	Expiration        *BlockExpiration `protobuf:"bytes,5,opt,name=expiration" json:"expiration,omitempty"`
 	Signature         *SignedMessage   `protobuf:"bytes,6,opt,name=signature" json:"signature,omitempty"`
@@ -924,9 +924,9 @@ func (m *SecretRequest) GetPaymentIdentifier() *PaymentID {
 	return nil
 }
 
-func (m *SecretRequest) GetSecrethash() *SecretHash {
+func (m *SecretRequest) GetSecretHash() *SecretHash {
 	if m != nil {
-		return m.Secrethash
+		return m.SecretHash
 	}
 	return nil
 }
@@ -1357,7 +1357,7 @@ type LockExpired struct {
 	EnvelopeMessage   *EnvelopeMessage `protobuf:"bytes,1,opt,name=envelope_message,json=envelopeMessage" json:"envelope_message,omitempty"`
 	MessageIdentifier *MessageID       `protobuf:"bytes,2,opt,name=message_identifier,json=messageIdentifier" json:"message_identifier,omitempty"`
 	Recipient         *Address         `protobuf:"bytes,3,opt,name=recipient" json:"recipient,omitempty"`
-	Secrethash        *SecretHash      `protobuf:"bytes,4,opt,name=secrethash" json:"secrethash,omitempty"`
+	SecretHash        *SecretHash      `protobuf:"bytes,4,opt,name=secrethash" json:"secrethash,omitempty"`
 }
 
 func (m *LockExpired) Reset()      { *m = LockExpired{} }
@@ -1413,9 +1413,9 @@ func (m *LockExpired) GetRecipient() *Address {
 	return nil
 }
 
-func (m *LockExpired) GetSecrethash() *SecretHash {
+func (m *LockExpired) GetSecretHash() *SecretHash {
 	if m != nil {
-		return m.Secrethash
+		return m.SecretHash
 	}
 	return nil
 }
@@ -2126,8 +2126,8 @@ func (this *HashTimeLock) VerboseEqual(that interface{}) error {
 	if !this.Expiration.Equal(that1.Expiration) {
 		return fmt.Errorf("Expiration this(%v) Not Equal that(%v)", this.Expiration, that1.Expiration)
 	}
-	if !this.Secrethash.Equal(that1.Secrethash) {
-		return fmt.Errorf("Secrethash this(%v) Not Equal that(%v)", this.Secrethash, that1.Secrethash)
+	if !this.SecretHash.Equal(that1.SecretHash) {
+		return fmt.Errorf("SecretHash this(%v) Not Equal that(%v)", this.SecretHash, that1.SecretHash)
 	}
 	return nil
 }
@@ -2156,7 +2156,7 @@ func (this *HashTimeLock) Equal(that interface{}) bool {
 	if !this.Expiration.Equal(that1.Expiration) {
 		return false
 	}
-	if !this.Secrethash.Equal(that1.Secrethash) {
+	if !this.SecretHash.Equal(that1.SecretHash) {
 		return false
 	}
 	return true
@@ -2474,8 +2474,8 @@ func (this *SecretRequest) VerboseEqual(that interface{}) error {
 	if !this.PaymentIdentifier.Equal(that1.PaymentIdentifier) {
 		return fmt.Errorf("PaymentIdentifier this(%v) Not Equal that(%v)", this.PaymentIdentifier, that1.PaymentIdentifier)
 	}
-	if !this.Secrethash.Equal(that1.Secrethash) {
-		return fmt.Errorf("Secrethash this(%v) Not Equal that(%v)", this.Secrethash, that1.Secrethash)
+	if !this.SecretHash.Equal(that1.SecretHash) {
+		return fmt.Errorf("SecretHash this(%v) Not Equal that(%v)", this.SecretHash, that1.SecretHash)
 	}
 	if !this.Amount.Equal(that1.Amount) {
 		return fmt.Errorf("Amount this(%v) Not Equal that(%v)", this.Amount, that1.Amount)
@@ -2513,7 +2513,7 @@ func (this *SecretRequest) Equal(that interface{}) bool {
 	if !this.PaymentIdentifier.Equal(that1.PaymentIdentifier) {
 		return false
 	}
-	if !this.Secrethash.Equal(that1.Secrethash) {
+	if !this.SecretHash.Equal(that1.SecretHash) {
 		return false
 	}
 	if !this.Amount.Equal(that1.Amount) {
@@ -2987,8 +2987,8 @@ func (this *LockExpired) VerboseEqual(that interface{}) error {
 	if !this.Recipient.Equal(that1.Recipient) {
 		return fmt.Errorf("Recipient this(%v) Not Equal that(%v)", this.Recipient, that1.Recipient)
 	}
-	if !this.Secrethash.Equal(that1.Secrethash) {
-		return fmt.Errorf("Secrethash this(%v) Not Equal that(%v)", this.Secrethash, that1.Secrethash)
+	if !this.SecretHash.Equal(that1.SecretHash) {
+		return fmt.Errorf("SecretHash this(%v) Not Equal that(%v)", this.SecretHash, that1.SecretHash)
 	}
 	return nil
 }
@@ -3020,7 +3020,7 @@ func (this *LockExpired) Equal(that interface{}) bool {
 	if !this.Recipient.Equal(that1.Recipient) {
 		return false
 	}
-	if !this.Secrethash.Equal(that1.Secrethash) {
+	if !this.SecretHash.Equal(that1.SecretHash) {
 		return false
 	}
 	return true
@@ -3157,8 +3157,8 @@ func (this *HashTimeLock) GoString() string {
 	if this.Expiration != nil {
 		s = append(s, "Expiration: "+fmt.Sprintf("%#v", this.Expiration)+",\n")
 	}
-	if this.Secrethash != nil {
-		s = append(s, "Secrethash: "+fmt.Sprintf("%#v", this.Secrethash)+",\n")
+	if this.SecretHash != nil {
+		s = append(s, "SecretHash: "+fmt.Sprintf("%#v", this.SecretHash)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -3250,8 +3250,8 @@ func (this *SecretRequest) GoString() string {
 	if this.PaymentIdentifier != nil {
 		s = append(s, "PaymentIdentifier: "+fmt.Sprintf("%#v", this.PaymentIdentifier)+",\n")
 	}
-	if this.Secrethash != nil {
-		s = append(s, "Secrethash: "+fmt.Sprintf("%#v", this.Secrethash)+",\n")
+	if this.SecretHash != nil {
+		s = append(s, "SecretHash: "+fmt.Sprintf("%#v", this.SecretHash)+",\n")
 	}
 	if this.Amount != nil {
 		s = append(s, "Amount: "+fmt.Sprintf("%#v", this.Amount)+",\n")
@@ -3401,8 +3401,8 @@ func (this *LockExpired) GoString() string {
 	if this.Recipient != nil {
 		s = append(s, "Recipient: "+fmt.Sprintf("%#v", this.Recipient)+",\n")
 	}
-	if this.Secrethash != nil {
-		s = append(s, "Secrethash: "+fmt.Sprintf("%#v", this.Secrethash)+",\n")
+	if this.SecretHash != nil {
+		s = append(s, "SecretHash: "+fmt.Sprintf("%#v", this.SecretHash)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -3731,11 +3731,11 @@ func (m *HashTimeLock) MarshalTo(dAtA []byte) (int, error) {
 		}
 		i += n2
 	}
-	if m.Secrethash != nil {
+	if m.SecretHash != nil {
 		dAtA[i] = 0x1a
 		i++
-		i = encodeVarintStream(dAtA, i, uint64(m.Secrethash.Size()))
-		n3, err := m.Secrethash.MarshalTo(dAtA[i:])
+		i = encodeVarintStream(dAtA, i, uint64(m.SecretHash.Size()))
+		n3, err := m.SecretHash.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -3988,11 +3988,11 @@ func (m *SecretRequest) MarshalTo(dAtA []byte) (int, error) {
 		}
 		i += n17
 	}
-	if m.Secrethash != nil {
+	if m.SecretHash != nil {
 		dAtA[i] = 0x1a
 		i++
-		i = encodeVarintStream(dAtA, i, uint64(m.Secrethash.Size()))
-		n18, err := m.Secrethash.MarshalTo(dAtA[i:])
+		i = encodeVarintStream(dAtA, i, uint64(m.SecretHash.Size()))
+		n18, err := m.SecretHash.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -4409,11 +4409,11 @@ func (m *LockExpired) MarshalTo(dAtA []byte) (int, error) {
 		}
 		i += n46
 	}
-	if m.Secrethash != nil {
+	if m.SecretHash != nil {
 		dAtA[i] = 0x22
 		i++
-		i = encodeVarintStream(dAtA, i, uint64(m.Secrethash.Size()))
-		n47, err := m.Secrethash.MarshalTo(dAtA[i:])
+		i = encodeVarintStream(dAtA, i, uint64(m.SecretHash.Size()))
+		n47, err := m.SecretHash.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -4594,8 +4594,8 @@ func (m *HashTimeLock) Size() (n int) {
 		l = m.Expiration.Size()
 		n += 1 + l + sovStream(uint64(l))
 	}
-	if m.Secrethash != nil {
-		l = m.Secrethash.Size()
+	if m.SecretHash != nil {
+		l = m.SecretHash.Size()
 		n += 1 + l + sovStream(uint64(l))
 	}
 	return n
@@ -4710,8 +4710,8 @@ func (m *SecretRequest) Size() (n int) {
 		l = m.PaymentIdentifier.Size()
 		n += 1 + l + sovStream(uint64(l))
 	}
-	if m.Secrethash != nil {
-		l = m.Secrethash.Size()
+	if m.SecretHash != nil {
+		l = m.SecretHash.Size()
 		n += 1 + l + sovStream(uint64(l))
 	}
 	if m.Amount != nil {
@@ -4892,8 +4892,8 @@ func (m *LockExpired) Size() (n int) {
 		l = m.Recipient.Size()
 		n += 1 + l + sovStream(uint64(l))
 	}
-	if m.Secrethash != nil {
-		l = m.Secrethash.Size()
+	if m.SecretHash != nil {
+		l = m.SecretHash.Size()
 		n += 1 + l + sovStream(uint64(l))
 	}
 	return n
@@ -5039,7 +5039,7 @@ func (this *HashTimeLock) String() string {
 	s := strings.Join([]string{`&HashTimeLock{`,
 		`Amount:` + strings.Replace(fmt.Sprintf("%v", this.Amount), "PaymentAmount", "PaymentAmount", 1) + `,`,
 		`Expiration:` + strings.Replace(fmt.Sprintf("%v", this.Expiration), "BlockExpiration", "BlockExpiration", 1) + `,`,
-		`Secrethash:` + strings.Replace(fmt.Sprintf("%v", this.Secrethash), "SecretHash", "SecretHash", 1) + `,`,
+		`SecretHash:` + strings.Replace(fmt.Sprintf("%v", this.SecretHash), "SecretHash", "SecretHash", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -5102,7 +5102,7 @@ func (this *SecretRequest) String() string {
 	s := strings.Join([]string{`&SecretRequest{`,
 		`MessageIdentifier:` + strings.Replace(fmt.Sprintf("%v", this.MessageIdentifier), "MessageID", "MessageID", 1) + `,`,
 		`PaymentIdentifier:` + strings.Replace(fmt.Sprintf("%v", this.PaymentIdentifier), "PaymentID", "PaymentID", 1) + `,`,
-		`Secrethash:` + strings.Replace(fmt.Sprintf("%v", this.Secrethash), "SecretHash", "SecretHash", 1) + `,`,
+		`SecretHash:` + strings.Replace(fmt.Sprintf("%v", this.SecretHash), "SecretHash", "SecretHash", 1) + `,`,
 		`Amount:` + strings.Replace(fmt.Sprintf("%v", this.Amount), "TokenAmount", "TokenAmount", 1) + `,`,
 		`Expiration:` + strings.Replace(fmt.Sprintf("%v", this.Expiration), "BlockExpiration", "BlockExpiration", 1) + `,`,
 		`Signature:` + strings.Replace(fmt.Sprintf("%v", this.Signature), "SignedMessage", "SignedMessage", 1) + `,`,
@@ -5195,7 +5195,7 @@ func (this *LockExpired) String() string {
 		`EnvelopeMessage:` + strings.Replace(fmt.Sprintf("%v", this.EnvelopeMessage), "EnvelopeMessage", "EnvelopeMessage", 1) + `,`,
 		`MessageIdentifier:` + strings.Replace(fmt.Sprintf("%v", this.MessageIdentifier), "MessageID", "MessageID", 1) + `,`,
 		`Recipient:` + strings.Replace(fmt.Sprintf("%v", this.Recipient), "Address", "Address", 1) + `,`,
-		`Secrethash:` + strings.Replace(fmt.Sprintf("%v", this.Secrethash), "SecretHash", "SecretHash", 1) + `,`,
+		`SecretHash:` + strings.Replace(fmt.Sprintf("%v", this.SecretHash), "SecretHash", "SecretHash", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -6193,7 +6193,7 @@ func (m *HashTimeLock) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Secrethash", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SecretHash", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6217,10 +6217,10 @@ func (m *HashTimeLock) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Secrethash == nil {
-				m.Secrethash = &SecretHash{}
+			if m.SecretHash == nil {
+				m.SecretHash = &SecretHash{}
 			}
-			if err := m.Secrethash.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.SecretHash.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -7019,7 +7019,7 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Secrethash", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SecretHash", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -7043,10 +7043,10 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Secrethash == nil {
-				m.Secrethash = &SecretHash{}
+			if m.SecretHash == nil {
+				m.SecretHash = &SecretHash{}
 			}
-			if err := m.Secrethash.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.SecretHash.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -8345,7 +8345,7 @@ func (m *LockExpired) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Secrethash", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SecretHash", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8369,10 +8369,10 @@ func (m *LockExpired) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Secrethash == nil {
-				m.Secrethash = &SecretHash{}
+			if m.SecretHash == nil {
+				m.SecretHash = &SecretHash{}
 			}
-			if err := m.Secrethash.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.SecretHash.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

@@ -88,3 +88,11 @@ type Signature []byte
 type TransactionHash []byte
 
 type PubKey []byte
+
+var EmptySecretHash = [32]byte{0x00}
+
+var EmptyHashKeccak = [32]byte{0x00}
+
+var EmptySecret = [32]byte{0x00}
+
+var EmptyAddress = Address{0x00}

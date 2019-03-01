@@ -1,8 +1,6 @@
 package transfer
 
 import (
-	"container/list"
-
 	"github.com/oniio/oniChannel/common"
 )
 
@@ -31,7 +29,7 @@ type AuthenticatedSenderStateChange struct {
 type ContractSendEvent struct {
 }
 
-type ContractSendExpirableEvent struct {
+type ContractSendExpireAbleEvent struct {
 	ContractSendEvent
 	Expiration common.BlockExpiration
 }
@@ -43,22 +41,19 @@ type ContractReceiveStateChange struct {
 
 type TransitionResult struct {
 	NewState State
-	Events   *list.List
+	Events   []Event
 }
 
-type StateTransitionCallback func(chainState State, stateChange StateChange) TransitionResult
+type StateTransitionCallback func(chainState State, stateChange StateChange) *TransitionResult
 
 type StateManager struct {
 	StateTransition StateTransitionCallback
 	CurrentState    State
 }
 
-func (self *StateManager) Dispatch(stateChange StateChange) *list.List {
-	var nextState State
-	var iteration TransitionResult
-
-	nextState = DeepCopy(self.CurrentState)
-	iteration = self.StateTransition(nextState, stateChange)
+func (self *StateManager) Dispatch(stateChange StateChange) []Event {
+	nextState := DeepCopy(self.CurrentState)
+	iteration := self.StateTransition(nextState, stateChange)
 	self.CurrentState = iteration.NewState
 	events := iteration.Events
 

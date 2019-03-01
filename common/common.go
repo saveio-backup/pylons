@@ -2,9 +2,11 @@ package common
 
 import (
 	"bytes"
+	"crypto/rand"
 	"errors"
 	"strconv"
 
+	"crypto/sha256"
 	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/utils/jsonext"
 )
@@ -356,4 +358,18 @@ func LocksrootEmpty(a Locksroot) bool {
 	}
 
 	return true
+}
+
+func GetHash(data []byte) SecretHash {
+	return sha256.Sum256(data)
+}
+
+func SecretRandom(len int) []byte {
+	buf := make([]byte, len)
+	if _, err := rand.Read(buf); err == nil {
+		return buf
+	} else {
+		return nil
+	}
+
 }

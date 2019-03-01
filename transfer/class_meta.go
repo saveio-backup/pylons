@@ -1,5 +1,9 @@
 package transfer
 
+const ChannelIdentifierGlobalQueue = 0
+const DefaultNumberOfBlockConfirmations = 5
+
+//state
 const (
 	InitiatorTaskClassId = 1 + iota
 	MediatorTaskClassId
@@ -13,8 +17,13 @@ const (
 	TransactionExecutionStatusClassId
 	UnlockPartialProofStateClassId
 	HashTimeLockStateClassId
+	InitiatorTransferStateClassId
+	InitiatorPaymentStateClassId
+	TargetTransferStateClassId
+	MediatorTransferStateClassId
 )
 
+//action
 const (
 	AuthenticatedSenderStateChangeClassId = 100 + iota
 	ContractReceiveStateChangeClassId
@@ -42,12 +51,21 @@ const (
 	ReceiveUnlockClassId
 	ReceiveDeliveredClassId
 	ReceiveProcessedClassId
+	ActionInitInitiatorClassId
+	ReceiveSecretRequestClassId
+	ReceiveSecretRevealClassId
+	ReceiveLockExpiredClassId
+	ReceiveTransferRefundCancelRouteClassId
+	ReceiveTransferRefundClassId
+	ActionInitTargetClassId
+	ActionInitMediatorClassId
 )
 
+//event
 const (
 	SendMessageEventClassId = 200 + iota
 	ContractSendEventClassId
-	ContractSendExpirableEventClassId
+	ContractSendExpireAbleEventClassId
 	EventPaymentSentSuccessClassId
 	EventPaymentSentFailedClassId
 	EventPaymentReceivedSuccessClassId
@@ -59,6 +77,15 @@ const (
 	ContractSendChannelUpdateTransferClassId
 	ContractSendChannelBatchUnlockClassId
 	ContractSendSecretRevealClassId
+	EventUnlockSuccessClassId
+	EventInvalidReceivedTransferRefundClassId
+	EventInvalidReceivedLockExpiredClassId
+	EventInvalidReceivedLockedTransferClassId
+	EventUnlockFailedClassId
+	EventUnlockClaimFailedClassId
+	EventInvalidReceivedUnlockClassId
+	EventUnlockClaimSuccessClassId
+	EventUnexpectedSecretRevealClassId
 )
 
 // class meta for State
@@ -108,6 +135,22 @@ func (self UnlockPartialProofState) ClassId() int {
 
 func (self HashTimeLockState) ClassId() int {
 	return HashTimeLockStateClassId
+}
+
+func (self InitiatorTransferState) ClassId() int {
+	return InitiatorTransferStateClassId
+}
+
+func (self InitiatorPaymentState) ClassId() int {
+	return InitiatorPaymentStateClassId
+}
+
+func (self TargetTransferState) ClassId() int {
+	return TargetTransferStateClassId
+}
+
+func (self MediatorTransferState) ClassId() int {
+	return MediatorTransferStateClassId
 }
 
 // class meta for StateChange
@@ -187,6 +230,38 @@ func (self ReceiveProcessed) ClassId() int {
 	return ReceiveProcessedClassId
 }
 
+func (self ActionInitInitiator) ClassId() int {
+	return ActionInitInitiatorClassId
+}
+
+func (self ReceiveSecretRequest) ClassId() int {
+	return ReceiveSecretRequestClassId
+}
+
+func (self ReceiveSecretReveal) ClassId() int {
+	return ReceiveSecretRevealClassId
+}
+
+func (self ReceiveLockExpired) ClassId() int {
+	return ReceiveLockExpiredClassId
+}
+
+func (self ReceiveTransferRefundCancelRoute) ClassId() int {
+	return ReceiveTransferRefundCancelRouteClassId
+}
+
+func (self ReceiveTransferRefund) ClassId() int {
+	return ReceiveTransferRefundClassId
+}
+
+func (self ActionInitTarget) ClassId() int {
+	return ActionInitTargetClassId
+}
+
+func (self ActionInitMediator) ClassId() int {
+	return ActionInitMediatorClassId
+}
+
 // class meta for Event
 func (self SendMessageEvent) ClassId() int {
 	return SendMessageEventClassId
@@ -234,6 +309,42 @@ func (self ContractSendChannelBatchUnlock) ClassId() int {
 
 func (self ContractSendSecretReveal) ClassId() int {
 	return ContractSendSecretRevealClassId
+}
+
+func (self EventUnlockSuccess) ClassId() int {
+	return EventUnlockSuccessClassId
+}
+
+func (self EventInvalidReceivedTransferRefund) ClassId() int {
+	return EventInvalidReceivedTransferRefundClassId
+}
+
+func (self EventInvalidReceivedLockExpired) ClassId() int {
+	return EventInvalidReceivedLockExpiredClassId
+}
+
+func (self EventInvalidReceivedLockedTransfer) ClassId() int {
+	return EventInvalidReceivedLockedTransferClassId
+}
+
+func (self EventUnlockFailed) ClassId() int {
+	return EventUnlockFailedClassId
+}
+
+func (self EventUnlockClaimFailed) ClassId() int {
+	return EventUnlockClaimFailedClassId
+}
+
+func (self EventInvalidReceivedUnlock) ClassId() int {
+	return EventInvalidReceivedUnlockClassId
+}
+
+func (self EventUnlockClaimSuccess) ClassId() int {
+	return EventUnlockClaimSuccessClassId
+}
+
+func (self EventUnexpectedSecretReveal) ClassId() int {
+	return EventUnexpectedSecretRevealClassId
 }
 
 // create class instance based on ClassId
@@ -286,6 +397,12 @@ func CreateStateByClassId(classId int) interface{} {
 		result = new(UnlockPartialProofState)
 	case HashTimeLockStateClassId:
 		result = new(HashTimeLockState)
+	case InitiatorTransferStateClassId:
+		result = new(InitiatorTransferState)
+	case InitiatorPaymentStateClassId:
+		result = new(InitiatorPaymentState)
+	case TargetTransferStateClassId:
+		result = new(TargetTransferState)
 	}
 
 	return result
@@ -347,6 +464,12 @@ func CreateStateChangeByClassId(classId int) interface{} {
 		result = new(ReceiveDelivered)
 	case ReceiveProcessedClassId:
 		result = new(ReceiveProcessed)
+	case ActionInitInitiatorClassId:
+		result = new(ActionInitInitiator)
+	case ReceiveSecretRequestClassId:
+		result = new(ReceiveSecretRequest)
+	case ReceiveSecretRevealClassId:
+		result = new(ReceiveSecretReveal)
 	}
 
 	return result
@@ -360,8 +483,8 @@ func CreateEventByClassId(classId int) interface{} {
 		result = new(SendMessageEvent)
 	case ContractSendEventClassId:
 		result = new(ContractSendEvent)
-	case ContractSendExpirableEventClassId:
-		result = new(ContractSendExpirableEvent)
+	case ContractSendExpireAbleEventClassId:
+		result = new(ContractSendExpireAbleEvent)
 	case EventPaymentSentSuccessClassId:
 		result = new(EventPaymentSentSuccess)
 	case EventPaymentSentFailedClassId:
@@ -384,6 +507,24 @@ func CreateEventByClassId(classId int) interface{} {
 		return new(ContractSendChannelBatchUnlock)
 	case ContractSendSecretRevealClassId:
 		return new(ContractSendSecretReveal)
+	case EventUnlockSuccessClassId:
+		return new(EventUnlockSuccess)
+	case EventInvalidReceivedTransferRefundClassId:
+		return new(EventInvalidReceivedTransferRefund)
+	case EventInvalidReceivedLockExpiredClassId:
+		return new(EventInvalidReceivedLockExpired)
+	case EventInvalidReceivedLockedTransferClassId:
+		return new(EventInvalidReceivedLockedTransfer)
+	case EventUnlockFailedClassId:
+		return new(EventUnlockFailed)
+	case EventUnlockClaimFailedClassId:
+		return new(EventUnlockClaimFailed)
+	case EventInvalidReceivedUnlockClassId:
+		return new(EventInvalidReceivedUnlock)
+	case EventUnlockClaimSuccessClassId:
+		return new(EventUnlockClaimSuccess)
+	case EventUnexpectedSecretRevealClassId:
+		return new(EventUnexpectedSecretReveal)
 	}
 
 	return result

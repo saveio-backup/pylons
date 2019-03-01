@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"container/list"
 	"reflect"
 	"sync"
 	"time"
@@ -19,19 +18,25 @@ func RestoreToStateChange(transitionFunction transfer.StateTransitionCallback,
 		log.Info("No snapshot found, replaying all state changes")
 	}
 
-	unappliedStateChanges := storage.getStateChangesByIdentifier(
+	unAppliedStateChanges := storage.getStateChangesByIdentifier(
 		fromStateChangeId, stateChangeIdentifier)
 
 	if chainState, ok := snapshot.(*transfer.ChainState); ok {
 		chainState.AdjustChainState()
 	}
-	stateManager := &transfer.StateManager{transitionFunction, snapshot}
+	var stateManager *transfer.StateManager
+	if chainState, ok := snapshot.(*transfer.ChainState); ok {
+		chainState.AdjustChainState()
+		stateManager = &transfer.StateManager{StateTransition:transitionFunction, CurrentState: chainState}
+	} else {
+		stateManager = &transfer.StateManager{StateTransition:transitionFunction, CurrentState: nil}
+	}
 
 	wal := new(WriteAheadLog)
 	wal.StateManager = stateManager
 	wal.Storage = storage
 
-	for e := unappliedStateChanges.Front(); e != nil; e = e.Next() {
+	for e := unAppliedStateChanges.Front(); e != nil; e = e.Next() {
 		wal.StateManager.Dispatch(e.Value.(transfer.StateChange))
 	}
 
@@ -59,12 +64,13 @@ func (self *WriteAheadLog) DeepCopy() *transfer.ChainState {
 	return nil
 }
 
-func (self *WriteAheadLog) LogAndDispatch(stateChange transfer.StateChange) *list.List {
+func (self *WriteAheadLog) LogAndDispatch(stateChange transfer.StateChange) []transfer.Event {
 
 	self.dbLock.Lock()
 	defer self.dbLock.Unlock()
 	self.Storage.StateSync.Wait()
 	self.Storage.writeStateChange(stateChange, &self.StateChangeId)
+	log.Info("[LogAndDispatch] ", reflect.TypeOf(stateChange).String())
 	events := self.StateManager.Dispatch(stateChange)
 
 	self.Storage.EventSync.Wait()
