@@ -1,7 +1,6 @@
 package transport
 
 import (
-	"container/list"
 	"fmt"
 	"sync"
 	"testing"
@@ -25,11 +24,14 @@ func (t *TestChannel) OnMessage(message proto.Message, str string) {}
 func (t *TestChannel) Sign(message interface{}) error {
 	return nil
 }
-func (t *TestChannel) HandleStateChange(stateChange transfer.StateChange) *list.List {
+func (t *TestChannel) HandleStateChange(stateChange transfer.StateChange) []transfer.Event {
 	return nil
 }
 func (t *TestChannel) Get(nodeAddress common.Address) string {
 	return ""
+}
+func (t *TestChannel) StateFromChannel() *transfer.ChainState {
+	return nil
 }
 
 var node1AccountAddress = [20]byte{1}
