@@ -29,11 +29,13 @@ func BytesToUint64(data []byte) uint64 {
 	binary.Read(bytesBuffer, binary.BigEndian, &n)
 	return n
 }
+
 func Uint64ToBytes(n uint64) []byte {
 	bytesBuffer := bytes.NewBuffer([]byte{})
 	binary.Write(bytesBuffer, binary.BigEndian, n)
 	return bytesBuffer.Bytes()
 }
+
 
 func (this *Processed) DataToSign() []byte {
 	return Uint64ToBytes(this.MessageIdentifier.MessageId)
@@ -46,26 +48,12 @@ func (this *Delivered) DataToSign() []byte {
 	return Uint64ToBytes(this.DeliveredMessageIdentifier.MessageId)
 }
 
-func (this *LockedTransfer) DataToSign() []byte {
-	message := this.BaseMessage.EnvelopeMessage
-	var locksRoot [32]byte
-	copy(locksRoot[:], message.Locksroot.Locksroot[:32])
-
-	log.Debug("[DataToSign]: ", common.TokenAmount(message.TransferredAmount.TokenAmount),
-		common.TokenAmount(message.LockedAmount.TokenAmount), locksRoot)
-
-	messageHash := transfer.HashBalanceData(common.TokenAmount(message.TransferredAmount.TokenAmount),
-		common.TokenAmount(message.LockedAmount.TokenAmount), locksRoot)
-
-	return message.DataToSign(messageHash)
-}
-
 // data to sign for envelopeMessage is the packed balance proof
-func (this *EnvelopeMessage) DataToSign(additionalHash []byte) []byte {
+func (this *EnvelopeMessage) DataToSign(dataToSign []byte) []byte {
 	var addr [20]byte
-
 	copy(addr[:], this.TokenNetworkAddress.TokenNetworkAddress)
 
+	nonce := common.Nonce(this.Nonce)
 	tokenNetworkAddr := common.TokenNetworkAddress(addr)
 	chainId := common.ChainID(int(this.ChainId.ChainId))
 	channelId := common.ChannelID(int(this.ChannelIdentifier.ChannelId))
@@ -75,24 +63,45 @@ func (this *EnvelopeMessage) DataToSign(additionalHash []byte) []byte {
 		common.TokenAmount(this.LockedAmount.TokenAmount),
 		ConvertLocksroot(this.Locksroot),
 	)
+	var additionalHash []byte
+	if dataToSign != nil {
+		additionalHash = MessageHash(dataToSign)
+	}
 
-	nonce := common.Nonce(this.Nonce)
 	log.Debug("[LockedTransfer DataToSign] balanceHash: ", balanceHash)
-	log.Debug("[LockedTransfer DataToSign] addtionalHash: ", additionalHash)
+	log.Debug("[LockedTransfer DataToSign] additionalHash: ", additionalHash)
 	return transfer.PackBalanceProof(nonce, balanceHash, additionalHash, channelId, tokenNetworkAddr, chainId, 1)
 }
 
+func (this *LockedTransfer) DataToSign() []byte {
+	return this.BaseMessage.EnvelopeMessage.DataToSign(this.Pack())
+}
+
+func (this *LockedTransfer) Pack() []byte {
+	var buf bytes.Buffer
+	env := this.BaseMessage.EnvelopeMessage
+	buf.Write(Uint64ToBytes(env.ChainId.ChainId))
+	buf.Write(Uint64ToBytes(this.BaseMessage.MessageIdentifier.MessageId))
+	buf.Write(Uint64ToBytes(this.BaseMessage.PaymentIdentifier.PaymentId))
+	buf.Write(Uint64ToBytes(env.Nonce))
+	buf.Write(this.BaseMessage.Token.Address)
+	buf.Write(env.TokenNetworkAddress.TokenNetworkAddress)
+	buf.Write(Uint64ToBytes(env.ChannelIdentifier.ChannelId))
+	buf.Write(Uint64ToBytes(env.TransferredAmount.TokenAmount))
+	buf.Write(Uint64ToBytes(env.LockedAmount.TokenAmount))
+	buf.Write(this.BaseMessage.Recipient.Address)
+	buf.Write(env.Locksroot.Locksroot)
+
+	return buf.Bytes()
+}
 
 func (this *DirectTransfer) DataToSign() []byte {
-	messageHash := MessageHash(this.Pack())
-	return this.EnvelopeMessage.DataToSign(messageHash[:])
+	return this.EnvelopeMessage.DataToSign(this.Pack())
 }
 
 func (this *DirectTransfer) Pack() []byte {
 	var buf bytes.Buffer
-
 	env := this.EnvelopeMessage
-
 	buf.Write(Uint64ToBytes(env.ChainId.ChainId))
 	buf.Write(Uint64ToBytes(this.MessageIdentifier.MessageId))
 	buf.Write(Uint64ToBytes(this.PaymentIdentifier.PaymentId))
@@ -112,7 +121,6 @@ func (this *SecretRequest) DataToSign() []byte {
 	var buf bytes.Buffer
 	buf.Write(Uint64ToBytes(this.MessageIdentifier.MessageId))
 	buf.Write(Uint64ToBytes(this.PaymentIdentifier.PaymentId))
-
 	buf.Write(this.SecretHash.SecretHash[:])
 	buf.Write(Uint64ToBytes(this.Amount.TokenAmount))
 	buf.Write(Uint64ToBytes(this.Expiration.BlockExpiration))
@@ -120,13 +128,46 @@ func (this *SecretRequest) DataToSign() []byte {
 }
 
 func (this *Secret) DataToSign() []byte {
-	message := this.EnvelopeMessage
-	var locksRoot [32]byte
-	copy(locksRoot[:], message.Locksroot.Locksroot[:32])
-	messageHash := transfer.HashBalanceData(common.TokenAmount(message.TransferredAmount.TokenAmount),
-		common.TokenAmount(message.LockedAmount.TokenAmount), locksRoot)
+	return this.EnvelopeMessage.DataToSign(this.Pack())
+}
 
-	return message.DataToSign(messageHash)
+func (this *Secret) Pack() []byte {
+	var buf bytes.Buffer
+	env := this.EnvelopeMessage
+	buf.Write(Uint64ToBytes(env.ChainId.ChainId))
+	buf.Write(Uint64ToBytes(this.MessageIdentifier.MessageId))
+	buf.Write(Uint64ToBytes(this.PaymentIdentifier.PaymentId))
+	buf.Write(Uint64ToBytes(env.Nonce))
+	buf.Write(env.TokenNetworkAddress.TokenNetworkAddress)
+	buf.Write(Uint64ToBytes(env.ChannelIdentifier.ChannelId))
+	buf.Write(Uint64ToBytes(env.TransferredAmount.TokenAmount))
+	buf.Write(Uint64ToBytes(env.LockedAmount.TokenAmount))
+	buf.Write(env.Locksroot.Locksroot)
+
+	return buf.Bytes()
+}
+
+func (this *LockExpired) DataToSign() []byte {
+	return this.EnvelopeMessage.DataToSign(this.Pack())
+}
+
+func (this *LockExpired) Pack() []byte {
+	var buf bytes.Buffer
+	env := this.EnvelopeMessage
+
+	buf.Write(Uint64ToBytes(env.ChainId.ChainId))
+	buf.Write(Uint64ToBytes(env.Nonce))
+	buf.Write(Uint64ToBytes(this.MessageIdentifier.MessageId))
+	buf.Write(env.TokenNetworkAddress.TokenNetworkAddress)
+	buf.Write(Uint64ToBytes(env.ChannelIdentifier.ChannelId))
+	buf.Write(Uint64ToBytes(env.TransferredAmount.TokenAmount))
+	buf.Write(Uint64ToBytes(env.LockedAmount.TokenAmount))
+	buf.Write(this.Recipient.Address)
+	buf.Write(env.Locksroot.Locksroot)
+	buf.Write(this.SecretHash.SecretHash[:])
+	//packed.signature = self.signature
+
+	return buf.Bytes()
 }
 
 func (this *RevealSecret) DataToSign() []byte {
@@ -138,7 +179,6 @@ func (this *RevealSecret) DataToSign() []byte {
 
 func MessageHash(data []byte) []byte {
 	sum := sha256.Sum256(data)
-
 	return sum[:]
 }
 
@@ -156,6 +196,8 @@ func MessageFromSendEvent(event interface{}) proto.Message {
 		return UnlockFromEvent(event.(*transfer.SendBalanceProof))
 	case *transfer.SendSecretRequest:
 		return SecretRequestFromEvent(event.(*transfer.SendSecretRequest))
+	case *transfer.SendLockExpired:
+		return LockExpiredFromEvent(event.(*transfer.SendLockExpired))
 	default:
 		log.Debug("Unknown event type: ", reflect.TypeOf(event).String())
 	}
@@ -170,6 +212,7 @@ func ProcessedFromEvent(event *transfer.SendProcessed) proto.Message {
 
 	return msg
 }
+
 func DirectTransferFromEvent(event *transfer.SendDirectTransfer) proto.Message {
 	bp := event.BalanceProof
 
@@ -272,6 +315,28 @@ func RevealSecretFromEvent(event *transfer.SendSecretReveal) proto.Message {
 	return msg
 }
 
+func LockExpiredFromEvent(event *transfer.SendLockExpired) proto.Message {
+	bp := event.BalanceProof
+	log.Debug("[LockExpiredFromEvent] lockedAmount: ", bp.LockedAmount)
+	env := &EnvelopeMessage{
+		ChainId:             &ChainID{uint64(bp.ChainId)},
+		Nonce:               uint64(bp.Nonce),
+		TransferredAmount:   &TokenAmount{uint64(bp.TransferredAmount)},
+		LockedAmount:        &TokenAmount{uint64(bp.LockedAmount)},
+		Locksroot:           &Locksroot{[]byte(bp.LocksRoot[:])},
+		ChannelIdentifier:   &ChannelID{uint64(bp.ChannelIdentifier)},
+		TokenNetworkAddress: &TokenNetworkAddress{bp.TokenNetworkIdentifier[:]},
+	}
+
+	msg := &LockExpired{
+		EnvelopeMessage:   env,
+		MessageIdentifier: &MessageID{MessageId: (uint64)(event.MessageIdentifier)},
+		Recipient:         &Address{Address: event.Recipient[:]},
+		SecretHash:        &SecretHash{SecretHash: event.SecretHash[:]},
+	}
+	return msg
+}
+
 func Sign(account *account.Account, message SignedMessageInterface) error {
 	log.Debug("[Sign]: ", reflect.TypeOf(message).String())
 	data := message.DataToSign()
@@ -332,12 +397,19 @@ func Sign(account *account.Account, message SignedMessageInterface) error {
 			Sender:    &Address{Address: account.Address[:]},
 			Publickey: pubKey,
 		}
+	case *LockExpired:
+		msg := message.(*LockExpired)
+		msg.EnvelopeMessage.Signature = &SignedMessage{
+			Signature: sigData,
+			Sender:    &Address{Address: account.Address[:]},
+			Publickey: pubKey,
+		}
 	default:
 		return fmt.Errorf("[Sign] Unknow message type to sign ", reflect.TypeOf(message).String())
 	}
-	log.Debug("[PubKey]: ", pubKey)
-	log.Debug("[Data]: ", data)
-	log.Debug("[SigObj]: ", sigData)
+	log.Debug("Sign [PubKey]: ", pubKey)
+	log.Debug("Sign [Data]: ", data)
+	log.Debug("Sign [Signature]: ", sigData)
 	return nil
 }
 func GetPublicKeyFromEnvelope(message *EnvelopeMessage) (keypair.PublicKey, error) {

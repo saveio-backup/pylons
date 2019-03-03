@@ -97,22 +97,30 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times, int
 		}
 		state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
 		if state != transfer.NetworkReachable {
-			log.Error("peer AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg is not reachable ")
+			log.Error("[loopTest] peer AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg is not reachable ")
 			break
+		} else {
+			log.Info("[loopTest] peer AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg is reachable ")
 		}
 		status, err := channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(r.Int63()))
 		if err != nil {
-			log.Error("direct tranfer failed:", err)
+			log.Error("[loopTest] direct transfer failed:", err)
 			break
+		} else {
+			log.Info("[loopTest] direct transfer successfully")
 		}
-		//log.Info("wait for payment status update...")
+
+		log.Info("[loopTest] wait for payment status update...")
 		ret := <-status
 		if !ret {
-			log.Error("payment failed:")
+			log.Error("[loopTest] payment failed:")
 			break
+		} else {
+			log.Info("[loopTest] payment successfully")
 		}
+
 	}
-	log.Info("direct transfer test done")
+	log.Info("[loopTest] direct transfer test done")
 
 }
 func logCurrentBalance(channel *ch.Channel, target common.Address) {

@@ -45,8 +45,9 @@ func (self *MessageHandler) HandleMessageDirecttransfer(channel *ChannelService,
 	copy(tokenNetworkIdentifier[:], message.EnvelopeMessage.TokenNetworkAddress.TokenNetworkAddress[:20])
 
 	//todo check
+
 	//balanceProof := BalanceProofFromEnvelope(message.EnvelopeMessage, message.Pack())
-	balanceProof := BalanceProofFromEnvelope(message.EnvelopeMessage)
+	balanceProof := BalanceProofFromEnvelope(message.EnvelopeMessage, message.Pack())
 	directTransfer := &transfer.ReceiveTransferDirect{
 		AuthenticatedSenderStateChange: transfer.AuthenticatedSenderStateChange{Sender: balanceProof.Sender},
 		TokenNetworkIdentifier:         tokenNetworkIdentifier,
@@ -114,7 +115,7 @@ func (self *MessageHandler) HandleMessageSecret(channel *ChannelService, message
 	var sender [20]byte
 	copy(sender[:], message.EnvelopeMessage.Signature.Sender.Address)
 	secretHash := common.GetHash(message.Secret.Secret)
-	balanceProof := BalanceProofFromEnvelope(message.EnvelopeMessage)
+	balanceProof := BalanceProofFromEnvelope(message.EnvelopeMessage, message.Pack())
 	stateChange := &transfer.ReceiveUnlock{
 		AuthenticatedSenderStateChange: transfer.AuthenticatedSenderStateChange{
 			Sender: sender,
@@ -130,7 +131,7 @@ func (self *MessageHandler) HandleMessageSecret(channel *ChannelService, message
 func (self *MessageHandler) HandleMessageLockExpired(channel *ChannelService, message *messages.LockExpired) {
 	var secretHash [32]byte
 	copy(secretHash[:], message.SecretHash.SecretHash)
-	balanceProof := BalanceProofFromEnvelope(message.EnvelopeMessage)
+	balanceProof := BalanceProofFromEnvelope(message.EnvelopeMessage, message.Pack())
 	stateChange := &transfer.ReceiveLockExpired{
 		BalanceProof:      balanceProof,
 		SecretHash:        secretHash,
@@ -187,7 +188,7 @@ func (self *MessageHandler) HandleMessageLockedTransfer(channel *ChannelService,
 	}
 }
 
-func BalanceProofFromEnvelope(message *messages.EnvelopeMessage) *transfer.BalanceProofSignedState {
+func BalanceProofFromEnvelope(message *messages.EnvelopeMessage, dataToSign []byte) *transfer.BalanceProofSignedState {
 	var tokenNetworkIdentifier common.TokenNetworkID
 	var messageHash common.Keccak256
 	var locksRoot common.Locksroot
@@ -196,10 +197,9 @@ func BalanceProofFromEnvelope(message *messages.EnvelopeMessage) *transfer.Balan
 	copy(locksRoot[:], tmpLocksRoot[:32])
 
 	log.Debug("[BalanceProofFromEnvelope]: ", locksRoot)
-	tmpMessageHash := transfer.HashBalanceData(common.TokenAmount(message.TransferredAmount.TokenAmount),
-		common.TokenAmount(message.LockedAmount.TokenAmount), locksRoot)
-
+	tmpMessageHash := common.GetHash(dataToSign)
 	copy(messageHash[:], tmpMessageHash[:32])
+
 	copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
 	if message.Signature == nil {
 		log.Warn("BalanceProofFromEnvelope message.Signature is nil")
@@ -224,7 +224,7 @@ func BalanceProofFromEnvelope(message *messages.EnvelopeMessage) *transfer.Balan
 
 func LockedTransferSignedFromMessage(message *messages.LockedTransfer) *transfer.LockedTransferSignedState {
 	//""" Create LockedTransferSignedState from a LockedTransfer message. """
-	balanceProof := BalanceProofFromEnvelope(message.BaseMessage.EnvelopeMessage)
+	balanceProof := BalanceProofFromEnvelope(message.BaseMessage.EnvelopeMessage, message.Pack())
 
 	var keccaKHash [32]byte
 	copy(keccaKHash[:], message.BaseMessage.Lock.SecretHash.SecretHash[:32])

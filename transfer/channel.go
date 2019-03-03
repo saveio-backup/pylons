@@ -346,16 +346,14 @@ func IsValidSignature(balanceProof *BalanceProofSignedState, senderAddress commo
 	// to_canonical_address(eth_recover(data=data_that_was_signed, signature=balance_proof.signature))
 	var signerAddress common.Address
 
-	balanceHash := HashBalanceData(
-		balanceProof.TransferredAmount,
-		balanceProof.LockedAmount,
-		balanceProof.LocksRoot)
+	balanceHash := HashBalanceData(balanceProof.TransferredAmount,
+		balanceProof.LockedAmount, balanceProof.LocksRoot)
 
 	dataThatWasSigned := PackBalanceProof(common.Nonce(balanceProof.Nonce), balanceHash, common.AdditionalHash(balanceProof.MessageHash[:]),
 		balanceProof.ChannelIdentifier, common.TokenNetworkAddress(balanceProof.TokenNetworkIdentifier), balanceProof.ChainId, 1)
 
 	if dataThatWasSigned == nil {
-		return false, string("Signature invalid, could not be recovered")
+		return false, string("Signature invalid, could not be recovered dataThatWasSigned is nil")
 	}
 
 	pubKey, err := common.GetPublicKey(balanceProof.PublicKey)
@@ -363,6 +361,9 @@ func IsValidSignature(balanceProof *BalanceProofSignedState, senderAddress commo
 		return false, string("Failed to get public key from balance proof")
 	}
 
+	log.Debug("Verify [Data]: ", dataThatWasSigned)
+	log.Debug("Verify [PubKey]: ", balanceProof.PublicKey)
+	log.Debug("Verify [Signature]: ", balanceProof.Signature)
 	err = common.VerifySignature(pubKey, dataThatWasSigned, balanceProof.Signature)
 	if err != nil {
 		return false, string("Signature invalid, could not be recovered")
@@ -420,13 +421,13 @@ func IsBalanceProofUsableOnChain(receivedBalanceProof *BalanceProofSignedState,
 	}
 }
 
-func IsValidDirecttransfer(directTransfer *ReceiveTransferDirect, channelState *NettingChannelState,
+func IsValidDirectTransfer(directTransfer *ReceiveTransferDirect, channelState *NettingChannelState,
 	senderState *NettingChannelEndState, receiverState *NettingChannelEndState) (bool, string) {
 
 	receivedBalanceProof := directTransfer.BalanceProof
 
 	currentBalanceProof := getCurrentBalanceProof(senderState)
-	currentLocksroot := currentBalanceProof.locksRoot
+	currentLocksRoot := currentBalanceProof.locksRoot
 	currentTransferredAmount := currentBalanceProof.transferredAmount
 	currentLockedAmount := currentBalanceProof.lockedAmount
 
@@ -439,7 +440,7 @@ func IsValidDirecttransfer(directTransfer *ReceiveTransferDirect, channelState *
 	if isBalanceProofUsable == false {
 		msg := fmt.Sprintf("Invalid DirectTransfer message. {%s}", invalidBalanceProofMsg)
 		return false, msg
-	} else if compareLocksroot(receivedBalanceProof.LocksRoot, currentLocksroot) == false {
+	} else if compareLocksroot(receivedBalanceProof.LocksRoot, currentLocksRoot) == false {
 		var buf1, buf2 bytes.Buffer
 
 		buf1.Write(currentBalanceProof.locksRoot[:])
@@ -935,17 +936,25 @@ func createSendDirectTransfer(channelState *NettingChannelState, amount common.P
 	lockedAmount := getAmountLocked(ourState)
 
 	balanceProof := &BalanceProofUnsignedState{
-		nonce,
-		transferAmount,
-		common.TokenAmount(lockedAmount),
-		locksRoot,
-		channelState.TokenNetworkIdentifier,
-		channelState.Identifier,
-		channelState.ChainId}
+		Nonce:nonce,
+		TransferredAmount:transferAmount,
+		LockedAmount:common.TokenAmount(lockedAmount),
+		LocksRoot:locksRoot,
+		TokenNetworkIdentifier:channelState.TokenNetworkIdentifier,
+		ChannelIdentifier:channelState.Identifier,
+		ChainId:channelState.ChainId,
+	}
 
 	sendDirectTransfer := SendDirectTransfer{
-		SendMessageEvent{common.Address(recipient), channelState.Identifier, messageIdentifier},
-		paymentIdentifier, balanceProof, common.TokenAddress(channelState.TokenAddress)}
+		SendMessageEvent:SendMessageEvent{
+			Recipient:common.Address(recipient),
+			ChannelIdentifier:channelState.Identifier,
+			MessageIdentifier:messageIdentifier,
+		},
+		PaymentIdentifier:paymentIdentifier,
+		BalanceProof:balanceProof,
+		TokenAddress:common.TokenAddress(channelState.TokenAddress),
+	}
 
 	return &sendDirectTransfer
 }
@@ -953,23 +962,18 @@ func createSendDirectTransfer(channelState *NettingChannelState, amount common.P
 func sendDirectTransfer(channelState *NettingChannelState, amount common.PaymentAmount,
 	messageIdentifier common.MessageID, paymentIdentifier common.PaymentID) *SendDirectTransfer {
 
-	directTransfer := createSendDirectTransfer(
-		channelState,
-		amount,
-		messageIdentifier,
-		paymentIdentifier)
+	directTransfer := createSendDirectTransfer(channelState, amount, messageIdentifier, paymentIdentifier)
 
 	//Construct fake BalanceProofSignedState from BalanceProofUnsignedState!
-	balanceProof := &BalanceProofSignedState{
+	channelState.OurState.BalanceProof = &BalanceProofSignedState{
 		Nonce:                  directTransfer.BalanceProof.Nonce,
 		TransferredAmount:      directTransfer.BalanceProof.TransferredAmount,
 		LockedAmount:           directTransfer.BalanceProof.LockedAmount,
 		LocksRoot:              directTransfer.BalanceProof.LocksRoot,
 		TokenNetworkIdentifier: directTransfer.BalanceProof.TokenNetworkIdentifier,
 		ChannelIdentifier:      directTransfer.BalanceProof.ChannelIdentifier,
-		ChainId:                directTransfer.BalanceProof.ChainId}
-
-	channelState.OurState.BalanceProof = balanceProof
+		ChainId:                directTransfer.BalanceProof.ChainId,
+	}
 
 	return directTransfer
 }
@@ -1362,12 +1366,12 @@ func HandleReceiveLockedTransfer(channelState *NettingChannelState,
 	return events, err
 }
 
-func handleReceiveDirecttransfer(channelState *NettingChannelState,
+func handleReceiveDirectTransfer(channelState *NettingChannelState,
 	directTransfer *ReceiveTransferDirect) TransitionResult {
 
 	var events []Event
 
-	isValid, msg := IsValidDirecttransfer(directTransfer, channelState,
+	isValid, msg := IsValidDirectTransfer(directTransfer, channelState,
 		channelState.PartnerState, channelState.OurState)
 
 	if isValid {
@@ -1398,6 +1402,7 @@ func handleReceiveDirecttransfer(channelState *NettingChannelState,
 			msg}
 
 		events = append(events, transferInvalidEvent)
+		log.Info("[handleReceiveDirectTransfer] EventTransferReceivedInvalidDirectTransfer: %s", msg)
 	}
 
 	return TransitionResult{channelState, events}
@@ -1591,7 +1596,6 @@ func StateTransitionForChannel(channelState *NettingChannelState, stateChange St
 	case *Block:
 		block, _ := stateChange.(*Block)
 		iteration = handleBlock(channelState, block, blockNumber)
-
 	case *ActionChannelClose:
 		actionChannelClose, _ := stateChange.(*ActionChannelClose)
 		iteration = handleActionClose(channelState, actionChannelClose, blockNumber)
@@ -1612,7 +1616,7 @@ func StateTransitionForChannel(channelState *NettingChannelState, stateChange St
 		iteration = handleChannelNewbalance(channelState, contractReceiveChannelNewBalance, blockNumber)
 	case *ReceiveTransferDirect:
 		receiveTransferDirect, _ := stateChange.(*ReceiveTransferDirect)
-		iteration = handleReceiveDirecttransfer(channelState, receiveTransferDirect)
+		iteration = handleReceiveDirectTransfer(channelState, receiveTransferDirect)
 	}
 
 	return iteration

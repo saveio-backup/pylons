@@ -6,12 +6,16 @@ import (
 
 	mpay "github.com/oniio/oniChain/smartcontract/service/native/micropayment"
 	"github.com/oniio/oniChannel/common"
+	"github.com/oniio/oniChain/common/log"
 )
 
 //[TODO] import from channel_contracts.constants import MessageTypeId
-func PackBalanceProof(nonce common.Nonce, balanceHash common.BalanceHash, addtionalHash common.AdditionalHash,
+func PackBalanceProof(nonce common.Nonce, balanceHash common.BalanceHash, additionalHash common.AdditionalHash,
 	channelId common.ChannelID, tokenNetworkAddr common.TokenNetworkAddress, chainId common.ChainID,
-	msgtype int) []byte {
+	msgType int) []byte {
+
+	log.Info("[LockedTransfer DataToSign] balanceHash: ", balanceHash)
+	log.Info("[LockedTransfer DataToSign] additionalHash: ", additionalHash)
 
 	var buf bytes.Buffer
 
@@ -20,11 +24,11 @@ func PackBalanceProof(nonce common.Nonce, balanceHash common.BalanceHash, addtio
 	// currently it is only used for the close channel.
 	buf.Write([]byte(mpay.CLOSE_MESSAGE_LENGTH))
 
-	buf.Write(Uint64ToBytes(uint64(msgtype)))
+	buf.Write(Uint64ToBytes(uint64(msgType)))
 	buf.Write(Uint64ToBytes(uint64(channelId)))
 	buf.Write(balanceHash)
 	buf.Write(Uint64ToBytes(uint64(nonce)))
-	buf.Write(addtionalHash)
+	buf.Write(additionalHash)
 	// ignore the token network address and chain ID now
 	//buf.Write(tokenNetworkAddr[:])
 	//buf.Write(Uint64ToBytes(uint64(chainId)))
