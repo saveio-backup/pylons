@@ -36,7 +36,7 @@ var f *os.File
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func main() {
-	log.InitLog(0, log.Stdout)
+	log.InitLog(2, log.Stdout)
 	flag.Parse()
 	if *cpuprofile != "" {
 		cupf, err := os.Create(*cpuprofile)
@@ -117,25 +117,25 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times, int
 			log.Error("[loopTest] peer Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC is not reachable ")
 			break
 		} else {
-			log.Info("[loopTest] peer Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC is reachable ")
+			//log.Info("[loopTest] peer Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC is reachable ")
 		}
 		status, err := channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(r.Int63()))
 		if err != nil {
 			log.Error("[loopTest] direct transfer failed:", err)
 			break
 		} else {
-			log.Info("[loopTest] direct transfer successfully")
+			log.Debug("[loopTest] direct transfer successfully")
 		}
 
-		log.Info("[loopTest] wait for payment status update...")
+		log.Debug("[loopTest] wait for payment status update...")
 		ret := <-status
 		if !ret {
 			log.Error("[loopTest] payment failed")
 			break
 		} else {
-			log.Info("[loopTest] payment successfully")
+			log.Debug("[loopTest] payment successfully")
 		}
-		log.Infof("[loopTest] direct transfer %f ong to %s successfully", float32(amount)/1000000000, "Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
+		log.Debugf("[loopTest] direct transfer %f ong to %s successfully", 100*float32(amount)/1000000000, "Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
 	}
 	log.Info("[loopTest] direct transfer test done")
 }
@@ -153,9 +153,9 @@ func logCurrentBalance(channel *ch.Channel, target common.Address) {
 				break
 			}
 			state := channelState.GetChannelEndState(0)
-			log.Infof("current balance = %d, transfer balance = %d", state.GetContractBalance(), state.GetGasBalance())
+			log.Infof("current balance = %d, transfered = %d", state.GetContractBalance(), state.GetContractBalance()-state.GetGasBalance())
 			state = channelState.GetChannelEndState(1)
-			log.Infof("partner balance = %d, transfer balance = %d", state.GetContractBalance(), state.GetGasBalance())
+			log.Infof("partner balance = %d, transfered = %d", state.GetContractBalance(), state.GetContractBalance()-state.GetGasBalance())
 		}
 	}
 }

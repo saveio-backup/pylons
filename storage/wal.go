@@ -27,9 +27,9 @@ func RestoreToStateChange(transitionFunction transfer.StateTransitionCallback,
 	var stateManager *transfer.StateManager
 	if chainState, ok := snapshot.(*transfer.ChainState); ok {
 		chainState.AdjustChainState()
-		stateManager = &transfer.StateManager{StateTransition:transitionFunction, CurrentState: chainState}
+		stateManager = &transfer.StateManager{StateTransition: transitionFunction, CurrentState: chainState}
 	} else {
-		stateManager = &transfer.StateManager{StateTransition:transitionFunction, CurrentState: nil}
+		stateManager = &transfer.StateManager{StateTransition: transitionFunction, CurrentState: nil}
 	}
 
 	wal := new(WriteAheadLog)
@@ -70,7 +70,7 @@ func (self *WriteAheadLog) LogAndDispatch(stateChange transfer.StateChange) []tr
 	defer self.dbLock.Unlock()
 	self.Storage.StateSync.Wait()
 	self.Storage.writeStateChange(stateChange, &self.StateChangeId)
-	log.Info("[LogAndDispatch] ", reflect.TypeOf(stateChange).String())
+	log.Debug("[LogAndDispatch] ", reflect.TypeOf(stateChange).String())
 	events := self.StateManager.Dispatch(stateChange)
 
 	self.Storage.EventSync.Wait()

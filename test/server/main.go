@@ -37,7 +37,7 @@ var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var bidirect = flag.Bool("bidirect", false, "run bidirection test")
 
 func main() {
-	log.InitLog(0, log.Stdout)
+	log.InitLog(2, log.Stdout)
 	flag.Parse()
 	if *cpuprofile != "" {
 		cupf, err := os.Create(*cpuprofile)
@@ -100,14 +100,14 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times, int
 			log.Error("[loopTest] peer AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg is not reachable ")
 			break
 		} else {
-			log.Info("[loopTest] peer AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg is reachable ")
+			//log.Info("[loopTest] peer AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg is reachable ")
 		}
 		status, err := channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(r.Int63()))
 		if err != nil {
 			log.Error("[loopTest] direct transfer failed:", err)
 			break
 		} else {
-			log.Info("[loopTest] direct transfer successfully")
+			//log.Info("[loopTest] direct transfer successfully")
 		}
 
 		log.Info("[loopTest] wait for payment status update...")
@@ -116,7 +116,7 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times, int
 			log.Error("[loopTest] payment failed:")
 			break
 		} else {
-			log.Info("[loopTest] payment successfully")
+			//log.Info("[loopTest] payment successfully")
 		}
 
 	}
@@ -138,9 +138,9 @@ func logCurrentBalance(channel *ch.Channel, target common.Address) {
 				break
 			}
 			state := channelState.GetChannelEndState(0)
-			log.Infof("current balance = %d, transfer balance = %d", state.GetContractBalance(), state.GetGasBalance())
+			log.Infof("current balance = %d, transfered = %d", state.GetContractBalance(), state.GetContractBalance()-state.GetGasBalance())
 			state = channelState.GetChannelEndState(1)
-			log.Infof("partner balance = %d, transfer balance = %d", state.GetContractBalance(), state.GetGasBalance())
+			log.Infof("partner balance = %d, transfered = %d", state.GetContractBalance(), state.GetContractBalance()-state.GetGasBalance())
 		}
 	}
 }

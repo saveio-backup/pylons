@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"crypto/sha256"
 
+	"github.com/oniio/oniChain/common/log"
 	mpay "github.com/oniio/oniChain/smartcontract/service/native/micropayment"
 	"github.com/oniio/oniChannel/common"
-	"github.com/oniio/oniChain/common/log"
 )
 
 //[TODO] import from channel_contracts.constants import MessageTypeId
@@ -14,8 +14,8 @@ func PackBalanceProof(nonce common.Nonce, balanceHash common.BalanceHash, additi
 	channelId common.ChannelID, tokenNetworkAddr common.TokenNetworkAddress, chainId common.ChainID,
 	msgType int) []byte {
 
-	log.Info("[LockedTransfer DataToSign] balanceHash: ", balanceHash)
-	log.Info("[LockedTransfer DataToSign] additionalHash: ", additionalHash)
+	log.Debug("[LockedTransfer DataToSign] balanceHash: ", balanceHash)
+	log.Debug("[LockedTransfer DataToSign] additionalHash: ", additionalHash)
 
 	var buf bytes.Buffer
 

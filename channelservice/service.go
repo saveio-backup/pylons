@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"bytes"
+	"reflect"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/oniio/oniChain-go-sdk/ong"
 	"github.com/oniio/oniChain/account"
@@ -26,7 +28,6 @@ import (
 	"github.com/oniio/oniChannel/network/transport/messages"
 	"github.com/oniio/oniChannel/storage"
 	"github.com/oniio/oniChannel/transfer"
-	"reflect"
 )
 
 type ChannelService struct {
@@ -254,7 +255,8 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 		self.channelEventHandler.OnChannelEvent(self, e.(transfer.Event))
 	}
 	//take snapshot
-
+	self.dispatchEventsLock.Lock()
+	defer self.dispatchEventsLock.Unlock()
 	newSnapShotGroup := self.Wal.StateChangeId / constants.SNAPSHOT_STATE_CHANGE_COUNT
 	if newSnapShotGroup > self.snapshotGroup {
 		log.Info("storing snapshot, snapshot id = ", newSnapShotGroup)
