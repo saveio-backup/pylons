@@ -193,7 +193,6 @@ type TokenNetworkGraph struct {
 	NetworkGraphName string
 	Nodes            []Node
 	Edges            []Edge
-	Expected         SPT
 }
 
 type TokenNetworkState struct {

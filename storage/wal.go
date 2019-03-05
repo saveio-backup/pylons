@@ -68,7 +68,7 @@ func (self *WriteAheadLog) LogAndDispatch(stateChange transfer.StateChange) []tr
 
 	self.dbLock.Lock()
 	defer self.dbLock.Unlock()
-	self.Storage.StateSync.Wait()
+
 	self.Storage.writeStateChange(stateChange, &self.StateChangeId)
 	log.Debug("[LogAndDispatch] ", reflect.TypeOf(stateChange).String())
 	events := self.StateManager.Dispatch(stateChange)

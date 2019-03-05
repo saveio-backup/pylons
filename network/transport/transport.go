@@ -7,9 +7,10 @@ import (
 	"sync"
 	"time"
 
+	"reflect"
+
 	"github.com/gogo/protobuf/proto"
-	"github.com/hashicorp/golang-lru"
-	chainComm "github.com/oniio/oniChain/common"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/common/constants"
@@ -21,7 +22,6 @@ import (
 	"github.com/oniio/oniP2p/network/addressmap"
 	"github.com/oniio/oniP2p/network/keepalive"
 	"github.com/oniio/oniP2p/types/opcode"
-	"reflect"
 )
 
 const ADDRESS_CACHE_SIZE = 50
@@ -133,8 +133,8 @@ func (this *Transport) SetKeys(keys *crypto.KeyPair) {
 func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Message) error {
 	var msgID *messages.MessageID
 
-	rec := chainComm.Address(queueId.Recipient)
-	log.Debug("[SendAsync] %v, TO: %v.", reflect.TypeOf(msg).String(), rec.ToBase58())
+	//rec := chainComm.Address(queueId.Recipient)
+	//log.Debug("[SendAsync] %v, TO: %v.", reflect.TypeOf(msg).String(), rec.ToBase58())
 	q := this.GetQueue(queueId)
 	switch msg.(type) {
 	case *messages.DirectTransfer:

@@ -174,7 +174,7 @@ func (self *SQLiteStorage) writeStateChange(stateChange transfer.StateChange, st
 	lastRowId, _ := sqlRes.LastInsertId()
 
 	*stateChangeId = int(lastRowId)
-	self.StateSync.Done()
+
 }
 
 func (self *SQLiteStorage) writeStateSnapshot(stateChangeId int, snapshot transfer.State) int {
