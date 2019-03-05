@@ -351,9 +351,16 @@ func (self *ChannelService) InitializeMessagesQueues(chainState *transfer.ChainS
 			}
 
 			message := messages.MessageFromSendEvent(&event)
-
-			self.Sign(message)
-			self.transport.SendAsync(&queueIdentifier, message)
+			if message != nil {
+				err := self.Sign(message)
+				if err != nil {
+					log.Error("[InitializeMessagesQueues] Sign: ", err.Error())
+				}
+				err = self.transport.SendAsync(&queueIdentifier, message)
+				if err != nil {
+					log.Error("[InitializeMessagesQueues] SendAsync: ", err.Error())
+				}
+			}
 		}
 	}
 }

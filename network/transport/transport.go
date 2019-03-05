@@ -132,7 +132,6 @@ func (this *Transport) SetKeys(keys *crypto.KeyPair) {
 // messages first be queued, only can be send when Delivered for previous msssage is received
 func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Message) error {
 	var msgID *messages.MessageID
-
 	//rec := chainComm.Address(queueId.Recipient)
 	//log.Debug("[SendAsync] %v, TO: %v.", reflect.TypeOf(msg).String(), rec.ToBase58())
 	q := this.GetQueue(queueId)
@@ -149,8 +148,10 @@ func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Me
 		msgID = (msg.(*messages.RevealSecret)).MessageIdentifier
 	case *messages.Secret:
 		msgID = (msg.(*messages.Secret)).MessageIdentifier
+	case *messages.LockExpired:
+		msgID = (msg.(*messages.LockExpired)).MessageIdentifier
 	default:
-		log.Error("[SendAsync] Unknown message type to send async")
+		log.Error("[SendAsync] Unknown message type to send async: ", reflect.TypeOf(msg).String())
 		return fmt.Errorf("Unknown message type to send async")
 	}
 	ok := q.Push(&QueueItem{

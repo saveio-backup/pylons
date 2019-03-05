@@ -183,6 +183,7 @@ func MessageHash(data []byte) []byte {
 }
 
 func MessageFromSendEvent(event interface{}) proto.Message {
+	log.Debug("[MessageFromSendEvent] Event type: ", reflect.TypeOf(event).String())
 	switch event.(type) {
 	case *transfer.SendDirectTransfer:
 		return DirectTransferFromEvent(event.(*transfer.SendDirectTransfer))
