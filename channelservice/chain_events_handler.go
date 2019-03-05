@@ -139,7 +139,7 @@ func (self ChannelService) HandleChannelNewBalance(event map[string]interface{})
 
 func (self ChannelService) HandleChannelClose(event map[string]interface{}) {
 
-	tokenNetworkIdentifier := common.TokenNetworkID{}
+	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
 
 	var channelIdentifier common.ChannelID
 	var transactionHash common.TransactionHash
@@ -183,7 +183,7 @@ func (self ChannelService) HandleChannelUpdateTransfer(event map[string]interfac
 	nonce := event["nonce"].(common.Nonce)
 
 	chainState := self.StateFromChannel()
-	tokenNetworkIdentifier := common.TokenNetworkID{}
+	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
 	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(chainState,
 		tokenNetworkIdentifier, channelIdentifier)
 
@@ -199,7 +199,7 @@ func (self ChannelService) HandleChannelUpdateTransfer(event map[string]interfac
 }
 
 func (self ChannelService) HandleChannelSettled(event map[string]interface{}) {
-	tokenNetworkIdentifier := common.TokenNetworkID{}
+	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
 
 	var transactionHash common.TransactionHash
 
@@ -222,7 +222,7 @@ func (self ChannelService) HandleChannelSettled(event map[string]interface{}) {
 }
 
 func (self ChannelService) HandleChannelBatchUnlock(event map[string]interface{}) {
-	tokenNetworkIdentifier := common.TokenNetworkID{}
+	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
 
 	transactionHash := event["transactionHash"].(common.TransactionHash)
 	blockNumber := event["blockHeight"].(common.BlockHeight)
@@ -313,7 +313,6 @@ func SetupChannelState(tokenAddress common.TokenAddress, paymentNetworkIdentifie
 
 	openTransaction := &transfer.TransactionExecutionStatus{
 		0, openedBlockHeight, transfer.TxnExecSucc}
-
 	channel := &transfer.NettingChannelState{
 		Identifier:               identifier,
 		ChainId:                  channelDetails.ChainId,

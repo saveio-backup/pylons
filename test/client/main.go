@@ -95,7 +95,7 @@ func main() {
 			<-time.After(time.Duration(3000) * time.Millisecond)
 		}
 		log.Info("begin direct transfer test...")
-		go loopTest(channel, 1, common.Address(target), 10000, 0)
+		go loopTest(channel, 1, common.Address(target), 10, 0)
 	} else {
 		log.Fatal("setup channel failed, exit")
 		return

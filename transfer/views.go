@@ -122,7 +122,6 @@ func GetPaymentNetworkIdentifiers(chainState *ChainState) []common.PaymentNetwor
 
 func GetTokenNetworkRegistryByTokenNetworkIdentifier(chainState *ChainState,
 	tokenNetworkIdentifier common.TokenNetworkID) *PaymentNetworkState {
-
 	for _, v := range chainState.IdentifiersToPaymentnetworks {
 		_, exist := v.TokenIdentifiersToTokenNetworks[tokenNetworkIdentifier]
 		if exist {

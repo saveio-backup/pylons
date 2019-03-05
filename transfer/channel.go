@@ -361,9 +361,9 @@ func IsValidSignature(balanceProof *BalanceProofSignedState, senderAddress commo
 		return false, string("Failed to get public key from balance proof")
 	}
 
-	log.Debug("Verify [Data]: ", dataThatWasSigned)
-	log.Debug("Verify [PubKey]: ", balanceProof.PublicKey)
-	log.Debug("Verify [Signature]: ", balanceProof.Signature)
+	//log.Debug("Verify [Data]: ", dataThatWasSigned)
+	//log.Debug("Verify [PubKey]: ", balanceProof.PublicKey)
+	//log.Debug("Verify [Signature]: ", balanceProof.Signature)
 	err = common.VerifySignature(pubKey, dataThatWasSigned, balanceProof.Signature)
 	if err != nil {
 		return false, string("Signature invalid, could not be recovered")

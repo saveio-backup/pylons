@@ -186,7 +186,8 @@ func (self *ChannelService) Start() error {
 		stateChange = &transfer.ActionInitChain{
 			BlockHeight: common.BlockHeight(currentHeight),
 			OurAddress:  self.address,
-			ChainId:     chainNetworkId}
+			ChainId:     chainNetworkId,
+		}
 		self.HandleStateChange(stateChange)
 
 		paymentNetwork := transfer.NewPaymentNetworkState()
@@ -200,7 +201,6 @@ func (self *ChannelService) Start() error {
 		}
 		self.HandleStateChange(stateChange)
 		self.InitializeTokenNetwork()
-
 	} else {
 		lastLogBlockHeight = transfer.GetBlockHeight(self.StateFromChannel())
 		log.Infof("Restored state from WAL,last log BlockHeight=%d", lastLogBlockHeight)
@@ -347,9 +347,7 @@ func (self *ChannelService) InitializeMessagesQueues(chainState *transfer.ChainS
 			switch event.(type) {
 			case transfer.SendDirectTransfer:
 				e := event.(transfer.SendDirectTransfer)
-
 				self.RegisterPaymentStatus(common.Address(e.Recipient), e.PaymentIdentifier, common.PAYMENT_DIRECT, e.BalanceProof.TransferredAmount, e.BalanceProof.TokenNetworkIdentifier)
-
 			}
 
 			message := messages.MessageFromSendEvent(&event)
@@ -408,7 +406,6 @@ func (self *ChannelService) Sign(message interface{}) error {
 func (self *ChannelService) ConnectionManagerForTokenNetwork(tokenNetworkIdentifier common.TokenNetworkID) *ConnectionManager {
 	var manager *ConnectionManager
 	var exist bool
-
 	manager, exist = self.tokennetworkidsToConnectionmanagers[tokenNetworkIdentifier]
 	if exist == false {
 		manager = NewConnectionManager(self, tokenNetworkIdentifier)
@@ -576,7 +573,6 @@ func (self *ChannelService) tokenNetworkLeave(registryAddress common.PaymentNetw
 
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(
 		self.StateFromChannel(), registryAddress, tokenAddress)
-
 	connectionManager := self.ConnectionManagerForTokenNetwork(
 		tokenNetworkIdentifier)
 
@@ -617,6 +613,7 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 	log.Infof("new channel between %s and %s has setup, channel ID = %d", regAddr.ToBase58(), patAddr.ToBase58(), channelState.Identifier)
 
 	chainState := self.StateFromChannel()
+
 	tokenNetworkState := transfer.GetTokenNetworkByIdentifier(chainState, channelState.TokenNetworkIdentifier)
 	tokenNetworkState.AddRoute(self.Address(), partnerAddress, channelState.Identifier)
 	return channelState.Identifier
@@ -793,7 +790,7 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 	}
 
 	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
-	tokenAddress := common.TokenAddress(sc_utils.OngContractAddress)
+	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(self.StateFromChannel(),
 		paymentNetworkIdentifier, tokenAddress)
 	self.transport.StartHealthCheck(common.Address(target))
@@ -846,7 +843,6 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(
 		chainState, paymentNetworkIdentifier, tokenAddress)
-
 	secret := common.SecretRandom(constants.SECRET_LEN)
 	log.Info("[MediaTransfer] Secret: ", secret)
 	//TODO: check secret used
@@ -901,7 +897,6 @@ func (self *ChannelService) InitiatorInit(transferIdentifier common.PaymentID,
 	transferAmount common.TokenAmount, transferSecret common.Secret,
 	tokenNetworkIdentifier common.TokenNetworkID,
 	targetAddress common.Address) (*transfer.ActionInitInitiator, error) {
-
 	if 0 == bytes.Compare(transferSecret, common.EmptySecretHash[:]) {
 		return nil, fmt.Errorf("Should never end up initiating transfer with Secret 0x0 ")
 	}
@@ -977,7 +972,6 @@ func (self *ChannelService) GetEventsPaymentHistoryWithTimestamps(tokenAddress c
 
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(self.StateFromChannel(),
 		common.PaymentNetworkID{}, tokenAddress)
-
 	events := self.Wal.Storage.GetEventsWithTimestamps(limit, offset)
 	for e := events.Front(); e != nil; e = e.Next() {
 		event := e.Value.(*storage.TimestampedEvent)

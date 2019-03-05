@@ -170,7 +170,6 @@ func (self *SQLiteStorage) writeStateChange(stateChange transfer.StateChange, st
 	defer stmt.Close()
 
 	sqlRes, _ := stmt.Exec(serializedData)
-
 	lastRowId, _ := sqlRes.LastInsertId()
 
 	*stateChangeId = int(lastRowId)

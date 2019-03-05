@@ -732,24 +732,25 @@ func updateQueues(iteration *TransitionResult, stateChange StateChange) {
 		}
 	}
 
-	if chainState != nil {
-		if chainState.QueueIdsToQueues != nil {
-			for _, v := range chainState.QueueIdsToQueues {
-				l := len(v)
-				for i := 0; i < l; i++ {
-					e := v[i]
-					log.Debug("[updateQueues] QueueIdsToQueues:", reflect.TypeOf(e).String())
-				}
-
-			}
-		}
-	}
+	//if chainState != nil {
+	//	if chainState.QueueIdsToQueues != nil {
+	//		for _, v := range chainState.QueueIdsToQueues {
+	//			l := len(v)
+	//			for i := 0; i < l; i++ {
+	//				e := v[i]
+	//				log.Debug("[updateQueues] QueueIdsToQueues:", reflect.TypeOf(e).String())
+	//			}
+	//		}
+	//	}
+	//}
 	return
-
 }
 
 func StateTransition(chainState State, stateChange StateChange) *TransitionResult {
 	iteration := handleStateChangeForNode(chainState, stateChange)
+	if iteration.NewState == nil {
+		log.Warn("[node.StateTransition] iteration.NewState is nil")
+	}
 	for _, e := range iteration.Events {
 		log.Debug("[node.StateTransition]:", reflect.TypeOf(e).String())
 	}

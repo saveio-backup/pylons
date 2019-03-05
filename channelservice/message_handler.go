@@ -43,7 +43,6 @@ func (self *MessageHandler) HandleMessageDirecttransfer(channel *ChannelService,
 	var tokenNetworkIdentifier common.TokenNetworkID
 
 	copy(tokenNetworkIdentifier[:], message.EnvelopeMessage.TokenNetworkAddress.TokenNetworkAddress[:20])
-
 	//todo check
 
 	//balanceProof := BalanceProofFromEnvelope(message.EnvelopeMessage, message.Pack())
@@ -199,7 +198,6 @@ func BalanceProofFromEnvelope(message *messages.EnvelopeMessage, dataToSign []by
 	log.Debug("[BalanceProofFromEnvelope]: ", locksRoot)
 	tmpMessageHash := common.GetHash(dataToSign)
 	copy(messageHash[:], tmpMessageHash[:32])
-
 	copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
 	if message.Signature == nil {
 		log.Warn("BalanceProofFromEnvelope message.Signature is nil")

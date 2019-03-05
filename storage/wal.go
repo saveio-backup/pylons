@@ -21,11 +21,11 @@ func RestoreToStateChange(transitionFunction transfer.StateTransitionCallback,
 	unAppliedStateChanges := storage.getStateChangesByIdentifier(
 		fromStateChangeId, stateChangeIdentifier)
 
-	if chainState, ok := snapshot.(*transfer.ChainState); ok {
-		chainState.AdjustChainState()
-	}
+	var ok bool
+	var chainState *transfer.ChainState
 	var stateManager *transfer.StateManager
-	if chainState, ok := snapshot.(*transfer.ChainState); ok {
+
+	if chainState, ok = snapshot.(*transfer.ChainState); ok {
 		chainState.AdjustChainState()
 		stateManager = &transfer.StateManager{StateTransition: transitionFunction, CurrentState: chainState}
 	} else {

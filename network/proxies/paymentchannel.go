@@ -44,7 +44,13 @@ func NewPaymentChannel(tokenNetwork *TokenNetwork, channelIdentifier common.Chan
 		self.openBlockHeight = v.(common.BlockHeight)
 	}
 	if v, exist := args["settleTimeout"]; exist {
-		self.settleTimeout = common.BlockHeight(v.(common.BlockTimeout))
+		self.settleTimeout = v.(common.BlockHeight)
+		switch v.(type) {
+		case common.BlockHeight:
+			self.settleTimeout = v.(common.BlockHeight)
+		case common.BlockTimeout:
+			self.settleTimeout = common.BlockHeight(v.(common.BlockTimeout))
+		}
 	}
 
 	self.channelIdentifier = channelIdentifier

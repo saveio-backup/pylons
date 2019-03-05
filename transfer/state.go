@@ -135,7 +135,16 @@ func DeepCopy(src State) *ChainState {
 
 		value.IdentifiersToPaymentnetworks = make(map[common.PaymentNetworkID]*PaymentNetworkState)
 		for id, state := range chainState.IdentifiersToPaymentnetworks {
-			value.IdentifiersToPaymentnetworks[id] = state
+			value.IdentifiersToPaymentnetworks[id] = &PaymentNetworkState{}
+			value.IdentifiersToPaymentnetworks[id].Address = state.Address
+			value.IdentifiersToPaymentnetworks[id].TokenAddressesToTokenIdentifiers = make(map[common.TokenAddress]common.TokenNetworkID)
+			for tokenAddress, tokenNetworkId := range state.TokenAddressesToTokenIdentifiers {
+				value.IdentifiersToPaymentnetworks[id].TokenAddressesToTokenIdentifiers[tokenAddress] = tokenNetworkId
+			}
+			value.IdentifiersToPaymentnetworks[id].TokenIdentifiersToTokenNetworks = make(map[common.TokenNetworkID]*TokenNetworkState)
+			for tokenNetworkId, tokenNetworkState := range state.TokenIdentifiersToTokenNetworks {
+				value.IdentifiersToPaymentnetworks[id].TokenIdentifiersToTokenNetworks[tokenNetworkId] = tokenNetworkState
+			}
 		}
 		value.NodeAddressesToNetworkstates = make(map[common.Address]string)
 		for addr, state := range chainState.NodeAddressesToNetworkstates {

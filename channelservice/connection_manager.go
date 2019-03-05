@@ -22,9 +22,7 @@ type ConnectionManager struct {
 	wg sync.WaitGroup
 }
 
-func NewConnectionManager(
-	channel *ChannelService,
-	tokenNetworkIdentifier common.TokenNetworkID) *ConnectionManager {
+func NewConnectionManager(channel *ChannelService, tokenNetworkIdentifier common.TokenNetworkID) *ConnectionManager {
 	self := new(ConnectionManager)
 
 	self.funds = 0

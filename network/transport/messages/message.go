@@ -68,8 +68,8 @@ func (this *EnvelopeMessage) DataToSign(dataToSign []byte) []byte {
 		additionalHash = MessageHash(dataToSign)
 	}
 
-	log.Debug("[LockedTransfer DataToSign] balanceHash: ", balanceHash)
-	log.Debug("[LockedTransfer DataToSign] additionalHash: ", additionalHash)
+	log.Debug("[EnvelopeMessage DataToSign] balanceHash: ", balanceHash)
+	log.Debug("[EnvelopeMessage DataToSign] additionalHash: ", additionalHash)
 	return transfer.PackBalanceProof(nonce, balanceHash, additionalHash, channelId, tokenNetworkAddr, chainId, 1)
 }
 
@@ -407,9 +407,9 @@ func Sign(account *account.Account, message SignedMessageInterface) error {
 	default:
 		return fmt.Errorf("[Sign] Unknow message type to sign ", reflect.TypeOf(message).String())
 	}
-	log.Debug("Sign [PubKey]: ", pubKey)
-	log.Debug("Sign [Data]: ", data)
-	log.Debug("Sign [Signature]: ", sigData)
+	//log.Debug("Sign [PubKey]: ", pubKey)
+	//log.Debug("Sign [Data]: ", data)
+	//log.Debug("Sign [Signature]: ", sigData)
 	return nil
 }
 func GetPublicKeyFromEnvelope(message *EnvelopeMessage) (keypair.PublicKey, error) {
