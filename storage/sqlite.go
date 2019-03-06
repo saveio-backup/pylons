@@ -652,3 +652,31 @@ func (self *SQLiteStorage) Close() {
 	self.connState.Close()
 	self.connEvent.Close()
 }
+func (self *SQLiteStorage) CountStateChanges() int {
+	self.writeStateLock.Lock()
+	defer self.writeStateLock.Unlock()
+	var count int
+	stmt, err := self.connState.Prepare("SELECT seq FROM sqlite_sequence WHERE name=?")
+	if err != nil {
+		return 0
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query("state_changes")
+	if err != nil {
+		return 1
+	}
+	defer rows.Close()
+
+	var countStr string
+	for rows.Next() {
+		err = rows.Scan(&countStr)
+		if err != nil {
+			return 2
+		}
+		count, err = strconv.Atoi(countStr)
+		break
+	}
+
+	return count
+}

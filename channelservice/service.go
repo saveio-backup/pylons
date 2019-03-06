@@ -167,6 +167,9 @@ func (self *ChannelService) Start() error {
 		log.Error("create db failed:", err)
 		return err
 	}
+	stateChangeQty := sqliteStorage.CountStateChanges()
+	self.snapshotGroup = stateChangeQty / constants.SNAPSHOT_STATE_CHANGE_COUNT
+
 	var lastLogBlockHeight common.BlockHeight
 	self.Wal = storage.RestoreToStateChange(transfer.StateTransition, sqliteStorage, "latest")
 	if self.Wal.StateManager.CurrentState == nil {
@@ -206,8 +209,6 @@ func (self *ChannelService) Start() error {
 		log.Infof("Restored state from WAL,last log BlockHeight=%d", lastLogBlockHeight)
 	}
 
-	stateChangeQty := self.Wal.StateChangeId
-	self.snapshotGroup = stateChangeQty / constants.SNAPSHOT_STATE_CHANGE_COUNT
 	log.Info("db setup done")
 	//set filter start block 	number
 	self.lastFilterBlock = lastLogBlockHeight
@@ -251,7 +252,7 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 	log.Debug("[HandleStateChange]", reflect.TypeOf(stateChange).String())
 	eventList := self.Wal.LogAndDispatch(stateChange)
 	for _, e := range eventList {
-		log.Debug("[HandleStateChange] Range Events: ", reflect.TypeOf(e).String(), "nimbusEventHandler.OnNimbusEvent")
+		log.Debug("[HandleStateChange] Range Events: ", reflect.TypeOf(e).String())
 		self.channelEventHandler.OnChannelEvent(self, e.(transfer.Event))
 	}
 	//take snapshot
