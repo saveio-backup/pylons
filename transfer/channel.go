@@ -936,24 +936,24 @@ func createSendDirectTransfer(channelState *NettingChannelState, amount common.P
 	lockedAmount := getAmountLocked(ourState)
 
 	balanceProof := &BalanceProofUnsignedState{
-		Nonce:nonce,
-		TransferredAmount:transferAmount,
-		LockedAmount:common.TokenAmount(lockedAmount),
-		LocksRoot:locksRoot,
-		TokenNetworkIdentifier:channelState.TokenNetworkIdentifier,
-		ChannelIdentifier:channelState.Identifier,
-		ChainId:channelState.ChainId,
+		Nonce:                  nonce,
+		TransferredAmount:      transferAmount,
+		LockedAmount:           common.TokenAmount(lockedAmount),
+		LocksRoot:              locksRoot,
+		TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,
+		ChannelIdentifier:      channelState.Identifier,
+		ChainId:                channelState.ChainId,
 	}
 
 	sendDirectTransfer := SendDirectTransfer{
-		SendMessageEvent:SendMessageEvent{
-			Recipient:common.Address(recipient),
-			ChannelIdentifier:channelState.Identifier,
-			MessageIdentifier:messageIdentifier,
+		SendMessageEvent: SendMessageEvent{
+			Recipient:         common.Address(recipient),
+			ChannelIdentifier: channelState.Identifier,
+			MessageIdentifier: messageIdentifier,
 		},
-		PaymentIdentifier:paymentIdentifier,
-		BalanceProof:balanceProof,
-		TokenAddress:common.TokenAddress(channelState.TokenAddress),
+		PaymentIdentifier: paymentIdentifier,
+		BalanceProof:      balanceProof,
+		TokenAddress:      common.TokenAddress(channelState.TokenAddress),
 	}
 
 	return &sendDirectTransfer
@@ -1402,7 +1402,7 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 			msg}
 
 		events = append(events, transferInvalidEvent)
-		log.Info("[handleReceiveDirectTransfer] EventTransferReceivedInvalidDirectTransfer: %s", msg)
+		log.Info("[handleReceiveDirectTransfer] EventTransferReceivedInvalidDirectTransfer:", msg)
 	}
 
 	return TransitionResult{channelState, events}

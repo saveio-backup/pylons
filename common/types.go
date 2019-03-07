@@ -51,7 +51,7 @@ type MerkleTreeLeaves list.List
 
 type MessageID int64
 
-type Nonce int
+type Nonce uint64
 
 type AdditionalHash []byte
 

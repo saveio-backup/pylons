@@ -35,10 +35,13 @@ var testConfig = &ch.ChannelConfig{
 var f *os.File
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var bidirect = flag.Bool("bidirect", false, "run bidirection test")
+var tranferAmount = flag.Uint("amount", 0, "test transfer amount")
 
 func main() {
 	log.InitLog(2, log.Stdout)
 	flag.Parse()
+	var amount uint
+	amount = 10000
 	if *cpuprofile != "" {
 		cupf, err := os.Create(*cpuprofile)
 		if err != nil {
@@ -46,6 +49,9 @@ func main() {
 		}
 		pprof.StartCPUProfile(cupf)
 		defer pprof.StopCPUProfile()
+	}
+	if *tranferAmount != 0 {
+		amount = *tranferAmount
 	}
 	wallet, err := wallet.OpenWallet(WALLET_PATH)
 	if err != nil {
@@ -69,7 +75,9 @@ func main() {
 		log.Fatal(err)
 		return
 	}
+
 	target, _ := chaincomm.AddressFromBase58("AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
+	go logCurrentBalance(channel, common.Address(target))
 	for {
 		state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
 		if state == transfer.NetworkReachable {
@@ -81,17 +89,16 @@ func main() {
 	}
 	if *bidirect {
 		log.Info("begin direct transfer test...")
-		go loopTest(channel, 1, common.Address(target), 100000, 0)
+		go loopTest(channel, 1, common.Address(target), amount, 0)
 	}
-	go logCurrentBalance(channel, common.Address(target))
 
 	waitToExit()
 }
 
-func loopTest(channel *ch.Channel, amount int, target common.Address, times, interval int) {
+func loopTest(channel *ch.Channel, amount int, target common.Address, times uint, interval int) {
 
 	r := rand.NewSource(time.Now().UnixNano())
-	for index := 0; index < times; index++ {
+	for index := uint(0); index < times; index++ {
 		if interval > 0 {
 			<-time.After(time.Duration(interval) * time.Millisecond)
 		}
@@ -109,8 +116,6 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times, int
 		} else {
 			//log.Info("[loopTest] direct transfer successfully")
 		}
-
-		log.Info("[loopTest] wait for payment status update...")
 		ret := <-status
 		if !ret {
 			log.Error("[loopTest] payment failed:")
@@ -124,7 +129,7 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times, int
 
 }
 func logCurrentBalance(channel *ch.Channel, target common.Address) {
-	ticker := time.NewTicker(config.DEFAULT_GEN_BLOCK_TIME * time.Second)
+	ticker := time.NewTicker(config.MIN_GEN_BLOCK_TIME * time.Second)
 
 	for {
 		select {

@@ -34,10 +34,14 @@ var testConfig = &ch.ChannelConfig{
 }
 var f *os.File
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+var tranferAmount = flag.Uint("amount", 0, "test transfer amount")
 
 func main() {
 	log.InitLog(2, log.Stdout)
 	flag.Parse()
+	var amount uint
+	amount = 10000
+
 	if *cpuprofile != "" {
 		cupf, err := os.Create(*cpuprofile)
 		if err != nil {
@@ -45,6 +49,9 @@ func main() {
 		}
 		pprof.StartCPUProfile(cupf)
 		defer pprof.StopCPUProfile()
+	}
+	if *tranferAmount != 0 {
+		amount = *tranferAmount
 	}
 	wallet, err := wallet.OpenWallet(WALLET_PATH)
 	if err != nil {
@@ -71,7 +78,7 @@ func main() {
 
 	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
 	target, _ := chaincomm.AddressFromBase58("Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
-
+	go logCurrentBalance(channel, common.Address(target))
 	channelID := channel.Service.OpenChannel(tokenAddress, common.Address(target))
 	depositAmount := common.TokenAmount(1000000)
 	if channelID != 0 {
@@ -95,19 +102,18 @@ func main() {
 			<-time.After(time.Duration(3000) * time.Millisecond)
 		}
 		log.Info("begin direct transfer test...")
-		go loopTest(channel, 1, common.Address(target), 10000, 0)
+		go loopTest(channel, 1, common.Address(target), amount, 0)
 	} else {
 		log.Fatal("setup channel failed, exit")
 		return
 	}
-	go logCurrentBalance(channel, common.Address(target))
 
 	waitToExit()
 }
-func loopTest(channel *ch.Channel, amount int, target common.Address, times, interval int) {
+func loopTest(channel *ch.Channel, amount uint, target common.Address, times uint, interval int) {
 
 	r := rand.NewSource(time.Now().UnixNano())
-	for index := 0; index < times; index++ {
+	for index := uint(0); index < times; index++ {
 		if interval > 0 {
 			<-time.After(time.Duration(interval) * time.Millisecond)
 		}
@@ -140,7 +146,7 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times, int
 	log.Info("[loopTest] direct transfer test done")
 }
 func logCurrentBalance(channel *ch.Channel, target common.Address) {
-	ticker := time.NewTicker(config.DEFAULT_GEN_BLOCK_TIME * time.Second)
+	ticker := time.NewTicker(config.MIN_GEN_BLOCK_TIME * time.Second)
 
 	for {
 		select {

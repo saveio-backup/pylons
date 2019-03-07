@@ -249,6 +249,8 @@ func (self *ChannelService) AddPendingRoutine() {
 }
 
 func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) []transfer.Event {
+	self.dispatchEventsLock.Lock()
+	defer self.dispatchEventsLock.Unlock()
 	log.Debug("[HandleStateChange]", reflect.TypeOf(stateChange).String())
 	eventList := self.Wal.LogAndDispatch(stateChange)
 	for _, e := range eventList {
@@ -256,8 +258,7 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 		self.channelEventHandler.OnChannelEvent(self, e.(transfer.Event))
 	}
 	//take snapshot
-	self.dispatchEventsLock.Lock()
-	defer self.dispatchEventsLock.Unlock()
+
 	newSnapShotGroup := self.Wal.StateChangeId / constants.SNAPSHOT_STATE_CHANGE_COUNT
 	if newSnapShotGroup > self.snapshotGroup {
 		log.Info("storing snapshot, snapshot id = ", newSnapShotGroup)

@@ -527,7 +527,7 @@ func (self *SQLiteStorage) GetLatestStateChangesByDataField(filters map[string]i
 }
 
 func (self *SQLiteStorage) getStateChangesByIdentifier(fromIdentifier interface{},
-	toIdentifier interface{}) *list.List {
+	toIdentifier interface{}) []transfer.StateChange {
 
 	var rows *sql.Rows
 	var realFromIdentifier, realToIdentifier int
@@ -560,7 +560,7 @@ func (self *SQLiteStorage) getStateChangesByIdentifier(fromIdentifier interface{
 	}
 
 	if toLatest == true {
-		rows, _ = self.connState.Query("SELECT data FROM state_changes WHERE identifier >= ?", realFromIdentifier)
+		rows, _ = self.connState.Query("SELECT data FROM state_changes WHERE identifier > ?", realFromIdentifier)
 	} else {
 		rows, _ = self.connState.Query("SELECT data FROM state_changes WHERE identifier BETWEEN ? AND ?", realFromIdentifier, realToIdentifier)
 	}
@@ -568,7 +568,7 @@ func (self *SQLiteStorage) getStateChangesByIdentifier(fromIdentifier interface{
 
 	var stateChangeData []byte
 
-	result := list.New()
+	result := make([]transfer.StateChange, 0)
 	for rows.Next() {
 		err := rows.Scan(&stateChangeData)
 		if err == nil {
@@ -577,7 +577,7 @@ func (self *SQLiteStorage) getStateChangesByIdentifier(fromIdentifier interface{
 				continue
 			}
 			if stateChange, ok := v.(transfer.StateChange); ok {
-				result.PushBack(stateChange)
+				result = append(result, stateChange)
 			}
 		}
 	}
