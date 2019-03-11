@@ -34,6 +34,7 @@ var testConfig = &ch.ChannelConfig{
 }
 var f *os.File
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+var disable = flag.Bool("disable", false, "disable transfer test")
 var tranferAmount = flag.Uint("amount", 0, "test transfer amount")
 
 func main() {
@@ -101,8 +102,10 @@ func main() {
 			log.Infof("peer state = %s wait for connect ...", state)
 			<-time.After(time.Duration(3000) * time.Millisecond)
 		}
-		log.Info("begin direct transfer test...")
-		go loopTest(channel, 1, common.Address(target), amount, 0)
+		if *disable == false {
+			log.Info("begin direct transfer test...")
+			go loopTest(channel, 1, common.Address(target), amount, 0)
+		}
 	} else {
 		log.Fatal("setup channel failed, exit")
 		return

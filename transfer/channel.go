@@ -1402,7 +1402,7 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 			msg}
 
 		events = append(events, transferInvalidEvent)
-		log.Info("[handleReceiveDirectTransfer] EventTransferReceivedInvalidDirectTransfer:", msg)
+		log.Warn("[handleReceiveDirectTransfer] EventTransferReceivedInvalidDirectTransfer:", msg)
 	}
 
 	return TransitionResult{channelState, events}

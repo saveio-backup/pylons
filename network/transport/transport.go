@@ -214,9 +214,9 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 				continue
 			}
 			item := data.(*QueueItem)
-			//log.Infof("msgId %d queue.DeliverChan %d", msgId.MessageId, item.messageId.MessageId)
+			fmt.Printf("msgId = %+v\n", msgId.MessageId)
+			fmt.Printf("item = %+v\n", item.messageId)
 			if msgId.MessageId == item.messageId.MessageId {
-				//log.Info("msgId.MessageId == item.messageId.MessageId====popup ", msgId.MessageId)
 				queue.Pop()
 				t.Stop()
 				if queue.Len() != 0 {
@@ -238,7 +238,7 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 	}
 
 	msg := item.(*QueueItem).message
-
+	fmt.Printf("send msg msg = %+v\n", msg)
 	address := this.GetHostPortFromAddress(queueId.Recipient)
 	if address == "" {
 		return errors.New("no valid address to send message")

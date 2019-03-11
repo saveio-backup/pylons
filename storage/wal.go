@@ -73,10 +73,9 @@ func (self *WriteAheadLog) LogAndDispatch(stateChange transfer.StateChange) []tr
 	log.Debug("[LogAndDispatch] ", reflect.TypeOf(stateChange).String())
 	events := self.StateManager.Dispatch(stateChange)
 
-	self.Storage.EventSync.Wait()
 	t := time.Now()
 	timestamp := t.UTC().String()
-	go self.Storage.writeEvents(self.StateChangeId, events, timestamp)
+	self.Storage.writeEvents(self.StateChangeId, events, timestamp)
 
 	return events
 }
