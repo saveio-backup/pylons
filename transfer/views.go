@@ -6,7 +6,7 @@ import (
 
 	sc_utils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
-	"github.com/daseinio/x-dsp/log"
+	"github.com/oniio/oniChain/common/log"
 )
 
 func GetNeigbours(chainState *ChainState) []common.Address {
