@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/oniio/oniChannel/network/transport/messages"
+	"github.com/oniio/oniChain/common/log"
 )
 
 type Node struct {
@@ -65,7 +66,7 @@ func (q *Queue) Push(data interface{}) bool {
 		q.tail = node
 	}
 	q.length++
-
+	log.Debugf("Queue Push Queue: %p\n", q)
 	return true
 }
 
@@ -93,6 +94,6 @@ func (q *Queue) Pop() (interface{}, bool) {
 		q.tail = nil
 	}
 	q.length--
-
+	log.Debugf("Queue Pop Queue: %p\n", q)
 	return data, true
 }

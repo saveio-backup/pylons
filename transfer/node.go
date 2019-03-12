@@ -13,7 +13,7 @@ func getNetworks(chainState *ChainState, paymentNetworkIdentifier common.Payment
 
 	var tokenNetworkState *TokenNetworkState
 
-	paymentNetworkState := chainState.IdentifiersToPaymentnetworks[paymentNetworkIdentifier]
+	paymentNetworkState := chainState.IdentifiersToPaymentNetworks[paymentNetworkIdentifier]
 
 	if paymentNetworkState != nil {
 		if tokenNetworkId, ok := paymentNetworkState.TokenAddressesToTokenIdentifiers[tokenAddress]; ok {
@@ -35,7 +35,7 @@ func getTokenNetworkByTokenAddress(chainState *ChainState, paymentNetworkIdentif
 func subDispatchToAllChannels(chainState *ChainState, stateChange StateChange,
 	blockNumber common.BlockHeight) TransitionResult {
 	var events []Event
-	for _, v := range chainState.IdentifiersToPaymentnetworks {
+	for _, v := range chainState.IdentifiersToPaymentNetworks {
 		for _, v2 := range v.TokenIdentifiersToTokenNetworks {
 			for _, v3 := range v2.ChannelIdentifiersToChannels {
 				result := StateTransitionForChannel(v3, stateChange, blockNumber)
@@ -285,7 +285,7 @@ func maybeAddTokenNetwork(chainState *ChainState, paymentNetworkIdentifier commo
 		paymentNetworkState.TokenIdentifiersToTokenNetworks[tokenNetworkIdentifier] = tokenNetworkState
 		paymentNetworkState.TokenAddressesToTokenIdentifiers[tokenAddress] = tokenNetworkState.Address
 
-		chainState.IdentifiersToPaymentnetworks[paymentNetworkIdentifier] = paymentNetworkState
+		chainState.IdentifiersToPaymentNetworks[paymentNetworkIdentifier] = paymentNetworkState
 	}
 
 	if tokenNetworkStatePrevious == nil {
@@ -295,26 +295,24 @@ func maybeAddTokenNetwork(chainState *ChainState, paymentNetworkIdentifier commo
 	return
 }
 
-func inplaceDeleteMessageQueue(chainState *ChainState, stateChange StateChange,
-	queueid QueueIdentifier) {
-
-	queue, ok := chainState.QueueIdsToQueues[queueid]
-	if ok == false {
+func inPlaceDeleteMessageQueue(chainState *ChainState, stateChange StateChange, queueId QueueIdentifier) {
+	queue, ok := chainState.QueueIdsToQueues[queueId]
+	if !ok {
+		log.Warn("[inPlaceDeleteMessageQueue] queueId is not in QueueIdsToQueues.")
 		return
 	}
 
-	newQueue := inplaceDeleteMessage(queue, stateChange)
-
+	newQueue := inPlaceDeleteMessage(queue, stateChange)
 	if len(newQueue) == 0 {
-		delete(chainState.QueueIdsToQueues, queueid)
+		delete(chainState.QueueIdsToQueues, queueId)
 	} else {
-		chainState.QueueIdsToQueues[queueid] = newQueue
+		chainState.QueueIdsToQueues[queueId] = newQueue
 	}
 
 	return
 }
 
-func inplaceDeleteMessage(messageQueue []Event, stateChange StateChange) []Event {
+func inPlaceDeleteMessage(messageQueue []Event, stateChange StateChange) []Event {
 
 	if messageQueue == nil {
 		return messageQueue
@@ -407,8 +405,9 @@ func handleContractReceiveChannelClosed(chainState *ChainState,
 }
 
 func handleDelivered(chainState *ChainState, stateChange *ReceiveDelivered) *TransitionResult {
+	log.Infof("[handleDelivered] stateChange MessageIdentifier: %v\n", stateChange.MessageIdentifier)
 	queueId := QueueIdentifier{stateChange.Sender, 0}
-	inplaceDeleteMessageQueue(chainState, stateChange, queueId)
+	inPlaceDeleteMessageQueue(chainState, stateChange, queueId)
 
 	return &TransitionResult{chainState, nil}
 }
@@ -427,7 +426,7 @@ func handleNodeChangeNetworkState(chainState *ChainState,
 
 	nodeAddress := stateChange.NodeAddress
 	networkState := stateChange.NetworkState
-	chainState.NodeAddressesToNetworkstates[nodeAddress] = networkState
+	chainState.NodeAddressesToNetworkStates[nodeAddress] = networkState
 
 	return &TransitionResult{chainState, nil}
 }
@@ -435,7 +434,7 @@ func handleNodeChangeNetworkState(chainState *ChainState,
 func handleLeaveAllNetworks(chainState *ChainState) *TransitionResult {
 	var events []Event
 
-	for _, v := range chainState.IdentifiersToPaymentnetworks {
+	for _, v := range chainState.IdentifiersToPaymentNetworks {
 		for _, v := range v.TokenIdentifiersToTokenNetworks {
 			result := getChannelsCloseEvents(chainState, v)
 			events = append(events, result...)
@@ -452,9 +451,9 @@ func handleNewPaymentNetwork(chainState *ChainState,
 	paymentNetwork := stateChange.PaymentNetwork
 	paymentNetworkIdentifier := paymentNetwork.Address
 
-	_, ok := chainState.IdentifiersToPaymentnetworks[paymentNetworkIdentifier]
+	_, ok := chainState.IdentifiersToPaymentNetworks[paymentNetworkIdentifier]
 	if !ok {
-		chainState.IdentifiersToPaymentnetworks[paymentNetworkIdentifier] = paymentNetwork
+		chainState.IdentifiersToPaymentNetworks[paymentNetworkIdentifier] = paymentNetwork
 	}
 
 	return &TransitionResult{chainState, events}
@@ -524,7 +523,7 @@ func handleProcessed(chainState *ChainState, stateChange *ReceiveProcessed) *Tra
 	}
 
 	for k := range chainState.QueueIdsToQueues {
-		inplaceDeleteMessageQueue(chainState, stateChange, k)
+		inPlaceDeleteMessageQueue(chainState, stateChange, k)
 	}
 	return &TransitionResult{chainState, events}
 }

@@ -78,11 +78,11 @@ func MdIsChannelUsable(candidateChannelState *NettingChannelState, transferAmoun
 		candidateChannelState.PartnerState)
 
 	//
-	fmt.Println(lockTimeout, candidateChannelState.SettleTimeout, candidateChannelState.RevealTimeout,
+	log.Debug(lockTimeout, candidateChannelState.SettleTimeout, candidateChannelState.RevealTimeout,
 		pendingTransfersCount, transferAmount, distributable)
 
 	channelState := GetStatus(candidateChannelState)
-	fmt.Println("channelState: ", channelState)
+	log.Debug("channelState: ", channelState)
 
 	isValid := IsValidAmount(candidateChannelState.OurState, common.TokenAmount(transferAmount))
 	if isValid {
@@ -99,7 +99,7 @@ func MdIsChannelUsable(candidateChannelState *NettingChannelState, transferAmoun
 		IsValidAmount(candidateChannelState.OurState, common.TokenAmount(transferAmount))
 
 	if !usable {
-		fmt.Println("MdIsChannelUsable channel is not usable.")
+		log.Warn("MdIsChannelUsable channel is not usable.")
 	}
 	return usable
 }
@@ -452,8 +452,8 @@ func backwardTransferPair(backwardChannel *NettingChannelState, payerTransfer *L
 	var events []Event
 
 	lock := payerTransfer.Lock
-	fmt.Println("lock.Expiration : ", lock.Expiration)
-	fmt.Println("blockNumber : ", blockNumber)
+	log.Debug("lock.Expiration : ", lock.Expiration)
+	log.Debug("blockNumber : ", blockNumber)
 	lockTimeout := common.BlockTimeout(lock.Expiration - blockNumber)
 
 	//# Ensure the refund transfer's lock has a safe expiration, otherwise don't

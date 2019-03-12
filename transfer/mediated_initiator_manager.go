@@ -2,7 +2,6 @@ package transfer
 
 import (
 	"crypto/sha256"
-	"fmt"
 	"reflect"
 
 	"github.com/oniio/oniChannel/common"
@@ -313,7 +312,7 @@ func ImStateTransition(paymentState *InitiatorPaymentState, stateChange interfac
 		iteration = ImHandleOnChainSecretReveal(paymentState, contractReceiveSecretReveal,
 			channelIdToChannels)
 	default:
-		fmt.Println("[ImStateTransition] unknown stateChange Type: ", reflect.TypeOf(stateChange).String())
+		log.Warn("[ImStateTransition] unknown stateChange Type: ", reflect.TypeOf(stateChange).String())
 	}
 	return iteration
 }

@@ -688,13 +688,18 @@ func GetDistributable(sender *NettingChannelEndState, receiver *NettingChannelEn
 }
 
 func getNextNonce(endState *NettingChannelEndState) common.Nonce {
+	var nonce common.Nonce
+
+	log.Debug("[getNextNonce]: ", common.ToBase58(endState.Address))
+
 	if endState.BalanceProof != nil {
-		return endState.BalanceProof.Nonce + 1
+		nonce = endState.BalanceProof.Nonce + 1
 	} else {
+		nonce = 1
 		log.Warn("[getNextNonce=] endState.BalanceProof == nil")
 	}
-
-	return 1
+	log.Info("[getNextNonce=============] nonce = ", nonce)
+	return nonce
 }
 
 func MerkleTreeWidth(merkleTree *MerkleTreeState) int {
@@ -1348,7 +1353,7 @@ func HandleReceiveLockedTransfer(channelState *NettingChannelState,
 		lock := mediatedTransfer.Lock
 		channelState.PartnerState.SecretHashesToLockedLocks[common.SecretHash(lock.SecretHash)] = lock
 		//addr2 := common2.Address(mediatedTransfer.BalanceProof.Sender)
-		//fmt.Println("[HandleReceiveLockedTransfer] SendProcessed to: ", addr2.ToBase58())
+		//log.Debug("[HandleReceiveLockedTransfer] SendProcessed to: ", addr2.ToBase58())
 
 		sendProcessed := &SendProcessed{SendMessageEvent: SendMessageEvent{
 			Recipient:         common.Address(mediatedTransfer.BalanceProof.Sender),
@@ -1370,7 +1375,7 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 	directTransfer *ReceiveTransferDirect) TransitionResult {
 
 	var events []Event
-
+	log.Debug("[handleReceiveDirectTransfer] %v \n", channelState.PartnerState)
 	isValid, msg := IsValidDirectTransfer(directTransfer, channelState,
 		channelState.PartnerState, channelState.OurState)
 
@@ -1383,11 +1388,11 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 
 		channelState.PartnerState.BalanceProof = directTransfer.BalanceProof
 		paymentReceivedSuccess := &EventPaymentReceivedSuccess{
-			channelState.PaymentNetworkIdentifier,
-			channelState.TokenNetworkIdentifier,
-			directTransfer.PaymentIdentifier,
-			transferAmount,
-			common.InitiatorAddress(channelState.PartnerState.Address)}
+			PaymentNetworkIdentifier: channelState.PaymentNetworkIdentifier,
+			TokenNetworkIdentifier:   channelState.TokenNetworkIdentifier,
+			Identifier:               directTransfer.PaymentIdentifier,
+			Amount:                   transferAmount,
+			Initiator:                common.InitiatorAddress(channelState.PartnerState.Address)}
 
 		sendProcessed := new(SendProcessed)
 		sendProcessed.Recipient = common.Address(directTransfer.BalanceProof.Sender)
@@ -1398,11 +1403,12 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 		events = append(events, sendProcessed)
 	} else {
 		transferInvalidEvent := &EventTransferReceivedInvalidDirectTransfer{
-			directTransfer.PaymentIdentifier,
-			msg}
+			Identifier: directTransfer.PaymentIdentifier,
+			Reason:     msg,
+		}
 
 		events = append(events, transferInvalidEvent)
-		log.Warn("[handleReceiveDirectTransfer] EventTransferReceivedInvalidDirectTransfer:", msg)
+		log.Error("[handleReceiveDirectTransfer] EventTransferReceivedInvalidDirectTransfer:", msg)
 	}
 
 	return TransitionResult{channelState, events}
@@ -1448,18 +1454,23 @@ func handleBlock(channelState *NettingChannelState, stateChange *Block,
 
 		if stateChange.BlockHeight > settlementEnd && channelState.SettleTransaction == nil {
 			channelState.SettleTransaction = &TransactionExecutionStatus{
-				stateChange.BlockHeight, 0, ""}
+				StartedBlockHeight:  stateChange.BlockHeight,
+				FinishedBlockHeight: 0,
+				Result:              "",
+			}
 
-			event := &ContractSendChannelSettle{ContractSendEvent{}, channelState.Identifier,
-				common.TokenNetworkAddress(channelState.TokenNetworkIdentifier)}
+			event := &ContractSendChannelSettle{
+				ContractSendEvent:      ContractSendEvent{},
+				ChannelIdentifier:      channelState.Identifier,
+				TokenNetworkIdentifier: common.TokenNetworkAddress(channelState.TokenNetworkIdentifier),
+			}
 			events = append(events, event)
 		}
 	}
 
 	for isDepositConfirmed(channelState, blockNumber) {
 		orderDepositTransaction := channelState.DepositTransactionQueue.Pop()
-		applyChannelNewbalance(channelState,
-			&orderDepositTransaction.Transaction)
+		applyChannelNewbalance(channelState, &orderDepositTransaction.Transaction)
 	}
 
 	return TransitionResult{channelState, events}
@@ -1510,8 +1521,7 @@ func handleChannelClosed(channelState *NettingChannelState, stateChange *Contrac
 }
 
 func handleChannelUpdatedTransfer(channelState *NettingChannelState,
-	stateChange *ContractReceiveUpdateTransfer,
-	blockNumber common.BlockHeight) TransitionResult {
+	stateChange *ContractReceiveUpdateTransfer, blockNumber common.BlockHeight) TransitionResult {
 
 	if stateChange.ChannelIdentifier == channelState.Identifier {
 		channelState.UpdateTransaction = &TransactionExecutionStatus{
@@ -1522,8 +1532,7 @@ func handleChannelUpdatedTransfer(channelState *NettingChannelState,
 }
 
 func handleChannelSettled(channelState *NettingChannelState,
-	stateChange *ContractReceiveChannelSettled,
-	blockNumber common.BlockHeight) TransitionResult {
+	stateChange *ContractReceiveChannelSettled, blockNumber common.BlockHeight) TransitionResult {
 
 	var events []Event
 
@@ -1534,7 +1543,7 @@ func handleChannelSettled(channelState *NettingChannelState,
 			isSettlePending = true
 		}
 
-		merkleTreeLeaves := []common.Keccak256{}
+		var merkleTreeLeaves []common.Keccak256
 
 		//[TODO] support getBatchUnlock when support unlock
 		if isSettlePending == false && merkleTreeLeaves != nil && len(merkleTreeLeaves) != 0 {

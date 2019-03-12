@@ -10,7 +10,7 @@ import (
 	"reflect"
 
 	"github.com/gogo/protobuf/proto"
-	lru "github.com/hashicorp/golang-lru"
+	"github.com/hashicorp/golang-lru"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/common/constants"
@@ -22,6 +22,7 @@ import (
 	"github.com/oniio/oniP2p/network/addressmap"
 	"github.com/oniio/oniP2p/network/keepalive"
 	"github.com/oniio/oniP2p/types/opcode"
+	"os"
 )
 
 const ADDRESS_CACHE_SIZE = 50
@@ -193,10 +194,14 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 	for {
 		select {
 		case <-queue.DataCh:
+			log.Debugf("[QueueSend] <-queue.DataCh Time: %s queue: %p\n", time.Now().String(), queue)
 			t.Reset(interval * time.Second)
 			this.PeekAndSend(queue, queueId)
 		// handle timeout retry
 		case <-t.C:
+			log.Debugf("[QueueSend]  <-t.C Time: %s queue: %p\n", time.Now().String(), queue)
+			//os.Exit(-1)
+			log.Error("Timeout retry")
 			if queue.Len() == 0 {
 				continue
 			}
@@ -208,23 +213,32 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 				break
 			}
 		case msgId := <-queue.DeliverChan:
-
+			log.Debugf("[DeliverChan] Time: %s msgId := <-queue.DeliverChan queue: %p msgId = %+v queue.length: %d\n",
+				time.Now().String(), queue, msgId.MessageId, queue.Len())
 			data, _ := queue.Peek()
 			if data == nil {
+				log.Debug("[DeliverChan] msgId := <-queue.DeliverChan data == nil")
+				//os.Exit(-1)
+				log.Error("msgId := <-queue.DeliverChan data == nil")
 				continue
 			}
 			item := data.(*QueueItem)
-			fmt.Printf("msgId = %+v\n", msgId.MessageId)
-			fmt.Printf("item = %+v\n", item.messageId)
+			log.Debugf("[DeliverChan] msgId := <-queue.DeliverChan: %s item = %+v\n",
+				reflect.TypeOf(item.message).String(), item.messageId)
 			if msgId.MessageId == item.messageId.MessageId {
 				queue.Pop()
 				t.Stop()
 				if queue.Len() != 0 {
+					log.Debug("msgId.MessageId == item.messageId.MessageId queue.Len() != 0")
 					t.Reset(interval * time.Second)
 					this.PeekAndSend(queue, queueId)
 				}
+			} else {
+				log.Debug("[DeliverChan] msgId.MessageId != item.messageId.MessageId queue.Len: ", queue.Len())
+				os.Exit(-1)
 			}
 		case <-this.kill:
+			log.Info("[QueueSend] msgId := <-this.kill")
 			t.Stop()
 			break
 		}
@@ -234,18 +248,24 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifier) error {
 	item, ok := queue.Peek()
 	if !ok {
-		return fmt.Errorf("Error peeking from queue")
+		return fmt.Errorf("Error peeking from queue. ")
 	}
 
 	msg := item.(*QueueItem).message
-	fmt.Printf("send msg msg = %+v\n", msg)
+	log.Debugf("send msg msg = %+v\n", msg)
 	address := this.GetHostPortFromAddress(queueId.Recipient)
 	if address == "" {
+		log.Error("[PeekAndSend] GetHostPortFromAddress address is nil")
 		return errors.New("no valid address to send message")
 	}
-	this.addressQueueMap.LoadOrStore(address, queue)
+	msgId := common.MessageID(item.(*QueueItem).messageId.MessageId)
+	log.Debugf("[PeekAndSend] address: %s msgId: %v, queue: %p\n", address, msgId, queue)
+	//this.addressQueueMap.LoadOrStore(address, queue)
+
+	this.addressQueueMap.LoadOrStore(msgId, queue)
 	err := this.Send(address, msg)
 	if err != nil {
+		log.Error("[PeekAndSend] send error: ", err.Error())
 		return err
 	}
 
@@ -324,7 +344,7 @@ func (this *Transport) StartHealthCheck(address common.Address) {
 func (this *Transport) SetNodeNetworkState(address common.Address, state string) {
 	chainState := this.ChannelService.StateFromChannel()
 	if chainState != nil {
-		chainState.NodeAddressesToNetworkstates[address] = state
+		chainState.NodeAddressesToNetworkStates[address] = state
 	}
 }
 
@@ -339,7 +359,7 @@ func (this *Transport) Receive(message proto.Message, from string) {
 }
 
 func (this *Transport) ReceiveMessage(message proto.Message, from string) {
-	log.Debug("[ReceiveMessage] %v from: %v", reflect.TypeOf(message).String(), from)
+	log.Infof("[ReceiveMessage] %v from: %v", reflect.TypeOf(message).String(), from)
 
 	if this.ChannelService != nil {
 		this.ChannelService.OnMessage(message, from)
@@ -390,11 +410,11 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 		} else {
 			nodeAddress = this.protocol + "://" + from
 		}
-		log.Debugf("[ReceiveMessage] Send (%v) deliveredMessage from: %v",
-			reflect.TypeOf(message).String(), nodeAddress)
+		log.Infof("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v",
+			reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier, nodeAddress)
 		this.Send(nodeAddress, deliveredMessage)
 	} else {
-		log.Errorf("[ReceiveMessage] (%v) deliveredMessage Sign error: ", err.Error(),
+		log.Infof("SendDeliveredMessage (%v) deliveredMessage Sign error: ", err.Error(),
 			reflect.TypeOf(message).String(), nodeAddress)
 	}
 }
@@ -402,16 +422,25 @@ func (this *Transport) ReceiveDelivered(message proto.Message, from string) {
 	if this.ChannelService != nil {
 		this.ChannelService.OnMessage(message, from)
 	}
-
+	//f := func(key, value interface{}) bool {
+	//	fmt.Printf("[ReceiveDelivered] addressQueueMap Content \n", )
+	//	fmt.Printf("k Type: %s k %v \n", reflect.TypeOf(key).String(), key)
+	//	fmt.Printf("v Type: %s v %v \n", reflect.TypeOf(value).String(), value)
+	//	return true
+	//}
 	msg := message.(*messages.Delivered)
+	//this.addressQueueMap.Range(f)
 
-	queue, ok := this.addressQueueMap.Load(from)
+	//queue, ok := this.addressQueueMap.Load(from)
+	msgId := common.MessageID(msg.DeliveredMessageIdentifier.MessageId)
+	queue, ok := this.addressQueueMap.Load(msgId)
 	if !ok {
+		log.Debugf("[ReceiveDelivered] from: %s Time: %s msgId: %v\n", from, time.Now().String(), msgId)
+		log.Error("[ReceiveDelivered] msg.DeliveredMessageIdentifier is not in addressQueueMap")
 		return
 	}
-
+	log.Debugf("[ReceiveDelivered] from: %s Time: %s msgId: %v, queue: %p\n", from, time.Now().String(), msgId, queue)
 	queue.(*Queue).DeliverChan <- msg.DeliveredMessageIdentifier
-	//log.Info("ReceiveDelivered for", msg.DeliveredMessageIdentifier)
 }
 
 func (this *Transport) Send(address string, message proto.Message) error {
@@ -441,6 +470,7 @@ func (this *Transport) syncPeerState() {
 	for {
 		select {
 		case state := <-this.peerStateChan:
+			log.Debugf("[syncPeerState] addr: %s state: %v\n ", state.Address, state.State)
 			if state.State == keepalive.PEER_REACHABLE {
 				this.activePeers.LoadOrStore(state.Address, struct{}{})
 				nodeNetworkState = transfer.NetworkReachable
@@ -451,7 +481,6 @@ func (this *Transport) syncPeerState() {
 
 			this.addressForHealthCheck.Delete(state.Address)
 			address, ok := this.hostPortToAddress.Load(state.Address)
-
 			if !ok {
 				continue
 			}

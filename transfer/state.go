@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"math"
-	"math/rand"
 	"sort"
-	"time"
-
+	"crypto/rand"
 	chainComm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
+	"math/big"
 )
 
 type SecretHashToLock map[common.SecretHash]*HashTimeLockState
@@ -32,9 +31,13 @@ const NetworkUnreachable string = "unreachable"
 const NetworkReachable string = "reachable"
 
 func GetMsgID() common.MessageID {
-	rand.Seed(time.Now().UnixNano())
-	messageId := rand.Int63n(math.MaxInt64)
-	return common.MessageID(messageId)
+	for ;; {
+		b := new(big.Int).SetInt64(math.MaxInt64)
+		if id, err := rand.Int(rand.Reader, b); err == nil {
+			messageId := id.Int64()
+			return common.MessageID(messageId)
+		}
+	}
 }
 
 type TransactionOrderHeap []TransactionOrder
@@ -82,8 +85,8 @@ type TargetTask struct {
 type ChainState struct {
 	BlockHeight                  common.BlockHeight
 	ChainId                      common.ChainID
-	IdentifiersToPaymentnetworks map[common.PaymentNetworkID]*PaymentNetworkState
-	NodeAddressesToNetworkstates map[common.Address]string
+	IdentifiersToPaymentNetworks map[common.PaymentNetworkID]*PaymentNetworkState
+	NodeAddressesToNetworkStates map[common.Address]string
 	Address                      common.Address
 	PaymentMapping               PaymentMappingState
 	PendingTransactions          []Event
@@ -93,8 +96,8 @@ type ChainState struct {
 func NewChainState() *ChainState {
 	result := new(ChainState)
 
-	result.IdentifiersToPaymentnetworks = make(map[common.PaymentNetworkID]*PaymentNetworkState)
-	result.NodeAddressesToNetworkstates = make(map[common.Address]string)
+	result.IdentifiersToPaymentNetworks = make(map[common.PaymentNetworkID]*PaymentNetworkState)
+	result.NodeAddressesToNetworkStates = make(map[common.Address]string)
 	result.PaymentMapping.SecretHashesToTask = make(map[common.SecretHash]State)
 	result.PendingTransactions = []Event{}
 	result.QueueIdsToQueues = make(QueueIdsToQueuesType)
@@ -102,9 +105,9 @@ func NewChainState() *ChainState {
 	return result
 }
 
-//Adjust PaymentNetworkState in IdentifiersToPaymentnetworks
+//Adjust PaymentNetworkState in IdentifiersToPaymentNetworks
 func (self *ChainState) AdjustChainState() {
-	for _, v := range self.IdentifiersToPaymentnetworks {
+	for _, v := range self.IdentifiersToPaymentNetworks {
 		v.AdjustPaymentNetworkState()
 	}
 
@@ -133,22 +136,22 @@ func DeepCopy(src State) *ChainState {
 		value.Address = chainState.Address
 		value.BlockHeight = chainState.BlockHeight
 
-		value.IdentifiersToPaymentnetworks = make(map[common.PaymentNetworkID]*PaymentNetworkState)
-		for id, state := range chainState.IdentifiersToPaymentnetworks {
-			value.IdentifiersToPaymentnetworks[id] = &PaymentNetworkState{}
-			value.IdentifiersToPaymentnetworks[id].Address = state.Address
-			value.IdentifiersToPaymentnetworks[id].TokenAddressesToTokenIdentifiers = make(map[common.TokenAddress]common.TokenNetworkID)
+		value.IdentifiersToPaymentNetworks = make(map[common.PaymentNetworkID]*PaymentNetworkState)
+		for id, state := range chainState.IdentifiersToPaymentNetworks {
+			value.IdentifiersToPaymentNetworks[id] = &PaymentNetworkState{}
+			value.IdentifiersToPaymentNetworks[id].Address = state.Address
+			value.IdentifiersToPaymentNetworks[id].TokenAddressesToTokenIdentifiers = make(map[common.TokenAddress]common.TokenNetworkID)
 			for tokenAddress, tokenNetworkId := range state.TokenAddressesToTokenIdentifiers {
-				value.IdentifiersToPaymentnetworks[id].TokenAddressesToTokenIdentifiers[tokenAddress] = tokenNetworkId
+				value.IdentifiersToPaymentNetworks[id].TokenAddressesToTokenIdentifiers[tokenAddress] = tokenNetworkId
 			}
-			value.IdentifiersToPaymentnetworks[id].TokenIdentifiersToTokenNetworks = make(map[common.TokenNetworkID]*TokenNetworkState)
+			value.IdentifiersToPaymentNetworks[id].TokenIdentifiersToTokenNetworks = make(map[common.TokenNetworkID]*TokenNetworkState)
 			for tokenNetworkId, tokenNetworkState := range state.TokenIdentifiersToTokenNetworks {
-				value.IdentifiersToPaymentnetworks[id].TokenIdentifiersToTokenNetworks[tokenNetworkId] = tokenNetworkState
+				value.IdentifiersToPaymentNetworks[id].TokenIdentifiersToTokenNetworks[tokenNetworkId] = tokenNetworkState
 			}
 		}
-		value.NodeAddressesToNetworkstates = make(map[common.Address]string)
-		for addr, state := range chainState.NodeAddressesToNetworkstates {
-			value.NodeAddressesToNetworkstates[addr] = state
+		value.NodeAddressesToNetworkStates = make(map[common.Address]string)
+		for addr, state := range chainState.NodeAddressesToNetworkStates {
+			value.NodeAddressesToNetworkStates[addr] = state
 		}
 		value.PaymentMapping.SecretHashesToTask = make(map[common.SecretHash]State)
 		for hash, itf := range chainState.PaymentMapping.SecretHashesToTask {

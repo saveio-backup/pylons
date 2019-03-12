@@ -172,6 +172,7 @@ func (self *ChannelService) Start() error {
 
 	var lastLogBlockHeight common.BlockHeight
 	self.Wal = storage.RestoreToStateChange(transfer.StateTransition, sqliteStorage, "latest")
+	log.Info("channel service start: [RestoreToStateChange] finished")
 	if self.Wal.StateManager.CurrentState == nil {
 
 		var stateChange transfer.StateChange
@@ -219,6 +220,11 @@ func (self *ChannelService) Start() error {
 		log.Error("run alarm call back failed:", err)
 		return err
 	}
+
+	//reset neighbor networkStates
+	channelState := self.StateFromChannel()
+	channelState.NodeAddressesToNetworkStates = make(map[common.Address]string)
+
 	// start the transport layer, pass channel service for message handling and signing
 	err = self.transport.Start(self)
 	if err != nil {
@@ -233,7 +239,7 @@ func (self *ChannelService) Start() error {
 
 	self.InitializeMessagesQueues(chainState)
 
-	self.StartNeighboursHealthcheck()
+	self.StartNeighboursHealthCheck()
 	log.Info("channel service started")
 	return nil
 }
@@ -274,10 +280,11 @@ func (self *ChannelService) SetNodeNetworkState(nodeAddress common.Address,
 	return
 }
 
-func (self *ChannelService) StartNeighboursHealthcheck() {
+func (self *ChannelService) StartNeighboursHealthCheck() {
 	neighbours := transfer.GetNeigbours(self.StateFromChannel())
 
 	for _, v := range neighbours {
+		log.Debug("[StartNeighboursHealthCheck] Neighbour: %s", common.ToBase58(v))
 		self.transport.StartHealthCheck(v)
 	}
 

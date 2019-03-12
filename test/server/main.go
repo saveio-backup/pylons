@@ -41,7 +41,7 @@ func main() {
 	log.InitLog(2, log.Stdout)
 	flag.Parse()
 	var amount uint
-	amount = 10000
+	amount = 1000
 	if *cpuprofile != "" {
 		cupf, err := os.Create(*cpuprofile)
 		if err != nil {
@@ -75,7 +75,7 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-
+	time.Sleep(time.Second)
 	target, _ := chaincomm.AddressFromBase58("AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
 	go logCurrentBalance(channel, common.Address(target))
 	for {
@@ -118,7 +118,7 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times uint
 		}
 		ret := <-status
 		if !ret {
-			log.Error("[loopTest] payment failed:")
+			log.Error("[loopTest] directTransferAsync payment failed:")
 			break
 		} else {
 			//log.Info("[loopTest] payment successfully")

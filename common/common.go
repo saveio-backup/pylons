@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/utils/jsonext"
+	chainCom "github.com/oniio/oniChain/common"
 )
 
 func AddressEqual(address1 Address, address2 Address) bool {
@@ -372,4 +373,9 @@ func SecretRandom(len int) []byte {
 		return nil
 	}
 
+}
+
+func ToBase58(address Address) string {
+	addr := chainCom.Address(address)
+	return addr.ToBase58()
 }
