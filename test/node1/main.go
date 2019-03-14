@@ -80,7 +80,7 @@ func main() {
 		log.Error("SetTotalChannelDeposit: ", err.Error())
 	}
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 1; i++ {
 		fmt.Println("MediaTransfer times1: ", i)
 		ret, err := channel.Service.MediaTransfer(registryAddress, tokenAddress, 10, target, common.PaymentID(i))
 		if err != nil {
@@ -88,10 +88,10 @@ func main() {
 		}
 		r := <-ret
 		if !r {
-			log.Error("MediaTransfer Failed--------------------------------------------")
+			log.Error("MediaTransfer Failed")
 			time.Sleep(time.Second)
 		} else {
-			log.Info("MediaTransfer Success-------------------------------------------")
+			log.Info("MediaTransfer Success")
 			time.Sleep(time.Second)
 		}
 

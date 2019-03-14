@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,6 +12,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oniio/oniChannel/transfer"
 	"github.com/oniio/oniChannel/utils/jsonext"
+	"github.com/oniio/oniChain/common/log"
+	"reflect"
 )
 
 const ChannelDbVersion int = 6
@@ -158,14 +159,19 @@ func (self *SQLiteStorage) getVersion() int {
 }
 
 func (self *SQLiteStorage) writeStateChange(stateChange transfer.StateChange, stateChangeId *int) {
-	serializedData, _ := jsonext.Marshal(stateChange)
+	log.Debug("[writeStateChange]: %v ", stateChange)
+	serializedData, err := jsonext.Marshal(stateChange)
+	if err != nil {
+		log.Error("[writeStateChange] jsonext.Marshal error stateChange type: ", reflect.TypeOf(stateChange).String())
+	}
+
 	self.StateSync.Add(1)
 	self.writeStateLock.Lock()
 	defer self.writeStateLock.Unlock()
 
 	stmt, err := self.connState.Prepare("INSERT INTO state_changes(data) VALUES(?)")
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal(err)
 	}
 	defer stmt.Close()
 

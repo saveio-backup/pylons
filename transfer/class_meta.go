@@ -162,8 +162,16 @@ func (self Block) ClassId() int {
 	return BlockClassId
 }
 
+func (self ActionCancelPayment) ClassId() int {
+	return ActionCancelPaymentClassId
+}
+
 func (self ActionChannelClose) ClassId() int {
 	return ActionChannelCloseClassId
+}
+
+func (self ActionCancelTransfer) ClassId() int {
+	return ActionCancelTransferClassId
 }
 
 func (self ActionTransferDirect) ClassId() int {
@@ -208,6 +216,22 @@ func (self ContractReceiveNewPaymentNetwork) ClassId() int {
 
 func (self ContractReceiveNewTokenNetwork) ClassId() int {
 	return ContractReceiveNewTokenNetworkClassId
+}
+
+func (self ContractReceiveSecretReveal) ClassId() int {
+	return ContractReceiveSecretRevealClassId
+}
+
+func (self ContractReceiveChannelBatchUnlock) ClassId() int {
+	return ContractReceiveChannelBatchUnlockClassId
+}
+
+func (self ContractReceiveRouteNew) ClassId() int {
+	return ContractReceiveRouteNewClassId
+}
+
+func (self ContractReceiveRouteClosed) ClassId() int {
+	return ContractReceiveRouteClosedClassId
 }
 
 func (self ContractReceiveUpdateTransfer) ClassId() int {

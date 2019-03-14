@@ -54,7 +54,7 @@ func main() {
 		case msg = <-notificationChannel:
 			addr := chaincomm.Address(msg.Initiator)
 
-			log.Info("Initiator1: %v, Amount: %v Times: %v\n", addr.ToBase58(), msg.Amount, i)
+			log.Infof("Initiator1: %v, Amount: %v Times: %v\n", addr.ToBase58(), msg.Amount, i)
 
 			//var tokenAddr common.TokenAddress
 			//var partnerAddr common.Address

@@ -888,7 +888,6 @@ func createSendLockedTransfer(channelState *NettingChannelState, initiator commo
 
 	token := channelState.TokenAddress
 	nonce := getNextNonce(ourState)
-	log.Debug("[createSendLockedTransfer] nonce: ", nonce)
 
 	recipient := partnerState.Address
 	lockedAmount := getAmountLocked(ourState) + common.Balance(amount)
@@ -1425,7 +1424,8 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 			TokenNetworkIdentifier:   channelState.TokenNetworkIdentifier,
 			Identifier:               directTransfer.PaymentIdentifier,
 			Amount:                   transferAmount,
-			Initiator:                common.InitiatorAddress(channelState.PartnerState.Address)}
+			Initiator:                common.InitiatorAddress(channelState.PartnerState.Address),
+		}
 
 		sendProcessed := new(SendProcessed)
 		sendProcessed.Recipient = common.Address(directTransfer.BalanceProof.Sender)

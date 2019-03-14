@@ -2,7 +2,6 @@ package transfer
 
 import (
 	"crypto/sha256"
-	"fmt"
 	"reflect"
 
 	"github.com/oniio/oniChain/common/log"
@@ -94,7 +93,7 @@ func InitGetInitialLockExpiration(blockNumber common.BlockHeight, revealTimeout 
 func InitNextChannelFromRoutes(availableRoutes []RouteState,
 	channelIdToChannels map[common.ChannelID]*NettingChannelState,
 	transferAmount common.TokenAmount) *NettingChannelState {
-	fmt.Println("[InitNextChannelFromRoutes]")
+	log.Debug("[InitNextChannelFromRoutes]")
 	for i := 0; i < len(availableRoutes); i++ {
 		channelIdentifier := availableRoutes[i].ChannelIdentifier
 		channelState := channelIdToChannels[channelIdentifier]
@@ -102,10 +101,10 @@ func InitNextChannelFromRoutes(availableRoutes []RouteState,
 			continue
 		}
 		if channelState.OurState.MerkleTree.Layers == nil {
-			fmt.Println("[InitNextChannelFromRoutes] channelState.OurState.MerkleTree.Layers == nil")
+			log.Debug("[InitNextChannelFromRoutes] channelState.OurState.MerkleTree.Layers == nil")
 		}
 		pendingTransfers := getNumberOfPendingTransfers(channelState.OurState)
-		fmt.Println("[InitNextChannelFromRoutes] pendingTransfers: ", pendingTransfers)
+		log.Debug("[InitNextChannelFromRoutes] pendingTransfers: ", pendingTransfers)
 		if pendingTransfers >= MaximumPendingTransfers {
 			continue
 		}

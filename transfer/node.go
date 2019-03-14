@@ -69,7 +69,7 @@ func subDispatchToPaymentTask(chainState *ChainState, stateChange StateChange,
 		log.Debug("[subDispatchToPaymentTask] secretHash: ", secretHash)
 
 		if reflect.TypeOf(subTask).String() == "*transfer.InitiatorTask" {
-			log.Info("-------------------------------")
+			log.Debug("-------------------------------")
 			iSubTask := subTask.(*InitiatorTask)
 			tokenNetworkIdentifier := iSubTask.TokenNetworkIdentifier
 			tokenNetworkState := GetTokenNetworkByIdentifier(chainState, tokenNetworkIdentifier)

@@ -257,6 +257,7 @@ func (self *ChannelService) AddPendingRoutine() {
 func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) []transfer.Event {
 	self.dispatchEventsLock.Lock()
 	defer self.dispatchEventsLock.Unlock()
+
 	log.Debug("[HandleStateChange]", reflect.TypeOf(stateChange).String())
 	eventList := self.Wal.LogAndDispatch(stateChange)
 	for _, e := range eventList {
@@ -873,7 +874,7 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(
 		chainState, paymentNetworkIdentifier, tokenAddress)
 	secret := common.SecretRandom(constants.SECRET_LEN)
-	log.Info("[MediaTransfer] Secret: ", secret)
+	log.Debug("[MediaTransfer] Secret: ", secret)
 	//TODO: check secret used
 
 	//asyncResult, err := self.StartMediatedTransferWithSecret(tokenNetworkIdentifier,
