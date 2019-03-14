@@ -5,7 +5,7 @@ import (
 
 	"github.com/oniio/oniChain-go-sdk/ong"
 	"github.com/oniio/oniChain/common/log"
-	sc_utils "github.com/oniio/oniChain/smartcontract/service/native/utils"
+	scUtils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/network/proxies"
@@ -16,7 +16,7 @@ import (
 //Not the Event from transfer dir!
 func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 	var transactionHash common.TransactionHash
-
+	log.Debug("[HandleChannelNew]")
 	var isParticipant bool
 
 	participant1 := event["participant1"].(common.Address)
@@ -42,10 +42,9 @@ func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 			} else {
 				revealTimeout = common.BlockHeight(ret)
 			}
-
 		}
 		tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
-		defaultRegister := common.PaymentNetworkID(sc_utils.MicroPayContractAddress)
+		defaultRegister := common.PaymentNetworkID(scUtils.MicroPayContractAddress)
 		channelState := SetupChannelState(tokenAddress, defaultRegister,
 			common.TokenNetworkAddress(tokenNetworkIdentifier), revealTimeout, channelProxy, blockNumber)
 
@@ -79,8 +78,8 @@ func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 	return
 }
 
-func (self ChannelService) HandleChannelNewBalance(event map[string]interface{}) {
-
+func (self ChannelService) handleChannelNewBalance(event map[string]interface{}) {
+	log.Debug("[handleChannelNewBalance]")
 	var transactionHash common.TransactionHash
 	var isParticipant bool
 
@@ -268,13 +267,11 @@ func (self ChannelService) HandleSecretRevealed(event map[string]interface{}) {
 
 func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 	var eventName string
-
 	if _, ok := event["eventName"].(string); ok == false {
 		return
 	}
 
 	eventName = event["eventName"].(string)
-
 	events := ParseEvent(event)
 
 	if eventName == "chanOpened" {
@@ -282,7 +279,7 @@ func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 	} else if eventName == "ChannelClose" {
 		channel.HandleChannelClose(events)
 	} else if eventName == "SetTotalDeposit" {
-		channel.HandleChannelNewBalance(events)
+		channel.handleChannelNewBalance(events)
 	} else if eventName == "chanSettled" {
 		channel.HandleChannelSettled(events)
 	} else if eventName == "NonClosingBPFUpdate" {
@@ -291,6 +288,7 @@ func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 
 	return
 }
+
 func SetupChannelState(tokenAddress common.TokenAddress, paymentNetworkIdentifier common.PaymentNetworkID,
 	tokenNetworkAddress common.TokenNetworkAddress, revealTimeout common.BlockHeight,
 	paymentChannelProxy *proxies.PaymentChannel, openedBlockHeight common.BlockHeight) *transfer.NettingChannelState {

@@ -2,14 +2,14 @@ package transfer
 
 import (
 	"bytes"
-	"errors"
-	"math"
-	"sort"
 	"crypto/rand"
+	"errors"
 	chainComm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
+	"math"
 	"math/big"
+	"sort"
 )
 
 type SecretHashToLock map[common.SecretHash]*HashTimeLockState
@@ -31,7 +31,7 @@ const NetworkUnreachable string = "unreachable"
 const NetworkReachable string = "reachable"
 
 func GetMsgID() common.MessageID {
-	for ;; {
+	for {
 		b := new(big.Int).SetInt64(math.MaxInt64)
 		if id, err := rand.Int(rand.Reader, b); err == nil {
 			messageId := id.Int64()
@@ -146,7 +146,19 @@ func DeepCopy(src State) *ChainState {
 			}
 			value.IdentifiersToPaymentNetworks[id].TokenIdentifiersToTokenNetworks = make(map[common.TokenNetworkID]*TokenNetworkState)
 			for tokenNetworkId, tokenNetworkState := range state.TokenIdentifiersToTokenNetworks {
-				value.IdentifiersToPaymentNetworks[id].TokenIdentifiersToTokenNetworks[tokenNetworkId] = tokenNetworkState
+				var tokenNwState TokenNetworkState
+				tokenNwState.Address = tokenNetworkState.Address
+				tokenNwState.TokenAddress = tokenNetworkState.TokenAddress
+				tokenNwState.NetworkGraph = tokenNetworkState.NetworkGraph
+				tokenNwState.ChannelIdentifiersToChannels =	make(map[common.ChannelID]*NettingChannelState)
+				for channelId, channelState := range tokenNetworkState.ChannelIdentifiersToChannels {
+					tokenNwState.ChannelIdentifiersToChannels[channelId] = channelState
+				}
+				tokenNwState.PartnerAddressesToChannels = make(map[common.Address]map[common.ChannelID]*NettingChannelState)
+				for addr, mp := range tokenNetworkState.PartnerAddressesToChannels {
+					tokenNwState.PartnerAddressesToChannels[addr] = mp
+				}
+				value.IdentifiersToPaymentNetworks[id].TokenIdentifiersToTokenNetworks[tokenNetworkId] = &tokenNwState
 			}
 		}
 		value.NodeAddressesToNetworkStates = make(map[common.Address]string)
@@ -229,7 +241,7 @@ func NewTokenNetworkState(localAddr common.Address) *TokenNetworkState {
 func (self *TokenNetworkState) AddRoute(addr1 common.Address, addr2 common.Address, channelId common.ChannelID) {
 	node1 := chainComm.Address(addr1)
 	node2 := chainComm.Address(addr2)
-	log.Infof("[AddRoute], addr1: %v addr2: %v", node1.ToBase58(), node2.ToBase58())
+	log.Infof("addRoute addr: %v addr: %v", node1.ToBase58(), node2.ToBase58())
 	self.NetworkGraph.Nodes = append(self.NetworkGraph.Nodes, Node{Name: node1.ToBase58()})
 	self.NetworkGraph.Nodes = append(self.NetworkGraph.Nodes, Node{Name: node2.ToBase58()})
 

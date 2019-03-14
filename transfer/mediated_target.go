@@ -2,9 +2,9 @@ package transfer
 
 import (
 	"crypto/sha256"
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
 	"reflect"
-	"github.com/oniio/oniChain/common/log"
 )
 
 func TgEventsForOnChainSecretReveal(targetState *TargetTransferState, channelState *NettingChannelState,

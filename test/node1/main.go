@@ -6,9 +6,9 @@ import (
 	"github.com/oniio/oniChain-go-sdk/wallet"
 	chaincomm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
+	"github.com/oniio/oniChain/smartcontract/service/native/utils"
 	ch "github.com/oniio/oniChannel"
 	"github.com/oniio/oniChannel/common"
-	"github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"os"
 	"time"
 )
@@ -71,7 +71,6 @@ func main() {
 		return
 	}
 	target := common.Address(targetAddress)
-
 
 	chanId := channel.Service.OpenChannel(tokenAddress, common.Address(partnerAddress))
 	log.Info("[OpenChannel] ChanId: ", chanId)

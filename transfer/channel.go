@@ -277,7 +277,10 @@ func IsValidRefund(refund *ReceiveTransferRefund, channelState *NettingChannelSt
 func IsValidUnlock(unlock *ReceiveUnlock, channelState *NettingChannelState,
 	senderState *NettingChannelEndState) (bool, string, *MerkleTreeState) {
 	receivedBalanceProof := unlock.BalanceProof
-	currentBalanceProof := getCurrentBalanceProof(senderState)
+	currentBalanceProof, err := getCurrentBalanceProof(senderState)
+	if err != nil {
+		log.Error("[IsValidUnlock] error: ", err.Error())
+	}
 
 	secretHash := common.GetHash(unlock.Secret)
 	log.Debug("[IsValidUnlock] secretHash: ", secretHash)
@@ -331,7 +334,10 @@ func IsValidUnlock(unlock *ReceiveUnlock, channelState *NettingChannelState,
 }
 
 func IsValidAmount(endState *NettingChannelEndState, amount common.TokenAmount) bool {
-	balanceProofData := getCurrentBalanceProof(endState)
+	balanceProofData, err := getCurrentBalanceProof(endState)
+	if err != nil {
+		log.Error("[IsValidAmount] error: ", err.Error())
+	}
 	currentTransferredAmount := balanceProofData.transferredAmount
 	currentLockedAmount := balanceProofData.lockedAmount
 
@@ -426,7 +432,10 @@ func IsValidDirectTransfer(directTransfer *ReceiveTransferDirect, channelState *
 
 	receivedBalanceProof := directTransfer.BalanceProof
 
-	currentBalanceProof := getCurrentBalanceProof(senderState)
+	currentBalanceProof, err := getCurrentBalanceProof(senderState)
+	if err != nil {
+		log.Error("[IsValidDirectTransfer] error: ", err.Error())
+	}
 	currentLocksRoot := currentBalanceProof.locksRoot
 	currentTransferredAmount := currentBalanceProof.transferredAmount
 	currentLockedAmount := currentBalanceProof.lockedAmount
@@ -500,8 +509,11 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 			hex.EncodeToString(secretHash[:]))
 	}
 
-	currentBalanceProof := getCurrentBalanceProof(senderState)
-	merkletree := computeMerkleTreeWithout(senderState.MerkleTree, lock.LockHash)
+	currentBalanceProof, err := getCurrentBalanceProof(senderState)
+	if err != nil {
+		log.Error("[IsValidLockExpired] error: ", err.Error())
+	}
+	merkleTree := computeMerkleTreeWithout(senderState.MerkleTree, lock.LockHash)
 
 	currentTransferredAmount := currentBalanceProof.transferredAmount
 	currentLockedAmount := currentBalanceProof.lockedAmount
@@ -514,12 +526,12 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 
 	if !isBalanceProofUsable {
 		return nil, fmt.Errorf("Invalid LockExpired message. %s ", invalidBalanceProofMsg)
-	} else if merkletree == nil {
+	} else if merkleTree == nil {
 		return nil, fmt.Errorf("Invalid LockExpired message. Same lockhash handled twice. ")
 	} else if lockRegisteredOnChain != nil {
 		return nil, fmt.Errorf("Invalid LockExpired mesage. Lock was unlocked on-chain. ")
 	} else {
-		locksRootWithoutLock := MerkleRoot(merkletree.Layers)
+		locksRootWithoutLock := MerkleRoot(merkleTree.Layers)
 		hasExpired, lockExpiredMessage := IsLockExpired(receiverState, lock, blockNumber,
 			lock.Expiration+common.BlockHeight(DefaultNumberOfConfirmationsBlock))
 		if !hasExpired {
@@ -541,7 +553,7 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 				"Balance proof's locked_amount is invalid, expected: %d got: %d. ",
 				expectedLockedAmount, receivedBalanceProof.LockedAmount)
 		} else {
-			return merkletree, nil
+			return merkleTree, nil
 		}
 	}
 	return nil, nil
@@ -551,7 +563,10 @@ func ValidLockedTransferCheck(channelState *NettingChannelState, senderState *Ne
 	receiverState *NettingChannelEndState, messageName string, receivedBalanceProof *BalanceProofSignedState,
 	lock *HashTimeLockState) (*MerkleTreeState, error) {
 
-	currentBalanceProof := getCurrentBalanceProof(senderState)
+	currentBalanceProof, err := getCurrentBalanceProof(senderState)
+	if err != nil {
+		log.Error("[ValidLockedTransferCheck] error: ", err.Error())
+	}
 	lockHash := lock.CalcLockHash()
 	merkleTree := computeMerkleTreeWith(senderState.MerkleTree, lockHash)
 
@@ -648,7 +663,7 @@ func getBalance(sender *NettingChannelEndState, receiver *NettingChannelEndState
 
 }
 
-func getCurrentBalanceProof(endState *NettingChannelEndState) BalanceProofData {
+func getCurrentBalanceProof(endState *NettingChannelEndState) (*BalanceProofData, error) {
 	var locksRoot common.Locksroot
 	var nonce common.Nonce
 	var transferredAmount, lockedAmount common.TokenAmount
@@ -667,21 +682,21 @@ func getCurrentBalanceProof(endState *NettingChannelEndState) BalanceProofData {
 		lockedAmount = 0
 	}
 
-	return BalanceProofData{locksRoot, nonce, transferredAmount, lockedAmount}
+	return &BalanceProofData{locksRoot, nonce, transferredAmount, lockedAmount}, nil
 }
 
 func GetDistributable(sender *NettingChannelEndState, receiver *NettingChannelEndState) common.TokenAmount {
-	balanceProofData := getCurrentBalanceProof(sender)
-
+	balanceProofData, err := getCurrentBalanceProof(sender)
+	if err != nil || balanceProofData == nil {
+		log.Error("[GetDistributable] error: ", err.Error())
+	}
 	transferredAmount := balanceProofData.transferredAmount
 	lockedAmount := balanceProofData.lockedAmount
-
 	distributable := getBalance(sender, receiver) - getAmountLocked(sender)
+	overflowLimit := Max(math.MaxUint64-(uint64)(transferredAmount)-(uint64)(lockedAmount), 0)
 
-	overflowLimit := Max(
-		math.MaxUint64-(uint64)(transferredAmount)-(uint64)(lockedAmount),
-		0,
-	)
+	log.Debugf("[GetDistributable] lockedAmount: %v, transferredAmount: %v distributable: %v overflowLimit: %v",
+		lockedAmount, transferredAmount, distributable, overflowLimit)
 
 	result := Min(overflowLimit, (uint64)(distributable))
 	return (common.TokenAmount)(result)
@@ -696,9 +711,9 @@ func getNextNonce(endState *NettingChannelEndState) common.Nonce {
 		nonce = endState.BalanceProof.Nonce + 1
 	} else {
 		nonce = 1
-		log.Warn("[getNextNonce=] endState.BalanceProof == nil")
+		log.Debug("[getNextNonce=] endState.BalanceProof == nil")
 	}
-	log.Info("[getNextNonce=============] nonce = ", nonce)
+	log.Debug("[getNextNonce] nonce = ", nonce)
 	return nonce
 }
 
@@ -1212,7 +1227,10 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 	targetAddress := stateChange.ReceiverAddress
 	distributableAmount := GetDistributable(channelState.OurState, channelState.PartnerState)
 
-	currentBalanceProof := getCurrentBalanceProof(channelState.OurState)
+	currentBalanceProof, err := getCurrentBalanceProof(channelState.OurState)
+	if err != nil {
+		log.Error("[handleSendDirectTransfer] error: ", err.Error())
+	}
 	currentTransferredAmount := currentBalanceProof.transferredAmount
 	currentLockedAmount := currentBalanceProof.lockedAmount
 
@@ -1238,26 +1256,38 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 		events = append(events, directTransfer)
 	} else {
 		if isOpen == false {
-			failure := &EventPaymentSentFailed{channelState.PaymentNetworkIdentifier,
-				channelState.TokenNetworkIdentifier, paymentIdentifier,
-				common.Address(targetAddress), "Channel is not opened"}
-
+			msg := fmt.Sprintf("Channel is not opened")
+			failure := &EventPaymentSentFailed{
+				PaymentNetworkIdentifier: channelState.PaymentNetworkIdentifier,
+				TokenNetworkIdentifier:   channelState.TokenNetworkIdentifier,
+				Identifier:               paymentIdentifier,
+				Target:                   common.Address(targetAddress),
+				Reason:                   msg,
+			}
+			log.Warn("[handleSendDirectTransfer] failure: ", msg)
 			events = append(events, failure)
 		} else if isValid == false {
 			msg := fmt.Sprintf("Payment amount is invalid. Transfer %d", amount)
-			failure := &EventPaymentSentFailed{channelState.PaymentNetworkIdentifier,
-				channelState.TokenNetworkIdentifier, paymentIdentifier,
-				common.Address(targetAddress), msg}
-
+			failure := &EventPaymentSentFailed{
+				PaymentNetworkIdentifier: channelState.PaymentNetworkIdentifier,
+				TokenNetworkIdentifier:   channelState.TokenNetworkIdentifier,
+				Identifier:               paymentIdentifier,
+				Target:                   common.Address(targetAddress),
+				Reason:                   msg,
+			}
+			log.Warn("[handleSendDirectTransfer] failure: ", msg)
 			events = append(events, failure)
 		} else if canPay == false {
 			msg := fmt.Sprintf("Payment amount exceeds the available capacity. Capacity:%d, Transfer:%d",
 				distributableAmount, amount)
-
-			failure := &EventPaymentSentFailed{channelState.PaymentNetworkIdentifier,
-				channelState.TokenNetworkIdentifier, paymentIdentifier,
-				common.Address(targetAddress), msg}
-
+			failure := &EventPaymentSentFailed{
+				PaymentNetworkIdentifier: channelState.PaymentNetworkIdentifier,
+				TokenNetworkIdentifier:   channelState.TokenNetworkIdentifier,
+				Identifier:               paymentIdentifier,
+				Target:                   common.Address(targetAddress),
+				Reason:                   msg,
+			}
+			log.Warn("[handleSendDirectTransfer] failure: ", msg)
 			events = append(events, failure)
 		}
 	}
@@ -1380,7 +1410,10 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 		channelState.PartnerState, channelState.OurState)
 
 	if isValid {
-		currentBalanceProof := getCurrentBalanceProof(channelState.PartnerState)
+		currentBalanceProof, err := getCurrentBalanceProof(channelState.PartnerState)
+		if err != nil {
+			log.Error("[handleReceiveDirectTransfer] error: ", err.Error())
+		}
 		previousTransferredAmount := currentBalanceProof.transferredAmount
 
 		newTransferredAmount := directTransfer.BalanceProof.TransferredAmount
@@ -1470,7 +1503,8 @@ func handleBlock(channelState *NettingChannelState, stateChange *Block,
 
 	for isDepositConfirmed(channelState, blockNumber) {
 		orderDepositTransaction := channelState.DepositTransactionQueue.Pop()
-		applyChannelNewbalance(channelState, &orderDepositTransaction.Transaction)
+		log.Debug("[handleBlock] isDepositConfirmed applyChannelNewBalance")
+		applyChannelNewBalance(channelState, &orderDepositTransaction.Transaction)
 	}
 
 	return TransitionResult{channelState, events}
@@ -1565,23 +1599,25 @@ func handleChannelSettled(channelState *NettingChannelState,
 	return TransitionResult{channelState, events}
 }
 
-func handleChannelNewbalance(channelState *NettingChannelState,
+func handleChannelNewBalance(channelState *NettingChannelState,
 	stateChange *ContractReceiveChannelNewBalance,
 	blockNumber common.BlockHeight) TransitionResult {
 
 	depositTransaction := stateChange.DepositTransaction
 
 	if IsTransactionConfirmed(depositTransaction.DepositBlockHeight, blockNumber) {
-		applyChannelNewbalance(channelState, &stateChange.DepositTransaction)
+		log.Debug("[handleChannelNewBalance] IsTransactionConfirmed applyChannelNewBalance")
+		applyChannelNewBalance(channelState, &stateChange.DepositTransaction)
 	} else {
 		order := TransactionOrder{depositTransaction.DepositBlockHeight, depositTransaction}
+		log.Debug("[handleChannelNewBalance] DepositTransactionQueue.Push")
 		channelState.DepositTransactionQueue.Push(order)
 	}
 
 	return TransitionResult{channelState, nil}
 }
 
-func applyChannelNewbalance(channelState *NettingChannelState,
+func applyChannelNewBalance(channelState *NettingChannelState,
 	depositTransaction *TransactionChannelNewBalance) {
 	participantAddress := depositTransaction.ParticipantAddress
 	contractBalance := depositTransaction.ContractBalance
@@ -1622,7 +1658,7 @@ func StateTransitionForChannel(channelState *NettingChannelState, stateChange St
 		iteration = handleChannelSettled(channelState, contractReceiveChannelSettled, blockNumber)
 	case *ContractReceiveChannelNewBalance:
 		contractReceiveChannelNewBalance, _ := stateChange.(*ContractReceiveChannelNewBalance)
-		iteration = handleChannelNewbalance(channelState, contractReceiveChannelNewBalance, blockNumber)
+		iteration = handleChannelNewBalance(channelState, contractReceiveChannelNewBalance, blockNumber)
 	case *ReceiveTransferDirect:
 		receiveTransferDirect, _ := stateChange.(*ReceiveTransferDirect)
 		iteration = handleReceiveDirectTransfer(channelState, receiveTransferDirect)

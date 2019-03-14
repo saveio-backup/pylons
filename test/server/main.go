@@ -96,8 +96,16 @@ func main() {
 }
 
 func loopTest(channel *ch.Channel, amount int, target common.Address, times uint, interval int) {
-
 	r := rand.NewSource(time.Now().UnixNano())
+	log.Info("wait for loopTest canTransfer...")
+	for {
+		if channel.Service.CanTransfer(target, common.TokenAmount(amount)) {
+			log.Info("loopTest can transfer!")
+			break
+		} else {
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
 	for index := uint(0); index < times; index++ {
 		if interval > 0 {
 			<-time.After(time.Duration(interval) * time.Millisecond)
@@ -105,7 +113,7 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times uint
 		state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
 		if state != transfer.NetworkReachable {
 			log.Error("[loopTest] peer AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg is not reachable ")
-			break
+			continue
 		} else {
 			//log.Info("[loopTest] peer AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg is reachable ")
 		}
@@ -113,21 +121,19 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times uint
 		if err != nil {
 			log.Error("[loopTest] direct transfer failed:", err)
 			break
-		} else {
-			//log.Info("[loopTest] direct transfer successfully")
 		}
+
 		ret := <-status
 		if !ret {
-			log.Error("[loopTest] directTransferAsync payment failed:")
+			log.Error("[loopTest] direct transfer failed:")
 			break
 		} else {
-			//log.Info("[loopTest] payment successfully")
+			log.Info("[loopTest] direct transfer successfully")
 		}
-
 	}
 	log.Info("[loopTest] direct transfer test done")
-
 }
+
 func logCurrentBalance(channel *ch.Channel, target common.Address) {
 	ticker := time.NewTicker(config.MIN_GEN_BLOCK_TIME * time.Second)
 

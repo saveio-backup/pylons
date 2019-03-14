@@ -9,6 +9,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/oniio/oniChain/account"
+	"github.com/oniio/oniChain/common/log"
 	sig "github.com/oniio/oniChain/core/signature"
 	"github.com/oniio/oniChain/core/types"
 	"github.com/oniio/oniChain/crypto/keypair"
@@ -16,7 +17,6 @@ import (
 	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/transfer"
 	"reflect"
-	"github.com/oniio/oniChain/common/log"
 )
 
 type SignedMessageInterface interface {
@@ -35,7 +35,6 @@ func Uint64ToBytes(n uint64) []byte {
 	binary.Write(bytesBuffer, binary.BigEndian, n)
 	return bytesBuffer.Bytes()
 }
-
 
 func (this *Processed) DataToSign() []byte {
 	return Uint64ToBytes(this.MessageIdentifier.MessageId)
@@ -273,7 +272,6 @@ func LockedTransferFromEvent(event *transfer.SendLockedTransfer) proto.Message {
 	}
 	return msg
 }
-
 
 func SecretRequestFromEvent(event *transfer.SendSecretRequest) proto.Message {
 	msg := &SecretRequest{

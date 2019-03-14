@@ -20,7 +20,7 @@ import (
 	"github.com/oniio/oniChain/account"
 	comm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
-	sc_utils "github.com/oniio/oniChain/smartcontract/service/native/utils"
+	scUtils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/network"
@@ -173,8 +173,8 @@ func (self *ChannelService) Start() error {
 	var lastLogBlockHeight common.BlockHeight
 	self.Wal = storage.RestoreToStateChange(transfer.StateTransition, sqliteStorage, "latest")
 	log.Info("channel service start: [RestoreToStateChange] finished")
-	if self.Wal.StateManager.CurrentState == nil {
 
+	if self.Wal.StateManager.CurrentState == nil {
 		var stateChange transfer.StateChange
 		networkId, err := self.chain.ChainClient.GetNetworkId()
 		if err != nil {
@@ -195,7 +195,7 @@ func (self *ChannelService) Start() error {
 		self.HandleStateChange(stateChange)
 
 		paymentNetwork := transfer.NewPaymentNetworkState()
-		paymentNetwork.Address = common.PaymentNetworkID(sc_utils.MicroPayContractAddress)
+		paymentNetwork.Address = common.PaymentNetworkID(scUtils.MicroPayContractAddress)
 		stateChange = &transfer.ContractReceiveNewPaymentNetwork{
 			ContractReceiveStateChange: transfer.ContractReceiveStateChange{
 				TransactionHash: common.TransactionHash{},
@@ -281,7 +281,7 @@ func (self *ChannelService) SetNodeNetworkState(nodeAddress common.Address,
 }
 
 func (self *ChannelService) StartNeighboursHealthCheck() {
-	neighbours := transfer.GetNeigbours(self.StateFromChannel())
+	neighbours := transfer.GetNeighbours(self.StateFromChannel())
 
 	for _, v := range neighbours {
 		log.Debug("[StartNeighboursHealthCheck] Neighbour: %s", common.ToBase58(v))
@@ -475,7 +475,7 @@ func (self *ChannelService) InitializeTokenNetwork() {
 	tokenNetworkState := transfer.NewTokenNetworkState(self.address)
 	tokenNetworkState.Address = common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
 	tokenNetworkState.TokenAddress = common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
-	newTokenNetwork := &transfer.ContractReceiveNewTokenNetwork{PaymentNetworkIdentifier: common.PaymentNetworkID(sc_utils.MicroPayContractAddress),
+	newTokenNetwork := &transfer.ContractReceiveNewTokenNetwork{PaymentNetworkIdentifier: common.PaymentNetworkID(scUtils.MicroPayContractAddress),
 		TokenNetwork: tokenNetworkState}
 
 	self.HandleStateChange(newTokenNetwork)
@@ -512,9 +512,8 @@ func (self *ChannelService) GetPaymentArgs(channelState *transfer.NettingChannel
 
 	return args
 }
-func EventFilterForPayments(
-	event transfer.Event,
-	tokenNetworkIdentifier common.TokenNetworkID,
+
+func EventFilterForPayments(event transfer.Event, tokenNetworkIdentifier common.TokenNetworkID,
 	partnerAddress common.Address) bool {
 
 	var result bool
@@ -659,8 +658,8 @@ func (self *ChannelService) SetTotalChannelDeposit(tokenAddress common.TokenAddr
 		return err
 	}
 
-	addednum := totalDeposit - channelState.OurState.ContractBalance
-	if balance < addednum {
+	addedNum := totalDeposit - channelState.OurState.ContractBalance
+	if balance < addedNum {
 		return errors.New("gas balance not enough")
 	}
 
@@ -798,19 +797,35 @@ func (self *ChannelService) TransferAsync(registryAddress common.PaymentNetworkI
 	return asyncResult
 }
 
+func (self *ChannelService) CanTransfer(target common.Address, amount common.TokenAmount) bool {
+	chainState := self.StateFromChannel()
+	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
+	channelState := transfer.GetChannelStateFor(chainState, paymentNetworkIdentifier, tokenAddress, target)
+	if channelState.OurState.ContractBalance < amount {
+		return false
+	} else {
+		return true
+	}
+}
+
 func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, target common.Address,
 	identifier common.PaymentID) (chan bool, error) {
 	if target == common.ADDRESS_EMPTY {
 		log.Error("target address is invalid:", target)
 		return nil, fmt.Errorf("target address is invalid")
 	}
-
-	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
+	chainState := self.StateFromChannel()
 	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
-	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(self.StateFromChannel(),
+	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
+	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(chainState,
 		paymentNetworkIdentifier, tokenAddress)
-	self.transport.StartHealthCheck(common.Address(target))
 
+	if !self.CanTransfer(target, amount) {
+		return nil, fmt.Errorf("contract balance small than transfer amount")
+	}
+
+	self.transport.StartHealthCheck(common.Address(target))
 	if identifier == common.PaymentID(0) {
 		identifier = CreateDefaultIdentifier()
 	}
@@ -818,9 +833,9 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 	paymentStatus, exist := self.GetPaymentStatus(common.Address(target), identifier)
 	if exist {
 		if !paymentStatus.Match(common.PAYMENT_DIRECT, tokenNetworkIdentifier, amount) {
-			return nil, errors.New("Another payment with same id is in flight")
+			return nil, errors.New("Another payment with same id is in flight. ")
 		}
-		log.Warn("payment already existd:")
+		log.Warn("payment already existed:")
 		return paymentStatus.paymentDone, nil
 	}
 
@@ -835,9 +850,7 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 	//paymentStatus, _ = self.GetPaymentStatus(common.Address(target), identifier)
 
 	self.HandleStateChange(directTransfer)
-
 	return paymentStatus.paymentDone, nil
-
 }
 
 func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkID,

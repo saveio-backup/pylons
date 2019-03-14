@@ -1,8 +1,8 @@
 package main
 
 import (
-	"time"
 	"fmt"
+	"time"
 
 	"github.com/oniio/oniChain-go-sdk/wallet"
 	chaincomm "github.com/oniio/oniChain/common"
@@ -30,7 +30,6 @@ func main() {
 	if err != nil {
 		fmt.Printf("GetDefaultAccount error:%s\n", err)
 	}
-log.Debug()
 	channel, err := ch.NewChannelService(testConfig, account)
 	if err != nil {
 		log.Fatal(err)
@@ -49,7 +48,7 @@ log.Debug()
 	log.Info("[RegisterReceiveNotification]")
 
 	var msg *transfer.EventPaymentReceivedSuccess
-	for i := 0; ;i++ {
+	for i := 0; ; i++ {
 		log.Info("[WaitForReceiveNotification]")
 		select {
 		case msg = <-notificationChannel:

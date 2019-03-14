@@ -359,7 +359,7 @@ func (this *Transport) Receive(message proto.Message, from string) {
 }
 
 func (this *Transport) ReceiveMessage(message proto.Message, from string) {
-	log.Infof("[ReceiveMessage] %v from: %v", reflect.TypeOf(message).String(), from)
+	log.Debugf("[ReceiveMessage] %v from: %v", reflect.TypeOf(message).String(), from)
 
 	if this.ChannelService != nil {
 		this.ChannelService.OnMessage(message, from)
@@ -410,11 +410,11 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 		} else {
 			nodeAddress = this.protocol + "://" + from
 		}
-		log.Infof("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v",
+		log.Debugf("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v",
 			reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier, nodeAddress)
 		this.Send(nodeAddress, deliveredMessage)
 	} else {
-		log.Infof("SendDeliveredMessage (%v) deliveredMessage Sign error: ", err.Error(),
+		log.Debugf("SendDeliveredMessage (%v) deliveredMessage Sign error: ", err.Error(),
 			reflect.TypeOf(message).String(), nodeAddress)
 	}
 }

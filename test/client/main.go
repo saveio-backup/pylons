@@ -33,9 +33,9 @@ var testConfig = &ch.ChannelConfig{
 	RevealTimeout: "1000",
 }
 var f *os.File
-var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var disable = flag.Bool("disable", false, "disable transfer test")
-var tranferAmount = flag.Uint("amount", 0, "test transfer amount")
+var transferAmount = flag.Uint("amount", 0, "test transfer amount")
 
 func main() {
 	log.InitLog(2, log.Stdout)
@@ -43,16 +43,16 @@ func main() {
 	var amount uint
 	amount = 1000
 
-	if *cpuprofile != "" {
-		cupf, err := os.Create(*cpuprofile)
+	if *cpuProfile != "" {
+		cupF, err := os.Create(*cpuProfile)
 		if err != nil {
 			log.Fatal(err)
 		}
-		pprof.StartCPUProfile(cupf)
+		pprof.StartCPUProfile(cupF)
 		defer pprof.StopCPUProfile()
 	}
-	if *tranferAmount != 0 {
-		amount = *tranferAmount
+	if *transferAmount != 0 {
+		amount = *transferAmount
 	}
 	wallet, err := wallet.OpenWallet(WALLET_PATH)
 	if err != nil {
@@ -90,6 +90,11 @@ func main() {
 			return
 		}
 		log.Info("deposit successful")
+		//time.Sleep(7 * time.Second)
+		//for {
+		//	time.Sleep(7 * time.Second)
+		//}
+
 		for {
 			state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
 			if state == transfer.NetworkReachable {
@@ -114,8 +119,17 @@ func main() {
 	waitToExit()
 }
 func loopTest(channel *ch.Channel, amount uint, target common.Address, times uint, interval int) {
-
 	r := rand.NewSource(time.Now().UnixNano())
+	log.Info("wait for loopTest canTransfer...")
+	for {
+		if channel.Service.CanTransfer(target, common.TokenAmount(amount)) {
+			log.Info("loopTest can transfer!")
+			break
+		} else {
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
 	for index := uint(0); index < times; index++ {
 		if interval > 0 {
 			<-time.After(time.Duration(interval) * time.Millisecond)
@@ -124,7 +138,7 @@ func loopTest(channel *ch.Channel, amount uint, target common.Address, times uin
 		state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
 		if state != transfer.NetworkReachable {
 			log.Error("[loopTest] peer Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC is not reachable ")
-			break
+			continue
 		} else {
 			//log.Info("[loopTest] peer Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC is reachable ")
 		}
@@ -132,17 +146,15 @@ func loopTest(channel *ch.Channel, amount uint, target common.Address, times uin
 		if err != nil {
 			log.Error("[loopTest] direct transfer failed:", err)
 			break
-		} else {
-			log.Debug("[loopTest] direct transfer successfully")
 		}
 
 		log.Debug("[loopTest] wait for payment status update...")
 		ret := <-status
 		if !ret {
-			log.Error("[loopTest] directTransferAsync payment failed")
+			log.Error("[loopTest] direct transfer failed")
 			break
 		} else {
-			log.Debug("[loopTest] payment successfully")
+			log.Info("[loopTest] direct transfer successfully")
 		}
 		log.Debugf("[loopTest] direct transfer %f ong to %s successfully", 100*float32(amount)/1000000000, "Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
 	}

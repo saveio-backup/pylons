@@ -3,8 +3,8 @@ package transport
 import (
 	"sync"
 
-	"github.com/oniio/oniChannel/network/transport/messages"
 	"github.com/oniio/oniChain/common/log"
+	"github.com/oniio/oniChannel/network/transport/messages"
 )
 
 type Node struct {

@@ -4,8 +4,8 @@ import (
 	"crypto/sha256"
 	"reflect"
 
-	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChain/common/log"
+	"github.com/oniio/oniChannel/common"
 )
 
 func RefundTransferMatchesReceived(refundTransfer *LockedTransferSignedState,

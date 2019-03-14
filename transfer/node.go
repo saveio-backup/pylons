@@ -4,7 +4,7 @@ import (
 	"reflect"
 
 	"github.com/oniio/oniChain/common/log"
-	sc_utils "github.com/oniio/oniChain/smartcontract/service/native/utils"
+	scUtils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
 )
 
@@ -173,9 +173,6 @@ func subDispatchMediatorTask(chainState *ChainState, stateChange StateChange,
 	subTask := chainState.PaymentMapping.SecretHashesToTask[secretHash]
 	log.Debug("\n[subDispatchMediatorTask] secretHash:", secretHash)
 
-	if subTask == nil {
-		log.Warn("[subDispatchMediatorTask] subTask == nil")
-	}
 	var isValidSubTask bool
 	var mediatorState *MediatorTransferState
 	if subTask == nil {
@@ -281,7 +278,7 @@ func maybeAddTokenNetwork(chainState *ChainState, paymentNetworkIdentifier commo
 
 	if paymentNetworkState == nil {
 		paymentNetworkState = NewPaymentNetworkState()
-		paymentNetworkState.Address = common.PaymentNetworkID(sc_utils.MicroPayContractAddress)
+		paymentNetworkState.Address = common.PaymentNetworkID(scUtils.MicroPayContractAddress)
 		paymentNetworkState.TokenIdentifiersToTokenNetworks[tokenNetworkIdentifier] = tokenNetworkState
 		paymentNetworkState.TokenAddressesToTokenIdentifiers[tokenAddress] = tokenNetworkState.Address
 
@@ -298,7 +295,7 @@ func maybeAddTokenNetwork(chainState *ChainState, paymentNetworkIdentifier commo
 func inPlaceDeleteMessageQueue(chainState *ChainState, stateChange StateChange, queueId QueueIdentifier) {
 	queue, ok := chainState.QueueIdsToQueues[queueId]
 	if !ok {
-		log.Warn("[inPlaceDeleteMessageQueue] queueId is not in QueueIdsToQueues.")
+		log.Debug("[inPlaceDeleteMessageQueue] queueId is not in QueueIdsToQueues.")
 		return
 	}
 
@@ -405,7 +402,7 @@ func handleContractReceiveChannelClosed(chainState *ChainState,
 }
 
 func handleDelivered(chainState *ChainState, stateChange *ReceiveDelivered) *TransitionResult {
-	log.Infof("[handleDelivered] stateChange MessageIdentifier: %v\n", stateChange.MessageIdentifier)
+	log.Debugf("[handleDelivered] stateChange MessageIdentifier: %v\n", stateChange.MessageIdentifier)
 	queueId := QueueIdentifier{stateChange.Sender, 0}
 	inPlaceDeleteMessageQueue(chainState, stateChange, queueId)
 

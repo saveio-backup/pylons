@@ -3,7 +3,6 @@ package transfer
 import (
 	"reflect"
 
-	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
 )
 
@@ -219,16 +218,17 @@ func handleActionTransferDirect(paymentNetworkIdentifier common.PaymentNetworkID
 		events = iteration.Events
 	} else {
 		failure := &EventPaymentSentFailed{
-			paymentNetworkIdentifier,
-			stateChange.TokenNetworkIdentifier,
-			stateChange.PaymentIdentifier,
-			common.Address(receiverAddress),
-			"Unknown partner channel"}
+			PaymentNetworkIdentifier: paymentNetworkIdentifier,
+			TokenNetworkIdentifier:   stateChange.TokenNetworkIdentifier,
+			Identifier:               stateChange.PaymentIdentifier,
+			Target:                   common.Address(receiverAddress),
+			Reason:                   "Unknown partner channel",
+		}
 
 		events = append(events, failure)
 	}
 
-	return TransitionResult{tokenNetworkState, events}
+	return TransitionResult{NewState:tokenNetworkState, Events:events}
 }
 
 func handleNewRoute(tokenNetworkState *TokenNetworkState, stateChange *ContractReceiveRouteNew) TransitionResult {
@@ -285,7 +285,6 @@ func stateTransitionForNetwork(paymentNetworkIdentifier common.PaymentNetworkID,
 		receiveTransferDirect, _ := stateChange.(*ReceiveTransferDirect)
 		iteration = handleReceiveTransferDirect(tokenNetworkState, receiveTransferDirect, blockNumber)
 	case *ContractReceiveRouteNew:
-		log.Info("[handleNewRoute], ContractReceiveRouteNew")
 		contractReceiveRouteNew, _ := stateChange.(*ContractReceiveRouteNew)
 		iteration = handleNewRoute(tokenNetworkState, contractReceiveRouteNew)
 	case *ContractReceiveRouteClosed:

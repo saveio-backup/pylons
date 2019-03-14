@@ -169,7 +169,6 @@ func (self *ConnectionManager) JoinPartner(partner common.Address) {
 }
 
 func (self *ConnectionManager) openChannels() bool {
-
 	openChannels := transfer.GetChannelStateOpen(self.channel.StateFromChannel(),
 		common.PaymentNetworkID{}, common.TokenAddress{})
 

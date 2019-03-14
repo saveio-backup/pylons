@@ -4,21 +4,16 @@ import (
 	"container/list"
 	"sort"
 
-	sc_utils "github.com/oniio/oniChain/smartcontract/service/native/utils"
+	scUtils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
-	"github.com/oniio/oniChain/common/log"
 )
 
-func GetNeigbours(chainState *ChainState) []common.Address {
+func GetNeighbours(chainState *ChainState) []common.Address {
 	var addr []common.Address
 	for _, p := range chainState.IdentifiersToPaymentNetworks {
-		log.Debug("[GetNeigbours] Check IdentifiersToPaymentNetworks")
 		for _, t := range p.TokenIdentifiersToTokenNetworks {
-			log.Debug("[GetNeigbours] Check TokenIdentifiersToTokenNetworks")
 			for _, c := range t.ChannelIdentifiersToChannels {
-				log.Debug("[GetNeigbours] Check ChannelIdentifiersToChannels")
 				if !common.AddressEqual(c.PartnerState.Address, common.Address{}) {
-					log.Debug("[GetNeigbours] Check AddressEqual")
 					addr = append(addr, c.PartnerState.Address)
 				}
 			}
@@ -94,10 +89,8 @@ func GetParticipantsAddresses(chainState *ChainState,
 	return addresses
 }
 
-func GetOurCapacityForTokenNetwork(
-	chainState *ChainState,
-	paymentNetworkId common.PaymentNetworkID,
-	tokenAddress common.TokenAddress) int {
+func GetOurCapacityForTokenNetwork(chainState *ChainState,
+	paymentNetworkId common.PaymentNetworkID, tokenAddress common.TokenAddress) int {
 
 	openChannels := GetChannelStateOpen(
 		chainState,
@@ -231,7 +224,7 @@ func GetTokenNetworkByIdentifier(
 	chainState *ChainState,
 	tokenNetworkId common.TokenNetworkID) *TokenNetworkState {
 	//log.Debug("chainState.IdentifiersToPaymentNetworks = %+v\n", chainState.IdentifiersToPaymentNetworks)
-	paymentNetworkState := chainState.IdentifiersToPaymentNetworks[common.PaymentNetworkID(sc_utils.MicroPayContractAddress)]
+	paymentNetworkState := chainState.IdentifiersToPaymentNetworks[common.PaymentNetworkID(scUtils.MicroPayContractAddress)]
 	//log.Debug("paymentNetworkState = %+v\n", paymentNetworkState)
 	if paymentNetworkState == nil {
 		return nil
@@ -343,9 +336,7 @@ func getChannelStateFilter(
 	return result
 }
 
-func GetChannelStateForReceiving(
-	chainState *ChainState,
-	paymentNetworkId common.PaymentNetworkID,
+func GetChannelStateForReceiving(chainState *ChainState, paymentNetworkId common.PaymentNetworkID,
 	tokenAddress common.TokenAddress) *list.List {
 
 	tokenNetworkState := getTokenNetworkByTokenAddress(
@@ -364,9 +355,7 @@ func GetChannelStateForReceiving(
 	return result
 }
 
-func GetChannelStateOpen(
-	chainState *ChainState,
-	paymentNetworkId common.PaymentNetworkID,
+func GetChannelStateOpen(chainState *ChainState, paymentNetworkId common.PaymentNetworkID,
 	tokenAddress common.TokenAddress) *list.List {
 
 	f := func(channelState *NettingChannelState) bool {
@@ -378,11 +367,7 @@ func GetChannelStateOpen(
 		}
 	}
 
-	return getChannelStateFilter(
-		chainState,
-		paymentNetworkId,
-		tokenAddress,
-		f)
+	return getChannelStateFilter(chainState, paymentNetworkId, tokenAddress, f)
 }
 
 func GetChannelStateClosing(

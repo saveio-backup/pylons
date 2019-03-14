@@ -6,8 +6,8 @@ import (
 	"reflect"
 
 	chainComm "github.com/oniio/oniChain/common"
-	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChain/common/log"
+	"github.com/oniio/oniChannel/common"
 )
 
 const MAXIMUM_PENDING_TRANSFERS = 160
@@ -302,22 +302,25 @@ func clearIfFinalized(iteration *TransitionResult,
 	//A lock is considered finalized if it has been removed from the merkle tree
 	//offchain, either because the transfer was unlocked or expired, or because the
 	//channel was settled on chain and therefore the channel is removed."""
-
+	if iteration.NewState == nil {
+		log.Error("[clearIfFinalized] iteration is nil")
+		return iteration
+	}
 	state := iteration.NewState.(*MediatorTransferState)
 	if state == nil {
 		return iteration
 	}
 
 	//# Only clear the task if all channels have the lock cleared.
-	secrethash := state.SecretHash
+	secretHash := state.SecretHash
 	for i := 0; i < len(state.TransfersPair); i++ {
 		pair := state.TransfersPair[i]
 		payerChannel := GetPayerChannel(channelIdentifiersToChannels, pair)
-		if payerChannel != nil && IsLockPending(payerChannel.PartnerState, secrethash) {
+		if payerChannel != nil && IsLockPending(payerChannel.PartnerState, secretHash) {
 			return iteration
 		}
 		payeeChannel := GetPayeeChannel(channelIdentifiersToChannels, pair)
-		if payeeChannel != nil && IsLockPending(payeeChannel.OurState, secrethash) {
+		if payeeChannel != nil && IsLockPending(payeeChannel.OurState, secretHash) {
 			return iteration
 		}
 	}
@@ -327,7 +330,7 @@ func clearIfFinalized(iteration *TransitionResult,
 		waitingChannelIdentifier := waitingTransfer.BalanceProof.ChannelIdentifier
 		waitingChannel := channelIdentifiersToChannels[waitingChannelIdentifier]
 
-		if waitingChannel != nil && IsLockPending(waitingChannel.PartnerState, secrethash) {
+		if waitingChannel != nil && IsLockPending(waitingChannel.PartnerState, secretHash) {
 			return iteration
 		}
 	}
@@ -1070,6 +1073,7 @@ func handleInit(stateChange *ActionInitMediator, channelIdentifiersToChannels ma
 
 	//# There is no corresponding channel for the message, ignore it
 	if payerChannel == nil {
+		log.Warn("[handleInit] payerChannel is nil")
 		return nil
 	}
 	mediatorState := &MediatorTransferState{
@@ -1081,11 +1085,11 @@ func handleInit(stateChange *ActionInitMediator, channelIdentifiersToChannels ma
 		//# If the balance proof is not valid, do *not* create a task. Otherwise it's
 		//# possible for an attacker to send multiple invalid transfers, and increase
 		//# the memory usage of this Node.
-		log.Debug("[handleInit]     HandleReceiveLockedTransfer", err.Error())
+		log.Error("[handleInit]     HandleReceiveLockedTransfer", err.Error())
 		return &TransitionResult{NewState: nil, Events: events}
 	}
 	for _, e := range events {
-		log.Debug("[handleInit]: ", reflect.TypeOf(e).String())
+		log.Info("[handleInit]: ", reflect.TypeOf(e).String())
 	}
 
 	iteration, err := mediateTransfer(mediatorState, routes, payerChannel,
@@ -1093,11 +1097,11 @@ func handleInit(stateChange *ActionInitMediator, channelIdentifiersToChannels ma
 
 	events = append(events, iteration.Events...)
 	for _, e := range iteration.Events {
-		log.Debug("[handleInit]: ", reflect.TypeOf(e).String())
+		log.Info("[handleInit]: ", reflect.TypeOf(e).String())
 	}
 
 	if iteration.NewState == nil {
-		log.Debug("[handleInit]     iteration.NewState == nil")
+		log.Info("[handleInit]     iteration.NewState == nil")
 	}
 
 	return &TransitionResult{NewState: iteration.NewState, Events: events}
@@ -1367,9 +1371,9 @@ func MdStateTransition(mediatorState *MediatorTransferState, stateChange interfa
 
 	var err error
 	iteration := &TransitionResult{NewState: mediatorState, Events: nil}
-	log.Debug("[MdStateTransition]: ", reflect.TypeOf(stateChange).String())
+	log.Info("[MdStateTransition]: ", reflect.TypeOf(stateChange).String())
 	if mediatorState == nil {
-		log.Warn("[MdStateTransition] mediatorState is nil")
+		log.Debug("[MdStateTransition] mediatorState is nil")
 	}
 	switch stateChange.(type) {
 	case *ActionInitMediator:

@@ -128,7 +128,7 @@ func (self ChannelEventHandler) HandlePaymentSentFailed(channel *ChannelService,
 	}
 
 	channel.RemovePaymentStatus(target, identifier)
-	//log.Info("set paymentDone to false")
+	log.Warn("set paymentDone to false")
 	paymentStatus.paymentDone <- false
 
 	return

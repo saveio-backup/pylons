@@ -7,9 +7,9 @@ import (
 	"strconv"
 
 	"crypto/sha256"
+	chainCom "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/utils/jsonext"
-	chainCom "github.com/oniio/oniChain/common"
 )
 
 func AddressEqual(address1 Address, address2 Address) bool {
