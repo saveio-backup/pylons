@@ -1318,6 +1318,80 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 	return TransitionResult{channelState, events}
 }
 
+func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *ActionWithdraw) TransitionResult {
+	var events []Event
+
+	messageIdentifier := GetMsgID()
+	sendWithdrawRequest := &SendWithdrawRequest{
+		SendMessageEvent: SendMessageEvent{
+			Recipient:         stateChange.Partner,
+			ChannelIdentifier: stateChange.ChannelIdentifier,
+			MessageIdentifier: messageIdentifier,
+		},
+
+		WithdrawAmount: stateChange.TotalWithdraw,
+	}
+
+	events = append(events, sendWithdrawRequest)
+
+	return TransitionResult{channelState, events}
+}
+
+func handleWithdrawRequestReceived(channelState *NettingChannelState, stateChange *ReceiveWithdrawRequest) TransitionResult {
+	var events []Event
+
+	// check if  received message is valid
+	//1. check if channel id is valid,
+	//2. check if participant is valid,
+	//3. check if withdraw is valid
+	//4. verify is signature is valid
+
+	// if valid, generate a SendWithdraw event
+
+	messageIdentifier := GetMsgID()
+	sendWithdraw := &SendWithdraw{
+		SendMessageEvent: SendMessageEvent{
+			Recipient:         stateChange.Participant,
+			ChannelIdentifier: stateChange.ChannelIdentifier,
+			MessageIdentifier: messageIdentifier,
+		},
+
+		WithdrawAmount: stateChange.TotalWithdraw,
+	}
+
+	events = append(events, sendWithdraw)
+	return TransitionResult{channelState, events}
+}
+
+func handleWithdrawReceived(channelState *NettingChannelState, stateChange *ReceiveWithdraw) TransitionResult {
+	var events []Event
+
+	// check if partner signature is valid, we dont want to waste gas to try some invalid contract call
+	// check if channel is still open, if the channel is closed dont call contract
+
+	// if everything is ok, we construct a ContractSendChannelWithdraw event;
+	contractSendChannelWithdraw := &ContractSendChannelWithdraw{
+		ChannelIdentifier:    stateChange.ChannelIdentifier,
+		Participant:          stateChange.Participant,
+		TotalWithdraw:        stateChange.TotalWithdraw,
+		ParticipantSignature: stateChange.ParticipantSignature,
+		ParticipantAddress:   stateChange.ParticipantAddress,
+		ParticipantPublicKey: stateChange.ParticipantPublicKey,
+		PartnerSignature:     stateChange.PartnerSignature,
+		PartnerAddress:       stateChange.PartnerAddress,
+		PartnerPublicKey:     stateChange.PartnerPublicKey,
+	}
+
+	events = append(events, contractSendChannelWithdraw)
+	return TransitionResult{channelState, events}
+}
+
+func handleChannelWithdraw(channelState *NettingChannelState, stateChange *ContractReceiveChannelWithdraw) TransitionResult {
+	var events []Event
+
+	return TransitionResult{channelState, events}
+}
+
 func handleActionClose(channelState *NettingChannelState, close *ActionChannelClose,
 	blockNumber common.BlockHeight) TransitionResult {
 
@@ -1687,6 +1761,18 @@ func StateTransitionForChannel(channelState *NettingChannelState, stateChange St
 	case *ReceiveTransferDirect:
 		receiveTransferDirect, _ := stateChange.(*ReceiveTransferDirect)
 		iteration = handleReceiveDirectTransfer(channelState, receiveTransferDirect)
+	case *ActionWithdraw:
+		actionWithdraw, _ := stateChange.(*ActionWithdraw)
+		iteration = handleSendWithdrawRequest(channelState, actionWithdraw)
+	case *ReceiveWithdrawRequest:
+		receiveWithdrawRequest, _ := stateChange.(*ReceiveWithdrawRequest)
+		iteration = handleWithdrawRequestReceived(channelState, receiveWithdrawRequest)
+	case *ReceiveWithdraw:
+		receiveWithdraw, _ := stateChange.(*ReceiveWithdraw)
+		iteration = handleWithdrawReceived(channelState, receiveWithdraw)
+	case *ContractReceiveChannelWithdraw:
+		contractReceiveChannelWithdraw, _ := stateChange.(*ContractReceiveChannelWithdraw)
+		iteration = handleChannelWithdraw(channelState, contractReceiveChannelWithdraw)
 	}
 
 	return iteration

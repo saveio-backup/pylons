@@ -59,6 +59,10 @@ const (
 	ReceiveTransferRefundClassId
 	ActionInitTargetClassId
 	ActionInitMediatorClassId
+	ActionWithdrawClassId
+	ReceiveWithdrawRequestClassId
+	ReceiveWithdrawClassId
+	ContractReceiveChannelWithdrawClassId
 )
 
 //event
@@ -86,6 +90,9 @@ const (
 	EventInvalidReceivedUnlockClassId
 	EventUnlockClaimSuccessClassId
 	EventUnexpectedSecretRevealClassId
+	SendWithdrawRequestClassId
+	SendWithdrawClassId
+	ContractSendChannelWithdrawClassId
 )
 
 // class meta for State
@@ -286,6 +293,19 @@ func (self ActionInitMediator) ClassId() int {
 	return ActionInitMediatorClassId
 }
 
+func (self ActionWithdraw) ClassId() int {
+	return ActionWithdrawClassId
+}
+func (self ReceiveWithdrawRequest) ClassId() int {
+	return ReceiveWithdrawRequestClassId
+}
+func (self ReceiveWithdraw) ClassId() int {
+	return ReceiveWithdrawClassId
+}
+func (self ContractReceiveChannelWithdraw) ClassId() int {
+	return ContractReceiveChannelWithdrawClassId
+}
+
 // class meta for Event
 func (self SendMessageEvent) ClassId() int {
 	return SendMessageEventClassId
@@ -369,6 +389,18 @@ func (self EventUnlockClaimSuccess) ClassId() int {
 
 func (self EventUnexpectedSecretReveal) ClassId() int {
 	return EventUnexpectedSecretRevealClassId
+}
+
+func (self SendWithdrawRequest) ClassId() int {
+	return SendWithdrawRequestClassId
+}
+
+func (self SendWithdraw) ClassId() int {
+	return SendWithdrawClassId
+}
+
+func (self ContractSendChannelWithdraw) ClassId() int {
+	return ContractSendChannelWithdrawClassId
 }
 
 // create class instance based on ClassId
@@ -494,6 +526,14 @@ func CreateStateChangeByClassId(classId int) interface{} {
 		result = new(ReceiveSecretRequest)
 	case ReceiveSecretRevealClassId:
 		result = new(ReceiveSecretReveal)
+	case ActionWithdrawClassId:
+		result = new(ActionWithdraw)
+	case ReceiveWithdrawRequestClassId:
+		result = new(ReceiveWithdrawRequest)
+	case ReceiveWithdrawClassId:
+		result = new(ReceiveWithdraw)
+	case ContractReceiveChannelWithdrawClassId:
+		result = new(ContractReceiveChannelWithdraw)
 	}
 
 	return result
@@ -549,6 +589,12 @@ func CreateEventByClassId(classId int) interface{} {
 		return new(EventUnlockClaimSuccess)
 	case EventUnexpectedSecretRevealClassId:
 		return new(EventUnexpectedSecretReveal)
+	case SendWithdrawRequestClassId:
+		return new(SendWithdrawRequest)
+	case SendWithdrawClassId:
+		return new(SendWithdraw)
+	case ContractSendChannelWithdrawClassId:
+		return new(ContractSendChannelWithdraw)
 	}
 
 	return result

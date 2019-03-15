@@ -7,6 +7,8 @@ import (
 
 	"crypto/sha256"
 
+	"reflect"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/oniio/oniChain/account"
 	"github.com/oniio/oniChain/common/log"
@@ -16,7 +18,6 @@ import (
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/transfer"
-	"reflect"
 )
 
 type SignedMessageInterface interface {
@@ -176,6 +177,23 @@ func (this *RevealSecret) DataToSign() []byte {
 	return buf.Bytes()
 }
 
+// fwtodo : remove duplicate code for withdrawrequest and withdraw
+func (this *WithdrawRequest) DataToSign() []byte {
+	var buf bytes.Buffer
+	buf.Write(Uint64ToBytes(this.ChannelIdentifier.ChannelId))
+	buf.Write(this.Participant.Address)
+	buf.Write(Uint64ToBytes(this.WithdrawAmount.TokenAmount))
+	return buf.Bytes()
+}
+
+func (this *Withdraw) DataToSign() []byte {
+	var buf bytes.Buffer
+	buf.Write(Uint64ToBytes(this.ChannelIdentifier.ChannelId))
+	buf.Write(this.Participant.Address)
+	buf.Write(Uint64ToBytes(this.WithdrawAmount.TokenAmount))
+	return buf.Bytes()
+}
+
 func MessageHash(data []byte) []byte {
 	sum := sha256.Sum256(data)
 	return sum[:]
@@ -198,6 +216,10 @@ func MessageFromSendEvent(event interface{}) proto.Message {
 		return SecretRequestFromEvent(event.(*transfer.SendSecretRequest))
 	case *transfer.SendLockExpired:
 		return LockExpiredFromEvent(event.(*transfer.SendLockExpired))
+	case *transfer.SendWithdrawRequest:
+		return WithdrawRequestFromEvent(event.(*transfer.SendWithdrawRequest))
+	case *transfer.SendWithdraw:
+		return WithdrawFromEvent(event.(*transfer.SendWithdraw))
 	default:
 		log.Debug("Unknown event type: ", reflect.TypeOf(event).String())
 	}
@@ -332,6 +354,27 @@ func LockExpiredFromEvent(event *transfer.SendLockExpired) proto.Message {
 		MessageIdentifier: &MessageID{MessageId: (uint64)(event.MessageIdentifier)},
 		Recipient:         &Address{Address: event.Recipient[:]},
 		SecretHash:        &SecretHash{SecretHash: event.SecretHash[:]},
+	}
+	return msg
+}
+
+// fwtoo : refacotr to remove duplicate code
+func WithdrawRequestFromEvent(event *transfer.SendWithdrawRequest) proto.Message {
+	msg := &WithdrawRequest{
+		MessageIdentifier: &MessageID{MessageId: (uint64)(event.MessageIdentifier)},
+		ChannelIdentifier: &ChannelID{uint64(event.ChannelIdentifier)},
+		Participant:       &Address{Address: event.Recipient[:]},
+		WithdrawAmount:    &TokenAmount{uint64(event.WithdrawAmount)},
+	}
+	return msg
+}
+
+func WithdrawFromEvent(event *transfer.SendWithdraw) proto.Message {
+	msg := &Withdraw{
+		MessageIdentifier: &MessageID{MessageId: (uint64)(event.MessageIdentifier)},
+		ChannelIdentifier: &ChannelID{uint64(event.ChannelIdentifier)},
+		Participant:       &Address{Address: event.Recipient[:]},
+		WithdrawAmount:    &TokenAmount{uint64(event.WithdrawAmount)},
 	}
 	return msg
 }

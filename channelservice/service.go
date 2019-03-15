@@ -620,7 +620,7 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 	}
 	log.Info("wait for new channel ... ")
 	channelState := WaitForNewChannel(self, common.PaymentNetworkID(self.mircoAddress),
-		common.TokenAddress(ong.ONG_CONTRACT_ADDRESS), 	partnerAddress,
+		common.TokenAddress(ong.ONG_CONTRACT_ADDRESS), partnerAddress,
 		float32(constants.OPEN_CHANNEL_RETRY_TIMEOUT), constants.OPEN_CHANNEL_RETRY_TIMES)
 	if channelState == nil {
 		log.Error("setup channel timeout")
@@ -640,7 +640,7 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 func (self *ChannelService) SetTotalChannelDeposit(tokenAddress common.TokenAddress, partnerAddress common.Address, totalDeposit common.TokenAmount) error {
 
 	chainState := self.StateFromChannel()
-	partAddr  := common.ToBase58(partnerAddress)
+	partAddr := common.ToBase58(partnerAddress)
 	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.mircoAddress), tokenAddress, partnerAddress)
 	if channelState == nil {
 		log.Errorf("deposit failed, can not find specific channel with %s", partAddr)
@@ -1051,6 +1051,31 @@ func (self *ChannelService) GetHostAddr(nodeAddress common.Address) (string, err
 //	log.Infof("peer %s registe address: %s", regAddr.ToBase58(), nodeAddr)
 //	return nodeAddr
 //}
+func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAddress common.Address, totalWithdraw common.TokenAmount) error {
+
+	chainState := self.StateFromChannel()
+	partAddr, _ := comm.AddressParseFromBytes(partnerAddress[:])
+	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.mircoAddress), tokenAddress, partnerAddress)
+	if channelState == nil {
+		log.Errorf("withdraw failed, can not find specific channel with %s", partAddr.ToBase58())
+		return errors.New("can not find specific channel")
+	}
+
+	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
+	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(self.StateFromChannel(),
+		paymentNetworkIdentifier, tokenAddress)
+
+	withdraw := &transfer.ActionWithdraw{
+		TokenNetworkIdentifier: tokenNetworkIdentifier,
+		Partner:                partnerAddress,
+		TotalWithdraw:          totalWithdraw,
+	}
+
+	self.HandleStateChange(withdraw)
+
+	return nil
+
+}
 
 func GetFullDatabasePath() (string, error) {
 	file, err := exec.LookPath(os.Args[0])

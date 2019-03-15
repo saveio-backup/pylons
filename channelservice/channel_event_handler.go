@@ -66,6 +66,15 @@ func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event tr
 	case *transfer.EventUnlockFailed:
 		unlockClaimFailed := event.(*transfer.EventUnlockFailed)
 		self.HandleEventUnlockFailed(channel, unlockClaimFailed)
+	case *transfer.SendWithdrawRequest:
+		sendWithdrawRequest := event.(*transfer.SendWithdrawRequest)
+		self.HandleSendWithdrawRequest(channel, sendWithdrawRequest)
+	case *transfer.SendWithdraw:
+		sendWithdraw := event.(*transfer.SendWithdraw)
+		self.HandleSendWithdraw(channel, sendWithdraw)
+	case *transfer.ContractSendChannelWithdraw:
+		contractSendChannelWithdraw := event.(*transfer.ContractSendChannelWithdraw)
+		self.HandleContractSendChannelWithdraw(channel, contractSendChannelWithdraw)
 	default:
 		log.Warn("[OnChannelEvent] Not known type: ", reflect.TypeOf(event).String())
 	}
@@ -376,4 +385,55 @@ func (self ChannelEventHandler) HandleEventUnlockSuccess(channel *ChannelService
 func (self ChannelEventHandler) HandleEventUnlockFailed(channel *ChannelService,
 	unlockFailed *transfer.EventUnlockFailed) {
 	log.Info("[OnChannelEvent] Unlock Failed PaymentId: ", unlockFailed.Identifier)
+}
+
+func (self ChannelEventHandler) HandleSendWithdrawRequest(channel *ChannelService, withdrawRequestEvent *transfer.SendWithdrawRequest) {
+	withdrawRequestMessage := messages.MessageFromSendEvent(withdrawRequestEvent)
+	if withdrawRequestMessage != nil {
+		err := channel.Sign(withdrawRequestMessage)
+		if err != nil {
+			log.Error("[HandleSendWithdrawRequest] ", err.Error())
+			return
+		}
+		queueId := &transfer.QueueIdentifier{
+			Recipient:         common.Address(withdrawRequestEvent.Recipient),
+			ChannelIdentifier: withdrawRequestEvent.ChannelIdentifier,
+		}
+		channel.transport.SendAsync(queueId, withdrawRequestMessage)
+	} else {
+		log.Warn("[HandleSendWithdrawRequest] Message is nil")
+	}
+	return
+}
+
+func (self ChannelEventHandler) HandleSendWithdraw(channel *ChannelService, withdrawEvent *transfer.SendWithdraw) {
+	withdrawMessage := messages.MessageFromSendEvent(withdrawEvent)
+	if withdrawMessage != nil {
+		err := channel.Sign(withdrawMessage)
+		if err != nil {
+			log.Error("[HandleSendWithdrawRequest] ", err.Error())
+			return
+		}
+		queueId := &transfer.QueueIdentifier{
+			Recipient:         common.Address(withdrawEvent.Recipient),
+			ChannelIdentifier: withdrawEvent.ChannelIdentifier,
+		}
+		channel.transport.SendAsync(queueId, withdrawMessage)
+	} else {
+		log.Warn("[HandleSendWithdrawRequest] Message is nil")
+	}
+	return
+}
+
+func (self ChannelEventHandler) HandleContractSendChannelWithdraw(channel *ChannelService, channelWithdrawEvent *transfer.ContractSendChannelWithdraw) {
+
+	args := channel.GetPaymentChannelArgs(channelWithdrawEvent.TokenNetworkIdentifier, channelWithdrawEvent.ChannelIdentifier)
+	if args == nil {
+		panic("error in HandleContractSendChannelWithdraw, cannot get paymentchannel args")
+	}
+
+	channelProxy := channel.chain.PaymentChannel(common.Address(channelWithdrawEvent.TokenNetworkIdentifier), channelWithdrawEvent.ChannelIdentifier, args)
+
+	channelProxy.Withdraw(channelWithdrawEvent.Participant, channelWithdrawEvent.TotalWithdraw, channelWithdrawEvent.PartnerSignature, channelWithdrawEvent.PartnerPublicKey,
+		channelWithdrawEvent.ParticipantSignature, channelWithdrawEvent.ParticipantPublicKey)
 }

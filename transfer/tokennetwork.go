@@ -257,6 +257,50 @@ func handleReceiveTransferDirect(tokenNetworkState *TokenNetworkState,
 	return TransitionResult{tokenNetworkState, events}
 }
 
+func handleActionWithdraw(paymentNetworkIdentifier common.PaymentNetworkID,
+	tokenNetworkState *TokenNetworkState, stateChange *ActionWithdraw,
+	blockNumber common.BlockHeight) TransitionResult {
+
+	var events []Event
+
+	receiverAddress := stateChange.Partner
+	excludeStates := make(map[string]int)
+	excludeStates[ChannelStateClosed] = 0
+	excludeStates[ChannelStateClosing] = 0
+	excludeStates[ChannelStateSettled] = 0
+	excludeStates[ChannelStateSettling] = 0
+	excludeStates[ChannelStateUnusable] = 0
+
+	channelStates := FilterChannelsByStatus(tokenNetworkState.PartnerAddressesToChannels[receiverAddress],
+		excludeStates)
+
+	if channelStates != nil && channelStates.Len() != 0 {
+		iteration := StateTransitionForChannel(channelStates.Back().Value.(*NettingChannelState),
+			stateChange, blockNumber)
+		events = iteration.Events
+	}
+
+	return TransitionResult{tokenNetworkState, events}
+}
+
+func handleReceiveWithdrawRequest(paymentNetworkIdentifier common.PaymentNetworkID,
+	tokenNetworkState *TokenNetworkState, stateChange StateChange,
+	blockNumber common.BlockHeight) TransitionResult {
+
+	return subDispatchToChannelById(tokenNetworkState, stateChange, blockNumber)
+}
+func handleReceiveWithdraw(paymentNetworkIdentifier common.PaymentNetworkID,
+	tokenNetworkState *TokenNetworkState, stateChange StateChange,
+	blockNumber common.BlockHeight) TransitionResult {
+
+	return subDispatchToChannelById(tokenNetworkState, stateChange, blockNumber)
+}
+func handleWithdraw(tokenNetworkState *TokenNetworkState, stateChange StateChange,
+	blockNumber common.BlockHeight) TransitionResult {
+
+	return subDispatchToChannelById(tokenNetworkState, stateChange, blockNumber)
+}
+
 func stateTransitionForNetwork(paymentNetworkIdentifier common.PaymentNetworkID,
 	tokenNetworkState *TokenNetworkState, stateChange StateChange,
 	blockNumber common.BlockHeight) TransitionResult {
@@ -290,6 +334,16 @@ func stateTransitionForNetwork(paymentNetworkIdentifier common.PaymentNetworkID,
 	case *ContractReceiveRouteClosed:
 		contractReceiveRouteClosed, _ := stateChange.(*ContractReceiveRouteClosed)
 		iteration = handleCloseRoute(tokenNetworkState, contractReceiveRouteClosed)
+	case *ActionWithdraw:
+		actionWithdraw, _ := stateChange.(*ActionWithdraw)
+		iteration = handleActionWithdraw(paymentNetworkIdentifier, tokenNetworkState,
+			actionWithdraw, blockNumber)
+	case *ReceiveWithdrawRequest:
+		iteration = handleReceiveWithdrawRequest(paymentNetworkIdentifier, tokenNetworkState, stateChange, blockNumber)
+	case *ReceiveWithdraw:
+		iteration = handleReceiveWithdraw(paymentNetworkIdentifier, tokenNetworkState, stateChange, blockNumber)
+	case *ContractReceiveChannelWithdraw:
+		iteration = handleWithdraw(tokenNetworkState, stateChange, blockNumber)
 	}
 
 	return iteration

@@ -30,6 +30,34 @@ type ActionTransferDirect struct {
 	Amount                 common.TokenAmount
 }
 
+type ActionWithdraw struct {
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	Partner                common.Address
+	TotalWithdraw          common.TokenAmount
+}
+
+type ReceiveWithdrawRequest struct {
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	Participant            common.Address
+	TotalWithdraw          common.TokenAmount
+	ParticipantSignature   common.Signature
+	ParticipantAddress     common.Address
+	ParticipantPublicKey   common.PubKey
+}
+
+type ReceiveWithdraw struct {
+	ReceiveWithdrawRequest
+	PartnerSignature common.Signature
+	PartnerAddress   common.Address
+	PartnerPublicKey common.PubKey
+}
+
+type ContractReceiveChannelWithdraw struct {
+	TokenNetworkIdentifier common.TokenNetworkID
+}
+
 type ContractReceiveChannelNew struct {
 	ContractReceiveStateChange
 	TokenNetworkIdentifier common.TokenNetworkID

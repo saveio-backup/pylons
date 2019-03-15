@@ -83,6 +83,32 @@ type SendProcessed struct {
 	SendMessageEvent
 }
 
+type SendWithdrawRequest struct {
+	SendMessageEvent
+	WithdrawAmount common.TokenAmount
+}
+
+type SendWithdraw struct {
+	SendMessageEvent
+	WithdrawAmount common.TokenAmount
+}
+
+type ContractSendChannelWithdraw struct {
+	ContractSendEvent
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	Participant            common.Address
+	TotalWithdraw          common.TokenAmount
+
+	ParticipantSignature common.Signature
+	ParticipantAddress   common.Address
+	ParticipantPublicKey common.PubKey
+
+	PartnerSignature common.Signature
+	PartnerAddress   common.Address
+	PartnerPublicKey common.PubKey
+}
+
 type EventInvalidReceivedTransferRefund struct {
 	PaymentIdentifier common.PaymentID
 	Reason            string

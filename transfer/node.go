@@ -581,6 +581,18 @@ func handleStateChangeForNode(chainStateArg State, stateChange StateChange) *Tra
 	case *ReceiveTransferDirect:
 		receiveTransferDirect, _ := stateChange.(*ReceiveTransferDirect)
 		iteration = handleTokenNetworkAction(chainState, stateChange, receiveTransferDirect.TokenNetworkIdentifier)
+	case *ActionWithdraw:
+		actionWithdraw, _ := stateChange.(*ActionWithdraw)
+		iteration = handleTokenNetworkAction(chainState, stateChange, actionWithdraw.TokenNetworkIdentifier)
+	case *ReceiveWithdrawRequest:
+		receiveWithdrawRequest, _ := stateChange.(*ReceiveWithdrawRequest)
+		iteration = handleTokenNetworkAction(chainState, stateChange, receiveWithdrawRequest.TokenNetworkIdentifier)
+	case *ReceiveWithdraw:
+		receiveWithdraw, _ := stateChange.(*ReceiveWithdraw)
+		iteration = handleTokenNetworkAction(chainState, stateChange, receiveWithdraw.TokenNetworkIdentifier)
+	case *ContractReceiveChannelWithdraw:
+		contractReceiveWithdraw, _ := stateChange.(*ContractReceiveChannelWithdraw)
+		iteration = handleTokenNetworkAction(chainState, stateChange, contractReceiveWithdraw.TokenNetworkIdentifier)
 	case *ActionChangeNodeNetworkState:
 		actionChangeNodeNetworkState, _ := stateChange.(*ActionChangeNodeNetworkState)
 		iteration = handleNodeChangeNetworkState(chainState, actionChangeNodeNetworkState)

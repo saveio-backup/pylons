@@ -36,6 +36,10 @@ func (this *NetComponent) Receive(ctx *network.ComponentContext) error {
 		this.Net.Receive(msg, addr)
 	case *messages.LockExpired:
 		this.Net.Receive(msg, addr)
+	case *messages.WithdrawRequest:
+		this.Net.Receive(msg, addr)
+	case *messages.Withdraw:
+		this.Net.Receive(msg, addr)
 	}
 	return nil
 }

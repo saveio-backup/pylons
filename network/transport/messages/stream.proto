@@ -65,7 +65,7 @@ message Address{
 message HashTimeLock{
     PaymentAmount amount = 1;
     BlockExpiration expiration = 2;
-    SecretHash secrethash = 3;
+    SecretHash secret_hash = 3;
 }
 
 // messages definition
@@ -105,7 +105,7 @@ message Delivered{
 message SecretRequest{
     MessageID message_identifier = 1;
     PaymentID payment_identifier = 2;
-    SecretHash secrethash = 3;
+    SecretHash secret_hash = 3;
     TokenAmount amount = 4;
     BlockExpiration expiration = 5;
     SignedMessage signature = 6;
@@ -163,6 +163,23 @@ message LockExpired{
     EnvelopeMessage envelope_message = 1;
     MessageID message_identifier = 2;
     Address recipient = 3;
-    SecretHash secrethash = 4;
+    SecretHash secret_hash = 4;
+}
+
+message WithdrawRequest{
+    MessageID message_identifier = 1;
+    ChannelID channel_identifier = 2;
+    Address participant = 3;
+    TokenAmount withdraw_amount = 4;
+    SignedMessage participant_signature = 5;
+}
+
+message Withdraw{
+    MessageID message_identifier = 1;
+    ChannelID channel_identifier = 2;
+    Address participant = 3;
+    TokenAmount withdraw_amount = 4;
+    SignedMessage participant_signature =5;
+    SignedMessage partner_signature =6;
 }
 
