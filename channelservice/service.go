@@ -133,34 +133,34 @@ func (self *ChannelService) setDefaultDBPath() {
 }
 func (self *ChannelService) Start() error {
 	// register to Endpoint contract
-	var addr comm.Address
-	var err error
-	if addr, err = comm.AddressParseFromBytes(self.address[:]); err != nil {
-		log.Fatal("address format invalid", err)
-		return err
-	}
-
-	info, err := self.chain.ChannelClient.GetEndpointByAddress(addr)
-	if err != nil {
-		log.Fatal("check endpoint info failed:", err)
-		return err
-	}
-
-	if info == nil {
-		log.Info("this account haven`t registered, begin registering...")
-		txHash, err := self.chain.ChannelClient.RegisterPaymentEndPoint([]byte(self.config["protocol"]), []byte(self.config["host"]), []byte(self.config["port"]), addr)
-		if err != nil {
-			log.Fatal("register endpoint service failed:", err)
-			return err
-		}
-		log.Info("wait for the confirmation of transaction...")
-		_, err = self.chain.ChainClient.PollForTxConfirmed(time.Duration(constants.POLL_FOR_COMFIRMED)*time.Second, txHash)
-		if err != nil {
-			log.Error("poll transaction failed:", err)
-			return err
-		}
-		log.Info("endpoint register succesful")
-	}
+	//var addr comm.Address
+	//var err error
+	//if addr, err = comm.AddressParseFromBytes(self.address[:]); err != nil {
+	//	log.Fatal("address format invalid", err)
+	//	return err
+	//}
+	//
+	//info, err := self.chain.ChannelClient.GetEndpointByAddress(addr)
+	//if err != nil {
+	//	log.Fatal("check endpoint info failed:", err)
+	//	return err
+	//}
+	//
+	//if info == nil {
+	//	log.Info("this account haven`t registered, begin registering...")
+	//	txHash, err := self.chain.ChannelClient.RegisterPaymentEndPoint([]byte(self.config["protocol"]), []byte(self.config["host"]), []byte(self.config["port"]), addr)
+	//	if err != nil {
+	//		log.Fatal("register endpoint service failed:", err)
+	//		return err
+	//	}
+	//	log.Info("wait for the confirmation of transaction...")
+	//	_, err = self.chain.ChainClient.PollForTxConfirmed(time.Duration(constants.POLL_FOR_COMFIRMED)*time.Second, txHash)
+	//	if err != nil {
+	//		log.Error("poll transaction failed:", err)
+	//		return err
+	//	}
+	//	log.Info("endpoint register succesful")
+	//}
 	log.Info("account been registered")
 	sqliteStorage, err := storage.NewSQLiteStorage(self.databasePath)
 	if err != nil {

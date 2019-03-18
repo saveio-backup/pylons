@@ -27,6 +27,17 @@ func main() {
 		return
 	}
 
+	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
+	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+
+	partnerAddress, err := chaincomm.AddressFromBase58(os.Args[1])
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	partner := common.Address(partnerAddress)
+
+
 	wallet, err := wallet.OpenWallet("./wallet.dat")
 	if err != nil {
 		log.Error("wallet.Open error:%s\n", err)
@@ -43,21 +54,19 @@ func main() {
 	}
 	log.Info("[NewChannelService]")
 
+	addr1, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
+	addr2, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
+	addr3, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
+	channel.Service.SetHostAddr(common.Address(addr1), "tcp://127.0.0.1:3000")
+	channel.Service.SetHostAddr(common.Address(addr2), "tcp://127.0.0.1:3001")
+	channel.Service.SetHostAddr(common.Address(addr3), "tcp://127.0.0.1:3002")
+
 	err = channel.StartService()
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 	log.Info("[StartService]")
-	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
-
-	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
-	partnerAddress, err := chaincomm.AddressFromBase58(os.Args[1])
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	partnerAddr := common.Address(partnerAddress)
 
 	chanId := channel.Service.OpenChannel(tokenAddress, common.Address(partnerAddress))
 	log.Info("[OpenChannel] ChanId: ", chanId)
@@ -69,7 +78,7 @@ func main() {
 	}
 
 	for i := 0; ; i++ {
-		chanState := channel.Service.GetChannel(registryAddress, &tokenAddress, &partnerAddr)
+		chanState := channel.Service.GetChannel(registryAddress, &tokenAddress, &partner)
 		log.Info("==============================")
 		if chanState != nil {
 			if chanState.OurState != nil {

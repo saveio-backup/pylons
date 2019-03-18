@@ -34,6 +34,23 @@ func main() {
 		return
 	}
 
+	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
+	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+
+	partnerAddress, err := chaincomm.AddressFromBase58(os.Args[1])
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	partner := common.Address(partnerAddress)
+
+	targetAddress, err := chaincomm.AddressFromBase58(os.Args[2])
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	target := common.Address(targetAddress)
+
 	wallet, err := wallet.OpenWallet("./wallet.dat")
 	if err != nil {
 		log.Error("wallet.Open error:%s\n", err)
@@ -49,33 +66,23 @@ func main() {
 		return
 	}
 
+	addr1, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
+	addr2, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
+	addr3, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
+	channel.Service.SetHostAddr(common.Address(addr1), "tcp://127.0.0.1:3000")
+	channel.Service.SetHostAddr(common.Address(addr2), "tcp://127.0.0.1:3001")
+	channel.Service.SetHostAddr(common.Address(addr3), "tcp://127.0.0.1:3002")
+
 	err = channel.StartService()
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
-
-	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
-	partnerAddress, err := chaincomm.AddressFromBase58(os.Args[1])
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	partnerAddr := common.Address(partnerAddress)
-
-	targetAddress, err := chaincomm.AddressFromBase58(os.Args[2])
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	target := common.Address(targetAddress)
-
-	chanId := channel.Service.OpenChannel(tokenAddress, common.Address(partnerAddress))
+	chanId := channel.Service.OpenChannel(tokenAddress, common.Address(partner))
 	log.Info("[OpenChannel] ChanId: ", chanId)
 
-	err = channel.Service.SetTotalChannelDeposit(tokenAddress, common.Address(partnerAddress), 20000)
+	err = channel.Service.SetTotalChannelDeposit(tokenAddress, common.Address(partner), 20000)
 	if err != nil {
 		log.Error("SetTotalChannelDeposit: ", err.Error())
 	}
@@ -97,7 +104,7 @@ func main() {
 
 		log.Info("GetChannel times: ", i)
 
-		chanState := channel.Service.GetChannel(registryAddress, &tokenAddress, &partnerAddr)
+		chanState := channel.Service.GetChannel(registryAddress, &tokenAddress, &partner)
 		fmt.Println()
 		log.Info("State.OurState.GetBalance: ", chanState.OurState.GetGasBalance())
 		log.Info("State.OurState.ContractBalance: ", chanState.OurState.ContractBalance)

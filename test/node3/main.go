@@ -9,6 +9,7 @@ import (
 	"github.com/oniio/oniChain/common/log"
 	ch "github.com/oniio/oniChannel"
 	"github.com/oniio/oniChannel/transfer"
+	"github.com/oniio/oniChannel/common"
 )
 
 var testConfig = &ch.ChannelConfig{
@@ -36,6 +37,14 @@ func main() {
 		return
 	}
 	log.Info("[NewChannelService]")
+
+	addr1, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
+	addr2, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
+	addr3, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
+	channel.Service.SetHostAddr(common.Address(addr1), "tcp://127.0.0.1:3000")
+	channel.Service.SetHostAddr(common.Address(addr2), "tcp://127.0.0.1:3001")
+	channel.Service.SetHostAddr(common.Address(addr3), "tcp://127.0.0.1:3002")
+
 	err = channel.StartService()
 	if err != nil {
 		log.Fatal(err)
