@@ -1311,7 +1311,7 @@ func handleUnlock(mediatorState *MediatorTransferState, stateChange *ReceiveUnlo
 
 				events = append(events, channelEvents...)
 				if isValid {
-					unlock := EventUnlockClaimSuccess{
+					unlock := &EventUnlockClaimSuccess{
 						Identifier: pair.PayeeTransfer.PaymentIdentifier,
 						SecretHash: common.SecretHash(pair.PayeeTransfer.Lock.SecretHash),
 					}

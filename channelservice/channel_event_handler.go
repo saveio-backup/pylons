@@ -54,6 +54,18 @@ func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event tr
 	case *transfer.SendSecretRequest:
 		sendSecretRequest := event.(*transfer.SendSecretRequest)
 		self.HandleSendSecretRequest(channel, sendSecretRequest)
+	case *transfer.EventUnlockClaimSuccess:
+		unlockClaimSuccess := event.(*transfer.EventUnlockClaimSuccess)
+		self.HandleEventUnlockClaimSuccess(channel, unlockClaimSuccess)
+	case *transfer.EventUnlockClaimFailed:
+		unlockClaimFailed := event.(*transfer.EventUnlockClaimFailed)
+		self.HandleEventUnlockClaimFailed(channel, unlockClaimFailed)
+	case *transfer.EventUnlockSuccess:
+		unlockSuccess := event.(*transfer.EventUnlockSuccess)
+		self.HandleEventUnlockSuccess(channel, unlockSuccess)
+	case *transfer.EventUnlockFailed:
+		unlockClaimFailed := event.(*transfer.EventUnlockFailed)
+		self.HandleEventUnlockFailed(channel, unlockClaimFailed)
 	default:
 		log.Warn("[OnChannelEvent] Not known type: ", reflect.TypeOf(event).String())
 	}
@@ -344,4 +356,25 @@ func (self ChannelEventHandler) HandleSendSecretRequest(channel *ChannelService,
 		log.Warn("[HandleSendSecretRequest] Message is nil")
 	}
 	return
+}
+
+func (self ChannelEventHandler) HandleEventUnlockClaimSuccess(channel *ChannelService,
+	unlockClaimSuccess *transfer.EventUnlockClaimSuccess) {
+	log.Info("[OnChannelEvent] Unlock Claim Success PaymentId: ", unlockClaimSuccess.Identifier)
+}
+
+func (self ChannelEventHandler) HandleEventUnlockClaimFailed(channel *ChannelService,
+	unlockClaimFailed *transfer.EventUnlockClaimFailed) {
+	log.Info("[OnChannelEvent] Unlock Claim Failed PaymentId: ", unlockClaimFailed.Identifier)
+}
+
+
+func (self ChannelEventHandler) HandleEventUnlockSuccess(channel *ChannelService,
+	unlockSuccess *transfer.EventUnlockSuccess) {
+	log.Info("[OnChannelEvent] Unlock Success PaymentId: ", unlockSuccess.Identifier)
+}
+
+func (self ChannelEventHandler) HandleEventUnlockFailed(channel *ChannelService,
+	unlockFailed *transfer.EventUnlockFailed) {
+	log.Info("[OnChannelEvent] Unlock Failed PaymentId: ", unlockFailed.Identifier)
 }
