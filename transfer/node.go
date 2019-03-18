@@ -60,6 +60,7 @@ func subDispatchToPaymentTask(chainState *ChainState, stateChange StateChange,
 
 	blockNumber := chainState.BlockHeight
 	subTask := chainState.PaymentMapping.SecretHashesToTask[secretHash]
+	var err error
 	var events []Event
 	var subIteration *TransitionResult
 
@@ -93,7 +94,7 @@ func subDispatchToPaymentTask(chainState *ChainState, stateChange StateChange,
 			tokenNetworkState := GetTokenNetworkByIdentifier(chainState, tokenNetworkIdentifier)
 			if tokenNetworkState != nil {
 				ms := mSubTask.MediatorState.(*MediatorTransferState)
-				subIteration, err := MdStateTransition(ms, stateChange,
+				subIteration, err = MdStateTransition(ms, stateChange,
 					tokenNetworkState.ChannelIdentifiersToChannels, blockNumber)
 				if err != nil {
 					log.Error("MdStateTransition Err: ", err.Error())
