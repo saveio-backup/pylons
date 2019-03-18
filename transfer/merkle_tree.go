@@ -7,6 +7,25 @@ import (
 	"github.com/oniio/oniChannel/common"
 )
 
+type MerkleTreeState struct {
+	Layers [][]common.Keccak256
+}
+
+func (self *MerkleTreeState) init() {
+
+	self.Layers = append(self.Layers, []common.Keccak256{})
+	self.Layers = append(self.Layers, []common.Keccak256{})
+
+	emptyRoot := common.Keccak256{}
+	self.Layers[1] = append(self.Layers[1], emptyRoot)
+}
+
+func GetEmptyMerkleTree() *MerkleTreeState {
+	var merkleTreeState MerkleTreeState
+	merkleTreeState.init()
+	return &merkleTreeState
+}
+
 func HashPair(first common.Keccak256, second common.Keccak256) common.Keccak256 {
 	var result common.Keccak256
 
@@ -20,23 +39,22 @@ func HashPair(first common.Keccak256, second common.Keccak256) common.Keccak256 
 		return first
 	}
 
-	if common.Keccak256Compare(&first, &first) > 0 {
-		var data []byte
-
+	var data []byte
+	if common.Keccak256Compare(&first, &second) > 0 {
+		data = append(data, second[:]...)
+		data = append(data, first[:]...)
+	} else {
 		data = append(data, first[:]...)
 		data = append(data, second[:]...)
-
-		sum := sha256.Sum256(data)
-		result = common.Keccak256(sum)
 	}
 
+	sum := sha256.Sum256(data)
+	result = common.Keccak256(sum)
 	return result
 }
 
 func computeLayers(elements []common.Keccak256) [][]common.Keccak256 {
-
 	var tree [][]common.Keccak256
-
 	sort.Sort(common.Keccak256Slice(elements))
 	leaves := elements
 

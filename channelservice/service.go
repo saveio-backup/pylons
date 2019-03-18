@@ -131,6 +131,7 @@ func (self *ChannelService) setDefaultDBPath() {
 		log.Warn("get full db path failed,use memory database")
 	}
 }
+
 func (self *ChannelService) Start() error {
 	// register to Endpoint contract
 	//var addr comm.Address

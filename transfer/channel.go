@@ -293,6 +293,7 @@ func IsValidUnlock(unlock *ReceiveUnlock, channelState *NettingChannelState,
 		return false, msg, nil
 	}
 
+	lock.LockHash = lock.CalcLockHash()
 	merkleTree := computeMerkleTreeWithout(senderState.MerkleTree, lock.LockHash)
 	locksrootWithoutLock := MerkleRoot(merkleTree.Layers)
 
@@ -513,6 +514,7 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 	if err != nil {
 		log.Error("[IsValidLockExpired] error: ", err.Error())
 	}
+	lock.LockHash = lock.CalcLockHash()
 	merkleTree := computeMerkleTreeWithout(senderState.MerkleTree, lock.LockHash)
 
 	currentTransferredAmount := currentBalanceProof.transferredAmount
@@ -567,8 +569,8 @@ func ValidLockedTransferCheck(channelState *NettingChannelState, senderState *Ne
 	if err != nil {
 		log.Error("[ValidLockedTransferCheck] error: ", err.Error())
 	}
-	lockHash := lock.CalcLockHash()
-	merkleTree := computeMerkleTreeWith(senderState.MerkleTree, lockHash)
+	lock.LockHash = lock.CalcLockHash()
+	merkleTree := computeMerkleTreeWith(senderState.MerkleTree, lock.LockHash)
 
 	currentTransferredAmount := currentBalanceProof.transferredAmount
 	currentLockedAmount := currentBalanceProof.lockedAmount
@@ -718,12 +720,16 @@ func getNextNonce(endState *NettingChannelEndState) common.Nonce {
 }
 
 func MerkleTreeWidth(merkleTree *MerkleTreeState) int {
+	if len(merkleTree.Layers) == 0 {
+		return 0
+	}
 	return len(merkleTree.Layers[0])
 }
 
 func getNumberOfPendingTransfers(channelEndState *NettingChannelEndState) int {
 	if channelEndState.MerkleTree == nil {
-		log.Debug("[getNumberOfPendingTransfers] channelEndState.MerkleTree == nil")
+		log.Warn("[getNumberOfPendingTransfers] channelEndState.MerkleTree == nil")
+		return 0
 	}
 	return MerkleTreeWidth(channelEndState.MerkleTree)
 }
@@ -791,10 +797,10 @@ func updateContractBalance(endState *NettingChannelEndState, contractBalance com
 	}
 }
 
-func computeMerkleTreeWith(merkletree *MerkleTreeState, lockHash common.LockHash) *MerkleTreeState {
+func computeMerkleTreeWith(merkleTree *MerkleTreeState, lockHash common.LockHash) *MerkleTreeState {
 	var result *MerkleTreeState
 	log.Debug("[computeMerkleTreeWith] lockHash:", lockHash)
-	leaves := merkletree.Layers[0]
+	leaves := merkleTree.Layers[0]
 	found := false
 	for i := 0; i < len(leaves); i++ {
 		temp := common.Keccak256(lockHash)
@@ -807,25 +813,25 @@ func computeMerkleTreeWith(merkletree *MerkleTreeState, lockHash common.LockHash
 	if found == false {
 		newLeaves := make([]common.Keccak256, len(leaves)+1)
 		copy(newLeaves, leaves)
-		newLeaves = append(newLeaves, common.Keccak256(lockHash))
+		newLeaves[len(leaves)] = common.Keccak256(lockHash)
 
 		newLayers := computeLayers(newLeaves)
 		result = &MerkleTreeState{}
 		result.Layers = newLayers
 	} else {
-		log.Error("[computeMerkleTreeWith] lockHash is found")
+		log.Warn("[computeMerkleTreeWith] lockHash is found")
 	}
 
 	return result
 }
 
-func computeMerkleTreeWithout(merkletree *MerkleTreeState, lockhash common.LockHash) *MerkleTreeState {
+func computeMerkleTreeWithout(merkleTree *MerkleTreeState, lockHash common.LockHash) *MerkleTreeState {
 	var i int
 	found := false
-	leaves := merkletree.Layers[0]
-	log.Debug("[computeMerkleTreeWithout] lockhash:", lockhash)
+	leaves := merkleTree.Layers[0]
+	log.Debug("[computeMerkleTreeWithout] lockHash:", lockHash)
 	for i = 0; i < len(leaves); i++ {
-		temp := common.Keccak256(lockhash)
+		temp := common.Keccak256(lockHash)
 		log.Debug("[computeMerkleTreeWithout] leaves[i]:", leaves[i])
 		if common.Keccak256Compare(&leaves[i], &temp) == 0 {
 			log.Debug("[computeMerkleTreeWithout] found")
@@ -845,7 +851,7 @@ func computeMerkleTreeWithout(merkletree *MerkleTreeState, lockhash common.LockH
 			newLayers := computeLayers(newLeaves)
 			result.Layers = newLayers
 		} else {
-			return nil
+			return GetEmptyMerkleTree()
 		}
 	}
 	return &result
@@ -873,11 +879,22 @@ func createSendLockedTransfer(channelState *NettingChannelState, initiator commo
 		Expiration: common.BlockHeight(expiration),
 		SecretHash: common.Keccak256(secretHash),
 	}
-	lockHash := lock.CalcLockHash()
-	log.Debug("[createSendLockedTransfer] lock.Lockhash", lockHash)
-	merkleTree := computeMerkleTreeWith(channelState.OurState.MerkleTree, lockHash)
-	//depth := len(merkleTree.Layers)
-	//locksRoot := merkleTree.Layers[depth - 1][0]
+	lock.LockHash = lock.CalcLockHash()
+
+	log.Debug("---------------------------------------------------------------------")
+	log.Debug("[createSendLockedTransfer], lock.LockHash: ", lock.LockHash)
+	log.Debug("[createSendLockedTransfer] computeMerkleTreeWith Before merkleTreeWidth: ", MerkleTreeWidth(ourState.MerkleTree))
+	log.Debug(ourState.MerkleTree)
+
+	merkleTree := computeMerkleTreeWith(channelState.OurState.MerkleTree, lock.LockHash)
+
+	log.Debug("[createSendLockedTransfer] computeMerkleTreeWith After  merkleTreeWidth: ", MerkleTreeWidth(merkleTree))
+	log.Debug(merkleTree)
+	log.Debug("======================================================================")
+
+
+
+
 	locksRoot := MerkleRoot(merkleTree.Layers)
 	var transferAmount common.TokenAmount
 	if ourBalanceProof != nil {
@@ -1017,7 +1034,19 @@ func CreateUnlock(channelState *NettingChannelState, messageIdentifier common.Me
 			lock.Amount, transferredAmount)
 	}
 
+	lock.LockHash = lock.CalcLockHash()
+
+	log.Debug("---------------------------------------------------------------------")
+	log.Debug("[CreateUnlock], lock.LockHash: ", lock.LockHash)
+	log.Debug("[CreateUnlock] computeMerkleTreeWithout Before merkleTreeWidth: ", MerkleTreeWidth(ourState.MerkleTree))
+	log.Debug(ourState.MerkleTree)
 	merkleTree := computeMerkleTreeWithout(ourState.MerkleTree, lock.LockHash)
+
+	log.Debug("[CreateUnlock] computeMerkleTreeWithout After  merkleTreeWidth: ", MerkleTreeWidth(merkleTree))
+	log.Debug(merkleTree)
+	log.Debug("======================================================================")
+
+
 	locksRoot := MerkleRoot(merkleTree.Layers)
 
 	tokenAddress := channelState.TokenAddress

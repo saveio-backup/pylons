@@ -91,6 +91,8 @@ func main() {
 		ret, err := channel.Service.MediaTransfer(registryAddress, tokenAddress, 10, target, common.PaymentID(i))
 		if err != nil {
 			log.Error("MediaTransfer: ", err.Error())
+		} else {
+			log.Info("MediaTransfer Return")
 		}
 		r := <-ret
 		if !r {

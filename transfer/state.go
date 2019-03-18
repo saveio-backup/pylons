@@ -365,19 +365,6 @@ type TransactionExecutionStatus struct {
 	Result              string
 }
 
-type MerkleTreeState struct {
-	Layers [][]common.Keccak256
-}
-
-func (self *MerkleTreeState) init() {
-
-	self.Layers = append(self.Layers, []common.Keccak256{})
-	self.Layers = append(self.Layers, []common.Keccak256{})
-
-	emptyRoot := common.Keccak256{}
-	self.Layers[1] = append(self.Layers[1], emptyRoot)
-}
-
 type NettingChannelEndState struct {
 	Address                            common.Address
 	ContractBalance                    common.TokenAmount

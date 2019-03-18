@@ -71,7 +71,7 @@ func main() {
 	chanId := channel.Service.OpenChannel(tokenAddress, common.Address(partnerAddress))
 	log.Info("[OpenChannel] ChanId: ", chanId)
 
-	err = channel.Service.SetTotalChannelDeposit(tokenAddress, common.Address(partnerAddress), 20000)
+	err = channel.Service.SetTotalChannelDeposit(tokenAddress, common.Address(partner), 20000)
 	if err != nil {
 		log.Error("[SetTotalChannelDeposit]: ", err.Error())
 		return
@@ -82,20 +82,20 @@ func main() {
 		log.Info("==============================")
 		if chanState != nil {
 			if chanState.OurState != nil {
-				log.Info("State.OurState.GetBalance: ", chanState.OurState.GetGasBalance())
-				log.Info("State.OurState.ContractBalance: ", chanState.OurState.ContractBalance)
-				if chanState.OurState.BalanceProof != nil {
-					log.Info("State.OurState.BalanceProof.LockedAmount: ", chanState.OurState.BalanceProof.LockedAmount)
-				}
+				//log.Info("State.OurState.GetBalance: ", chanState.OurState.GetGasBalance())
+				//log.Info("State.OurState.ContractBalance: ", chanState.OurState.ContractBalance)
+				//if chanState.OurState.BalanceProof != nil {
+				//	log.Info("State.OurState.BalanceProof.LockedAmount: ", chanState.OurState.BalanceProof.LockedAmount)
+				//}
 			} else {
 				log.Error("[GetChannel] chanState.OurState is nil")
 			}
 
 			if chanState.PartnerState != nil {
-				log.Info("State.PartnerState.GetBalance: ", chanState.PartnerState.GetGasBalance())
-				log.Info("State.PartnerState.ContractBalance: ", chanState.PartnerState.ContractBalance)
+				//log.Info("State.PartnerState.GetBalance: ", chanState.PartnerState.GetGasBalance())
+				//log.Info("State.PartnerState.ContractBalance: ", chanState.PartnerState.ContractBalance)
 				if chanState.PartnerState.BalanceProof != nil {
-					log.Info("State.PartnerState.BalanceProof.LockedAmount: ", chanState.PartnerState.BalanceProof.LockedAmount)
+					//log.Info("State.PartnerState.BalanceProof.LockedAmount: ", chanState.PartnerState.BalanceProof.LockedAmount)
 				}
 			} else {
 				log.Error("[GetChannel] chanState.OurState is nil")

@@ -796,7 +796,7 @@ func EventsForOnChainSecretReveal(channelState *NettingChannelState,
 }
 
 func eventsForOnChainSecretRevealIfDangerzone(channelmap map[common.ChannelID]*NettingChannelState,
-	secrethash common.SecretHash, transfersPair []*MediationPairState,
+	secretHash common.SecretHash, transfersPair []*MediationPairState,
 	blockNumber common.BlockHeight) []Event {
 	//""" Reveal the secret on-chain if the lock enters the unsafe region and the
 	//secret is not yet on-chain.
@@ -811,7 +811,7 @@ func eventsForOnChainSecretRevealIfDangerzone(channelmap map[common.ChannelID]*N
 		}
 	}
 
-	transactionSent := MdHasSecretRegistrationStarted(allPayerChannels, transfersPair, secrethash)
+	transactionSent := MdHasSecretRegistrationStarted(allPayerChannels, transfersPair, secretHash)
 
 	//# Only consider the transfers which have a pair. This means if we have a
 	//# waiting transfer and for some reason the node knows the secret, it will
@@ -1120,16 +1120,32 @@ func MdHandleBlock(mediatorState *MediatorTransferState, stateChange *Block,
 	var events []Event
 	expiredLocksEvents, err := eventsToRemoveExpiredLocks(mediatorState, channelIdentifiersToChannels,
 		stateChange.BlockHeight)
+	if len(expiredLocksEvents) != 0 {
+		log.Debug("[MdHandleBlock] eventsToRemoveExpiredLocks len(expiredLocksEvents) != 0")
+	} else {
+		log.Debug("[MdHandleBlock] eventsToRemoveExpiredLocks len(expiredLocksEvents) == 0")
+	}
 	if err != nil {
 		return nil
 	}
+
 	secretRevealEvents := eventsForOnChainSecretRevealIfDangerzone(
 		channelIdentifiersToChannels, mediatorState.SecretHash,
 		mediatorState.TransfersPair, stateChange.BlockHeight)
+	if len(secretRevealEvents) != 0 {
+		log.Debug("[MdHandleBlock] eventsForOnChainSecretRevealIfDangerzone len(secretRevealEvents) != 0")
+	} else {
+		log.Debug("[MdHandleBlock] eventsForOnChainSecretRevealIfDangerzone len(secretRevealEvents) == 0")
+	}
 
 	unlockFailEvents := eventsForExpiredPairs(channelIdentifiersToChannels,
 		mediatorState.TransfersPair, mediatorState.WaitingTransfer,
 		stateChange.BlockHeight)
+	if len(unlockFailEvents) != 0 {
+		log.Debug("[MdHandleBlock] eventsForExpiredPairs len(unlockFailEvents) != 0")
+	} else {
+		log.Debug("[MdHandleBlock] eventsForExpiredPairs len(unlockFailEvents) == 0")
+	}
 
 	events = append(events, unlockFailEvents...)
 	events = append(events, secretRevealEvents...)
