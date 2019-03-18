@@ -295,7 +295,6 @@ func ImStateTransition(paymentState *InitiatorPaymentState, stateChange interfac
 		iteration = ImHandleTransferRefundCancelRoute(paymentState, receiveTransferRefundCancelRoute,
 			channelIdToChannels, blockNumber)
 	case *ActionCancelPayment:
-		//actionCancelPayment, _ := stateChange.(*ActionCancelPayment)
 		channelIdentifier := paymentState.Initiator.ChannelIdentifier
 		channelState := channelIdToChannels[channelIdentifier]
 		iteration = ImHandleCancelPayment(paymentState, channelState)

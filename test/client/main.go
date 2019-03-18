@@ -71,6 +71,9 @@ func main() {
 		return
 	}
 
+	target, _ := chaincomm.AddressFromBase58("Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
+	channel.Service.SetHostAddr(common.Address(target), "tcp://127.0.0.1:3001")
+
 	err = channel.StartService()
 	if err != nil {
 		log.Fatal(err)
@@ -78,10 +81,11 @@ func main() {
 	}
 	time.Sleep(time.Second)
 	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
-	target, _ := chaincomm.AddressFromBase58("Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
+
+
 	go logCurrentBalance(channel, common.Address(target))
 	channelID := channel.Service.OpenChannel(tokenAddress, common.Address(target))
-	depositAmount := common.TokenAmount(1000000)
+	depositAmount := common.TokenAmount(1000* 1000000000)
 	if channelID != 0 {
 		log.Infof("start to deposit %d token to channel", depositAmount)
 		err = channel.Service.SetTotalChannelDeposit(tokenAddress, common.Address(target), depositAmount)
@@ -159,6 +163,13 @@ func loopTest(channel *ch.Channel, amount uint, target common.Address, times uin
 		log.Debugf("[loopTest] direct transfer %f ong to %s successfully", 100*float32(amount)/1000000000, "Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
 	}
 	log.Info("[loopTest] direct transfer test done")
+
+	//tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+	//log.Info("[loopTest] channelClose")
+	//channel.Service.ChannelClose(tokenAddress, target, 3)
+
+	log.Info("[loopTest] finished")
+
 }
 func logCurrentBalance(channel *ch.Channel, target common.Address) {
 	ticker := time.NewTicker(config.MIN_GEN_BLOCK_TIME * time.Second)

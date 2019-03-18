@@ -683,15 +683,6 @@ func (self *ChannelService) ChannelClose(tokenAddress common.TokenAddress, partn
 	addressList.PushBack(partnerAddress)
 
 	self.ChannelBatchClose(tokenAddress, addressList, retryTimeout)
-
-	chainState := self.StateFromChannel()
-	registryAddress := common.PaymentNetworkID(self.mircoAddress)
-	channelState := transfer.GetChannelStateFor(chainState, registryAddress, tokenAddress, partnerAddress)
-	if channelState != nil {
-		return
-	}
-	tokenNetworkState := transfer.GetTokenNetworkByIdentifier(chainState, channelState.TokenNetworkIdentifier)
-	tokenNetworkState.DelRoute(channelState.Identifier)
 	return
 }
 
@@ -727,6 +718,9 @@ func (self *ChannelService) ChannelBatchClose(tokenAddress common.TokenAddress, 
 		channelClose.ChannelIdentifier = identifier
 
 		self.HandleStateChange(channelClose)
+
+		tokenNetworkState := transfer.GetTokenNetworkByIdentifier(chainState, channelState.TokenNetworkIdentifier)
+		tokenNetworkState.DelRoute(channelState.Identifier)
 	}
 
 	WaitForClose(self, registryAddress, tokenAddress, channelIds, float32(retryTimeout))
@@ -1037,21 +1031,29 @@ func (self *ChannelService) GetInternalEventsWithTimestamps(limit int, offset in
 
 }
 
-func (self *ChannelService) Get(nodeAddress common.Address) string {
-	info, err := self.chain.ChannelClient.GetEndpointByAddress(comm.Address(nodeAddress))
-	regAddr, _ := comm.AddressParseFromBytes(nodeAddress[:])
-	if err != nil {
-		log.Warnf("get %s reg info err: %s", regAddr.ToBase58(), err.Error())
-		return ""
-	}
-	if info == nil {
-		log.Warnf("node %s haven`t been registed", regAddr.ToBase58())
-		return ""
-	}
-	nodeAddr := string(info.Protocol) + "://" + string(info.IP) + ":" + string(info.Port)
-	log.Infof("peer %s registe address: %s", regAddr.ToBase58(), nodeAddr)
-	return nodeAddr
+func (self *ChannelService) SetHostAddr(nodeAddress common.Address, hostAddr string) {
+	self.transport.SetHostAddr(nodeAddress, hostAddr)
 }
+
+func (self *ChannelService) GetHostAddr(nodeAddress common.Address) (string, error) {
+	return self.transport.GetHostAddr(nodeAddress)
+}
+
+//func (self *ChannelService) Get(nodeAddress common.Address) string {
+//	info, err := self.chain.ChannelClient.GetEndpointByAddress(comm.Address(nodeAddress))
+//	regAddr, _ := comm.AddressParseFromBytes(nodeAddress[:])
+//	if err != nil {
+//		log.Warnf("get %s reg info err: %s", regAddr.ToBase58(), err.Error())
+//		return ""
+//	}
+//	if info == nil {
+//		log.Warnf("node %s haven`t been registed", regAddr.ToBase58())
+//		return ""
+//	}
+//	nodeAddr := string(info.Protocol) + "://" + string(info.IP) + ":" + string(info.Port)
+//	log.Infof("peer %s registe address: %s", regAddr.ToBase58(), nodeAddr)
+//	return nodeAddr
+//}
 
 func GetFullDatabasePath() (string, error) {
 	file, err := exec.LookPath(os.Args[0])

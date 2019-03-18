@@ -70,13 +70,16 @@ func main() {
 		return
 	}
 
+	target, _ := chaincomm.AddressFromBase58("AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
+	channel.Service.SetHostAddr(common.Address(target), "tcp://127.0.0.1:3000")
+
 	err = channel.StartService()
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 	time.Sleep(time.Second)
-	target, _ := chaincomm.AddressFromBase58("AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
+
 	go logCurrentBalance(channel, common.Address(target))
 	for {
 		state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))

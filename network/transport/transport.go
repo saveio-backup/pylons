@@ -10,7 +10,6 @@ import (
 	"reflect"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/hashicorp/golang-lru"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/common/constants"
@@ -54,13 +53,13 @@ type ChannelServiceInterface interface {
 	OnMessage(proto.Message, string)
 	Sign(message interface{}) error
 	HandleStateChange(stateChange transfer.StateChange) []transfer.Event
-	Get(nodeAddress common.Address) string
+	//Get(nodeAddress common.Address) string
 	StateFromChannel() *transfer.ChainState
 }
 
-type Discoverer interface {
-	Get(nodeAddress common.Address) string
-}
+//type Discoverer interface {
+//	Get(nodeAddress common.Address) string
+//}
 
 type Transport struct {
 	net *network.Network
@@ -76,7 +75,7 @@ type Transport struct {
 	activePeers            *sync.Map
 	addressForHealthCheck  *sync.Map
 	hostPortToAddress      *sync.Map
-	addressToHostPortCache *lru.ARCCache
+	//addressToHostPortCache *lru.ARCCache
 	// map QueueIdentifier to Queue
 	messageQueues *sync.Map
 	// map address to queue
@@ -84,6 +83,7 @@ type Transport struct {
 	kill            chan struct{}
 	// messsage handler and signer, reference channel service
 	ChannelService ChannelServiceInterface
+	hostAddrMap            *sync.Map
 }
 
 type QueueItem struct {
@@ -111,6 +111,7 @@ func NewTransport(protocol string) *Transport {
 		messageQueues:         new(sync.Map),
 		addressQueueMap:       new(sync.Map),
 		hostPortToAddress:     new(sync.Map),
+		hostAddrMap:           new(sync.Map),
 	}
 }
 
@@ -272,45 +273,64 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 	return nil
 }
 
-func (this *Transport) GetAddressCacheValue(address common.Address) string {
-	if this.addressToHostPortCache == nil {
-		return ""
-	}
-	hostPort, ok := this.addressToHostPortCache.Get(address)
-	if ok {
-		return hostPort.(string)
-	}
-	return ""
+func (this *Transport) SetHostAddr(address common.Address, hostAddr string) {
+	this.hostAddrMap.Store(address, hostAddr)
+	this.hostPortToAddress.Store(hostAddr, address)
 }
 
-func (this *Transport) SaveAddressCache(address common.Address, hostPort string) bool {
-	if this.addressToHostPortCache == nil {
-		var err error
-		this.addressToHostPortCache, err = lru.NewARC(ADDRESS_CACHE_SIZE)
-		if err != nil {
-			return false
-		}
+func (this *Transport) GetHostAddr(address common.Address) (string, error) {
+	if v, ok := this.hostAddrMap.Load(address); ok {
+		return v.(string), nil
+	} else {
+		return "", fmt.Errorf("host addr is not set")
 	}
-	this.addressToHostPortCache.Add(address, hostPort)
-
-	//also save in the hostport to address map
-	this.hostPortToAddress.Store(hostPort, address)
-	return true
 }
+
+//func (this *Transport) GetAddressCacheValue(address common.Address) string {
+//	if this.addressToHostPortCache == nil {
+//		return ""
+//	}
+//	hostPort, ok := this.addressToHostPortCache.Get(address)
+//	if ok {
+//		return hostPort.(string)
+//	}
+//	return ""
+//}
+//
+//func (this *Transport) SaveAddressCache(address common.Address, hostPort string) bool {
+//	if this.addressToHostPortCache == nil {
+//		var err error
+//		this.addressToHostPortCache, err = lru.NewARC(ADDRESS_CACHE_SIZE)
+//		if err != nil {
+//			return false
+//		}
+//	}
+//	this.addressToHostPortCache.Add(address, hostPort)
+//
+//	//also save in the hostport to address map
+//	this.hostPortToAddress.Store(hostPort, address)
+//	return true
+//}
 
 func (this *Transport) GetHostPortFromAddress(recipient common.Address) string {
-	hostPort := this.GetAddressCacheValue(recipient)
-	if hostPort == "" {
-		hostPort = this.ChannelService.Get(recipient)
-		if hostPort == "" {
-			log.Error("can`t get host and port of reg address")
-			return ""
-		}
-		this.SaveAddressCache(recipient, hostPort)
-	}
+	//hostPort := this.GetAddressCacheValue(recipient)
+	//if hostPort == "" {
+	//	hostPort = this.ChannelService.Get(recipient)
+	//	if hostPort == "" {
+	//		log.Error("can`t get host and port of reg address")
+	//		return ""
+	//	}
+	//	this.SaveAddressCache(recipient, hostPort)
+	//}
+	//
+	//address := hostPort
+	//return address
 
-	address := hostPort
-	return address
+	host, err := this.GetHostAddr(recipient)
+	if err != nil {
+		log.Errorf("[GetHostPortFromAddress] GetHostAddr error: ", err.Error())
+	}
+	return host
 }
 
 func (this *Transport) StartHealthCheck(address common.Address) {
