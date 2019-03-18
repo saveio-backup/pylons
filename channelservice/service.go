@@ -161,7 +161,7 @@ func (self *ChannelService) Start() error {
 	//	}
 	//	log.Info("endpoint register succesful")
 	//}
-	log.Info("account been registered")
+	//log.Info("account been registered")
 	sqliteStorage, err := storage.NewSQLiteStorage(self.databasePath)
 	if err != nil {
 		log.Error("create db failed:", err)
@@ -871,9 +871,6 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	log.Debug("[MediaTransfer] Secret: ", secret)
 	//TODO: check secret used
 
-	//asyncResult, err := self.StartMediatedTransferWithSecret(tokenNetworkIdentifier,
-	//	amount, target, identifier, secret)
-
 	self.transport.StartHealthCheck(target)
 	if identifier == common.PaymentID(0) {
 		identifier = CreateDefaultIdentifier()
@@ -898,9 +895,8 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 		paymentDone:            asyncDone,
 	}
 
-	payments := new(sync.Map)
-	payments.Store(identifier, paymentStatus)
-	self.targetsToIndentifierToStatues[target] = payments
+	paymentStatus = self.RegisterPaymentStatus(target, identifier, common.PAYMENT_MEDIATED,
+		amount, tokenNetworkIdentifier)
 
 	actionInitInitiator, err := self.InitiatorInit(identifier, amount,
 		secret, tokenNetworkIdentifier, target)

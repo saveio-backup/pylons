@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/oniio/oniChain-go-sdk/ong"
 	"github.com/oniio/oniChain-go-sdk/wallet"
 	chaincomm "github.com/oniio/oniChain/common"
@@ -103,7 +102,7 @@ func main() {
 		}
 
 		chanState := channel.Service.GetChannel(registryAddress, &tokenAddress, &partner)
-		fmt.Println()
+		log.Info()
 		log.Info("State.OurState.GetBalance: ", chanState.OurState.GetGasBalance())
 		log.Info("State.OurState.ContractBalance: ", chanState.OurState.ContractBalance)
 		if chanState.OurState.BalanceProof != nil {
