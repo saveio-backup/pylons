@@ -88,7 +88,7 @@ func main() {
 	}
 
 	for i := 0; i < 1000; i++ {
-		fmt.Println("MediaTransfer times1: ", i)
+		log.Info("MediaTransfer times: ", i)
 		ret, err := channel.Service.MediaTransfer(registryAddress, tokenAddress, 10, target, common.PaymentID(i))
 		if err != nil {
 			log.Error("MediaTransfer: ", err.Error())
@@ -101,8 +101,6 @@ func main() {
 			log.Info("MediaTransfer Success")
 			time.Sleep(time.Second)
 		}
-
-		log.Info("GetChannel times: ", i)
 
 		chanState := channel.Service.GetChannel(registryAddress, &tokenAddress, &partner)
 		fmt.Println()

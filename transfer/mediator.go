@@ -1089,7 +1089,7 @@ func handleInit(stateChange *ActionInitMediator, channelIdentifiersToChannels ma
 		return &TransitionResult{NewState: nil, Events: events}
 	}
 	for _, e := range events {
-		log.Info("[handleInit]: ", reflect.TypeOf(e).String())
+		log.Debug("[handleInit]: ", reflect.TypeOf(e).String())
 	}
 
 	iteration, err := mediateTransfer(mediatorState, routes, payerChannel,
@@ -1097,11 +1097,11 @@ func handleInit(stateChange *ActionInitMediator, channelIdentifiersToChannels ma
 
 	events = append(events, iteration.Events...)
 	for _, e := range iteration.Events {
-		log.Info("[handleInit]: ", reflect.TypeOf(e).String())
+		log.Debug("[handleInit]: ", reflect.TypeOf(e).String())
 	}
 
 	if iteration.NewState == nil {
-		log.Info("[handleInit]     iteration.NewState == nil")
+		log.Debug("[handleInit]     iteration.NewState == nil")
 	}
 
 	return &TransitionResult{NewState: iteration.NewState, Events: events}
@@ -1371,7 +1371,7 @@ func MdStateTransition(mediatorState *MediatorTransferState, stateChange interfa
 
 	var err error
 	iteration := &TransitionResult{NewState: mediatorState, Events: nil}
-	log.Info("[MdStateTransition]: ", reflect.TypeOf(stateChange).String())
+	log.Debug("[MdStateTransition]: ", reflect.TypeOf(stateChange).String())
 	if mediatorState == nil {
 		log.Debug("[MdStateTransition] mediatorState is nil")
 	}
