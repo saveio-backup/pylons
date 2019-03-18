@@ -9,6 +9,8 @@ import (
 
 	"reflect"
 
+	"os"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
@@ -151,6 +153,10 @@ func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Me
 		msgID = (msg.(*messages.Secret)).MessageIdentifier
 	case *messages.LockExpired:
 		msgID = (msg.(*messages.LockExpired)).MessageIdentifier
+	case *messages.WithdrawRequest:
+		msgID = (msg.(*messages.WithdrawRequest)).MessageIdentifier
+	case *messages.Withdraw:
+		msgID = (msg.(*messages.Withdraw)).MessageIdentifier
 	default:
 		log.Error("[SendAsync] Unknown message type to send async: ", reflect.TypeOf(msg).String())
 		return fmt.Errorf("Unknown message type to send async")
@@ -409,6 +415,14 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 	case *messages.Secret:
 		msg := message.(*messages.Secret)
 		address = messages.ConvertAddress(msg.EnvelopeMessage.Signature.Sender)
+		msgID = msg.MessageIdentifier
+	case *messages.WithdrawRequest:
+		msg := message.(*messages.WithdrawRequest)
+		address = messages.ConvertAddress(msg.Participant)
+		msgID = msg.MessageIdentifier
+	case *messages.Withdraw:
+		msg := message.(*messages.Withdraw)
+		address = messages.ConvertAddress(msg.PartnerSignature.Sender)
 		msgID = msg.MessageIdentifier
 	default:
 		log.Warn("[ReceiveMessage] unkown Msg type: ", reflect.TypeOf(message).String())
