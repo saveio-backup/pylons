@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"fmt"
 )
 
 var testConfig = &ch.ChannelConfig{
@@ -29,7 +30,7 @@ func main() {
 
 	wallet, err := wallet.OpenWallet("./wallet.dat")
 	if err != nil {
-		log.Error("wallet.Open error:%s\n", err)
+		log.Error("Wallet.Open error:%s\n", err)
 	}
 	account, err := wallet.GetDefaultAccount([]byte("pwd"))
 	if err != nil {
@@ -60,113 +61,85 @@ func main() {
 
 	err = channel.Service.SetTotalChannelDeposit(tokenAddress, common.Address(partner), 20000)
 	if err != nil {
-		log.Error("SetTotalChannelDeposit: ", err.Error())
+		log.Error("[SetTotalChannelDeposit] error: ", err.Error())
 	}
 
-	go mediaTransfer(channel)
+	go mediaTransfer(channel, 1000)
 	go receivePayment(channel)
+	go currentBalance(channel)
 
 	waitToExit()
 }
 
-func mediaTransfer(channel *ch.Channel) {
+func mediaTransfer(channel *ch.Channel, loopTimes int64) {
 	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
 	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
 
 	targetAddress, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
 	target := common.Address(targetAddress)
-	partnerAddress, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
-	partner := common.Address(partnerAddress)
 
-	for i := 0; i < 1000; i++ {
-		log.Info("MediaTransfer times: ", i)
+	time1 := time.Now().Unix()
+	for i := int64(0); i < loopTimes; i++ {
+		log.Info("[MediaTransfer] Transfer times: ", i)
 		ret, err := channel.Service.MediaTransfer(registryAddress, tokenAddress, 1, common.Address(target), common.PaymentID(i))
 		if err != nil {
-			log.Error("MediaTransfer: ", err.Error())
+			log.Error("[MediaTransfer] MediaTransfer: ", err.Error())
 		} else {
-			log.Info("MediaTransfer Return")
+			log.Info("[MediaTransfer] MediaTransfer Calls Return")
 		}
 		r := <-ret
 		if !r {
-			log.Error("MediaTransfer Failed")
+			log.Error("[MediaTransfer] MediaTransfer Failed")
 			time.Sleep(time.Second)
 		} else {
-			log.Info("MediaTransfer Success")
-			time.Sleep(time.Second)
-		}
-
-		chanState := channel.Service.GetChannel(registryAddress, tokenAddress, partner)
-		log.Info()
-		log.Info("Local Balance: ", chanState.OurState.GetGasBalance())
-		log.Info("Local ContractBalance: ", chanState.OurState.ContractBalance)
-		if chanState.OurState.BalanceProof != nil {
-			log.Info("Local LockedAmount: ", chanState.OurState.BalanceProof.LockedAmount)
-		}
-
-		log.Info("Partner Balance: ", chanState.PartnerState.GetGasBalance())
-		log.Info("Partner ContractBalance: ", chanState.PartnerState.ContractBalance)
-		if chanState.PartnerState.BalanceProof != nil {
-			log.Info("Partner LockedAmount: ", chanState.PartnerState.BalanceProof.LockedAmount)
+			log.Info("[MediaTransfer] MediaTransfer Success")
 		}
 	}
+	time2 := time.Now().Unix()
+	timeDuration := time2 - time1
+	fmt.Printf("[MediaTransfer] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", loopTimes, timeDuration, loopTimes/timeDuration)
 }
 
 func receivePayment(channel *ch.Channel) {
 	var notificationChannel = make(chan *transfer.EventPaymentReceivedSuccess)
 	channel.RegisterReceiveNotification(notificationChannel)
-	log.Info("[RegisterReceiveNotification]")
+	log.Info("[ReceivePayment] RegisterReceiveNotification")
 
 	var msg *transfer.EventPaymentReceivedSuccess
 	for i := 0; ; i++ {
-		log.Info("[WaitForReceiveNotification]")
+		log.Info("[ReceivePayment] WaitForReceiveNotification")
 		select {
 		case msg = <-notificationChannel:
 			addr := chaincomm.Address(msg.Initiator)
-
-			log.Infof("Initiator: %v, Amount: %v Times: %v\n", addr.ToBase58(), msg.Amount, i)
-
-			//var tokenAddr common.TokenAddress
-			//var partnerAddr common.Address
-			//
-			//chanStates := channel.Service.GetChannelList(msg.PaymentNetworkIdentifier, &tokenAddr, partnerAddr)
-			//if chanStates == nil {
-			//	fmt.Println("ChainStates == nil")
-			//	os.Exit(0)
-			//} else {
-			//	fmt.Println("[GetChannelList] Len(chanStates) = ", len(chanStates))
-			//}
-			//
-			//if chanStates[0].OurState == nil {
-			//	fmt.Println("ChainState[0].OurState == nil")
-			//}
-			//fmt.Println("State.OurState.GetBalance: ", chanStates[0].OurState.GetBalance())
-			//fmt.Println("State.OurState.ContractBalance: ", chanStates[0].OurState.ContractBalance)
-			//if chanStates[0].OurState.BalanceProof != nil {
-			//	fmt.Println("State.OurState.BalanceProof.LockedAmount: ", chanStates[0].OurState.BalanceProof.LockedAmount)
-			//}
-			//
-			//fmt.Println("State.PartnerState.GetBalance: ", chanStates[0].PartnerState.GetBalance())
-			//fmt.Println("State.PartnerState.ContractBalance: ", chanStates[0].PartnerState.ContractBalance)
-			//if chanStates[0].PartnerState.BalanceProof != nil {
-			//	fmt.Println("State.PartnerState.BalanceProof.LockedAmount: ", chanStates[0].PartnerState.BalanceProof.LockedAmount)
-			//}
-			//
-			//
-			//chanState := channel.Service.GetChannel(registryAddress, &tokenAddress, &partnerAddr)
-			//fmt.Println()
-			//fmt.Println("State.OurState.GetBalance: ", chanState.OurState.GetGasBalance())
-			//fmt.Println("State.OurState.ContractBalance: ", chanState.OurState.ContractBalance)
-			//if chanState.OurState.BalanceProof != nil {
-			//	fmt.Println("State.OurState.BalanceProof.LockedAmount: ", chanState.OurState.BalanceProof.LockedAmount)
-			//}
-			//
-			//fmt.Println("State.PartnerState.GetBalance: ", chanState.PartnerState.GetGasBalance())
-			//fmt.Println("State.PartnerState.ContractBalance: ", chanState.PartnerState.ContractBalance)
-			//if chanState.PartnerState.BalanceProof != nil {
-			//	fmt.Println("State.PartnerState.BalanceProof.LockedAmount: ", chanState.PartnerState.BalanceProof.LockedAmount)
-			//}
-			time.Sleep(time.Second)
+			log.Infof("[ReceivePayment] Initiator: %v, Amount: %v Times: %v\n", addr.ToBase58(), msg.Amount, i)
 		}
+	}
+}
+
+func currentBalance(channel *ch.Channel) {
+	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
+	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+
+	partnerAddress, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
+	partner := common.Address(partnerAddress)
+
+	for {
+		chanState := channel.Service.GetChannel(registryAddress, tokenAddress, partner)
+		log.Info()
+		if chanState != nil {
+			log.Info("[CurrentBalance] Local Balance: ", chanState.OurState.GetGasBalance())
+			log.Info("[CurrentBalance] Local ContractBalance: ", chanState.OurState.ContractBalance)
+			if chanState.OurState.BalanceProof != nil {
+				log.Info("[CurrentBalance] Local LockedAmount: ", chanState.OurState.BalanceProof.LockedAmount)
+			}
+
+			log.Info("[CurrentBalance] Partner Balance: ", chanState.PartnerState.GetGasBalance())
+			log.Info("[CurrentBalance] Partner ContractBalance: ", chanState.PartnerState.ContractBalance)
+			if chanState.PartnerState.BalanceProof != nil {
+				log.Info("[CurrentBalance] Partner LockedAmount: ", chanState.PartnerState.BalanceProof.LockedAmount)
+			}
+		}
+		time.Sleep(3 * time.Second)
 	}
 }
 
@@ -176,7 +149,7 @@ func waitToExit() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	go func() {
 		for sig := range sc {
-			log.Infof("server received exit signal:%v.", sig.String())
+			log.Infof("Server received exit signal:%v.", sig.String())
 			close(exit)
 			break
 		}

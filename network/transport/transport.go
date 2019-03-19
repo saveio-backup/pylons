@@ -21,7 +21,6 @@ import (
 	"github.com/oniio/oniP2p/network/addressmap"
 	"github.com/oniio/oniP2p/network/keepalive"
 	"github.com/oniio/oniP2p/types/opcode"
-	"os"
 )
 
 const ADDRESS_CACHE_SIZE = 50
@@ -201,7 +200,6 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 		// handle timeout retry
 		case <-t.C:
 			log.Debugf("[QueueSend]  <-t.C Time: %s queue: %p\n", time.Now().String(), queue)
-			//os.Exit(-1)
 			log.Error("Timeout retry")
 			if queue.Len() == 0 {
 				continue
@@ -219,7 +217,6 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 			data, _ := queue.Peek()
 			if data == nil {
 				log.Debug("[DeliverChan] msgId := <-queue.DeliverChan data == nil")
-				//os.Exit(-1)
 				log.Error("msgId := <-queue.DeliverChan data == nil")
 				continue
 			}
@@ -235,8 +232,7 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 					this.PeekAndSend(queue, queueId)
 				}
 			} else {
-				log.Debug("[DeliverChan] msgId.MessageId != item.messageId.MessageId queue.Len: ", queue.Len())
-				os.Exit(-1)
+				log.Warn("[DeliverChan] msgId.MessageId != item.messageId.MessageId queue.Len: ", queue.Len())
 			}
 		case <-this.kill:
 			log.Info("[QueueSend] msgId := <-this.kill")

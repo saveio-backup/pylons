@@ -9,6 +9,9 @@ import (
 	ch "github.com/oniio/oniChannel"
 	"github.com/oniio/oniChannel/common"
 	"time"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 var testConfig = &ch.ChannelConfig{
@@ -21,7 +24,6 @@ var testConfig = &ch.ChannelConfig{
 }
 
 func main() {
-	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
 	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
 
 	wallet, err := wallet.OpenWallet("./wallet.dat")
@@ -64,32 +66,48 @@ func main() {
 		return
 	}
 
-	for i := 0; ; i++ {
-		chanState := channel.Service.GetChannel(registryAddress, tokenAddress, common.Address(target))
+	go currentBalance(channel)
+
+	waitToExit()
+}
+
+func currentBalance(channel *ch.Channel) {
+	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
+	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+
+	partnerAddress, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
+	partner := common.Address(partnerAddress)
+
+	for {
+		chanState := channel.Service.GetChannel(registryAddress, tokenAddress, partner)
+		log.Info()
 		if chanState != nil {
-			if chanState.OurState != nil {
-				log.Info("Local Balance: ", chanState.OurState.GetGasBalance())
-				log.Info("Local ContractBalance: ", chanState.OurState.ContractBalance)
-				if chanState.OurState.BalanceProof != nil {
-					log.Info("Local LockedAmount: ", chanState.OurState.BalanceProof.LockedAmount)
-				}
-			} else {
-				log.Error("[GetChannel] OurState is nil")
+			log.Info("[CurrentBalance] Local Balance: ", chanState.OurState.GetGasBalance())
+			log.Info("[CurrentBalance] Local ContractBalance: ", chanState.OurState.ContractBalance)
+			if chanState.OurState.BalanceProof != nil {
+				log.Info("[CurrentBalance] Local LockedAmount: ", chanState.OurState.BalanceProof.LockedAmount)
 			}
 
-			if chanState.PartnerState != nil {
-				log.Info("Partner Balance: ", chanState.PartnerState.GetGasBalance())
-				log.Info("Partner ContractBalance: ", chanState.PartnerState.ContractBalance)
-				if chanState.PartnerState.BalanceProof != nil {
-					log.Info("Partner LockedAmount: ", chanState.PartnerState.BalanceProof.LockedAmount)
-				}
-			} else {
-				log.Error("[GetChannel] OurState is nil")
+			log.Info("[CurrentBalance] Partner Balance: ", chanState.PartnerState.GetGasBalance())
+			log.Info("[CurrentBalance] Partner ContractBalance: ", chanState.PartnerState.ContractBalance)
+			if chanState.PartnerState.BalanceProof != nil {
+				log.Info("[CurrentBalance] Partner LockedAmount: ", chanState.PartnerState.BalanceProof.LockedAmount)
 			}
-		} else {
-			log.Error("[GetChannel] chanState is nil")
 		}
 		time.Sleep(3 * time.Second)
 	}
+}
 
+func waitToExit() {
+	exit := make(chan bool, 0)
+	sc := make(chan os.Signal, 1)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	go func() {
+		for sig := range sc {
+			log.Infof("Server received exit signal:%v.", sig.String())
+			close(exit)
+			break
+		}
+	}()
+	<-exit
 }

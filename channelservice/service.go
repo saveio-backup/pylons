@@ -567,12 +567,9 @@ func (self *ChannelService) GetChannel(registryAddress common.PaymentNetworkID, 
 	return result
 }
 
-func (self *ChannelService) tokenNetworkConnect(
-	registryAddress common.PaymentNetworkID,
-	tokenAddress common.TokenAddress,
-	funds common.TokenAmount,
-	initialChannelTarget int,
-	joinableFundsTarget float32) {
+func (self *ChannelService) tokenNetworkConnect(registryAddress common.PaymentNetworkID,
+	tokenAddress common.TokenAddress, funds common.TokenAmount,
+	initialChannelTarget int, joinableFundsTarget float32) {
 
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(
 		self.StateFromChannel(), registryAddress, tokenAddress)
