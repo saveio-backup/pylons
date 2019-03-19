@@ -85,12 +85,19 @@ type SendProcessed struct {
 
 type SendWithdrawRequest struct {
 	SendMessageEvent
-	WithdrawAmount common.TokenAmount
+	Participant            common.Address
+	TokenNetworkIdentifier common.TokenNetworkID
+	WithdrawAmount         common.TokenAmount
 }
 
 type SendWithdraw struct {
 	SendMessageEvent
-	WithdrawAmount common.TokenAmount
+	Participant            common.Address
+	TokenNetworkIdentifier common.TokenNetworkID
+	WithdrawAmount         common.TokenAmount
+	ParticipantSignature   common.Signature
+	ParticipantAddress     common.Address
+	ParticipantPublicKey   common.PubKey
 }
 
 type ContractSendChannelWithdraw struct {

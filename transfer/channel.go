@@ -1321,6 +1321,7 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *ActionWithdraw) TransitionResult {
 	var events []Event
 
+	// fwtodo: add checking if we can send withdraw request
 	messageIdentifier := GetMsgID()
 	sendWithdrawRequest := &SendWithdrawRequest{
 		SendMessageEvent: SendMessageEvent{
@@ -1329,7 +1330,9 @@ func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *A
 			MessageIdentifier: messageIdentifier,
 		},
 
-		WithdrawAmount: stateChange.TotalWithdraw,
+		Participant:            stateChange.Participant,
+		TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,
+		WithdrawAmount:         stateChange.TotalWithdraw,
 	}
 
 	events = append(events, sendWithdrawRequest)
@@ -1355,8 +1358,12 @@ func handleWithdrawRequestReceived(channelState *NettingChannelState, stateChang
 			ChannelIdentifier: stateChange.ChannelIdentifier,
 			MessageIdentifier: messageIdentifier,
 		},
-
-		WithdrawAmount: stateChange.TotalWithdraw,
+		Participant:            stateChange.Participant,
+		TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,
+		WithdrawAmount:         stateChange.TotalWithdraw,
+		ParticipantSignature:   stateChange.ParticipantSignature,
+		ParticipantAddress:     stateChange.ParticipantAddress,
+		ParticipantPublicKey:   stateChange.ParticipantPublicKey,
 	}
 
 	events = append(events, sendWithdraw)
@@ -1371,15 +1378,16 @@ func handleWithdrawReceived(channelState *NettingChannelState, stateChange *Rece
 
 	// if everything is ok, we construct a ContractSendChannelWithdraw event;
 	contractSendChannelWithdraw := &ContractSendChannelWithdraw{
-		ChannelIdentifier:    stateChange.ChannelIdentifier,
-		Participant:          stateChange.Participant,
-		TotalWithdraw:        stateChange.TotalWithdraw,
-		ParticipantSignature: stateChange.ParticipantSignature,
-		ParticipantAddress:   stateChange.ParticipantAddress,
-		ParticipantPublicKey: stateChange.ParticipantPublicKey,
-		PartnerSignature:     stateChange.PartnerSignature,
-		PartnerAddress:       stateChange.PartnerAddress,
-		PartnerPublicKey:     stateChange.PartnerPublicKey,
+		ChannelIdentifier:      stateChange.ChannelIdentifier,
+		TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
+		Participant:            stateChange.Participant,
+		TotalWithdraw:          stateChange.TotalWithdraw,
+		ParticipantSignature:   stateChange.ParticipantSignature,
+		ParticipantAddress:     stateChange.ParticipantAddress,
+		ParticipantPublicKey:   stateChange.ParticipantPublicKey,
+		PartnerSignature:       stateChange.PartnerSignature,
+		PartnerAddress:         stateChange.PartnerAddress,
+		PartnerPublicKey:       stateChange.PartnerPublicKey,
 	}
 
 	events = append(events, contractSendChannelWithdraw)

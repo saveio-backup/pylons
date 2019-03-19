@@ -192,30 +192,36 @@ func (self *MessageHandler) HandleMessageLockedTransfer(channel *ChannelService,
 }
 
 func (self *MessageHandler) HandleMessageWithdrawRequest(channel *ChannelService, message *messages.WithdrawRequest) {
+	var tokenNetworkIdentifier common.TokenNetworkID
+
+	copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
 
 	stateChange := &transfer.ReceiveWithdrawRequest{
-		//TokenNetworkIdentifier :
-		ChannelIdentifier:    common.ChannelID(message.ChannelIdentifier.ChannelId),
-		Participant:          messages.ConvertAddress(message.Participant),
-		TotalWithdraw:        common.TokenAmount(message.WithdrawAmount.TokenAmount),
-		ParticipantSignature: message.ParticipantSignature.Signature,
-		ParticipantAddress:   messages.ConvertAddress(message.ParticipantSignature.Sender),
-		ParticipantPublicKey: message.ParticipantSignature.Publickey,
+		TokenNetworkIdentifier: tokenNetworkIdentifier,
+		ChannelIdentifier:      common.ChannelID(message.ChannelIdentifier.ChannelId),
+		Participant:            messages.ConvertAddress(message.Participant),
+		TotalWithdraw:          common.TokenAmount(message.WithdrawAmount.TokenAmount),
+		ParticipantSignature:   message.ParticipantSignature.Signature,
+		ParticipantAddress:     messages.ConvertAddress(message.ParticipantSignature.Sender),
+		ParticipantPublicKey:   message.ParticipantSignature.Publickey,
 	}
 	channel.HandleStateChange(stateChange)
 }
 
 func (self *MessageHandler) HandleMessageWithdraw(channel *ChannelService, message *messages.Withdraw) {
+	var tokenNetworkIdentifier common.TokenNetworkID
 
-	stateChange := transfer.ReceiveWithdraw{
-		//TokenNetworkIdentifier :
+	copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
+
+	stateChange := &transfer.ReceiveWithdraw{
 		ReceiveWithdrawRequest: transfer.ReceiveWithdrawRequest{
-			ChannelIdentifier:    common.ChannelID(message.ChannelIdentifier.ChannelId),
-			Participant:          messages.ConvertAddress(message.Participant),
-			TotalWithdraw:        common.TokenAmount(message.WithdrawAmount.TokenAmount),
-			ParticipantSignature: message.ParticipantSignature.Signature,
-			ParticipantAddress:   messages.ConvertAddress(message.ParticipantSignature.Sender),
-			ParticipantPublicKey: message.ParticipantSignature.Publickey,
+			TokenNetworkIdentifier: tokenNetworkIdentifier,
+			ChannelIdentifier:      common.ChannelID(message.ChannelIdentifier.ChannelId),
+			Participant:            messages.ConvertAddress(message.Participant),
+			TotalWithdraw:          common.TokenAmount(message.WithdrawAmount.TokenAmount),
+			ParticipantSignature:   message.ParticipantSignature.Signature,
+			ParticipantAddress:     messages.ConvertAddress(message.ParticipantSignature.Sender),
+			ParticipantPublicKey:   message.ParticipantSignature.Publickey,
 		},
 		PartnerSignature: message.PartnerSignature.Signature,
 		PartnerAddress:   messages.ConvertAddress(message.PartnerSignature.Sender),

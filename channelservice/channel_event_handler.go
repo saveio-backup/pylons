@@ -434,6 +434,6 @@ func (self ChannelEventHandler) HandleContractSendChannelWithdraw(channel *Chann
 
 	channelProxy := channel.chain.PaymentChannel(common.Address(channelWithdrawEvent.TokenNetworkIdentifier), channelWithdrawEvent.ChannelIdentifier, args)
 
-	channelProxy.Withdraw(channelWithdrawEvent.Participant, channelWithdrawEvent.TotalWithdraw, channelWithdrawEvent.PartnerSignature, channelWithdrawEvent.PartnerPublicKey,
+	channelProxy.Withdraw(channelWithdrawEvent.PartnerAddress, channelWithdrawEvent.TotalWithdraw, channelWithdrawEvent.PartnerSignature, channelWithdrawEvent.PartnerPublicKey,
 		channelWithdrawEvent.ParticipantSignature, channelWithdrawEvent.ParticipantPublicKey)
 }

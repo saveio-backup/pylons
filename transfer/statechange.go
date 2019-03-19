@@ -33,6 +33,7 @@ type ActionTransferDirect struct {
 type ActionWithdraw struct {
 	TokenNetworkIdentifier common.TokenNetworkID
 	ChannelIdentifier      common.ChannelID
+	Participant            common.Address
 	Partner                common.Address
 	TotalWithdraw          common.TokenAmount
 }

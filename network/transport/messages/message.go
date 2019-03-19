@@ -361,23 +361,36 @@ func LockExpiredFromEvent(event *transfer.SendLockExpired) proto.Message {
 // fwtoo : refacotr to remove duplicate code
 func WithdrawRequestFromEvent(event *transfer.SendWithdrawRequest) proto.Message {
 	msg := &WithdrawRequest{
-		MessageIdentifier: &MessageID{MessageId: (uint64)(event.MessageIdentifier)},
-		ChannelIdentifier: &ChannelID{uint64(event.ChannelIdentifier)},
-		Participant:       &Address{Address: event.Recipient[:]},
-		WithdrawAmount:    &TokenAmount{uint64(event.WithdrawAmount)},
+		TokenNetworkAddress: &TokenNetworkAddress{event.TokenNetworkIdentifier[:]},
+		MessageIdentifier:   &MessageID{MessageId: (uint64)(event.MessageIdentifier)},
+		ChannelIdentifier:   &ChannelID{uint64(event.ChannelIdentifier)},
+		Participant:         &Address{Address: event.Participant[:]},
+		WithdrawAmount:      &TokenAmount{uint64(event.WithdrawAmount)},
 	}
 	return msg
 }
 
 func WithdrawFromEvent(event *transfer.SendWithdraw) proto.Message {
 	msg := &Withdraw{
-		MessageIdentifier: &MessageID{MessageId: (uint64)(event.MessageIdentifier)},
-		ChannelIdentifier: &ChannelID{uint64(event.ChannelIdentifier)},
-		Participant:       &Address{Address: event.Recipient[:]},
-		WithdrawAmount:    &TokenAmount{uint64(event.WithdrawAmount)},
+		TokenNetworkAddress: &TokenNetworkAddress{event.TokenNetworkIdentifier[:]},
+		MessageIdentifier:   &MessageID{MessageId: (uint64)(event.MessageIdentifier)},
+		ChannelIdentifier:   &ChannelID{uint64(event.ChannelIdentifier)},
+		Participant:         &Address{Address: event.Participant[:]},
+		WithdrawAmount:      &TokenAmount{uint64(event.WithdrawAmount)},
+		ParticipantSignature: &SignedMessage{
+			Signature: event.ParticipantSignature,
+			Sender:    &Address{Address: event.ParticipantAddress[:]},
+			Publickey: event.ParticipantPublicKey,
+		},
 	}
 	return msg
 }
+
+/*
+ParticipantSignature   common.Signature
+	ParticipantAddress     common.Address
+	ParticipantPublicKey   common.PubKe
+*/
 
 func Sign(account *account.Account, message SignedMessageInterface) error {
 	log.Debug("[Sign]: ", reflect.TypeOf(message).String())
@@ -446,6 +459,21 @@ func Sign(account *account.Account, message SignedMessageInterface) error {
 			Sender:    &Address{Address: account.Address[:]},
 			Publickey: pubKey,
 		}
+	case *WithdrawRequest:
+		msg := message.(*WithdrawRequest)
+		msg.ParticipantSignature = &SignedMessage{
+			Signature: sigData,
+			Sender:    &Address{Address: account.Address[:]},
+			Publickey: pubKey,
+		}
+	case *Withdraw:
+		msg := message.(*Withdraw)
+		msg.PartnerSignature = &SignedMessage{
+			Signature: sigData,
+			Sender:    &Address{Address: account.Address[:]},
+			Publickey: pubKey,
+		}
+
 	default:
 		return fmt.Errorf("[Sign] Unknow message type to sign ", reflect.TypeOf(message).String())
 	}

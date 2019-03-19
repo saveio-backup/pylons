@@ -36,18 +36,22 @@ const (
 	OpcodeLockedTransfer
 	OpcodeRefundTransfer
 	OpcodeLockExpired
+	OpcodeWithdrawRequest
+	OpcodeWithdraw
 )
 
 var opcodes = map[opcode.Opcode]proto.Message{
-	OpcodeProcessed:      &messages.Processed{},
-	OpcodeDelivered:      &messages.Delivered{},
-	OpcodeSecrectRequest: &messages.SecretRequest{},
-	OpcodeRevealSecret:   &messages.RevealSecret{},
-	OpcodeSecrectMsg:     &messages.Secret{},
-	OpcodeDirectTransfer: &messages.DirectTransfer{},
-	OpcodeLockedTransfer: &messages.LockedTransfer{},
-	OpcodeRefundTransfer: &messages.RefundTransfer{},
-	OpcodeLockExpired:    &messages.LockExpired{},
+	OpcodeProcessed:       &messages.Processed{},
+	OpcodeDelivered:       &messages.Delivered{},
+	OpcodeSecrectRequest:  &messages.SecretRequest{},
+	OpcodeRevealSecret:    &messages.RevealSecret{},
+	OpcodeSecrectMsg:      &messages.Secret{},
+	OpcodeDirectTransfer:  &messages.DirectTransfer{},
+	OpcodeLockedTransfer:  &messages.LockedTransfer{},
+	OpcodeRefundTransfer:  &messages.RefundTransfer{},
+	OpcodeLockExpired:     &messages.LockExpired{},
+	OpcodeWithdrawRequest: &messages.WithdrawRequest{},
+	OpcodeWithdraw:        &messages.Withdraw{},
 }
 
 type ChannelServiceInterface interface {

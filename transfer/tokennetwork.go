@@ -25,6 +25,12 @@ func GetChannelIdentifier(stateChange StateChange) common.ChannelID {
 	case *ContractReceiveUpdateTransfer:
 		contractReceiveUpdateTransfer, _ := stateChange.(*ContractReceiveUpdateTransfer)
 		result = contractReceiveUpdateTransfer.ChannelIdentifier
+	case *ReceiveWithdrawRequest:
+		receiveWithdrawRequest, _ := stateChange.(*ReceiveWithdrawRequest)
+		result = receiveWithdrawRequest.ChannelIdentifier
+	case *ReceiveWithdraw:
+		receiveWithdraw, _ := stateChange.(*ReceiveWithdraw)
+		result = receiveWithdraw.ChannelIdentifier
 	}
 
 	return result

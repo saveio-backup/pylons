@@ -167,19 +167,21 @@ message LockExpired{
 }
 
 message WithdrawRequest{
-    MessageID message_identifier = 1;
-    ChannelID channel_identifier = 2;
-    Address participant = 3;
-    TokenAmount withdraw_amount = 4;
-    SignedMessage participant_signature = 5;
+    TokenNetworkAddress token_network_address = 1;
+    MessageID message_identifier = 2;
+    ChannelID channel_identifier = 3;
+    Address participant = 4;
+    TokenAmount withdraw_amount = 5;
+    SignedMessage participant_signature = 6;
 }
 
 message Withdraw{
-    MessageID message_identifier = 1;
-    ChannelID channel_identifier = 2;
-    Address participant = 3;
-    TokenAmount withdraw_amount = 4;
-    SignedMessage participant_signature =5;
-    SignedMessage partner_signature =6;
+    TokenNetworkAddress token_network_address = 1;
+    MessageID message_identifier = 2;
+    ChannelID channel_identifier = 3;
+    Address participant = 4;
+    TokenAmount withdraw_amount = 5;
+    SignedMessage participant_signature = 6;
+    SignedMessage partner_signature = 7;
 }
 

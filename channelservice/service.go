@@ -106,10 +106,10 @@ func NewChannelService(chain *network.BlockchainService,
 	self.transport = transport
 	self.alarm = NewAlarmTask(chain)
 
-	if _, exist := config["DBPath"]; exist == false {
+	if _, exist := config["database_path"]; exist == false {
 		self.setDefaultDBPath()
 	} else {
-		self.databasePath = config["DBPath"]
+		self.databasePath = config["database_path"]
 		if self.databasePath == "." {
 			self.setDefaultDBPath()
 		}
@@ -1067,6 +1067,8 @@ func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAd
 
 	withdraw := &transfer.ActionWithdraw{
 		TokenNetworkIdentifier: tokenNetworkIdentifier,
+		ChannelIdentifier:      channelState.Identifier,
+		Participant:            self.address,
 		Partner:                partnerAddress,
 		TotalWithdraw:          totalWithdraw,
 	}
