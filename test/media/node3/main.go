@@ -4,12 +4,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/oniio/oniChain-go-sdk/ong"
 	"github.com/oniio/oniChain-go-sdk/wallet"
 	chaincomm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
+	"github.com/oniio/oniChain/smartcontract/service/native/utils"
 	ch "github.com/oniio/oniChannel"
-	"github.com/oniio/oniChannel/transfer"
 	"github.com/oniio/oniChannel/common"
+	"github.com/oniio/oniChannel/transfer"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 var testConfig = &ch.ChannelConfig{
@@ -30,11 +35,13 @@ func main() {
 	if err != nil {
 		fmt.Printf("GetDefaultAccount error:%s\n", err)
 	}
+
 	channel, err := ch.NewChannelService(testConfig, account)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
+	log.Info("[NewChannelService]")
 
 	addr1, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
 	addr2, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
@@ -44,8 +51,6 @@ func main() {
 	channel.Service.SetHostAddr(common.Address(addr2), "tcp://127.0.0.1:3001")
 	channel.Service.SetHostAddr(common.Address(addr3), "tcp://127.0.0.1:3002")
 
-	log.Info("[NewChannelService]")
-
 	err = channel.StartService()
 	if err != nil {
 		log.Fatal(err)
@@ -53,6 +58,57 @@ func main() {
 	}
 	log.Info("[StartService]")
 
+	go mediaTransfer(channel)
+	go receivePayment(channel)
+
+	waitToExit()
+}
+
+func mediaTransfer(channel *ch.Channel) {
+	time.Sleep(50 * time.Second)
+
+	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
+	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+
+	targetAddress, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
+	target := common.Address(targetAddress)
+	partnerAddress, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
+	partner := common.Address(partnerAddress)
+
+	for i := 0; i < 1000; i++ {
+		log.Info("MediaTransfer times: ", i)
+		ret, err := channel.Service.MediaTransfer(registryAddress, tokenAddress, 1, common.Address(target), common.PaymentID(i))
+		if err != nil {
+			log.Error("MediaTransfer: ", err.Error())
+		} else {
+			log.Info("MediaTransfer Return")
+		}
+		r := <-ret
+		if !r {
+			log.Error("MediaTransfer Failed")
+			time.Sleep(time.Second)
+		} else {
+			log.Info("MediaTransfer Success")
+			time.Sleep(time.Second)
+		}
+
+		chanState := channel.Service.GetChannel(registryAddress, tokenAddress, partner)
+		log.Info()
+		log.Info("Local Balance: ", chanState.OurState.GetGasBalance())
+		log.Info("Local ContractBalance: ", chanState.OurState.ContractBalance)
+		if chanState.OurState.BalanceProof != nil {
+			log.Info("Local LockedAmount: ", chanState.OurState.BalanceProof.LockedAmount)
+		}
+
+		log.Info("Partner Balance: ", chanState.PartnerState.GetGasBalance())
+		log.Info("Partner ContractBalance: ", chanState.PartnerState.ContractBalance)
+		if chanState.PartnerState.BalanceProof != nil {
+			log.Info("Partner LockedAmount: ", chanState.PartnerState.BalanceProof.LockedAmount)
+		}
+	}
+}
+
+func receivePayment(channel *ch.Channel) {
 	var notificationChannel = make(chan *transfer.EventPaymentReceivedSuccess)
 	channel.RegisterReceiveNotification(notificationChannel)
 	log.Info("[RegisterReceiveNotification]")
@@ -109,4 +165,18 @@ func main() {
 			time.Sleep(time.Second)
 		}
 	}
+}
+
+func waitToExit() {
+	exit := make(chan bool, 0)
+	sc := make(chan os.Signal, 1)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	go func() {
+		for sig := range sc {
+			log.Infof("server received exit signal:%v.", sig.String())
+			close(exit)
+			break
+		}
+	}()
+	<-exit
 }

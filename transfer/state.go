@@ -150,7 +150,7 @@ func DeepCopy(src State) *ChainState {
 				tokenNwState.Address = tokenNetworkState.Address
 				tokenNwState.TokenAddress = tokenNetworkState.TokenAddress
 				tokenNwState.NetworkGraph = tokenNetworkState.NetworkGraph
-				tokenNwState.ChannelIdentifiersToChannels =	make(map[common.ChannelID]*NettingChannelState)
+				tokenNwState.ChannelIdentifiersToChannels = make(map[common.ChannelID]*NettingChannelState)
 				for channelId, channelState := range tokenNetworkState.ChannelIdentifiersToChannels {
 					tokenNwState.ChannelIdentifiersToChannels[channelId] = channelState
 				}

@@ -892,9 +892,6 @@ func createSendLockedTransfer(channelState *NettingChannelState, initiator commo
 	log.Debug(merkleTree)
 	log.Debug("======================================================================")
 
-
-
-
 	locksRoot := MerkleRoot(merkleTree.Layers)
 	var transferAmount common.TokenAmount
 	if ourBalanceProof != nil {
@@ -1045,7 +1042,6 @@ func CreateUnlock(channelState *NettingChannelState, messageIdentifier common.Me
 	log.Debug("[CreateUnlock] computeMerkleTreeWithout After  merkleTreeWidth: ", MerkleTreeWidth(merkleTree))
 	log.Debug(merkleTree)
 	log.Debug("======================================================================")
-
 
 	locksRoot := MerkleRoot(merkleTree.Layers)
 

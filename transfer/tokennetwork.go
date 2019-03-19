@@ -228,7 +228,7 @@ func handleActionTransferDirect(paymentNetworkIdentifier common.PaymentNetworkID
 		events = append(events, failure)
 	}
 
-	return TransitionResult{NewState:tokenNetworkState, Events:events}
+	return TransitionResult{NewState: tokenNetworkState, Events: events}
 }
 
 func handleNewRoute(tokenNetworkState *TokenNetworkState, stateChange *ContractReceiveRouteNew) TransitionResult {

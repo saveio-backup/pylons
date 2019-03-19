@@ -8,7 +8,6 @@ import (
 	"github.com/oniio/oniChain/smartcontract/service/native/utils"
 	ch "github.com/oniio/oniChannel"
 	"github.com/oniio/oniChannel/common"
-	"os"
 	"time"
 )
 
@@ -22,21 +21,8 @@ var testConfig = &ch.ChannelConfig{
 }
 
 func main() {
-	if len(os.Args) != 2 {
-		log.Error("Param error")
-		return
-	}
-
 	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
 	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
-
-	partnerAddress, err := chaincomm.AddressFromBase58(os.Args[1])
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	partner := common.Address(partnerAddress)
-
 
 	wallet, err := wallet.OpenWallet("./wallet.dat")
 	if err != nil {
@@ -54,12 +40,13 @@ func main() {
 	}
 	log.Info("[NewChannelService]")
 
-	addr1, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
-	addr2, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
-	addr3, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
-	channel.Service.SetHostAddr(common.Address(addr1), "tcp://127.0.0.1:3000")
-	channel.Service.SetHostAddr(common.Address(addr2), "tcp://127.0.0.1:3001")
-	channel.Service.SetHostAddr(common.Address(addr3), "tcp://127.0.0.1:3002")
+	initiator, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
+	local, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
+	target, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
+
+	channel.Service.SetHostAddr(common.Address(initiator), "tcp://127.0.0.1:3000")
+	channel.Service.SetHostAddr(common.Address(local), "tcp://127.0.0.1:3001")
+	channel.Service.SetHostAddr(common.Address(target), "tcp://127.0.0.1:3002")
 
 	err = channel.StartService()
 	if err != nil {
@@ -68,37 +55,36 @@ func main() {
 	}
 	log.Info("[StartService]")
 
-	chanId := channel.Service.OpenChannel(tokenAddress, common.Address(partnerAddress))
+	chanId := channel.Service.OpenChannel(tokenAddress, common.Address(target))
 	log.Info("[OpenChannel] ChanId: ", chanId)
 
-	err = channel.Service.SetTotalChannelDeposit(tokenAddress, common.Address(partner), 20000)
+	err = channel.Service.SetTotalChannelDeposit(tokenAddress, common.Address(target), 20000)
 	if err != nil {
 		log.Error("[SetTotalChannelDeposit]: ", err.Error())
 		return
 	}
 
 	for i := 0; ; i++ {
-		chanState := channel.Service.GetChannel(registryAddress, &tokenAddress, &partner)
-		log.Info("==============================")
+		chanState := channel.Service.GetChannel(registryAddress, tokenAddress, common.Address(target))
 		if chanState != nil {
 			if chanState.OurState != nil {
-				//log.Info("State.OurState.GetBalance: ", chanState.OurState.GetGasBalance())
-				//log.Info("State.OurState.ContractBalance: ", chanState.OurState.ContractBalance)
-				//if chanState.OurState.BalanceProof != nil {
-				//	log.Info("State.OurState.BalanceProof.LockedAmount: ", chanState.OurState.BalanceProof.LockedAmount)
-				//}
+				log.Info("Local Balance: ", chanState.OurState.GetGasBalance())
+				log.Info("Local ContractBalance: ", chanState.OurState.ContractBalance)
+				if chanState.OurState.BalanceProof != nil {
+					log.Info("Local LockedAmount: ", chanState.OurState.BalanceProof.LockedAmount)
+				}
 			} else {
-				log.Error("[GetChannel] chanState.OurState is nil")
+				log.Error("[GetChannel] OurState is nil")
 			}
 
 			if chanState.PartnerState != nil {
-				//log.Info("State.PartnerState.GetBalance: ", chanState.PartnerState.GetGasBalance())
-				//log.Info("State.PartnerState.ContractBalance: ", chanState.PartnerState.ContractBalance)
+				log.Info("Partner Balance: ", chanState.PartnerState.GetGasBalance())
+				log.Info("Partner ContractBalance: ", chanState.PartnerState.ContractBalance)
 				if chanState.PartnerState.BalanceProof != nil {
-					//log.Info("State.PartnerState.BalanceProof.LockedAmount: ", chanState.PartnerState.BalanceProof.LockedAmount)
+					log.Info("Partner LockedAmount: ", chanState.PartnerState.BalanceProof.LockedAmount)
 				}
 			} else {
-				log.Error("[GetChannel] chanState.OurState is nil")
+				log.Error("[GetChannel] OurState is nil")
 			}
 		} else {
 			log.Error("[GetChannel] chanState is nil")

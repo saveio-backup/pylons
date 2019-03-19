@@ -553,8 +553,8 @@ func (self *ChannelService) Address() common.Address {
 	return self.address
 }
 
-func (self *ChannelService) GetChannel(registryAddress common.PaymentNetworkID, tokenAddress *common.TokenAddress,
-	partnerAddress *common.Address) *transfer.NettingChannelState {
+func (self *ChannelService) GetChannel(registryAddress common.PaymentNetworkID, tokenAddress common.TokenAddress,
+	partnerAddress common.Address) *transfer.NettingChannelState {
 
 	var result *transfer.NettingChannelState
 	channelList := self.GetChannelList(registryAddress, tokenAddress, partnerAddress)
@@ -730,23 +730,23 @@ func (self *ChannelService) ChannelBatchClose(tokenAddress common.TokenAddress, 
 }
 
 func (self *ChannelService) GetChannelList(registryAddress common.PaymentNetworkID,
-	tokenAddress *common.TokenAddress, partnerAddress *common.Address) *list.List {
+	tokenAddress common.TokenAddress, partnerAddress common.Address) *list.List {
 
 	result := list.New()
 	chainState := self.StateFromChannel()
 
-	if tokenAddress != nil && partnerAddress != nil {
+	if tokenAddress != common.EmptyTokenAddress && partnerAddress != common.EmptyAddress {
 		channelState := transfer.GetChannelStateFor(chainState, registryAddress,
-			*tokenAddress, *partnerAddress)
+			tokenAddress, partnerAddress)
 
 		if channelState != nil {
 			result.PushBack(channelState)
 		} else {
 			log.Info("[GetChannelList] channelState == nil")
 		}
-	} else if tokenAddress != nil {
+	} else if tokenAddress != common.EmptyTokenAddress {
 		result = transfer.ListChannelStateForTokenNetwork(chainState, registryAddress,
-			*tokenAddress)
+			tokenAddress)
 	} else {
 		result = transfer.ListAllChannelState(chainState)
 	}

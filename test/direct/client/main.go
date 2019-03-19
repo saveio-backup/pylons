@@ -82,10 +82,9 @@ func main() {
 	time.Sleep(time.Second)
 	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
 
-
 	go logCurrentBalance(channel, common.Address(target))
 	channelID := channel.Service.OpenChannel(tokenAddress, common.Address(target))
-	depositAmount := common.TokenAmount(1000* 1000000000)
+	depositAmount := common.TokenAmount(1000 * 1000000000)
 	if channelID != 0 {
 		log.Infof("start to deposit %d token to channel", depositAmount)
 		err = channel.Service.SetTotalChannelDeposit(tokenAddress, common.Address(target), depositAmount)

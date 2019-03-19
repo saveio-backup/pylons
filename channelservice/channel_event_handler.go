@@ -368,7 +368,6 @@ func (self ChannelEventHandler) HandleEventUnlockClaimFailed(channel *ChannelSer
 	log.Info("[OnChannelEvent] Unlock Claim Failed PaymentId: ", unlockClaimFailed.Identifier)
 }
 
-
 func (self ChannelEventHandler) HandleEventUnlockSuccess(channel *ChannelService,
 	unlockSuccess *transfer.EventUnlockSuccess) {
 	log.Info("[OnChannelEvent] Unlock Success PaymentId: ", unlockSuccess.Identifier)

@@ -96,3 +96,5 @@ var EmptyHashKeccak = [32]byte{0x00}
 var EmptySecret = [32]byte{0x00}
 
 var EmptyAddress = Address{0x00}
+
+var EmptyTokenAddress = TokenAddress{0x00}

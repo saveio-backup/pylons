@@ -65,16 +65,16 @@ type Transport struct {
 	net *network.Network
 
 	//protocol could be Tcp, Kcp
-	protocol               string
-	address                string
-	mappingAddress         string
-	keys                   *crypto.KeyPair
-	keepaliveInterval      time.Duration
-	keepaliveTimeout       time.Duration
-	peerStateChan          chan *keepalive.PeerStateEvent
-	activePeers            *sync.Map
-	addressForHealthCheck  *sync.Map
-	hostPortToAddress      *sync.Map
+	protocol              string
+	address               string
+	mappingAddress        string
+	keys                  *crypto.KeyPair
+	keepaliveInterval     time.Duration
+	keepaliveTimeout      time.Duration
+	peerStateChan         chan *keepalive.PeerStateEvent
+	activePeers           *sync.Map
+	addressForHealthCheck *sync.Map
+	hostPortToAddress     *sync.Map
 	//addressToHostPortCache *lru.ARCCache
 	// map QueueIdentifier to Queue
 	messageQueues *sync.Map
@@ -83,7 +83,7 @@ type Transport struct {
 	kill            chan struct{}
 	// messsage handler and signer, reference channel service
 	ChannelService ChannelServiceInterface
-	hostAddrMap            *sync.Map
+	hostAddrMap    *sync.Map
 }
 
 type QueueItem struct {
