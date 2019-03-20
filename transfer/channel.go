@@ -351,8 +351,6 @@ func IsValidSignature(balanceProof *BalanceProofSignedState, senderAddress commo
 
 	//[TODO] find similar ONT function for
 	// to_canonical_address(eth_recover(data=data_that_was_signed, signature=balance_proof.signature))
-	var signerAddress common.Address
-
 	balanceHash := HashBalanceData(balanceProof.TransferredAmount,
 		balanceProof.LockedAmount, balanceProof.LocksRoot)
 
@@ -363,27 +361,7 @@ func IsValidSignature(balanceProof *BalanceProofSignedState, senderAddress commo
 		return false, string("Signature invalid, could not be recovered dataThatWasSigned is nil")
 	}
 
-	pubKey, err := common.GetPublicKey(balanceProof.PublicKey)
-	if err != nil {
-		return false, string("Failed to get public key from balance proof")
-	}
-
-	//log.Debug("Verify [Data]: ", dataThatWasSigned)
-	//log.Debug("Verify [PubKey]: ", balanceProof.PublicKey)
-	//log.Debug("Verify [Signature]: ", balanceProof.Signature)
-	err = common.VerifySignature(pubKey, dataThatWasSigned, balanceProof.Signature)
-	if err != nil {
-		return false, string("Signature invalid, could not be recovered")
-	}
-
-	signerAddress = common.GetAddressFromPubKey(pubKey)
-
-	if common.AddressEqual(senderAddress, signerAddress) == true {
-		return true, "success"
-	} else {
-		return false, string("Signature was valid but the expected address does not match.")
-	}
-
+	return isValidSignature(dataThatWasSigned, balanceProof.PublicKey, balanceProof.Signature, senderAddress)
 }
 
 func IsBalanceProofUsableOnChain(receivedBalanceProof *BalanceProofSignedState,
@@ -1321,7 +1299,10 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *ActionWithdraw) TransitionResult {
 	var events []Event
 
-	// fwtodo: add checking if we can send withdraw request
+	if GetStatus(channelState) != ChannelStateOpened {
+		return TransitionResult{channelState, events}
+	}
+
 	messageIdentifier := GetMsgID()
 	sendWithdrawRequest := &SendWithdrawRequest{
 		SendMessageEvent: SendMessageEvent{
@@ -1343,13 +1324,9 @@ func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *A
 func handleWithdrawRequestReceived(channelState *NettingChannelState, stateChange *ReceiveWithdrawRequest) TransitionResult {
 	var events []Event
 
-	// check if  received message is valid
-	//1. check if channel id is valid,
-	//2. check if participant is valid,
-	//3. check if withdraw is valid
-	//4. verify is signature is valid
-
-	// if valid, generate a SendWithdraw event
+	if !isValidWithdrawRequest(channelState, stateChange) {
+		return TransitionResult{channelState, events}
+	}
 
 	messageIdentifier := GetMsgID()
 	sendWithdraw := &SendWithdraw{
@@ -1370,13 +1347,82 @@ func handleWithdrawRequestReceived(channelState *NettingChannelState, stateChang
 	return TransitionResult{channelState, events}
 }
 
+func isValidWithdrawRequest(channelState *NettingChannelState, stateChange *ReceiveWithdrawRequest) bool {
+
+	if GetStatus(channelState) != ChannelStateOpened {
+		log.Debug("[isValidWithdrawRequest] channel is not opened")
+		return false
+	}
+	// check if participant is valid,
+	partnerState := channelState.PartnerState
+	if !common.AddressEqual(partnerState.Address, stateChange.Participant) {
+		log.Debug("[isValidWithdrawRequest] participant address invalid")
+		return false
+	}
+
+	if !common.AddressEqual(stateChange.Participant, stateChange.ParticipantAddress) {
+		log.Debug("[isValidWithdrawRequest] participant address is invalid")
+		return false
+	}
+
+	// check if withdraw is valid, make sure participant cannot withdraw more than available
+	withdrawAmount := stateChange.TotalWithdraw
+	if withdrawAmount > partnerState.ContractBalance {
+		log.Debug("[isValidWithdrawRequest] invalid withdraw amount, larger than partner's contract balance")
+		return false
+	} else {
+		balanceProof := partnerState.BalanceProof
+		if balanceProof != nil {
+			availableAmount := partnerState.ContractBalance - balanceProof.TransferredAmount - balanceProof.LockedAmount
+			if withdrawAmount > availableAmount {
+				log.Debug("[isValidWithdrawRequest] invalid withdraw amount, larger than available amount")
+				return false
+			}
+		}
+	}
+
+	// verify if signature is valid
+	dataToSign := PackWithdraw(stateChange.ChannelIdentifier, stateChange.Participant, stateChange.TotalWithdraw)
+	ok, errstr := isValidSignature(dataToSign, stateChange.ParticipantPublicKey, stateChange.ParticipantSignature, stateChange.ParticipantAddress)
+	if !ok {
+		log.Debugf("[isValidWithdrawRequest] check signature error: %s", errstr)
+		return false
+	}
+
+	return true
+}
+
+func isValidSignature(dataToSign []byte, publicKey common.PubKey, signature common.Signature, senderAddress common.Address) (bool, string) {
+	if len(dataToSign) == 0 {
+		return false, string("Signature invalid, dataToSign is nil")
+	}
+
+	pubKey, err := common.GetPublicKey(publicKey)
+	if err != nil {
+		return false, string("Failed to get public key")
+	}
+
+	err = common.VerifySignature(pubKey, dataToSign, signature)
+	if err != nil {
+		return false, string("Signature invalid, could not be recovered")
+	}
+
+	signerAddress := common.GetAddressFromPubKey(pubKey)
+
+	if common.AddressEqual(senderAddress, signerAddress) == true {
+		return true, "success"
+	} else {
+		return false, string("Signature was valid but the expected address does not match.")
+	}
+}
+
 func handleWithdrawReceived(channelState *NettingChannelState, stateChange *ReceiveWithdraw) TransitionResult {
 	var events []Event
 
-	// check if partner signature is valid, we dont want to waste gas to try some invalid contract call
-	// check if channel is still open, if the channel is closed dont call contract
+	if !isValidWithdraw(channelState, stateChange) {
+		return TransitionResult{channelState, events}
+	}
 
-	// if everything is ok, we construct a ContractSendChannelWithdraw event;
 	contractSendChannelWithdraw := &ContractSendChannelWithdraw{
 		ChannelIdentifier:      stateChange.ChannelIdentifier,
 		TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
@@ -1392,6 +1438,28 @@ func handleWithdrawReceived(channelState *NettingChannelState, stateChange *Rece
 
 	events = append(events, contractSendChannelWithdraw)
 	return TransitionResult{channelState, events}
+}
+func isValidWithdraw(channelState *NettingChannelState, stateChange *ReceiveWithdraw) bool {
+	if GetStatus(channelState) != ChannelStateOpened {
+		log.Debug("[isValidWithdraw] channel is not opened")
+		return false
+	}
+	// check if participant is valid,
+	ourState := channelState.OurState
+	if !common.AddressEqual(ourState.Address, stateChange.Participant) {
+		log.Debug("[isValidWithdraw] participant address invalid")
+		return false
+	}
+
+	// verify if signature is valid
+	dataToSign := PackWithdraw(stateChange.ChannelIdentifier, stateChange.Participant, stateChange.TotalWithdraw)
+	ok, errstr := isValidSignature(dataToSign, stateChange.PartnerPublicKey, stateChange.PartnerSignature, stateChange.PartnerAddress)
+	if !ok {
+		log.Debugf("[isValidWithdraw] check signature error: %s", errstr)
+		return false
+	}
+
+	return true
 }
 
 func handleChannelWithdraw(channelState *NettingChannelState, stateChange *ContractReceiveChannelWithdraw) TransitionResult {

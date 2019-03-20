@@ -2,7 +2,6 @@ package messages
 
 import (
 	"bytes"
-	"encoding/binary"
 	"fmt"
 
 	"crypto/sha256"
@@ -24,28 +23,15 @@ type SignedMessageInterface interface {
 	DataToSign() []byte
 }
 
-func BytesToUint64(data []byte) uint64 {
-	var n uint64
-	bytesBuffer := bytes.NewBuffer(data)
-	binary.Read(bytesBuffer, binary.BigEndian, &n)
-	return n
-}
-
-func Uint64ToBytes(n uint64) []byte {
-	bytesBuffer := bytes.NewBuffer([]byte{})
-	binary.Write(bytesBuffer, binary.BigEndian, n)
-	return bytesBuffer.Bytes()
-}
-
 func (this *Processed) DataToSign() []byte {
-	return Uint64ToBytes(this.MessageIdentifier.MessageId)
+	return transfer.Uint64ToBytes(this.MessageIdentifier.MessageId)
 }
 
 func (this *Delivered) DataToSign() []byte {
 	if this.DeliveredMessageIdentifier == nil {
 		log.Warn("this.DeliveredMessageIdentifier == nil")
 	}
-	return Uint64ToBytes(this.DeliveredMessageIdentifier.MessageId)
+	return transfer.Uint64ToBytes(this.DeliveredMessageIdentifier.MessageId)
 }
 
 // data to sign for envelopeMessage is the packed balance proof
@@ -80,15 +66,15 @@ func (this *LockedTransfer) DataToSign() []byte {
 func (this *LockedTransfer) Pack() []byte {
 	var buf bytes.Buffer
 	env := this.BaseMessage.EnvelopeMessage
-	buf.Write(Uint64ToBytes(env.ChainId.ChainId))
-	buf.Write(Uint64ToBytes(this.BaseMessage.MessageIdentifier.MessageId))
-	buf.Write(Uint64ToBytes(this.BaseMessage.PaymentIdentifier.PaymentId))
-	buf.Write(Uint64ToBytes(env.Nonce))
+	buf.Write(transfer.Uint64ToBytes(env.ChainId.ChainId))
+	buf.Write(transfer.Uint64ToBytes(this.BaseMessage.MessageIdentifier.MessageId))
+	buf.Write(transfer.Uint64ToBytes(this.BaseMessage.PaymentIdentifier.PaymentId))
+	buf.Write(transfer.Uint64ToBytes(env.Nonce))
 	buf.Write(this.BaseMessage.Token.Address)
 	buf.Write(env.TokenNetworkAddress.TokenNetworkAddress)
-	buf.Write(Uint64ToBytes(env.ChannelIdentifier.ChannelId))
-	buf.Write(Uint64ToBytes(env.TransferredAmount.TokenAmount))
-	buf.Write(Uint64ToBytes(env.LockedAmount.TokenAmount))
+	buf.Write(transfer.Uint64ToBytes(env.ChannelIdentifier.ChannelId))
+	buf.Write(transfer.Uint64ToBytes(env.TransferredAmount.TokenAmount))
+	buf.Write(transfer.Uint64ToBytes(env.LockedAmount.TokenAmount))
 	buf.Write(this.BaseMessage.Recipient.Address)
 	buf.Write(env.Locksroot.Locksroot)
 
@@ -102,15 +88,15 @@ func (this *DirectTransfer) DataToSign() []byte {
 func (this *DirectTransfer) Pack() []byte {
 	var buf bytes.Buffer
 	env := this.EnvelopeMessage
-	buf.Write(Uint64ToBytes(env.ChainId.ChainId))
-	buf.Write(Uint64ToBytes(this.MessageIdentifier.MessageId))
-	buf.Write(Uint64ToBytes(this.PaymentIdentifier.PaymentId))
-	buf.Write(Uint64ToBytes(env.Nonce))
+	buf.Write(transfer.Uint64ToBytes(env.ChainId.ChainId))
+	buf.Write(transfer.Uint64ToBytes(this.MessageIdentifier.MessageId))
+	buf.Write(transfer.Uint64ToBytes(this.PaymentIdentifier.PaymentId))
+	buf.Write(transfer.Uint64ToBytes(env.Nonce))
 	buf.Write(this.Token.Address)
 	buf.Write(env.TokenNetworkAddress.TokenNetworkAddress)
-	buf.Write(Uint64ToBytes(env.ChannelIdentifier.ChannelId))
-	buf.Write(Uint64ToBytes(env.TransferredAmount.TokenAmount))
-	buf.Write(Uint64ToBytes(env.LockedAmount.TokenAmount))
+	buf.Write(transfer.Uint64ToBytes(env.ChannelIdentifier.ChannelId))
+	buf.Write(transfer.Uint64ToBytes(env.TransferredAmount.TokenAmount))
+	buf.Write(transfer.Uint64ToBytes(env.LockedAmount.TokenAmount))
 	buf.Write(this.Recipient.Address)
 	buf.Write(env.Locksroot.Locksroot)
 
@@ -119,11 +105,11 @@ func (this *DirectTransfer) Pack() []byte {
 
 func (this *SecretRequest) DataToSign() []byte {
 	var buf bytes.Buffer
-	buf.Write(Uint64ToBytes(this.MessageIdentifier.MessageId))
-	buf.Write(Uint64ToBytes(this.PaymentIdentifier.PaymentId))
+	buf.Write(transfer.Uint64ToBytes(this.MessageIdentifier.MessageId))
+	buf.Write(transfer.Uint64ToBytes(this.PaymentIdentifier.PaymentId))
 	buf.Write(this.SecretHash.SecretHash[:])
-	buf.Write(Uint64ToBytes(this.Amount.TokenAmount))
-	buf.Write(Uint64ToBytes(this.Expiration.BlockExpiration))
+	buf.Write(transfer.Uint64ToBytes(this.Amount.TokenAmount))
+	buf.Write(transfer.Uint64ToBytes(this.Expiration.BlockExpiration))
 	return buf.Bytes()
 }
 
@@ -134,14 +120,14 @@ func (this *Secret) DataToSign() []byte {
 func (this *Secret) Pack() []byte {
 	var buf bytes.Buffer
 	env := this.EnvelopeMessage
-	buf.Write(Uint64ToBytes(env.ChainId.ChainId))
-	buf.Write(Uint64ToBytes(this.MessageIdentifier.MessageId))
-	buf.Write(Uint64ToBytes(this.PaymentIdentifier.PaymentId))
-	buf.Write(Uint64ToBytes(env.Nonce))
+	buf.Write(transfer.Uint64ToBytes(env.ChainId.ChainId))
+	buf.Write(transfer.Uint64ToBytes(this.MessageIdentifier.MessageId))
+	buf.Write(transfer.Uint64ToBytes(this.PaymentIdentifier.PaymentId))
+	buf.Write(transfer.Uint64ToBytes(env.Nonce))
 	buf.Write(env.TokenNetworkAddress.TokenNetworkAddress)
-	buf.Write(Uint64ToBytes(env.ChannelIdentifier.ChannelId))
-	buf.Write(Uint64ToBytes(env.TransferredAmount.TokenAmount))
-	buf.Write(Uint64ToBytes(env.LockedAmount.TokenAmount))
+	buf.Write(transfer.Uint64ToBytes(env.ChannelIdentifier.ChannelId))
+	buf.Write(transfer.Uint64ToBytes(env.TransferredAmount.TokenAmount))
+	buf.Write(transfer.Uint64ToBytes(env.LockedAmount.TokenAmount))
 	buf.Write(env.Locksroot.Locksroot)
 
 	return buf.Bytes()
@@ -155,13 +141,13 @@ func (this *LockExpired) Pack() []byte {
 	var buf bytes.Buffer
 	env := this.EnvelopeMessage
 
-	buf.Write(Uint64ToBytes(env.ChainId.ChainId))
-	buf.Write(Uint64ToBytes(env.Nonce))
-	buf.Write(Uint64ToBytes(this.MessageIdentifier.MessageId))
+	buf.Write(transfer.Uint64ToBytes(env.ChainId.ChainId))
+	buf.Write(transfer.Uint64ToBytes(env.Nonce))
+	buf.Write(transfer.Uint64ToBytes(this.MessageIdentifier.MessageId))
 	buf.Write(env.TokenNetworkAddress.TokenNetworkAddress)
-	buf.Write(Uint64ToBytes(env.ChannelIdentifier.ChannelId))
-	buf.Write(Uint64ToBytes(env.TransferredAmount.TokenAmount))
-	buf.Write(Uint64ToBytes(env.LockedAmount.TokenAmount))
+	buf.Write(transfer.Uint64ToBytes(env.ChannelIdentifier.ChannelId))
+	buf.Write(transfer.Uint64ToBytes(env.TransferredAmount.TokenAmount))
+	buf.Write(transfer.Uint64ToBytes(env.LockedAmount.TokenAmount))
 	buf.Write(this.Recipient.Address)
 	buf.Write(env.Locksroot.Locksroot)
 	buf.Write(this.SecretHash.SecretHash[:])
@@ -172,26 +158,26 @@ func (this *LockExpired) Pack() []byte {
 
 func (this *RevealSecret) DataToSign() []byte {
 	var buf bytes.Buffer
-	buf.Write(Uint64ToBytes(this.MessageIdentifier.MessageId))
+	buf.Write(transfer.Uint64ToBytes(this.MessageIdentifier.MessageId))
 	buf.Write(this.Secret.Secret[:])
 	return buf.Bytes()
 }
 
 // fwtodo : remove duplicate code for withdrawrequest and withdraw
 func (this *WithdrawRequest) DataToSign() []byte {
-	var buf bytes.Buffer
-	buf.Write(Uint64ToBytes(this.ChannelIdentifier.ChannelId))
-	buf.Write(this.Participant.Address)
-	buf.Write(Uint64ToBytes(this.WithdrawAmount.TokenAmount))
-	return buf.Bytes()
+	channelId := common.ChannelID(int(this.ChannelIdentifier.ChannelId))
+	participant := ConvertAddress(this.Participant)
+	withdrawAmount := common.TokenAmount(this.WithdrawAmount.TokenAmount)
+
+	return transfer.PackWithdraw(channelId, participant, withdrawAmount)
 }
 
 func (this *Withdraw) DataToSign() []byte {
-	var buf bytes.Buffer
-	buf.Write(Uint64ToBytes(this.ChannelIdentifier.ChannelId))
-	buf.Write(this.Participant.Address)
-	buf.Write(Uint64ToBytes(this.WithdrawAmount.TokenAmount))
-	return buf.Bytes()
+	channelId := common.ChannelID(int(this.ChannelIdentifier.ChannelId))
+	participant := ConvertAddress(this.Participant)
+	withdrawAmount := common.TokenAmount(this.WithdrawAmount.TokenAmount)
+
+	return transfer.PackWithdraw(channelId, participant, withdrawAmount)
 }
 
 func MessageHash(data []byte) []byte {
