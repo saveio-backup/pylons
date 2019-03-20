@@ -495,7 +495,7 @@ func (self *TokenNetwork) withDraw(channelIdentifier common.ChannelID, partner c
 		log.Errorf("UpdateNonClosingBalanceProof err:%s", err)
 		return
 	}
-	log.Infof("UpdateNonClosingBalanceProof tx hash:%s\n", txHash)
+	log.Infof("SetTotalWithdraw tx hash:%s\n", txHash)
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("UpdateNonClosingBalanceProof  WaitForGenerateBlock err:%s", err)

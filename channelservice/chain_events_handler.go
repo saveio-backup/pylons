@@ -220,6 +220,42 @@ func (self ChannelService) HandleChannelSettled(event map[string]interface{}) {
 	return
 }
 
+func (self ChannelService) HandleChannelWithdraw(event map[string]interface{}) {
+	log.Info("[HandleChannelWithdraw]")
+	var transactionHash common.TransactionHash
+	var isParticipant bool
+
+	participantAddress := event["participant"].(common.Address)
+	channelIdentifier := event["channelID"].(common.ChannelID)
+	blockNumber := event["blockHeight"].(common.BlockHeight)
+	totalWithdraw := event["totalWithdraw"].(common.TokenAmount)
+
+	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
+
+	previousChannelState := transfer.GetChannelStateByTokenNetworkIdentifier(
+		self.StateFromChannel(), tokenNetworkIdentifier, channelIdentifier)
+
+	if previousChannelState != nil {
+		isParticipant = true
+	}
+
+	if isParticipant {
+		channelWithdraw := &transfer.ContractReceiveChannelWithdraw{
+			ContractReceiveStateChange: transfer.ContractReceiveStateChange{
+				TransactionHash: transactionHash,
+				BlockHeight:     blockNumber,
+			},
+			TokenNetworkIdentifier: tokenNetworkIdentifier,
+			ChannelIdentifier:      channelIdentifier,
+			Participant:            participantAddress,
+			TotalWithdraw:          totalWithdraw,
+		}
+		self.HandleStateChange(channelWithdraw)
+	}
+
+	return
+}
+
 func (self ChannelService) HandleChannelBatchUnlock(event map[string]interface{}) {
 	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
 
@@ -284,6 +320,8 @@ func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 		channel.HandleChannelSettled(events)
 	} else if eventName == "NonClosingBPFUpdate" {
 		channel.HandleChannelUpdateTransfer(events)
+	} else if eventName == "SetTotalWithdraw" {
+		channel.HandleChannelWithdraw(events)
 	}
 
 	return
@@ -353,6 +391,8 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 		case "settleTimeout":
 			events[item] = common.BlockHeight(value.(float64))
 		case "totalDeposit":
+			fallthrough
+		case "totalWithdraw":
 			events[item] = common.TokenAmount(value.(float64))
 		case "nonce":
 			events[item] = common.Nonce(value.(float64))

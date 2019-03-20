@@ -434,6 +434,7 @@ func (self ChannelEventHandler) HandleContractSendChannelWithdraw(channel *Chann
 
 	channelProxy := channel.chain.PaymentChannel(common.Address(channelWithdrawEvent.TokenNetworkIdentifier), channelWithdrawEvent.ChannelIdentifier, args)
 
-	channelProxy.Withdraw(channelWithdrawEvent.PartnerAddress, channelWithdrawEvent.TotalWithdraw, channelWithdrawEvent.PartnerSignature, channelWithdrawEvent.PartnerPublicKey,
+	// run in a goroutine in order that partner will not time out for the delivered message for withdraw
+	go channelProxy.Withdraw(channelWithdrawEvent.PartnerAddress, channelWithdrawEvent.TotalWithdraw, channelWithdrawEvent.PartnerSignature, channelWithdrawEvent.PartnerPublicKey,
 		channelWithdrawEvent.ParticipantSignature, channelWithdrawEvent.ParticipantPublicKey)
 }

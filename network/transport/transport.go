@@ -9,8 +9,6 @@ import (
 
 	"reflect"
 
-	"os"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
@@ -336,6 +334,13 @@ func (this *Transport) GetHostPortFromAddress(recipient common.Address) string {
 	if err != nil {
 		log.Errorf("[GetHostPortFromAddress] GetHostAddr error: ", err.Error())
 	}
+
+	// update networkstate for the case network connection established before we get address
+	_, ok := this.activePeers.Load(host)
+	if ok {
+		log.Debug("update NodeNetworkState for active peer")
+		this.SetNodeNetworkState(recipient, transfer.NetworkReachable)
+	}
 	return host
 }
 
@@ -368,8 +373,10 @@ func (this *Transport) StartHealthCheck(address common.Address) {
 }
 
 func (this *Transport) SetNodeNetworkState(address common.Address, state string) {
+	log.Debugf("[syncPeerState] SetNodeNetworkState is called")
 	chainState := this.ChannelService.StateFromChannel()
 	if chainState != nil {
+		log.Debugf("[syncPeerState] SetNodeNetworkState set state %s", state)
 		chainState.NodeAddressesToNetworkStates[address] = state
 	}
 }
@@ -516,6 +523,7 @@ func (this *Transport) syncPeerState() {
 			this.addressForHealthCheck.Delete(state.Address)
 			address, ok := this.hostPortToAddress.Load(state.Address)
 			if !ok {
+				log.Debugf("[syncPeerState] NOK, continue")
 				continue
 			}
 			this.SetNodeNetworkState(address.(common.Address), nodeNetworkState)

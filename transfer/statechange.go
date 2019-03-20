@@ -56,7 +56,11 @@ type ReceiveWithdraw struct {
 }
 
 type ContractReceiveChannelWithdraw struct {
+	ContractReceiveStateChange
 	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	Participant            common.Address
+	TotalWithdraw          common.TokenAmount
 }
 
 type ContractReceiveChannelNew struct {

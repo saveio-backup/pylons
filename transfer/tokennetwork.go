@@ -76,6 +76,14 @@ func GetSenderMessageEvent(event Event) *SendMessageEvent {
 		result.Recipient = v.Recipient
 		result.ChannelIdentifier = v.ChannelIdentifier
 		result.MessageIdentifier = v.MessageIdentifier
+	case *SendWithdrawRequest:
+		v, _ := event.(*SendWithdrawRequest)
+		result.Recipient = v.Recipient
+		result.ChannelIdentifier = v.ChannelIdentifier
+	case *SendWithdraw:
+		v, _ := event.(*SendWithdraw)
+		result.Recipient = v.Recipient
+		result.ChannelIdentifier = v.ChannelIdentifier
 	default:
 		result = nil
 	}
