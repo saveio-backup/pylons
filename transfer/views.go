@@ -191,10 +191,8 @@ func GetTokenNetworkAddressesFor(chainState *ChainState,
 func TotalTokenNetworkChannels(chainState *ChainState, paymentNetworkId common.PaymentNetworkID,
 	tokenAddress common.TokenAddress) int {
 
-	tokenNetworkState := GetTokenNetworkByTokenAddress(
-		chainState,
-		paymentNetworkId,
-		tokenAddress)
+	tokenNetworkState := GetTokenNetworkByTokenAddress(chainState,
+		paymentNetworkId, tokenAddress)
 
 	result := 0
 	if tokenNetworkState != nil {
@@ -231,14 +229,12 @@ func GetTokenNetworkByIdentifier(chainState *ChainState,
 
 func GetChannelStateFor(chainState *ChainState, paymentNetworkId common.PaymentNetworkID,
 	tokenAddress common.TokenAddress, partnerAddress common.Address) *NettingChannelState {
-
-	tokenNetworkState := GetTokenNetworkByTokenAddress(chainState, paymentNetworkId, tokenAddress)
-
 	var channelState *NettingChannelState
 
 	excludeStates := make(map[string]int)
 	excludeStates[ChannelStateUnusable] = 0
 
+	tokenNetworkState := GetTokenNetworkByTokenAddress(chainState, paymentNetworkId, tokenAddress)
 	if tokenNetworkState != nil {
 		states := FilterChannelsByStatus(tokenNetworkState.PartnerAddressesToChannels[partnerAddress],
 			excludeStates)
@@ -276,10 +272,7 @@ func GetChannelStateByTokenNetworkIdentifier(chainState *ChainState,
 
 	var channelState *NettingChannelState
 
-	tokenNetworkState := GetTokenNetworkByIdentifier(
-		chainState,
-		tokenNetworkId)
-
+	tokenNetworkState := GetTokenNetworkByIdentifier(chainState, tokenNetworkId)
 	if tokenNetworkState != nil {
 		channelState = tokenNetworkState.ChannelIdentifiersToChannels[channelId]
 	}
@@ -291,12 +284,7 @@ func GetChannelStateById(chainState *ChainState, paymentNetworkId common.Payment
 	tokenAddress common.TokenAddress, channelId common.ChannelID) *NettingChannelState {
 
 	var channelState *NettingChannelState
-
-	tokenNetworkState := GetTokenNetworkByTokenAddress(
-		chainState,
-		paymentNetworkId,
-		tokenAddress)
-
+	tokenNetworkState := GetTokenNetworkByTokenAddress(chainState, paymentNetworkId, tokenAddress)
 	if tokenNetworkState != nil {
 		channelState = tokenNetworkState.ChannelIdentifiersToChannels[channelId]
 	}
@@ -307,13 +295,8 @@ func GetChannelStateById(chainState *ChainState, paymentNetworkId common.Payment
 func getChannelStateFilter(chainState *ChainState, paymentNetworkId common.PaymentNetworkID,
 	tokenAddress common.TokenAddress, filterFn func(x *NettingChannelState) bool) *list.List {
 
-	tokenNetworkState := getTokenNetworkByTokenAddress(
-		chainState,
-		paymentNetworkId,
-		tokenAddress)
-
+	tokenNetworkState := getTokenNetworkByTokenAddress(chainState, paymentNetworkId, tokenAddress)
 	result := list.New()
-
 	for _, v := range tokenNetworkState.ChannelIdentifiersToChannels {
 		if filterFn(v) {
 			result.PushBack(v)
@@ -326,11 +309,8 @@ func getChannelStateFilter(chainState *ChainState, paymentNetworkId common.Payme
 func GetChannelStateForReceiving(chainState *ChainState, paymentNetworkId common.PaymentNetworkID,
 	tokenAddress common.TokenAddress) *list.List {
 
-	tokenNetworkState := getTokenNetworkByTokenAddress(chainState, paymentNetworkId,
-		tokenAddress)
-
+	tokenNetworkState := getTokenNetworkByTokenAddress(chainState, paymentNetworkId, tokenAddress)
 	result := list.New()
-
 	for _, v := range tokenNetworkState.ChannelIdentifiersToChannels {
 		if v.PartnerState.BalanceProof != nil {
 			result.PushBack(v)
@@ -367,11 +347,7 @@ func GetChannelStateClosing(chainState *ChainState, paymentNetworkId common.Paym
 		}
 	}
 
-	return getChannelStateFilter(
-		chainState,
-		paymentNetworkId,
-		tokenAddress,
-		f)
+	return getChannelStateFilter(chainState, paymentNetworkId, tokenAddress, f)
 }
 
 func GetChannelStateClosed(chainState *ChainState, paymentNetworkId common.PaymentNetworkID,
@@ -386,11 +362,7 @@ func GetChannelStateClosed(chainState *ChainState, paymentNetworkId common.Payme
 		}
 	}
 
-	return getChannelStateFilter(
-		chainState,
-		paymentNetworkId,
-		tokenAddress,
-		f)
+	return getChannelStateFilter(chainState, paymentNetworkId, tokenAddress, f)
 }
 
 func GetChannelStateSettling(chainState *ChainState, paymentNetworkId common.PaymentNetworkID,
@@ -405,11 +377,7 @@ func GetChannelStateSettling(chainState *ChainState, paymentNetworkId common.Pay
 		}
 	}
 
-	return getChannelStateFilter(
-		chainState,
-		paymentNetworkId,
-		tokenAddress,
-		f)
+	return getChannelStateFilter(chainState, paymentNetworkId, tokenAddress, f)
 }
 
 func GetChannelStateSettled(chainState *ChainState, paymentNetworkId common.PaymentNetworkID,

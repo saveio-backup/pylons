@@ -38,28 +38,40 @@ func GetChannelIdentifier(stateChange StateChange) common.ChannelID {
 
 func GetSenderAndMessageIdentifier(stateChange StateChange) (common.Address, common.MessageID) {
 	var sender common.Address
-	var messgeId common.MessageID
+	var messageId common.MessageID
 
 	switch stateChange.(type) {
 	case *ReceiveTransferDirect:
 		v, _ := stateChange.(*ReceiveTransferDirect)
 		sender = v.Sender
-		messgeId = v.MessageIdentifier
+		messageId = v.MessageIdentifier
 	case *ReceiveUnlock:
 		v, _ := stateChange.(*ReceiveUnlock)
 		sender = v.Sender
-		messgeId = v.MessageIdentifier
+		messageId = v.MessageIdentifier
+	case *ReceiveLockExpired:
+		v, _ := stateChange.(*ReceiveLockExpired)
+		sender = v.BalanceProof.Sender
+		messageId = v.MessageIdentifier
+	case *ReceiveSecretRequest:
+		v, _ := stateChange.(*ReceiveSecretRequest)
+		sender = v.Sender
+		messageId = v.MessageIdentifier
+	case *ReceiveSecretReveal:
+		v, _ := stateChange.(*ReceiveSecretReveal)
+		sender = v.Sender
+		messageId = v.MessageIdentifier
 	case *ReceiveDelivered:
 		v, _ := stateChange.(*ReceiveDelivered)
 		sender = v.Sender
-		messgeId = v.MessageIdentifier
+		messageId = v.MessageIdentifier
 	case *ReceiveProcessed:
 		v, _ := stateChange.(*ReceiveProcessed)
 		sender = v.Sender
-		messgeId = v.MessageIdentifier
+		messageId = v.MessageIdentifier
 	}
 
-	return sender, messgeId
+	return sender, messageId
 }
 
 func GetSenderMessageEvent(event Event) *SendMessageEvent {
@@ -68,6 +80,36 @@ func GetSenderMessageEvent(event Event) *SendMessageEvent {
 	switch event.(type) {
 	case *SendDirectTransfer:
 		v, _ := event.(*SendDirectTransfer)
+		result.Recipient = v.Recipient
+		result.ChannelIdentifier = v.ChannelIdentifier
+		result.MessageIdentifier = v.MessageIdentifier
+	case *SendLockedTransfer:
+		v, _ := event.(*SendLockedTransfer)
+		result.Recipient = v.Recipient
+		result.ChannelIdentifier = v.ChannelIdentifier
+		result.MessageIdentifier = v.MessageIdentifier
+	case *SendLockExpired:
+		v, _ := event.(*SendLockExpired)
+		result.Recipient = v.Recipient
+		result.ChannelIdentifier = v.ChannelIdentifier
+		result.MessageIdentifier = v.MessageIdentifier
+	case *SendBalanceProof:
+		v, _ := event.(*SendBalanceProof)
+		result.Recipient = v.Recipient
+		result.ChannelIdentifier = v.ChannelIdentifier
+		result.MessageIdentifier = v.MessageIdentifier
+	case *SendSecretReveal:
+		v, _ := event.(*SendSecretReveal)
+		result.Recipient = v.Recipient
+		result.ChannelIdentifier = v.ChannelIdentifier
+		result.MessageIdentifier = v.MessageIdentifier
+	case *SendSecretRequest:
+		v, _ := event.(*SendSecretRequest)
+		result.Recipient = v.Recipient
+		result.ChannelIdentifier = v.ChannelIdentifier
+		result.MessageIdentifier = v.MessageIdentifier
+	case *SendRefundTransfer:
+		v, _ := event.(*SendRefundTransfer)
 		result.Recipient = v.Recipient
 		result.ChannelIdentifier = v.ChannelIdentifier
 		result.MessageIdentifier = v.MessageIdentifier

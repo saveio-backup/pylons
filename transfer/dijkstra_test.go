@@ -9,15 +9,6 @@ import (
 	"github.com/oniio/oniChannel/common/constants"
 )
 
-func indexOf(element string, data []string) int {
-	for k, v := range data {
-		if element == v {
-			return k
-		}
-	}
-	return -1 //not found.
-}
-
 func TestSPT(t *testing.T) {
 	nodes := make(map[common.Address]int64)
 	names := []string{
