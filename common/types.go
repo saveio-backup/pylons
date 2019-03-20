@@ -13,6 +13,8 @@ const (
 	PAYMENT_MEDIATED
 )
 
+type EdgeId [constants.EDGEID_LEN]byte
+
 type Address [constants.ADDR_LEN]byte
 
 var ADDRESS_EMPTY = Address{}

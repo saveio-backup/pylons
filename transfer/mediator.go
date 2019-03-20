@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"reflect"
 
-	chainComm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
 )
@@ -339,8 +338,7 @@ func clearIfFinalized(iteration *TransitionResult,
 
 func nextChannelFromRoutes(availableRoutes []RouteState,
 	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
-	transferAmount common.PaymentAmount,
-	lockTimeout common.BlockTimeout) *NettingChannelState {
+	transferAmount common.PaymentAmount, lockTimeout common.BlockTimeout) *NettingChannelState {
 	/*
 		Returns the first route that may be used to mediated the transfer.
 
@@ -361,12 +359,12 @@ func nextChannelFromRoutes(availableRoutes []RouteState,
 	for _, route := range availableRoutes {
 		channelState := channelIdentifiersToChannels[route.ChannelIdentifier]
 
-		addr := chainComm.Address(route.NodeAddress)
+		addr := common.ToBase58(route.NodeAddress)
 		if channelState == nil {
-			log.Debug("nextChannelFromRoutes channelIdentifiersToChannels == nil", addr.ToBase58())
+			log.Debug("nextChannelFromRoutes channelIdentifiersToChannels == nil", addr)
 			continue
 		}
-		log.Debug("nextChannelFromRoutes channelIdentifiersToChannels != nil", addr.ToBase58())
+		log.Debug("nextChannelFromRoutes channelIdentifiersToChannels != nil", addr)
 		if MdIsChannelUsable(channelState, transferAmount, lockTimeout) {
 			return channelState
 		}

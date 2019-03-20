@@ -162,7 +162,8 @@ func (self *SQLiteStorage) writeStateChange(stateChange transfer.StateChange, st
 	log.Debug("[writeStateChange]: %v ", stateChange)
 	serializedData, err := jsonext.Marshal(stateChange)
 	if err != nil {
-		log.Error("[writeStateChange] jsonext.Marshal error stateChange type: ", reflect.TypeOf(stateChange).String())
+		log.Errorf("[writeStateChange] jsonext.Marshal error stateChange type: %s error: %s",
+			reflect.TypeOf(stateChange).String(), err.Error())
 	}
 
 	self.StateSync.Add(1)

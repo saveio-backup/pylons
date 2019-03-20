@@ -2,46 +2,49 @@ package transfer
 
 import (
 	"container/list"
+	"github.com/oniio/oniChannel/common"
 )
 
 // Topology represents a network topology
 type Topology struct {
-	nodes map[string]int64
-	edges map[string]map[string]int64
+	nodes map[common.Address]int64
+	edges map[common.Address]map[common.Address]int64
 }
 
 // Edge represents a directed edge in a graph
 type Edge struct {
-	NodeA    string
-	NodeB    string
+	NodeA    common.Address
+	NodeB    common.Address
 	Distance int64
 }
 
-type ShortPathTree [][]string
+type ShortPathTree [][]common.Address
 
 // NewTopology creates a new topology
-func NewTopology(nodes []string, edges []Edge) *Topology {
+func NewTopology(nodes map[common.Address]int64, edges map[common.EdgeId]int64) *Topology {
 	t := &Topology{
-		nodes: make(map[string]int64),
-		edges: make(map[string]map[string]int64),
+		nodes: make(map[common.Address]int64),
+		edges: make(map[common.Address]map[common.Address]int64),
 	}
 
-	for _, n := range nodes {
+	for n := range nodes {
 		t.nodes[n] = -1
 	}
 
-	for _, e := range edges {
-		if _, ok := t.edges[e.NodeA]; !ok {
-			t.edges[e.NodeA] = make(map[string]int64)
+	for e, d := range edges {
+		addr1 := e.GetAddr1()
+		addr2 := e.GetAddr2()
+		if _, ok := t.edges[addr1]; !ok {
+			t.edges[addr1] = make(map[common.Address]int64)
 		}
 
-		t.edges[e.NodeA][e.NodeB] = e.Distance
+		t.edges[addr1][addr2] = d
 	}
 
 	return t
 }
 
-func (self *Topology) GetShortPath(node string) ShortPathTree {
+func (self *Topology) GetShortPath(node common.Address) ShortPathTree {
 	var sp ShortPathTree
 	lst := list.New()
 	for n := range self.nodes  {
@@ -51,7 +54,7 @@ func (self *Topology) GetShortPath(node string) ShortPathTree {
 	}
 
 	//for e := lst.Front(); e != nil ; e = e.Next()  {
-	//	fmt.Println(e.Value.(string))
+		//fmt.Println(e.Value.(common.Address))
 	//}
 	//fmt.Println()
 
@@ -61,13 +64,13 @@ func (self *Topology) GetShortPath(node string) ShortPathTree {
 			e = lst.Front()
 		}
 
-		n := e.Value.(string)
+		n := e.Value.(common.Address)
 		//fmt.Println("Node | n : ", node, "| ", n)
 		if _, exist1 := self.edges[node][n]; exist1 {
-			var path []string
+			var path []common.Address
 			path = append(path, n)
 			sp = append(sp, path)
-			//fmt.Println("Remove: ", e.Value.(string))
+			//fmt.Println("Remove: ", e.Value.(common.Address))
 			//fmt.Println("Path: ", path)
 			lst.Remove(e)
 		} else {
@@ -83,7 +86,7 @@ func (self *Topology) GetShortPath(node string) ShortPathTree {
 					//fmt.Println("mp: ", mp)
 					if _, exist3 = mp[n]; exist3 {
 						//fmt.Println("exist3")
-						path := make([]string, len(sp[i]))
+						path := make([]common.Address, len(sp[i]))
 						copy(path, sp[i])
 						path = append(path, n)
 						sp = append(sp, path)
@@ -92,7 +95,7 @@ func (self *Topology) GetShortPath(node string) ShortPathTree {
 				}
 			}
 			if exist3 {
-				//fmt.Println("Remove: ", e.Value.(string))
+				//fmt.Println("Remove: ", e.Value.(common.Address))
 				lst.Remove(e)
 			}
 		}

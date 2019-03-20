@@ -106,8 +106,8 @@ func receivePayment(channel *ch.Channel) {
 		log.Info("[ReceivePayment] WaitForReceiveNotification")
 		select {
 		case msg = <-notificationChannel:
-			addr := chaincomm.Address(msg.Initiator)
-			log.Infof("[ReceivePayment] Initiator: %v, Amount: %v Times: %v\n", addr.ToBase58(), msg.Amount, i)
+			addr := common.ToBase58(common.Address(msg.Initiator))
+			log.Infof("[ReceivePayment] Initiator: %v, Amount: %v Times: %v\n", addr, msg.Amount, i)
 		}
 	}
 }

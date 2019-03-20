@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"crypto/rand"
 	"errors"
-	chainComm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
 	"math"
 	"math/big"
 	"sort"
+	"github.com/oniio/oniChannel/common/constants"
 )
 
 type SecretHashToLock map[common.SecretHash]*HashTimeLockState
@@ -214,15 +214,14 @@ func (self *PaymentNetworkState) AdjustPaymentNetworkState() {
 }
 
 type TokenNetworkGraph struct {
-	NetworkGraphName string
-	Nodes            []string
-	Edges            []Edge
+	Nodes map[common.Address]int64
+	Edges map[common.EdgeId]int64
 }
 
 type TokenNetworkState struct {
 	Address                      common.TokenNetworkID
 	TokenAddress                 common.TokenAddress
-	NetworkGraph                 *TokenNetworkGraph
+	NetworkGraph                 TokenNetworkGraph
 	ChannelIdentifiersToChannels map[common.ChannelID]*NettingChannelState
 	PartnerAddressesToChannels   map[common.Address]map[common.ChannelID]*NettingChannelState
 }
@@ -231,51 +230,86 @@ func NewTokenNetworkState(localAddr common.Address) *TokenNetworkState {
 	result := &TokenNetworkState{}
 	result.ChannelIdentifiersToChannels = make(map[common.ChannelID]*NettingChannelState)
 	result.PartnerAddressesToChannels = make(map[common.Address]map[common.ChannelID]*NettingChannelState)
-	result.NetworkGraph = &TokenNetworkGraph{}
 
-	localNode := chainComm.Address(localAddr)
-	result.NetworkGraph.Nodes = append(result.NetworkGraph.Nodes, localNode.ToBase58())
+	result.NetworkGraph = TokenNetworkGraph{}
+	result.NetworkGraph.Nodes = make(map[common.Address]int64)
+	result.NetworkGraph.Edges = make(map[common.EdgeId]int64)
+
+	result.NetworkGraph.Nodes[localAddr] = 1
 	return result
 }
 
 func (self *TokenNetworkState) AddRoute(addr1 common.Address, addr2 common.Address, channelId common.ChannelID) {
-	node1 := chainComm.Address(addr1)
-	node2 := chainComm.Address(addr2)
-	log.Infof("addRoute addr: %v addr: %v", node1.ToBase58(), node2.ToBase58())
-	self.NetworkGraph.Nodes = append(self.NetworkGraph.Nodes, node1.ToBase58())
-	self.NetworkGraph.Nodes = append(self.NetworkGraph.Nodes, node2.ToBase58())
+	log.Infof("AddRoute addr: %v addr: %v", common.ToBase58(addr1), common.ToBase58(addr2))
 
-	edge1 := Edge{NodeA: node1.ToBase58(), NodeB: node2.ToBase58(), Distance: 1}
-	edge2 := Edge{NodeA: node2.ToBase58(), NodeB: node1.ToBase58(), Distance: 1}
+	networkGraphState := self.NetworkGraph
 
-	self.NetworkGraph.Edges = append(self.NetworkGraph.Edges, edge1)
-	self.NetworkGraph.Edges = append(self.NetworkGraph.Edges, edge2)
+	var node1Node2, node2Node1 common.EdgeId
+	copy(node1Node2[:constants.ADDR_LEN], addr1[:])
+	copy(node1Node2[constants.ADDR_LEN:], addr2[:])
+
+	copy(node2Node1[:constants.ADDR_LEN], addr2[:])
+	copy(node2Node1[constants.ADDR_LEN:], addr1[:])
+
+	if _, ok := networkGraphState.Edges[node1Node2]; !ok {
+		networkGraphState.Edges[node1Node2] = 1
+		if _, ok := networkGraphState.Nodes[addr1]; ok {
+			networkGraphState.Nodes[addr1] = networkGraphState.Nodes[addr1] + 1
+		} else {
+			networkGraphState.Nodes[addr1] = 1
+		}
+	} else {
+		return
+	}
+
+	if _, ok := networkGraphState.Edges[node2Node1]; !ok {
+		networkGraphState.Edges[node2Node1] = 1
+		if _, ok := networkGraphState.Nodes[addr2]; ok {
+			networkGraphState.Nodes[addr2] = networkGraphState.Nodes[addr2] + 1
+		} else {
+			networkGraphState.Nodes[addr2] = 1
+		}
+	} else {
+		return
+	}
 }
 
 func (self *TokenNetworkState) DelRoute(channelId common.ChannelID) {
-	//networkGraphState := self.NetworkGraph
-	//if _, ok := networkGraphState.ChannelIdentifierToParticipants[channelId]; ok {
-	//	participants := networkGraphState.ChannelIdentifierToParticipants[channelId]
-	//
-	//	p1 := networkGraphState.NodeAddressesToNodeId[participants[1]]
-	//	networkGraphState.NodeIdToNodeAddresses[p1] = participants[1]
-	//	delete(networkGraphState.NodeIdToNodeAddresses, p1)
-	//	delete(networkGraphState.NodeAddressesToNodeId, participants[1])
-	//
-	//
-	//	p2 := networkGraphState.NodeAddressesToNodeId[participants[2]]
-	//	networkGraphState.NodeIdToNodeAddresses[p2] = participants[2]
-	//	delete(networkGraphState.NodeIdToNodeAddresses, p2)
-	//	delete(networkGraphState.NodeAddressesToNodeId, participants[2])
-	//
-	//	networkGraphState.Graph().(graph.EdgeRemover).RemoveEdge(p1, p2)
-	//	networkGraphState.Graph().(graph.EdgeRemover).RemoveEdge(p2, p1)
-	//	delete(networkGraphState.ChannelIdentifierToParticipants, channelId)
-	//
-	//	oAddr1 := chainComm.Address(participants[1])
-	//	oAddr2 := chainComm.Address(participants[2])
-	//	fmt.Println("[DelRoute]:", oAddr1.ToBase58(), oAddr2.ToBase58())
-	//}
+	networkGraphState := self.NetworkGraph
+	if _, ok := self.ChannelIdentifiersToChannels[channelId]; ok {
+		addr1 := self.ChannelIdentifiersToChannels[channelId].OurState.Address
+		addr2 := self.ChannelIdentifiersToChannels[channelId].PartnerState.Address
+
+		log.Infof("DelRoute addr: %v addr: %v", common.ToBase58(addr1), common.ToBase58(addr2))
+
+		var node1Node2, node2Node1 common.EdgeId
+		copy(node1Node2[:constants.ADDR_LEN], addr1[:])
+		copy(node1Node2[constants.ADDR_LEN:], addr2[:])
+
+		copy(node2Node1[:constants.ADDR_LEN], addr2[:])
+		copy(node2Node1[constants.ADDR_LEN:], addr1[:])
+
+		if _, ok := networkGraphState.Edges[node1Node2]; ok {
+			delete(networkGraphState.Edges, node1Node2)
+			if _, ok := networkGraphState.Nodes[addr1]; ok {
+				if networkGraphState.Nodes[addr1] == 1 {
+					delete(networkGraphState.Nodes, addr1)
+				}
+				networkGraphState.Nodes[addr1] = networkGraphState.Nodes[addr1] - 1
+
+			}
+		}
+
+		if _, ok := networkGraphState.Edges[node2Node1]; ok {
+			delete(networkGraphState.Edges, node2Node1)
+			if _, ok := networkGraphState.Nodes[addr2]; ok {
+				if networkGraphState.Nodes[addr2] == 1 {
+					delete(networkGraphState.Nodes, addr2)
+				}
+				networkGraphState.Nodes[addr2] = networkGraphState.Nodes[addr2] - 1
+			}
+		}
+	}
 }
 
 func (self *TokenNetworkState) GetTokenAddress() common.TokenAddress {

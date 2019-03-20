@@ -225,6 +225,66 @@ func (self *Address) UnmarshalText(text []byte) error {
 	return nil
 }
 
+func (self EdgeId) GetAddr1() Address {
+	var tmp Address
+	copy(tmp[:], self[0:constants.ADDR_LEN])
+	return tmp
+}
+
+func (self EdgeId) GetAddr2() Address {
+	var tmp Address
+	copy(tmp[:], self[constants.ADDR_LEN:])
+	return tmp
+}
+
+
+func (self EdgeId) MarshalText() (text []byte, err error) {
+	var scratch [64]byte
+	var e bytes.Buffer
+
+	e.WriteByte('[')
+	for i := 0; i < constants.EDGEID_LEN; i++ {
+		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
+		e.Write(b)
+		if i < constants.EDGEID_LEN-1 {
+			e.WriteByte(' ')
+		}
+
+	}
+	e.WriteByte(']')
+
+	return e.Bytes(), nil
+}
+
+func (self *EdgeId) UnmarshalText(text []byte) error {
+	newText := text[1:]
+
+	startIdx := 0
+	for i := 0; i < constants.EDGEID_LEN; i++ {
+		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
+			startIdx++
+		}
+
+		toIdx := startIdx
+		for newText[toIdx] >= '0' && newText[toIdx] <= '9' {
+			toIdx++
+		}
+
+		res, err := strconv.ParseUint(string(newText[startIdx:toIdx]), 10, 8)
+
+		if err != nil {
+			return errors.New("EdgeId TextUnmarshaler error!")
+		} else {
+			self[i] = byte(res)
+		}
+
+		startIdx = toIdx
+	}
+
+	return nil
+}
+
+
 func (self TokenAddress) String() string {
 	str, err := jsonext.Marshal(self)
 	if err != nil {

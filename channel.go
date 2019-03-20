@@ -82,14 +82,9 @@ func NewChannelService(config *ChannelConfig, account *account.Account) (*Channe
 		"reveal_timeout": config.RevealTimeout,
 	}
 
-	service := ch.NewChannelService(
-		blockChainService,
-		common.BlockHeight(startBlock),
-		transport,
-		common.Address(utils.MicroPayContractAddress),
-		new(ch.ChannelEventHandler),
-		new(ch.MessageHandler),
-		option)
+	service := ch.NewChannelService(blockChainService, common.BlockHeight(startBlock), transport,
+		common.Address(utils.MicroPayContractAddress), new(ch.ChannelEventHandler),
+		new(ch.MessageHandler),	option)
 	log.Info("channel service created, use account ", blockChainService.GetAccount().Address.ToBase58())
 	channel := &Channel{
 		Config:  config,

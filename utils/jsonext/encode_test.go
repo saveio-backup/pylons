@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"testing"
 	"unicode"
+
 )
 
 type Optionals struct {
@@ -977,4 +978,18 @@ func TestMarshalRawMessageValue(t *testing.T) {
 			t.Errorf("test %d, Marshal(%#v) = %q, want %q", i, tt.in, got, tt.want)
 		}
 	}
+}
+
+type EdgeId string
+
+func TestMarshalMapValue(t *testing.T) {
+	a := make(map[EdgeId]int64)
+	var id EdgeId
+	a[id] = 1
+
+	data, err := Marshal(a)
+	if err!= nil {
+		fmt.Println(err.Error())
+	}
+	fmt.Println(data)
 }

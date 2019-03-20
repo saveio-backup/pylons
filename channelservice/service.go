@@ -596,19 +596,20 @@ func (self *ChannelService) tokenNetworkLeave(registryAddress common.PaymentNetw
 func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 	partnerAddress common.Address) common.ChannelID {
 
-	id, err := self.chain.ChannelClient.GetChannelIdentifier(comm.Address(self.address), comm.Address(partnerAddress))
+	id, err := self.chain.ChannelClient.GetChannelIdentifier(comm.Address(self.address),
+		comm.Address(partnerAddress))
 	if err != nil {
 		log.Error("get channel identifier failed ", err)
 		return 0
 	}
-	regAddr, _ := comm.AddressParseFromBytes(self.address[:])
-	patAddr, _ := comm.AddressParseFromBytes(partnerAddress[:])
+	regAddr := common.ToBase58(self.address)
+	patAddr := common.ToBase58(partnerAddress)
 	if id != 0 {
-		log.Infof("channel between %s and %s already setup", regAddr.ToBase58(), patAddr.ToBase58())
+		log.Infof("channel between %s and %s already setup", regAddr, patAddr)
 		return common.ChannelID(id)
 	}
 	if id == 0 {
-		log.Infof("channel between %s and %s haven`t setup. start to create new one", regAddr.ToBase58(), patAddr.ToBase58())
+		log.Infof("channel between %s and %s haven`t setup. start to create new one", regAddr, patAddr)
 	}
 
 	tokenNetwork := self.chain.NewTokenNetwork(common.Address(ong.ONG_CONTRACT_ADDRESS))
@@ -618,13 +619,15 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 		return 0
 	}
 	log.Info("wait for new channel ... ")
-	channelState := WaitForNewChannel(self, common.PaymentNetworkID(self.mircoAddress), common.TokenAddress(ong.ONG_CONTRACT_ADDRESS), partnerAddress,
+	channelState := WaitForNewChannel(self, common.PaymentNetworkID(self.mircoAddress),
+		common.TokenAddress(ong.ONG_CONTRACT_ADDRESS), 	partnerAddress,
 		float32(constants.OPEN_CHANNEL_RETRY_TIMEOUT), constants.OPEN_CHANNEL_RETRY_TIMES)
 	if channelState == nil {
 		log.Error("setup channel timeout")
 		return 0
 	}
-	log.Infof("new channel between %s and %s has setup, channel ID = %d", regAddr.ToBase58(), patAddr.ToBase58(), channelState.Identifier)
+	log.Infof("new channel between %s and %s has setup, channel ID = %d", regAddr, patAddr,
+		channelState.Identifier)
 
 	chainState := self.StateFromChannel()
 
@@ -637,10 +640,10 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 func (self *ChannelService) SetTotalChannelDeposit(tokenAddress common.TokenAddress, partnerAddress common.Address, totalDeposit common.TokenAmount) error {
 
 	chainState := self.StateFromChannel()
-	partAddr, _ := comm.AddressParseFromBytes(partnerAddress[:])
+	partAddr  := common.ToBase58(partnerAddress)
 	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.mircoAddress), tokenAddress, partnerAddress)
 	if channelState == nil {
-		log.Errorf("deposit failed, can not find specific channel with %s", partAddr.ToBase58())
+		log.Errorf("deposit failed, can not find specific channel with %s", partAddr)
 		return errors.New("can not find specific channel")
 	}
 

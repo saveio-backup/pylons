@@ -146,10 +146,10 @@ func (self *TokenNetwork) NewNettingChannel(partner common.Address, settleTimeou
 
 func (self *TokenNetwork) newNettingChannel(partner common.Address, settleTimeout int) ([]byte, error) {
 	hash, err := self.ChannelClient.OpenChannel(comm.Address(self.nodeAddress), comm.Address(partner), uint64(settleTimeout))
-	regAddr, _ := comm.AddressParseFromBytes(self.nodeAddress[:])
-	patAddr, _ := comm.AddressParseFromBytes(partner[:])
+	regAddr  := common.ToBase58(self.nodeAddress)
+	patAddr := common.ToBase58(partner)
 	if err != nil {
-		log.Errorf("create new channel between failed:%s", regAddr.ToBase58(), patAddr.ToBase58(), err.Error())
+		log.Errorf("create new channel between failed:%s", regAddr, patAddr, err.Error())
 		return nil, err
 	}
 	return hash, nil
