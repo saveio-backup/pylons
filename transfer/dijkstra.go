@@ -1,37 +1,29 @@
 package transfer
 
+import (
+	"container/list"
+)
+
 // Topology represents a network topology
 type Topology struct {
-	nodes map[Node]int64
-	edges map[Node]map[Node]int64
-}
-
-// Node represents a node in a graph
-type Node struct {
-	Name string
+	nodes map[string]int64
+	edges map[string]map[string]int64
 }
 
 // Edge represents a directed edge in a graph
 type Edge struct {
-	NodeA    Node
-	NodeB    Node
+	NodeA    string
+	NodeB    string
 	Distance int64
 }
 
-// SPT represents a shortest path tree
-type SPT map[Node]Path
-
-// Path represents a path through a graph
-type Path struct {
-	Edges    []Edge
-	Distance int64
-}
+type ShortPathTree [][]string
 
 // NewTopology creates a new topology
-func NewTopology(nodes []Node, edges []Edge) *Topology {
+func NewTopology(nodes []string, edges []Edge) *Topology {
 	t := &Topology{
-		nodes: make(map[Node]int64),
-		edges: make(map[Node]map[Node]int64),
+		nodes: make(map[string]int64),
+		edges: make(map[string]map[string]int64),
 	}
 
 	for _, n := range nodes {
@@ -40,7 +32,7 @@ func NewTopology(nodes []Node, edges []Edge) *Topology {
 
 	for _, e := range edges {
 		if _, ok := t.edges[e.NodeA]; !ok {
-			t.edges[e.NodeA] = make(map[Node]int64)
+			t.edges[e.NodeA] = make(map[string]int64)
 		}
 
 		t.edges[e.NodeA][e.NodeB] = e.Distance
@@ -49,93 +41,69 @@ func NewTopology(nodes []Node, edges []Edge) *Topology {
 	return t
 }
 
-func (t *Topology) newSPT() SPT {
-	spt := make(SPT)
-
-	for n := range t.nodes {
-		spt[n] = Path{
-			Edges:    make([]Edge, 0),
-			Distance: -1,
+func (self *Topology) GetShortPath(node string) ShortPathTree {
+	var sp ShortPathTree
+	lst := list.New()
+	for n := range self.nodes  {
+		if n != node {
+			lst.PushBack(n)
 		}
 	}
 
-	return spt
-}
+	//for e := lst.Front(); e != nil ; e = e.Next()  {
+	//	fmt.Println(e.Value.(string))
+	//}
+	//fmt.Println()
 
-// SPT calculates the shortest path tree
-func (t *Topology) SPT(from Node) SPT {
-	spt := t.newSPT()
-
-	tmp := spt[from]
-	tmp.Distance = 0
-	spt[from] = tmp
-
-	unmarked := make(map[Node]struct{})
-	for n := range t.nodes {
-		if n == from {
-			continue
+	var lastLstLen = lst.Len()
+	for e := lst.Front(); lst.Len() != 0; e = e.Next(){
+		if e == nil {
+			e = lst.Front()
 		}
-		unmarked[n] = struct{}{}
-	}
 
-	for len(unmarked) > 0 {
-		for neighbor, distance := range t.edges[from] {
-			if spt[neighbor].Distance == -1 {
-				tmp := spt[neighbor]
-				tmp.Distance = spt[from].Distance + distance
-				tmp.Edges = make([]Edge, len(spt[from].Edges)+1)
-				copy(tmp.Edges, spt[from].Edges)
-				tmp.Edges[len(spt[from].Edges)] = Edge{
-					NodeA:    from,
-					NodeB:    neighbor,
-					Distance: distance,
+		n := e.Value.(string)
+		//fmt.Println("Node | n : ", node, "| ", n)
+		if _, exist1 := self.edges[node][n]; exist1 {
+			var path []string
+			path = append(path, n)
+			sp = append(sp, path)
+			//fmt.Println("Remove: ", e.Value.(string))
+			//fmt.Println("Path: ", path)
+			lst.Remove(e)
+		} else {
+			exist3 := false
+			pathCount := len(sp)
+			for i := 0; i < pathCount; i++  {
+				tmpPathLen := len(sp[i])
+				pathLastNode := sp[i][tmpPathLen - 1]
+				//fmt.Println("PathLastNode |  n : ", pathLastNode, "| ", n)
+				if _, exist2 := self.edges[pathLastNode]; exist2 {
+					//fmt.Println("exist2")
+					mp := self.edges[pathLastNode]
+					//fmt.Println("mp: ", mp)
+					if _, exist3 = mp[n]; exist3 {
+						//fmt.Println("exist3")
+						path := make([]string, len(sp[i]))
+						copy(path, sp[i])
+						path = append(path, n)
+						sp = append(sp, path)
+						//fmt.Println("Path: ", path)
+					}
 				}
-				spt[neighbor] = tmp
-				continue
 			}
-
-			if spt[from].Distance+distance < spt[neighbor].Distance {
-				tmp := spt[neighbor]
-				tmp.Distance = spt[from].Distance + distance
-				tmp.Edges = make([]Edge, len(spt[from].Edges)+1)
-				copy(tmp.Edges, spt[from].Edges)
-				tmp.Edges[len(spt[from].Edges)] = Edge{
-					NodeA:    from,
-					NodeB:    neighbor,
-					Distance: distance,
-				}
-				spt[neighbor] = tmp
-				continue
+			if exist3 {
+				//fmt.Println("Remove: ", e.Value.(string))
+				lst.Remove(e)
 			}
 		}
 
-		var next *Node
-		nextDistance := int64(0)
-		for candidate := range unmarked {
-			if spt[candidate].Distance == -1 {
-				continue
-			}
-
-			if next == nil {
-				tmp := candidate
-				next = &tmp
-				nextDistance = spt[candidate].Distance
-				continue
-			}
-
-			if spt[candidate].Distance < nextDistance {
-				tmp := candidate
-				next = &tmp
-				nextDistance = spt[candidate].Distance
-				continue
-			}
+		if e == lst.Back() && lst.Len() == lastLstLen {
+			//fmt.Println(lastLstLen)
+			break
 		}
-		if next == nil {
-			return nil
-		}
-		from = *next
-		delete(unmarked, from)
+
+		lastLstLen = lst.Len()
 	}
-
-	return spt
+	//fmt.Println(sp)
+	return sp
 }

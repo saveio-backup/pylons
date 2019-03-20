@@ -23,7 +23,10 @@ func GetBestRoutes(chainState *transfer.ChainState, tokenNetworkId common.TokenN
 	//# Rate each route to optimize the fee price/quality of each route and add a
 	//# rate from in the range [0.0,1.0].
 
-	var availableRoutes []transfer.RouteState
+	toAddr := chainComm.Address(toAddress)
+	toNode := toAddr.ToBase58()
+	fromAddr := chainComm.Address(fromAddress)
+	frBase58Addr := fromAddr.ToBase58()
 
 	tokenNetwork := transfer.GetTokenNetworkByIdentifier(chainState, tokenNetworkId)
 	networkStatuses := transfer.GetNetworkStatuses(chainState)
@@ -32,16 +35,17 @@ func GetBestRoutes(chainState *transfer.ChainState, tokenNetworkId common.TokenN
 	edges := tokenNetwork.NetworkGraph.Edges
 	log.Debug("[GetBestRoutes] edges", edges)
 
+
 	top := transfer.NewTopology(nodes, edges)
-	toAddr := chainComm.Address(toAddress)
-	toNode := transfer.Node{Name: toAddr.ToBase58()}
-	spt := top.SPT(toNode)
+	spt := top.GetShortPath(frBase58Addr)
+	sptLen := len(spt)
 	if len(spt) == 0 {
 		log.Errorf("[GetBestRoutes] spt is nil")
 		return nil, fmt.Errorf("[GetBestRoutes] spt is nil")
 	}
-	fromAddr := chainComm.Address(fromAddress)
-	frBase58Addr := fromAddr.ToBase58()
+	log.Debug("SPT:", spt)
+
+/*
 
 	var shortPath []transfer.Edge
 	var partnerAddress common.Address
@@ -70,12 +74,24 @@ func GetBestRoutes(chainState *transfer.ChainState, tokenNetworkId common.TokenN
 			break
 		}
 	}
+*/
+	var i int
+	for i = 0; i < sptLen; i++ {
+		sp := spt[i]
+		spLen := len(sp)
+		if sp[spLen - 1] == toNode {
+			break
+		}
+	}
+	base58PartAddr := spt[i][0]
+	partnerAddress, err := chainComm.AddressFromBase58(base58PartAddr)
+	if err != nil {
+		log.Errorf("[GetBestRoutes] error: %v", err.Error())
+		return nil, fmt.Errorf("[GetBestRoutes] error: %v", err.Error())
+	}
 
-	partAddr := chainComm.Address(partnerAddress)
-	partBase58Addr := partAddr.ToBase58()
-	log.Debug("PartBase58Addr: ", partBase58Addr)
-
-	channelState := transfer.GetChannelStateByTokenNetworkAndPartner(chainState, tokenNetworkId, partnerAddress)
+	partAddr := common.Address(partnerAddress)
+	channelState := transfer.GetChannelStateByTokenNetworkAndPartner(chainState, tokenNetworkId, partAddr)
 	if channelState == nil {
 		return nil, fmt.Errorf("GetChannelStateByTokenNetworkAndPartner error")
 	}
@@ -89,17 +105,18 @@ func GetBestRoutes(chainState *transfer.ChainState, tokenNetworkId common.TokenN
 		return nil, fmt.Errorf("channel doesnt have enough funds, ignoring %s, %s, %d, %d ", hex.EncodeToString(fromAddress[:]),
 			hex.EncodeToString(partnerAddress[:]), amount, distributable)
 	}
-	networkState := (*networkStatuses)[partnerAddress] //, NODE_NETWORK_UNKNOWN)
+	networkState := (*networkStatuses)[partAddr] //, NODE_NETWORK_UNKNOWN)
 	log.Debug("networkState:   ", networkState)
 	//if networkState != common.NodeNetworkReachable {
 	//	return nil, fmt.Errorf("partner for channel state isn't reachable, ignoring  %s, %s, %s ",
 	//		hex.EncodeToString(fromAddress[:]), hex.EncodeToString(partnerAddress[:]), networkState)
 	//}
 	routeState := transfer.RouteState{
-		NodeAddress:       partnerAddress,
+		NodeAddress:       partAddr,
 		ChannelIdentifier: channelState.Identifier,
 	}
 
+	var availableRoutes []transfer.RouteState
 	availableRoutes = append(availableRoutes, routeState)
 	return availableRoutes, nil
 }

@@ -215,7 +215,7 @@ func (self *PaymentNetworkState) AdjustPaymentNetworkState() {
 
 type TokenNetworkGraph struct {
 	NetworkGraphName string
-	Nodes            []Node
+	Nodes            []string
 	Edges            []Edge
 }
 
@@ -234,7 +234,7 @@ func NewTokenNetworkState(localAddr common.Address) *TokenNetworkState {
 	result.NetworkGraph = &TokenNetworkGraph{}
 
 	localNode := chainComm.Address(localAddr)
-	result.NetworkGraph.Nodes = append(result.NetworkGraph.Nodes, Node{Name: localNode.ToBase58()})
+	result.NetworkGraph.Nodes = append(result.NetworkGraph.Nodes, localNode.ToBase58())
 	return result
 }
 
@@ -242,11 +242,11 @@ func (self *TokenNetworkState) AddRoute(addr1 common.Address, addr2 common.Addre
 	node1 := chainComm.Address(addr1)
 	node2 := chainComm.Address(addr2)
 	log.Infof("addRoute addr: %v addr: %v", node1.ToBase58(), node2.ToBase58())
-	self.NetworkGraph.Nodes = append(self.NetworkGraph.Nodes, Node{Name: node1.ToBase58()})
-	self.NetworkGraph.Nodes = append(self.NetworkGraph.Nodes, Node{Name: node2.ToBase58()})
+	self.NetworkGraph.Nodes = append(self.NetworkGraph.Nodes, node1.ToBase58())
+	self.NetworkGraph.Nodes = append(self.NetworkGraph.Nodes, node2.ToBase58())
 
-	edge1 := Edge{NodeA: Node{Name: node1.ToBase58()}, NodeB: Node{Name: node2.ToBase58()}, Distance: 1}
-	edge2 := Edge{NodeA: Node{Name: node2.ToBase58()}, NodeB: Node{Name: node1.ToBase58()}, Distance: 1}
+	edge1 := Edge{NodeA: node1.ToBase58(), NodeB: node2.ToBase58(), Distance: 1}
+	edge2 := Edge{NodeA: node2.ToBase58(), NodeB: node1.ToBase58(), Distance: 1}
 
 	self.NetworkGraph.Edges = append(self.NetworkGraph.Edges, edge1)
 	self.NetworkGraph.Edges = append(self.NetworkGraph.Edges, edge2)
