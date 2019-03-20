@@ -318,14 +318,14 @@ func IsValidUnlock(unlock *ReceiveUnlock, channelState *NettingChannelState,
 	} else if receivedBalanceProof.TransferredAmount != expectedTransferredAmount {
 		//# Secret messages must increase the transferred_amount by lock amount,
 		//# otherwise the sender is trying to play the protocol and steal token.
-		msg := fmt.Sprintf("Invalid Unlock message. Balance proof's wrong transferred_amount, expected: %s got: %s.",
+		msg := fmt.Sprintf("Invalid Unlock message. Balance proof's wrong transferred_amount, expected: %v got: %v.",
 			expectedTransferredAmount, receivedBalanceProof.TransferredAmount)
 
 		return false, msg, nil
 	} else if receivedBalanceProof.LockedAmount != expectedLockedAmount {
 		//# Secret messages must increase the transferred_amount by lock amount,
 		//# otherwise the sender is trying to play the protocol and steal token.
-		msg := fmt.Sprintf("Invalid Unlock message. Balance proof's wrong locked_amount, expected: %s got: %s.",
+		msg := fmt.Sprintf("Invalid Unlock message. Balance proof's wrong locked_amount, expected: %v got: %v.",
 			expectedLockedAmount, receivedBalanceProof.LockedAmount,
 		)
 		return false, msg, nil

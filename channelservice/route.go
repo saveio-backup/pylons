@@ -36,10 +36,12 @@ func GetBestRoutes(chainState *transfer.ChainState, tokenNetworkId common.TokenN
 	toAddr := chainComm.Address(toAddress)
 	toNode := transfer.Node{Name: toAddr.ToBase58()}
 	spt := top.SPT(toNode)
-
+	if len(spt) == 0 {
+		log.Errorf("[GetBestRoutes] spt is nil")
+		return nil, fmt.Errorf("[GetBestRoutes] spt is nil")
+	}
 	fromAddr := chainComm.Address(fromAddress)
 	frBase58Addr := fromAddr.ToBase58()
-	//fromNode := dijkstra.Node{Name: frBase58Addr}
 
 	var shortPath []transfer.Edge
 	var partnerAddress common.Address

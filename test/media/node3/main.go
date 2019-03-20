@@ -75,7 +75,7 @@ func mediaTransfer(channel *ch.Channel, loopTimes int64) {
 	target := common.Address(targetAddress)
 
 	time1 := time.Now().Unix()
-	for i := int64(0); i < loopTimes; i++ {
+	for i := int64(1); i <= loopTimes; i++ {
 		log.Info("[MediaTransfer] MediaTransfer times: ", i)
 		ret, err := channel.Service.MediaTransfer(registryAddress, tokenAddress, 1, common.Address(target), common.PaymentID(i))
 		if err != nil {
