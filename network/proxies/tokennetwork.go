@@ -146,7 +146,7 @@ func (self *TokenNetwork) NewNettingChannel(partner common.Address, settleTimeou
 
 func (self *TokenNetwork) newNettingChannel(partner common.Address, settleTimeout int) ([]byte, error) {
 	hash, err := self.ChannelClient.OpenChannel(comm.Address(self.nodeAddress), comm.Address(partner), uint64(settleTimeout))
-	regAddr  := common.ToBase58(self.nodeAddress)
+	regAddr := common.ToBase58(self.nodeAddress)
 	patAddr := common.ToBase58(partner)
 	if err != nil {
 		log.Errorf("create new channel between failed:%s", regAddr, patAddr, err.Error())
@@ -466,12 +466,12 @@ func (self *TokenNetwork) updateTransfer(channelIdentifier common.ChannelID, par
 }
 
 func (self *TokenNetwork) withDraw(channelIdentifier common.ChannelID, partner common.Address,
-	totalWithdraw common.TokenAmount, partnerSignature common.Signature, partnerPubKey common.PubKey, signature common.Signature, pubKey common.PubKey) {
+	totalWithdraw common.TokenAmount, partnerSignature common.Signature, partnerPubKey common.PubKey, signature common.Signature, pubKey common.PubKey) error {
 
 	var opLock *sync.Mutex
 
 	if self.CheckForOutdatedChannel(self.nodeAddress, partner, channelIdentifier) == false {
-		return
+		return errors.New("channel out dated")
 	}
 
 	details := self.detailParticipant(channelIdentifier, self.nodeAddress, partner)
@@ -479,11 +479,11 @@ func (self *TokenNetwork) withDraw(channelIdentifier common.ChannelID, partner c
 	amountToWithdraw := totalWithdraw - currentWithdraw
 
 	if totalWithdraw < currentWithdraw {
-		return
+		return errors.New("total withdraw smaller than current")
 	}
 
 	if amountToWithdraw <= 0 {
-		return
+		return errors.New("amount to withdraw no larger than 0")
 	}
 
 	opLock = self.getOperationLock(partner)
@@ -492,19 +492,19 @@ func (self *TokenNetwork) withDraw(channelIdentifier common.ChannelID, partner c
 
 	txHash, err := self.ChannelClient.SetTotalWithdraw(uint64(channelIdentifier), comm.Address(self.nodeAddress), comm.Address(partner), uint64(totalWithdraw), []byte(signature), pubKey, []byte(partnerSignature), partnerPubKey)
 	if err != nil {
-		log.Errorf("UpdateNonClosingBalanceProof err:%s", err)
-		return
+		log.Errorf("SetTotoalWithdraw err:%s", err)
+		return err
 	}
 	log.Infof("SetTotalWithdraw tx hash:%s\n", txHash)
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
-		log.Errorf("UpdateNonClosingBalanceProof  WaitForGenerateBlock err:%s", err)
+		log.Errorf("SetTotoalWithdraw WaitForGenerateBlock err:%s", err)
 		self.checkChannelStateForWithdraw(self.nodeAddress, partner, channelIdentifier, totalWithdraw)
 
-		return
+		return err
 	}
 
-	return
+	return nil
 }
 
 func (self *TokenNetwork) unlock(channelIdentifier common.ChannelID, partner common.Address,

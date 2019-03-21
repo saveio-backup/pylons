@@ -212,23 +212,27 @@ func (self *MessageHandler) HandleMessageWithdrawRequest(channel *ChannelService
 func (self *MessageHandler) HandleMessageWithdraw(channel *ChannelService, message *messages.Withdraw) {
 	var tokenNetworkIdentifier common.TokenNetworkID
 
-	copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
+	// check if we send a withdraw request for the channel
+	_, exist := channel.GetWithdrawStatus(common.ChannelID(message.ChannelIdentifier.ChannelId))
+	if exist {
+		copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
 
-	stateChange := &transfer.ReceiveWithdraw{
-		ReceiveWithdrawRequest: transfer.ReceiveWithdrawRequest{
-			TokenNetworkIdentifier: tokenNetworkIdentifier,
-			ChannelIdentifier:      common.ChannelID(message.ChannelIdentifier.ChannelId),
-			Participant:            messages.ConvertAddress(message.Participant),
-			TotalWithdraw:          common.TokenAmount(message.WithdrawAmount.TokenAmount),
-			ParticipantSignature:   message.ParticipantSignature.Signature,
-			ParticipantAddress:     messages.ConvertAddress(message.ParticipantSignature.Sender),
-			ParticipantPublicKey:   message.ParticipantSignature.Publickey,
-		},
-		PartnerSignature: message.PartnerSignature.Signature,
-		PartnerAddress:   messages.ConvertAddress(message.PartnerSignature.Sender),
-		PartnerPublicKey: message.PartnerSignature.Publickey,
+		stateChange := &transfer.ReceiveWithdraw{
+			ReceiveWithdrawRequest: transfer.ReceiveWithdrawRequest{
+				TokenNetworkIdentifier: tokenNetworkIdentifier,
+				ChannelIdentifier:      common.ChannelID(message.ChannelIdentifier.ChannelId),
+				Participant:            messages.ConvertAddress(message.Participant),
+				TotalWithdraw:          common.TokenAmount(message.WithdrawAmount.TokenAmount),
+				ParticipantSignature:   message.ParticipantSignature.Signature,
+				ParticipantAddress:     messages.ConvertAddress(message.ParticipantSignature.Sender),
+				ParticipantPublicKey:   message.ParticipantSignature.Publickey,
+			},
+			PartnerSignature: message.PartnerSignature.Signature,
+			PartnerAddress:   messages.ConvertAddress(message.PartnerSignature.Sender),
+			PartnerPublicKey: message.PartnerSignature.Publickey,
+		}
+		channel.HandleStateChange(stateChange)
 	}
-	channel.HandleStateChange(stateChange)
 }
 
 func BalanceProofFromEnvelope(message *messages.EnvelopeMessage, dataToSign []byte) *transfer.BalanceProofSignedState {

@@ -441,30 +441,28 @@ func (self ChannelEventHandler) HandleContractSendChannelWithdraw(channel *Chann
 	channelProxy := channel.chain.PaymentChannel(common.Address(channelWithdrawEvent.TokenNetworkIdentifier), channelWithdrawEvent.ChannelIdentifier, args)
 
 	// run in a goroutine in order that partner will not time out for the delivered message for withdraw
-	go channelProxy.Withdraw(channelWithdrawEvent.PartnerAddress, channelWithdrawEvent.TotalWithdraw, channelWithdrawEvent.PartnerSignature, channelWithdrawEvent.PartnerPublicKey,
-		channelWithdrawEvent.ParticipantSignature, channelWithdrawEvent.ParticipantPublicKey)
+	go func() {
+		err := channelProxy.Withdraw(channelWithdrawEvent.PartnerAddress, channelWithdrawEvent.TotalWithdraw, channelWithdrawEvent.PartnerSignature, channelWithdrawEvent.PartnerPublicKey,
+			channelWithdrawEvent.ParticipantSignature, channelWithdrawEvent.ParticipantPublicKey)
+		if err != nil {
+			ok := channel.WithdrawResultNotify(channelWithdrawEvent.ChannelIdentifier, false)
+			if !ok {
+				panic("error in HandleContractSendChannelWithdraw, no withdraw status found in the map")
+			}
+		}
+	}()
 }
 
 func (self ChannelEventHandler) HandleWithdrawRequestSentFailed(channel *ChannelService, withdrawRequestSentFailedEvent *transfer.EventWithdrawRequestSentFailed) {
-	withdrawResult, exist := channel.GetWithdrawStatus(withdrawRequestSentFailedEvent.ChannelIdentifier)
-	if !exist {
+	ok := channel.WithdrawResultNotify(withdrawRequestSentFailedEvent.ChannelIdentifier, false)
+	if !ok {
 		panic("error in HandleWithdrawRequestSentFailed, no withdraw status found in the map")
 	}
-
-	channel.RemoveWithdrawStatus(withdrawRequestSentFailedEvent.ChannelIdentifier)
-
-	withdrawResult <- false
-	return
 }
 
 func (self ChannelEventHandler) HandleInvalidReceivedWithdraw(channel *ChannelService, invalidWithdrawReceivedEvent *transfer.EventInvalidReceivedWithdraw) {
-	withdrawResult, exist := channel.GetWithdrawStatus(invalidWithdrawReceivedEvent.ChannelIdentifier)
-	if !exist {
+	ok := channel.WithdrawResultNotify(invalidWithdrawReceivedEvent.ChannelIdentifier, false)
+	if !ok {
 		panic("error in HandleInvalidReceivedWithdraw, no withdraw status found in the map")
 	}
-
-	channel.RemoveWithdrawStatus(invalidWithdrawReceivedEvent.ChannelIdentifier)
-
-	withdrawResult <- false
-	return
 }

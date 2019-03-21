@@ -1113,6 +1113,18 @@ func (self *ChannelService) RemoveWithdrawStatus(channelId common.ChannelID) boo
 	return false
 }
 
+func (self *ChannelService) WithdrawResultNotify(channelId common.ChannelID, result bool) bool {
+	withdrawResult, exist := self.GetWithdrawStatus(channelId)
+	if !exist {
+		return false
+	}
+
+	self.RemoveWithdrawStatus(channelId)
+
+	withdrawResult <- result
+	return true
+}
+
 func GetFullDatabasePath() (string, error) {
 	file, err := exec.LookPath(os.Args[0])
 	if err != nil {

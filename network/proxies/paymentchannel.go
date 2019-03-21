@@ -131,9 +131,9 @@ func (self *PaymentChannel) Close(nonce common.Nonce, balanceHash common.Balance
 }
 
 func (self *PaymentChannel) Withdraw(partner common.Address, totalWithdraw common.TokenAmount,
-	partnerSignature common.Signature, partnerPubKey common.PubKey, signature common.Signature, pubKey common.PubKey) {
+	partnerSignature common.Signature, partnerPubKey common.PubKey, signature common.Signature, pubKey common.PubKey) error {
 
-	self.TokenNetwork.withDraw(self.channelIdentifier, partner, totalWithdraw, partnerSignature, partnerPubKey, signature, pubKey)
+	return self.TokenNetwork.withDraw(self.channelIdentifier, partner, totalWithdraw, partnerSignature, partnerPubKey, signature, pubKey)
 }
 
 func (self *PaymentChannel) UpdateTransfer(nonce common.Nonce, balanceHash common.BalanceHash,
