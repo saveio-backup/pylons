@@ -93,6 +93,9 @@ const (
 	SendWithdrawRequestClassId
 	SendWithdrawClassId
 	ContractSendChannelWithdrawClassId
+	EventWithdrawRequestSentFailedClassId
+	EventInvalidReceivedWithdrawRequestClassId
+	EventInvalidReceivedWithdrawClassId
 )
 
 // class meta for State
@@ -403,6 +406,18 @@ func (self ContractSendChannelWithdraw) ClassId() int {
 	return ContractSendChannelWithdrawClassId
 }
 
+func (self EventWithdrawRequestSentFailed) ClassId() int {
+	return EventWithdrawRequestSentFailedClassId
+}
+
+func (self EventInvalidReceivedWithdrawRequest) ClassId() int {
+	return EventInvalidReceivedWithdrawRequestClassId
+}
+
+func (self EventInvalidReceivedWithdraw) ClassId() int {
+	return EventInvalidReceivedWithdrawClassId
+}
+
 // create class instance based on ClassId
 
 func CreateObjectByClassId(classId int) interface{} {
@@ -595,6 +610,12 @@ func CreateEventByClassId(classId int) interface{} {
 		return new(SendWithdraw)
 	case ContractSendChannelWithdrawClassId:
 		return new(ContractSendChannelWithdraw)
+	case EventWithdrawRequestSentFailedClassId:
+		return new(EventWithdrawRequestSentFailed)
+	case EventInvalidReceivedWithdrawRequestClassId:
+		return new(EventInvalidReceivedWithdrawRequest)
+	case EventInvalidReceivedWithdrawClassId:
+		return new(EventInvalidReceivedWithdraw)
 	}
 
 	return result

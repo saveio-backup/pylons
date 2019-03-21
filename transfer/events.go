@@ -116,6 +116,27 @@ type ContractSendChannelWithdraw struct {
 	PartnerPublicKey common.PubKey
 }
 
+type EventWithdrawRequestSentFailed struct {
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	WithdrawAmount         common.TokenAmount
+	Reason                 string
+}
+
+type EventInvalidReceivedWithdrawRequest struct {
+	ChannelIdentifier common.ChannelID
+	Participant       common.Address
+	TotalWithdraw     common.TokenAmount
+	Reason            string
+}
+
+type EventInvalidReceivedWithdraw struct {
+	ChannelIdentifier common.ChannelID
+	Participant       common.Address
+	TotalWithdraw     common.TokenAmount
+	Reason            string
+}
+
 type EventInvalidReceivedTransferRefund struct {
 	PaymentIdentifier common.PaymentID
 	Reason            string
