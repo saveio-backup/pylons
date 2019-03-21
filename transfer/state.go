@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"crypto/rand"
 	"errors"
-	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChannel/common"
 	"math"
 	"math/big"
 	"sort"
+	"sync"
+
+	"github.com/oniio/oniChain/common/log"
+	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/common/constants"
 )
 
@@ -86,7 +88,7 @@ type ChainState struct {
 	BlockHeight                  common.BlockHeight
 	ChainId                      common.ChainID
 	IdentifiersToPaymentNetworks map[common.PaymentNetworkID]*PaymentNetworkState
-	NodeAddressesToNetworkStates map[common.Address]string
+	NodeAddressesToNetworkStates *sync.Map
 	Address                      common.Address
 	PaymentMapping               PaymentMappingState
 	PendingTransactions          []Event
@@ -97,7 +99,7 @@ func NewChainState() *ChainState {
 	result := new(ChainState)
 
 	result.IdentifiersToPaymentNetworks = make(map[common.PaymentNetworkID]*PaymentNetworkState)
-	result.NodeAddressesToNetworkStates = make(map[common.Address]string)
+	result.NodeAddressesToNetworkStates = new(sync.Map)
 	result.PaymentMapping.SecretHashesToTask = make(map[common.SecretHash]State)
 	result.PendingTransactions = []Event{}
 	result.QueueIdsToQueues = make(QueueIdsToQueuesType)
@@ -161,10 +163,13 @@ func DeepCopy(src State) *ChainState {
 				value.IdentifiersToPaymentNetworks[id].TokenIdentifiersToTokenNetworks[tokenNetworkId] = &tokenNwState
 			}
 		}
-		value.NodeAddressesToNetworkStates = make(map[common.Address]string)
-		for addr, state := range chainState.NodeAddressesToNetworkStates {
-			value.NodeAddressesToNetworkStates[addr] = state
-		}
+		value.NodeAddressesToNetworkStates = new(sync.Map)
+
+		chainState.NodeAddressesToNetworkStates.Range(func(addr, state interface{}) bool {
+			value.NodeAddressesToNetworkStates.Store(addr, state)
+			return true
+		})
+
 		value.PaymentMapping.SecretHashesToTask = make(map[common.SecretHash]State)
 		for hash, itf := range chainState.PaymentMapping.SecretHashesToTask {
 			value.PaymentMapping.SecretHashesToTask[hash] = itf

@@ -224,7 +224,7 @@ func (self *ChannelService) Start() error {
 
 	//reset neighbor networkStates
 	channelState := self.StateFromChannel()
-	channelState.NodeAddressesToNetworkStates = make(map[common.Address]string)
+	channelState.NodeAddressesToNetworkStates = new(sync.Map)
 
 	// start the transport layer, pass channel service for message handling and signing
 	err = self.transport.Start(self)

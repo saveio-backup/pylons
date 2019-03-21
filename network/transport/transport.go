@@ -377,7 +377,7 @@ func (this *Transport) SetNodeNetworkState(address common.Address, state string)
 	chainState := this.ChannelService.StateFromChannel()
 	if chainState != nil {
 		log.Debugf("[syncPeerState] SetNodeNetworkState set state %s", state)
-		chainState.NodeAddressesToNetworkStates[address] = state
+		chainState.NodeAddressesToNetworkStates.Store(address, state)
 	}
 }
 

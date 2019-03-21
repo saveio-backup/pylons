@@ -54,16 +54,23 @@ func GetAllMessageQueues(chainState *ChainState) *QueueIdsToQueuesType {
 }
 
 func GetNetworkStatuses(chainState *ChainState) *map[common.Address]string {
-	return &chainState.NodeAddressesToNetworkStates
+	states := make(map[common.Address]string)
+
+	chainState.NodeAddressesToNetworkStates.Range(func(key, value interface{}) bool {
+		states[key.(common.Address)] = value.(string)
+		return true
+	})
+
+	return &states
 }
 
 func GetNodeNetworkStatus(chainState *ChainState, nodeAddress common.Address) string {
-	result, exist := chainState.NodeAddressesToNetworkStates[nodeAddress]
+	result, exist := chainState.NodeAddressesToNetworkStates.Load(nodeAddress)
 	if !exist {
 		result = NetworkUnknown
 	}
 
-	return result
+	return result.(string)
 }
 
 func GetParticipantsAddresses(chainState *ChainState, paymentNetworkId common.PaymentNetworkID,

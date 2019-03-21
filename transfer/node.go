@@ -428,7 +428,7 @@ func handleNodeChangeNetworkState(chainState *ChainState,
 
 	nodeAddress := stateChange.NodeAddress
 	networkState := stateChange.NetworkState
-	chainState.NodeAddressesToNetworkStates[nodeAddress] = networkState
+	chainState.NodeAddressesToNetworkStates.Store(nodeAddress, networkState)
 
 	return &TransitionResult{chainState, nil}
 }
