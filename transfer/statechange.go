@@ -40,6 +40,7 @@ type ActionWithdraw struct {
 
 type ReceiveWithdrawRequest struct {
 	TokenNetworkIdentifier common.TokenNetworkID
+	MessageIdentifier      common.MessageID
 	ChannelIdentifier      common.ChannelID
 	Participant            common.Address
 	TotalWithdraw          common.TokenAmount

@@ -1343,7 +1343,16 @@ func handleWithdrawRequestReceived(channelState *NettingChannelState, stateChang
 		ParticipantPublicKey:   stateChange.ParticipantPublicKey,
 	}
 
+	sendProcessed := &SendProcessed{
+		SendMessageEvent: SendMessageEvent{
+			Recipient:         stateChange.Participant,
+			ChannelIdentifier: stateChange.ChannelIdentifier,
+			MessageIdentifier: stateChange.MessageIdentifier,
+		},
+	}
+
 	events = append(events, sendWithdraw)
+	events = append(events, sendProcessed)
 	return TransitionResult{channelState, events}
 }
 

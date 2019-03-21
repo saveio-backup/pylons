@@ -312,6 +312,7 @@ func inPlaceDeleteMessageQueue(chainState *ChainState, stateChange StateChange, 
 
 func inPlaceDeleteMessage(messageQueue []Event, stateChange StateChange) []Event {
 
+	log.Debug("[inPlaceDeleteMessageQueue] called for:", reflect.TypeOf(stateChange).String())
 	if messageQueue == nil {
 		return messageQueue
 	}
@@ -320,10 +321,13 @@ func inPlaceDeleteMessage(messageQueue []Event, stateChange StateChange) []Event
 	for i := 0; i < len; {
 		message := GetSenderMessageEvent(messageQueue[i])
 		sender, messageId := GetSenderAndMessageIdentifier(stateChange)
+		log.Debugf("[inPlaceDeleteMessageQueue] message: %v, sender:%v, messageId:%v", message, sender, messageId)
 		if message.MessageIdentifier == messageId && common.AddressEqual(common.Address(message.Recipient), sender) {
+			log.Debugf("[inPlaceDeleteMessageQueue] match")
 			messageQueue = append(messageQueue[:i], messageQueue[i+1:]...)
 			len--
 		} else {
+			log.Debugf("[inPlaceDeleteMessageQueue] no match")
 			i++
 		}
 	}
@@ -734,6 +738,7 @@ func updateQueues(iteration *TransitionResult, stateChange StateChange) {
 			events = chainState.QueueIdsToQueues[queueIdentifier]
 			events = append(events, e)
 			chainState.QueueIdsToQueues[queueIdentifier] = events
+			log.Debug("[updateQueses] add: ", reflect.TypeOf(e).String(), "queueIdentifier:", queueIdentifier)
 		}
 
 		if GetContractSendEvent(e) != nil {

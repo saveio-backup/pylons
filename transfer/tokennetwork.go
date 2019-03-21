@@ -80,10 +80,12 @@ func GetSenderMessageEvent(event Event) *SendMessageEvent {
 		v, _ := event.(*SendWithdrawRequest)
 		result.Recipient = v.Recipient
 		result.ChannelIdentifier = v.ChannelIdentifier
-	case *SendWithdraw:
-		v, _ := event.(*SendWithdraw)
-		result.Recipient = v.Recipient
-		result.ChannelIdentifier = v.ChannelIdentifier
+		/*
+			case *SendWithdraw:
+				v, _ := event.(*SendWithdraw)
+				result.Recipient = v.Recipient
+				result.ChannelIdentifier = v.ChannelIdentifier
+		*/
 	default:
 		result = nil
 	}

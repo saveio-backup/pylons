@@ -198,6 +198,7 @@ func (self *MessageHandler) HandleMessageWithdrawRequest(channel *ChannelService
 
 	stateChange := &transfer.ReceiveWithdrawRequest{
 		TokenNetworkIdentifier: tokenNetworkIdentifier,
+		MessageIdentifier:      common.MessageID(message.MessageIdentifier.MessageId),
 		ChannelIdentifier:      common.ChannelID(message.ChannelIdentifier.ChannelId),
 		Participant:            messages.ConvertAddress(message.Participant),
 		TotalWithdraw:          common.TokenAmount(message.WithdrawAmount.TokenAmount),
