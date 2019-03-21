@@ -110,7 +110,7 @@ func NewChannelService(chain *network.BlockchainService,
 		self.setDefaultDBPath()
 	} else {
 		self.databasePath = config["database_path"]
-		if self.databasePath == "." {
+		if self.databasePath == "." || self.databasePath == "" {
 			self.setDefaultDBPath()
 		}
 	}
