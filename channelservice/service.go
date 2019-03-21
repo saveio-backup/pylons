@@ -41,6 +41,7 @@ type ChannelService struct {
 	transport                     *transport.Transport
 	targetsToIndentifierToStatues map[common.Address]*sync.Map
 	ReceiveNotificationChannels   map[chan *transfer.EventPaymentReceivedSuccess]struct{}
+	channelWithdrawStatus         *sync.Map
 
 	address            common.Address
 	mircoAddress       common.Address
@@ -97,6 +98,7 @@ func NewChannelService(chain *network.BlockchainService,
 	self.targetsToIndentifierToStatues = make(map[common.Address]*sync.Map)
 	self.tokennetworkidsToConnectionmanagers = make(map[common.TokenNetworkID]*ConnectionManager)
 	self.ReceiveNotificationChannels = make(map[chan *transfer.EventPaymentReceivedSuccess]struct{})
+	self.channelWithdrawStatus = new(sync.Map)
 
 	// address in the blockchain service is set when import wallet
 	self.address = chain.Address
@@ -1051,14 +1053,20 @@ func (self *ChannelService) GetHostAddr(nodeAddress common.Address) (string, err
 //	log.Infof("peer %s registe address: %s", regAddr.ToBase58(), nodeAddr)
 //	return nodeAddr
 //}
-func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAddress common.Address, totalWithdraw common.TokenAmount) error {
+func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAddress common.Address, totalWithdraw common.TokenAmount) (chan bool, error) {
 
 	chainState := self.StateFromChannel()
 	partAddr, _ := comm.AddressParseFromBytes(partnerAddress[:])
 	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.mircoAddress), tokenAddress, partnerAddress)
 	if channelState == nil {
 		log.Errorf("withdraw failed, can not find specific channel with %s", partAddr.ToBase58())
-		return errors.New("can not find specific channel")
+		return nil, errors.New("can not find specific channel")
+	}
+
+	_, exist := self.GetWithdrawStatus(channelState.Identifier)
+	if exist {
+		log.Errorf("withdraw failed, there is ongoing withdraw for the channel")
+		return nil, errors.New("withdraw ongoing")
 	}
 
 	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
@@ -1073,10 +1081,36 @@ func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAd
 		TotalWithdraw:          totalWithdraw,
 	}
 
+	withdrawResult := self.RegisterWithdrawStatus(channelState.Identifier)
+
 	self.HandleStateChange(withdraw)
 
-	return nil
+	return withdrawResult, nil
+}
 
+func (self *ChannelService) RegisterWithdrawStatus(channelId common.ChannelID) chan bool {
+	withdrawResult := make(chan bool, 1)
+	self.channelWithdrawStatus.Store(channelId, withdrawResult)
+	return withdrawResult
+}
+
+func (self *ChannelService) GetWithdrawStatus(channelId common.ChannelID) (chan bool, bool) {
+	result, exist := self.channelWithdrawStatus.Load(channelId)
+	if exist {
+		return result.(chan bool), true
+	}
+
+	return nil, false
+}
+
+func (self *ChannelService) RemoveWithdrawStatus(channelId common.ChannelID) bool {
+	_, exist := self.channelWithdrawStatus.Load(channelId)
+	if exist {
+		self.channelWithdrawStatus.Delete(channelId)
+		return true
+	}
+
+	return false
 }
 
 func GetFullDatabasePath() (string, error) {

@@ -232,10 +232,10 @@ func (self ChannelService) HandleChannelWithdraw(event map[string]interface{}) {
 
 	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
 
-	previousChannelState := transfer.GetChannelStateByTokenNetworkIdentifier(
+	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(
 		self.StateFromChannel(), tokenNetworkIdentifier, channelIdentifier)
 
-	if previousChannelState != nil {
+	if channelState != nil {
 		isParticipant = true
 	}
 
@@ -250,9 +250,26 @@ func (self ChannelService) HandleChannelWithdraw(event map[string]interface{}) {
 			Participant:            participantAddress,
 			TotalWithdraw:          totalWithdraw,
 		}
+
+		ourState := channelState.GetChannelEndState(0)
+		if ourState != nil && common.AddressEqual(ourState.GetAddress(), participantAddress) {
+			go self.HandleWithdrawSuccess(channelIdentifier)
+		}
+
 		self.HandleStateChange(channelWithdraw)
 	}
+	return
+}
 
+func (self ChannelService) HandleWithdrawSuccess(channelId common.ChannelID) {
+	withdrawResult, exist := self.GetWithdrawStatus(channelId)
+	if !exist {
+		panic("error in HandleWithdrawSuccess, no withdraw status found in the map")
+	}
+
+	self.RemoveWithdrawStatus(channelId)
+
+	withdrawResult <- true
 	return
 }
 

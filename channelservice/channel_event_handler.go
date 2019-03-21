@@ -75,6 +75,12 @@ func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event tr
 	case *transfer.ContractSendChannelWithdraw:
 		contractSendChannelWithdraw := event.(*transfer.ContractSendChannelWithdraw)
 		self.HandleContractSendChannelWithdraw(channel, contractSendChannelWithdraw)
+	case *transfer.EventWithdrawRequestSentFailed:
+		eventWithdrawRequestSentFailed := event.(*transfer.EventWithdrawRequestSentFailed)
+		self.HandleWithdrawRequestSentFailed(channel, eventWithdrawRequestSentFailed)
+	case *transfer.EventInvalidReceivedWithdraw:
+		eventInvalidReceivedWithdraw := event.(*transfer.EventInvalidReceivedWithdraw)
+		self.HandleInvalidReceivedWithdraw(channel, eventInvalidReceivedWithdraw)
 	default:
 		log.Warn("[OnChannelEvent] Not known type: ", reflect.TypeOf(event).String())
 	}
@@ -437,4 +443,28 @@ func (self ChannelEventHandler) HandleContractSendChannelWithdraw(channel *Chann
 	// run in a goroutine in order that partner will not time out for the delivered message for withdraw
 	go channelProxy.Withdraw(channelWithdrawEvent.PartnerAddress, channelWithdrawEvent.TotalWithdraw, channelWithdrawEvent.PartnerSignature, channelWithdrawEvent.PartnerPublicKey,
 		channelWithdrawEvent.ParticipantSignature, channelWithdrawEvent.ParticipantPublicKey)
+}
+
+func (self ChannelEventHandler) HandleWithdrawRequestSentFailed(channel *ChannelService, withdrawRequestSentFailedEvent *transfer.EventWithdrawRequestSentFailed) {
+	withdrawResult, exist := channel.GetWithdrawStatus(withdrawRequestSentFailedEvent.ChannelIdentifier)
+	if !exist {
+		panic("error in HandleWithdrawRequestSentFailed, no withdraw status found in the map")
+	}
+
+	channel.RemoveWithdrawStatus(withdrawRequestSentFailedEvent.ChannelIdentifier)
+
+	withdrawResult <- false
+	return
+}
+
+func (self ChannelEventHandler) HandleInvalidReceivedWithdraw(channel *ChannelService, invalidWithdrawReceivedEvent *transfer.EventInvalidReceivedWithdraw) {
+	withdrawResult, exist := channel.GetWithdrawStatus(invalidWithdrawReceivedEvent.ChannelIdentifier)
+	if !exist {
+		panic("error in HandleInvalidReceivedWithdraw, no withdraw status found in the map")
+	}
+
+	channel.RemoveWithdrawStatus(invalidWithdrawReceivedEvent.ChannelIdentifier)
+
+	withdrawResult <- false
+	return
 }
