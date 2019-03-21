@@ -122,6 +122,8 @@ func subDispatchToPaymentTask(chainState *ChainState, stateChange StateChange,
 			log.Debug("[subDispatchToPaymentTask] delete SecretHashesToTask")
 			delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
 		}
+	} else {
+		log.Info("subTask is nil")
 	}
 
 	return &TransitionResult{NewState: chainState, Events: events}
@@ -537,7 +539,7 @@ func handleReceiveUnlock(chainState *ChainState, stateChange *ReceiveUnlock) *Tr
 
 func handleStateChangeForNode(chainStateArg State, stateChange StateChange) *TransitionResult {
 	chainState := chainStateArg.(*ChainState)
-
+	log.Debug("[handleStateChangeForNode] stateChange type: ", reflect.TypeOf(stateChange).String())
 	var iteration *TransitionResult
 	switch stateChange.(type) {
 	case *Block:

@@ -44,16 +44,13 @@ func NewConnectionManager(channel *ChannelService, tokenNetworkIdentifier common
 
 func getBootstrapAddress() common.Address {
 	bootstrapAddr := new(common.Address)
-
 	for i := 0; i < 20; i++ {
 		bootstrapAddr[i] = 0x22
 	}
-
 	return *bootstrapAddr
 }
 
-func (self *ConnectionManager) connect(funds common.TokenAmount,
-	initialChannelTarget int,
+func (self *ConnectionManager) connect(funds common.TokenAmount, initialChannelTarget int,
 	joinableFundsTarget float32) {
 
 	//[TODO] check there is enough token for funds
@@ -66,10 +63,8 @@ func (self *ConnectionManager) connect(funds common.TokenAmount,
 	self.initialChannelTarget = initialChannelTarget
 	self.joinableFundsTarget = joinableFundsTarget
 
-	qtyNetworkChannels := transfer.CountTokenNetworkChannels(
-		self.channel.StateFromChannel(),
-		common.PaymentNetworkID(self.registryAddress),
-		self.tokenAddress)
+	qtyNetworkChannels := transfer.CountTokenNetworkChannels(self.channel.StateFromChannel(),
+		common.PaymentNetworkID(self.registryAddress), self.tokenAddress)
 
 	if qtyNetworkChannels == 0 {
 		bootstrapAddr := getBootstrapAddress()

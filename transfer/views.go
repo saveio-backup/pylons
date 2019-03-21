@@ -31,11 +31,7 @@ func CountTokenNetworkChannels(chainState *ChainState, paymentNetworkId common.P
 
 	var count int
 
-	tokenNetwork := GetTokenNetworkByTokenAddress(
-		chainState,
-		paymentNetworkId,
-		tokenAddress)
-
+	tokenNetwork := GetTokenNetworkByTokenAddress(chainState, paymentNetworkId, tokenAddress)
 	if tokenNetwork != nil {
 		//[NOTE] use number of channels in ChannelIdentifiersToChannels currently
 		count = len(tokenNetwork.ChannelIdentifiersToChannels)
@@ -77,10 +73,7 @@ func GetParticipantsAddresses(chainState *ChainState, paymentNetworkId common.Pa
 	tokenAddress common.TokenAddress) map[common.Address]int {
 
 	addresses := make(map[common.Address]int)
-
-	tokenNetworkState := GetTokenNetworkByTokenAddress(chainState, paymentNetworkId,
-		tokenAddress)
-
+	tokenNetworkState := GetTokenNetworkByTokenAddress(chainState, paymentNetworkId, tokenAddress)
 	if tokenNetworkState != nil {
 		//[TODO] use token_network.network_graph.network.nodes() when supporting route
 		//[NOTE] this function return network.nodes whose are relative to route, NOT include
@@ -94,13 +87,9 @@ func GetParticipantsAddresses(chainState *ChainState, paymentNetworkId common.Pa
 func GetOurCapacityForTokenNetwork(chainState *ChainState, paymentNetworkId common.PaymentNetworkID,
 	tokenAddress common.TokenAddress) int {
 
-	openChannels := GetChannelStateOpen(
-		chainState,
-		paymentNetworkId,
-		tokenAddress)
+	openChannels := GetChannelStateOpen(chainState, paymentNetworkId, tokenAddress)
 
 	var totalDeposit common.TokenAmount
-
 	for e := openChannels.Front(); e != nil; e = e.Next() {
 		channelState := e.Value.(*NettingChannelState)
 		totalDeposit += channelState.OurState.ContractBalance
@@ -110,7 +99,6 @@ func GetOurCapacityForTokenNetwork(chainState *ChainState, paymentNetworkId comm
 }
 
 func GetPaymentNetworkIdentifiers(chainState *ChainState) []common.PaymentNetworkID {
-
 	result := make([]common.PaymentNetworkID, 0)
 	for k := range chainState.IdentifiersToPaymentNetworks {
 		result = append(result, k)
@@ -137,28 +125,21 @@ func GetTokenNetworkIdentifierByTokenAddress(chainState *ChainState, paymentNetw
 	return tokenNetworkState.Address
 }
 
-func GetTokenNetworkIdentifiers(chainState *ChainState,
-	paymentNetworkId common.PaymentNetworkID) *list.List {
-
+func GetTokenNetworkIdentifiers(chainState *ChainState, paymentNetworkId common.PaymentNetworkID) *list.List {
 	var result *list.List
 
 	paymentNetworkState := chainState.IdentifiersToPaymentNetworks[paymentNetworkId]
-
 	if paymentNetworkState != nil {
 		result := list.New()
 		for _, v := range paymentNetworkState.TokenIdentifiersToTokenNetworks {
 			result.PushBack(v.Address)
 		}
 	}
-
 	return result
 }
 
-func GetTokenIdentifiers(chainState *ChainState,
-	paymentNetworkId common.PaymentNetworkID) *list.List {
-
+func GetTokenIdentifiers(chainState *ChainState, paymentNetworkId common.PaymentNetworkID) *list.List {
 	var result *list.List
-
 	paymentNetworkState := chainState.IdentifiersToPaymentNetworks[paymentNetworkId]
 
 	if paymentNetworkState != nil {
@@ -167,13 +148,10 @@ func GetTokenIdentifiers(chainState *ChainState,
 			result.PushBack(k)
 		}
 	}
-
 	return result
 }
 
-func GetTokenNetworkAddressesFor(chainState *ChainState,
-	paymentNetworkId common.PaymentNetworkID) *list.List {
-
+func GetTokenNetworkAddressesFor(chainState *ChainState, paymentNetworkId common.PaymentNetworkID) *list.List {
 	var result *list.List
 
 	paymentNetworkState := chainState.IdentifiersToPaymentNetworks[paymentNetworkId]

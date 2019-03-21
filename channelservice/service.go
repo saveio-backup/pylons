@@ -360,7 +360,12 @@ func (self *ChannelService) InitializeMessagesQueues(chainState *transfer.ChainS
 			switch event.(type) {
 			case transfer.SendDirectTransfer:
 				e := event.(transfer.SendDirectTransfer)
-				self.RegisterPaymentStatus(common.Address(e.Recipient), e.PaymentIdentifier, common.PAYMENT_DIRECT, e.BalanceProof.TransferredAmount, e.BalanceProof.TokenNetworkIdentifier)
+				self.RegisterPaymentStatus(common.Address(e.Recipient), e.PaymentIdentifier, common.PAYMENT_DIRECT,
+					e.BalanceProof.TransferredAmount, e.BalanceProof.TokenNetworkIdentifier)
+			case transfer.SendLockedTransfer:
+				e := event.(transfer.SendLockedTransfer)
+				self.RegisterPaymentStatus(common.Address(e.Recipient), e.Transfer.PaymentIdentifier, common.PAYMENT_MEDIATED,
+					e.Transfer.BalanceProof.TransferredAmount, e.Transfer.BalanceProof.TokenNetworkIdentifier)
 			}
 
 			message := messages.MessageFromSendEvent(&event)
@@ -639,11 +644,13 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 
 }
 
-func (self *ChannelService) SetTotalChannelDeposit(tokenAddress common.TokenAddress, partnerAddress common.Address, totalDeposit common.TokenAmount) error {
+func (self *ChannelService) SetTotalChannelDeposit(tokenAddress common.TokenAddress, partnerAddress common.Address,
+	totalDeposit common.TokenAmount) error {
 
 	chainState := self.StateFromChannel()
 	partAddr := common.ToBase58(partnerAddress)
-	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.mircoAddress), tokenAddress, partnerAddress)
+	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.mircoAddress),
+		tokenAddress, partnerAddress)
 	if channelState == nil {
 		log.Errorf("deposit failed, can not find specific channel with %s", partAddr)
 		return errors.New("can not find specific channel")

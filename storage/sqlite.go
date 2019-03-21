@@ -162,7 +162,7 @@ func (self *SQLiteStorage) writeStateChange(stateChange transfer.StateChange, st
 	log.Debug("[writeStateChange]: %v ", stateChange)
 	serializedData, err := jsonext.Marshal(stateChange)
 	if err != nil {
-		log.Errorf("[writeStateChange] jsonext.Marshal error stateChange type: %s error: %s",
+		log.Errorf("[writeStateChange] stateChange type: %s jsonext.Marshal error: %s",
 			reflect.TypeOf(stateChange).String(), err.Error())
 	}
 
@@ -184,8 +184,11 @@ func (self *SQLiteStorage) writeStateChange(stateChange transfer.StateChange, st
 }
 
 func (self *SQLiteStorage) writeStateSnapshot(stateChangeId int, snapshot transfer.State) int {
-	serializedData, _ := jsonext.Marshal(snapshot)
-
+	serializedData, err := jsonext.Marshal(snapshot)
+	if err != nil {
+		log.Error("[writeStateSnapshot] state type: %s  jsonext.Marshal error: ",
+			reflect.TypeOf(snapshot).String(), err.Error())
+	}
 	self.writeStateLock.Lock()
 	defer self.writeStateLock.Unlock()
 
@@ -209,7 +212,11 @@ func (self *SQLiteStorage) writeEvents(stateChangeId int, events []transfer.Even
 	defer stmt.Close()
 
 	for _, e := range events {
-		serializedData, _ := jsonext.Marshal(e)
+		serializedData, err := jsonext.Marshal(e)
+		if err != nil {
+			log.Errorf("[writeEvents] event type: %s jsonext.Marshal error: %s ",
+				reflect.TypeOf(e).String(), err.Error())
+		}
 		stmt.Exec(stateChangeId, logTime, serializedData)
 	}
 	self.EventSync.Done()

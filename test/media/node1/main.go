@@ -26,6 +26,7 @@ var testConfig = &ch.ChannelConfig{
 }
 
 func main() {
+	log.Init(log.PATH, log.Stdout)
 	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
 
 	wallet, err := wallet.OpenWallet("./wallet.dat")
@@ -131,12 +132,18 @@ func currentBalance(channel *ch.Channel) {
 			log.Info("[CurrentBalance] Local ContractBalance: ", chanState.OurState.ContractBalance)
 			if chanState.OurState.BalanceProof != nil {
 				log.Info("[CurrentBalance] Local LockedAmount: ", chanState.OurState.BalanceProof.LockedAmount)
+				log.Info("[CurrentBalance] Local TransferredAmount: ", chanState.OurState.BalanceProof.TransferredAmount)
+			} else {
+				log.Warn("[CurrentBalance] OurBalance is nil")
 			}
 
 			log.Info("[CurrentBalance] Partner Balance: ", chanState.PartnerState.GetGasBalance())
 			log.Info("[CurrentBalance] Partner ContractBalance: ", chanState.PartnerState.ContractBalance)
 			if chanState.PartnerState.BalanceProof != nil {
 				log.Info("[CurrentBalance] Partner LockedAmount: ", chanState.PartnerState.BalanceProof.LockedAmount)
+				log.Info("[CurrentBalance] Partner TransferredAmount: ", chanState.PartnerState.BalanceProof.TransferredAmount)
+			} else {
+				log.Warn("[CurrentBalance] PartnerBalance is nil")
 			}
 		}
 		time.Sleep(3 * time.Second)
