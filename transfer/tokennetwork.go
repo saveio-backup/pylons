@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/oniio/oniChannel/common"
+	"github.com/oniio/oniChain/common/log"
 )
 
 func GetChannelIdentifier(stateChange StateChange) common.ChannelID {
@@ -69,6 +70,9 @@ func GetSenderAndMessageIdentifier(stateChange StateChange) (common.Address, com
 		v, _ := stateChange.(*ReceiveProcessed)
 		sender = v.Sender
 		messageId = v.MessageIdentifier
+	default:
+		log.Warn("[GetSenderAndMessageIdentifier] eventType: ", reflect.TypeOf(stateChange).String())
+
 	}
 
 	return sender, messageId
@@ -76,7 +80,6 @@ func GetSenderAndMessageIdentifier(stateChange StateChange) (common.Address, com
 
 func GetSenderMessageEvent(event Event) *SendMessageEvent {
 	result := new(SendMessageEvent)
-
 	switch event.(type) {
 	case *SendDirectTransfer:
 		v, _ := event.(*SendDirectTransfer)
@@ -129,6 +132,7 @@ func GetSenderMessageEvent(event Event) *SendMessageEvent {
 				result.ChannelIdentifier = v.ChannelIdentifier
 		*/
 	default:
+		//log.Warn("[GetSenderMessageEvent] eventType: ", reflect.TypeOf(event).String())
 		result = nil
 	}
 

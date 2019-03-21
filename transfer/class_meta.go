@@ -75,6 +75,12 @@ const (
 	EventPaymentReceivedSuccessClassId
 	EventTransferReceivedInvalidDirectTransferClassId
 	SendDirectTransferClassId
+	SendLockedTransferClassId
+	SendLockExpiredClassId
+	SendBalanceProofClassId
+	SendSecretRevealClassId
+	SendSecretRequestClassId
+	SendRefundTransferClassId
 	SendProcessedClassId
 	ContractSendChannelCloseClassId
 	ContractSendChannelSettleClassId
@@ -334,6 +340,30 @@ func (self SendDirectTransfer) ClassId() int {
 	return SendDirectTransferClassId
 }
 
+func (self SendLockedTransfer) ClassId() int {
+	return SendLockedTransferClassId
+}
+
+func (self SendLockExpired) ClassId() int {
+	return SendLockExpiredClassId
+}
+
+func (self SendBalanceProof) ClassId() int {
+	return SendBalanceProofClassId
+}
+
+func (self SendSecretRequest) ClassId() int {
+	return SendSecretRequestClassId
+}
+
+func (self SendSecretReveal) ClassId() int {
+	return SendSecretRevealClassId
+}
+
+func (self SendRefundTransfer) ClassId() int {
+	return SendRefundTransferClassId
+}
+
 func (self SendProcessed) ClassId() int {
 	return SendProcessedClassId
 }
@@ -541,6 +571,8 @@ func CreateStateChangeByClassId(classId int) interface{} {
 		result = new(ReceiveSecretRequest)
 	case ReceiveSecretRevealClassId:
 		result = new(ReceiveSecretReveal)
+	case ReceiveLockExpiredClassId:
+		result = new(ReceiveLockExpired)
 	case ActionWithdrawClassId:
 		result = new(ActionWithdraw)
 	case ReceiveWithdrawRequestClassId:
@@ -574,6 +606,18 @@ func CreateEventByClassId(classId int) interface{} {
 		result = new(EventTransferReceivedInvalidDirectTransfer)
 	case SendDirectTransferClassId:
 		result = new(SendDirectTransfer)
+	case SendLockedTransferClassId:
+		result = new(SendLockedTransfer)
+	case SendLockExpiredClassId:
+		result = new(SendLockExpired)
+	case SendBalanceProofClassId:
+		result = new(SendBalanceProof)
+	case SendSecretRevealClassId:
+		result = new(SendSecretReveal)
+	case SendSecretRequestClassId:
+		result = new(SendSecretRequest)
+	case SendRefundTransferClassId:
+		result = new(SendRefundTransfer)
 	case SendProcessedClassId:
 		result = new(SendProcessed)
 	case ContractSendChannelCloseClassId:

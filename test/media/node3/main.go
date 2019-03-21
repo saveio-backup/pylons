@@ -25,6 +25,7 @@ var testConfig = &ch.ChannelConfig{
 	RevealTimeout: "1000",
 }
 
+var isNode1OnLine = false
 func main() {
 	wallet, err := wallet.OpenWallet("./wallet.dat")
 	if err != nil {
@@ -66,7 +67,12 @@ func main() {
 }
 
 func mediaTransfer(channel *ch.Channel, loopTimes int64) {
-	time.Sleep(30 * time.Second)
+	for ; ;  {
+		if isNode1OnLine {
+			break
+		}
+		time.Sleep(time.Second)
+	}
 
 	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
 	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
@@ -102,10 +108,11 @@ func receivePayment(channel *ch.Channel) {
 	log.Info("[ReceivePayment] RegisterReceiveNotification")
 
 	var msg *transfer.EventPaymentReceivedSuccess
-	for i := 0; ; i++ {
+	for i := 1; ; i++ {
 		log.Info("[ReceivePayment] WaitForReceiveNotification")
 		select {
 		case msg = <-notificationChannel:
+			isNode1OnLine = true
 			addr := common.ToBase58(common.Address(msg.Initiator))
 			log.Infof("[ReceivePayment] Initiator: %v, Amount: %v Times: %v\n", addr, msg.Amount, i)
 		}

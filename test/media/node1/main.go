@@ -106,7 +106,7 @@ func receivePayment(channel *ch.Channel) {
 	log.Info("[ReceivePayment] RegisterReceiveNotification")
 
 	var msg *transfer.EventPaymentReceivedSuccess
-	for i := 0; ; i++ {
+	for i := 1; ; i++ {
 		log.Info("[ReceivePayment] WaitForReceiveNotification")
 		select {
 		case msg = <-notificationChannel:
