@@ -212,15 +212,22 @@ func (self *MessageHandler) HandleMessageWithdrawRequest(channel *ChannelService
 func (self *MessageHandler) HandleMessageWithdraw(channel *ChannelService, message *messages.Withdraw) {
 	var tokenNetworkIdentifier common.TokenNetworkID
 
-	// check if we send a withdraw request for the channel
-	_, exist := channel.GetWithdrawStatus(common.ChannelID(message.ChannelIdentifier.ChannelId))
-	if exist {
-		copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
+	channelId := common.ChannelID(message.ChannelIdentifier.ChannelId)
 
+	copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
+
+	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(channel.StateFromChannel(),
+		tokenNetworkIdentifier, channelId)
+	if channelState == nil {
+		return
+	}
+
+	withdrawTx := transfer.GetWithdrawTransaction(channelState)
+	if withdrawTx != nil {
 		stateChange := &transfer.ReceiveWithdraw{
 			ReceiveWithdrawRequest: transfer.ReceiveWithdrawRequest{
 				TokenNetworkIdentifier: tokenNetworkIdentifier,
-				ChannelIdentifier:      common.ChannelID(message.ChannelIdentifier.ChannelId),
+				ChannelIdentifier:      channelId,
 				Participant:            messages.ConvertAddress(message.Participant),
 				TotalWithdraw:          common.TokenAmount(message.WithdrawAmount.TokenAmount),
 				ParticipantSignature:   message.ParticipantSignature.Signature,

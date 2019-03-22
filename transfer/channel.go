@@ -1314,6 +1314,7 @@ func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *A
 		}
 
 		events = append(events, sendWithdrawRequest)
+		RecordWithdrawTransaction(channelState)
 	} else {
 		msg := fmt.Sprintf("Channel is not opened")
 		failure := &EventWithdrawRequestSentFailed{
@@ -1326,6 +1327,20 @@ func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *A
 		events = append(events, failure)
 	}
 	return TransitionResult{channelState, events}
+}
+
+func RecordWithdrawTransaction(channelState *NettingChannelState) {
+	log.Debugf("[RecordWithdrawTransaction] for channel %d", uint32(channelState.Identifier))
+	channelState.WithdrawTransaction = &TransactionExecutionStatus{0, 0, ""}
+}
+
+func DeleteWithdrawTransaction(channelState *NettingChannelState) {
+	log.Debugf("[DeleteWithdrawTransaction] for channel %d", uint32(channelState.Identifier))
+	channelState.WithdrawTransaction = nil
+}
+
+func GetWithdrawTransaction(channelState *NettingChannelState) *TransactionExecutionStatus {
+	return channelState.WithdrawTransaction
 }
 
 func handleWithdrawRequestReceived(channelState *NettingChannelState, stateChange *ReceiveWithdrawRequest) TransitionResult {
@@ -1454,10 +1469,11 @@ func handleWithdrawReceived(channelState *NettingChannelState, stateChange *Rece
 		events = append(events, contractSendChannelWithdraw)
 	} else {
 		failure := &EventInvalidReceivedWithdraw{
-			ChannelIdentifier: stateChange.ChannelIdentifier,
-			Participant:       stateChange.Participant,
-			TotalWithdraw:     stateChange.TotalWithdraw,
-			Reason:            msg,
+			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
+			ChannelIdentifier:      stateChange.ChannelIdentifier,
+			Participant:            stateChange.Participant,
+			TotalWithdraw:          stateChange.TotalWithdraw,
+			Reason:                 msg,
 		}
 		log.Warn("[handleWithdrawReceived] failure: ", msg)
 		events = append(events, failure)
@@ -1483,6 +1499,8 @@ func isValidWithdraw(channelState *NettingChannelState, stateChange *ReceiveWith
 
 func handleChannelWithdraw(channelState *NettingChannelState, stateChange *ContractReceiveChannelWithdraw) TransitionResult {
 	var events []Event
+
+	DeleteWithdrawTransaction(channelState)
 
 	return TransitionResult{channelState, events}
 }

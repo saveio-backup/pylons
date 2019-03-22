@@ -471,6 +471,7 @@ type NettingChannelState struct {
 	SettleTransaction        *TransactionExecutionStatus
 	UpdateTransaction        *TransactionExecutionStatus
 	OurUnlockTransaction     *TransactionExecutionStatus
+	WithdrawTransaction      *TransactionExecutionStatus
 }
 
 func (self *NettingChannelState) GetIdentifier() common.ChannelID {

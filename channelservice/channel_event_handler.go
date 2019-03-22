@@ -458,6 +458,14 @@ func (self ChannelEventHandler) HandleWithdrawRequestSentFailed(channel *Channel
 	if !ok {
 		panic("error in HandleWithdrawRequestSentFailed, no withdraw status found in the map")
 	}
+
+	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(channel.StateFromChannel(),
+		withdrawRequestSentFailedEvent.TokenNetworkIdentifier, withdrawRequestSentFailedEvent.ChannelIdentifier)
+	if channelState == nil {
+		panic("error in HandleWithdrawRequestSentFailed, channelState is nil")
+	}
+
+	transfer.DeleteWithdrawTransaction(channelState)
 }
 
 func (self ChannelEventHandler) HandleInvalidReceivedWithdraw(channel *ChannelService, invalidWithdrawReceivedEvent *transfer.EventInvalidReceivedWithdraw) {
@@ -465,4 +473,13 @@ func (self ChannelEventHandler) HandleInvalidReceivedWithdraw(channel *ChannelSe
 	if !ok {
 		panic("error in HandleInvalidReceivedWithdraw, no withdraw status found in the map")
 	}
+
+	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(channel.StateFromChannel(),
+		invalidWithdrawReceivedEvent.TokenNetworkIdentifier, invalidWithdrawReceivedEvent.ChannelIdentifier)
+	if channelState == nil {
+		panic("error in HandleInvalidReceivedWithdraw, channelState is nil")
+	}
+
+	transfer.DeleteWithdrawTransaction(channelState)
+
 }

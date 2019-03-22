@@ -131,10 +131,11 @@ type EventInvalidReceivedWithdrawRequest struct {
 }
 
 type EventInvalidReceivedWithdraw struct {
-	ChannelIdentifier common.ChannelID
-	Participant       common.Address
-	TotalWithdraw     common.TokenAmount
-	Reason            string
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	Participant            common.Address
+	TotalWithdraw          common.TokenAmount
+	Reason                 string
 }
 
 type EventInvalidReceivedTransferRefund struct {
