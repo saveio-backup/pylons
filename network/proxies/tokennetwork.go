@@ -474,18 +474,6 @@ func (self *TokenNetwork) withDraw(channelIdentifier common.ChannelID, partner c
 		return errors.New("channel out dated")
 	}
 
-	details := self.detailParticipant(channelIdentifier, self.nodeAddress, partner)
-	currentWithdraw := details.Withdrawn
-	amountToWithdraw := totalWithdraw - currentWithdraw
-
-	if totalWithdraw < currentWithdraw {
-		return errors.New("total withdraw smaller than current")
-	}
-
-	if amountToWithdraw <= 0 {
-		return errors.New("amount to withdraw no larger than 0")
-	}
-
 	opLock = self.getOperationLock(partner)
 	opLock.Lock()
 	defer opLock.Unlock()

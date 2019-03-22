@@ -1076,6 +1076,11 @@ func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAd
 		return nil, errors.New("withdraw ongoing")
 	}
 
+	err := self.isValidWithdrawAmount(channelState, tokenAddress, partnerAddress, totalWithdraw)
+	if err != nil {
+		return nil, err
+	}
+
 	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(self.StateFromChannel(),
 		paymentNetworkIdentifier, tokenAddress)
@@ -1093,6 +1098,50 @@ func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAd
 	self.HandleStateChange(withdraw)
 
 	return withdrawResult, nil
+}
+
+func (self *ChannelService) isValidWithdrawAmount(channelState *transfer.NettingChannelState, tokenAddress common.TokenAddress, partnerAddress common.Address, totalWithdraw common.TokenAmount) error {
+	ourState := channelState.GetChannelEndState(0)
+	if totalWithdraw > ourState.ContractBalance {
+		return errors.New("total withdraw larger than contract balance")
+	}
+
+	args := self.GetPaymentArgs(channelState)
+	if args == nil {
+		log.Error("can not get payment channel args")
+		return errors.New("can not get payment channel args")
+	}
+
+	channelProxy := self.chain.PaymentChannel(common.Address(tokenAddress), channelState.Identifier, args)
+	if channelProxy == nil {
+		return errors.New("failed to get channel proxy")
+	}
+	detail := channelProxy.Detail()
+	if detail == nil || detail.ParticipantsData == nil || detail.ParticipantsData.OurDetails == nil {
+		return errors.New("failed to get participant detail")
+	}
+
+	ourDetail := detail.ParticipantsData.OurDetails
+
+	currentWithdraw := ourDetail.Withdrawn
+	amountToWithdraw := totalWithdraw - currentWithdraw
+
+	if totalWithdraw < currentWithdraw {
+		return errors.New("total withdraw smaller than current")
+	}
+
+	if amountToWithdraw <= 0 {
+		return errors.New("amount to withdraw no larger than 0")
+	}
+
+	balanceProof := ourState.BalanceProof
+	if balanceProof != nil {
+		availableAmount := ourState.ContractBalance - balanceProof.TransferredAmount - balanceProof.LockedAmount
+		if totalWithdraw > availableAmount {
+			return fmt.Errorf("invalid withdraw amount, withdraw : %d larger than available amount %d", totalWithdraw, availableAmount)
+		}
+	}
+	return nil
 }
 
 func (self *ChannelService) RegisterWithdrawStatus(channelId common.ChannelID) chan bool {
