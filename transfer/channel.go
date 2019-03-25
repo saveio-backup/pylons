@@ -607,7 +607,7 @@ func getAmountLocked(endState *NettingChannelEndState) common.Balance {
 	}
 	log.Debug("[getAmountLocked] totalPending: ", totalPending)
 	for _, unLock := range endState.SecretHashesToUnLockedLocks {
-		totalUnclaimed = totalPending + unLock.Lock.Amount
+		totalUnclaimed = totalUnclaimed + unLock.Lock.Amount
 	}
 	log.Debug("[getAmountLocked] totalUnclaimed: ", totalUnclaimed)
 	totalUnclaimedOnChain = getAmountUnClaimedOnChain(endState)

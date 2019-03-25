@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 	"flag"
+	"runtime/pprof"
 )
 
 var testConfig = &ch.ChannelConfig{
@@ -25,11 +26,28 @@ var testConfig = &ch.ChannelConfig{
 	RevealTimeout: "1000",
 }
 
+var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var disable = flag.Bool("disable", false, "disable transfer test")
 var transferAmount = flag.Int64("amount", 1000, "test transfer amount")
 
 func main() {
 	flag.Parse()
+
+	if *cpuProfile != "" {
+		log.Infof("CPU Profile: %s", *cpuProfile)
+		cupF, err := os.Create(*cpuProfile)
+		if err != nil {
+			log.Fatal("could not create CPU profile: ", err)
+		}
+		defer cupF.Close()
+
+		if err := pprof.StartCPUProfile(cupF); err != nil {
+			log.Fatal("could not start CPU profile: ", err)
+		} else {
+			log.Info("start CPU profile.")
+		}
+		defer pprof.StopCPUProfile()
+	}
 
 	log.Init(log.PATH, log.Stdout)
 	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)

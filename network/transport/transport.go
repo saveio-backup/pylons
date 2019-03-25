@@ -508,10 +508,11 @@ func (this *Transport) Stop() {
 
 func (this *Transport) syncPeerState() {
 	var nodeNetworkState string
+	//log.Info("[syncPeerState] begin...")
 	for {
 		select {
 		case state := <-this.peerStateChan:
-			log.Debugf("[syncPeerState] addr: %s state: %v\n ", state.Address, state.State)
+			//log.Infof("[syncPeerState] addr: %s state: %v\n ", state.Address, state.State)
 			if state.State == keepalive.PEER_REACHABLE {
 				this.activePeers.LoadOrStore(state.Address, struct{}{})
 				nodeNetworkState = transfer.NetworkReachable
@@ -528,6 +529,7 @@ func (this *Transport) syncPeerState() {
 			}
 			this.SetNodeNetworkState(address.(common.Address), nodeNetworkState)
 		case <-this.kill:
+			log.Warn("[syncPeerState] this.kill...")
 			break
 		}
 	}

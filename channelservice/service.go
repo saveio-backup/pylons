@@ -287,7 +287,7 @@ func (self *ChannelService) StartNeighboursHealthCheck() {
 	neighbours := transfer.GetNeighbours(self.StateFromChannel())
 
 	for _, v := range neighbours {
-		log.Debug("[StartNeighboursHealthCheck] Neighbour: %s", common.ToBase58(v))
+		log.Debugf("[StartNeighboursHealthCheck] Neighbour: %s", common.ToBase58(v))
 		self.transport.StartHealthCheck(v)
 	}
 

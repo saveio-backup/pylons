@@ -32,26 +32,27 @@ var testConfig = &ch.ChannelConfig{
 	Protocol:      "tcp",
 	RevealTimeout: "1000",
 }
-var f *os.File
-var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
+var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var disable = flag.Bool("disable", false, "disable transfer test")
-var tranferAmount = flag.Uint("amount", 0, "test transfer amount")
+var transferAmount = flag.Uint("amount", 0, "test transfer amount")
 
 func main() {
 	log.InitLog(2, log.Stdout)
 	flag.Parse()
 	var amount uint
 	amount = 1000
-	if *cpuprofile != "" {
-		cupf, err := os.Create(*cpuprofile)
+	if *cpuProfile != "" {
+
+		cupF, err := os.Create(*cpuProfile)
 		if err != nil {
 			log.Fatal(err)
 		}
-		pprof.StartCPUProfile(cupf)
+		pprof.StartCPUProfile(cupF)
 		defer pprof.StopCPUProfile()
 	}
-	if *tranferAmount != 0 {
-		amount = *tranferAmount
+	if *transferAmount != 0 {
+		amount = *transferAmount
 	}
 	wallet, err := wallet.OpenWallet(WALLET_PATH)
 	if err != nil {

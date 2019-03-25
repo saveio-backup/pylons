@@ -32,7 +32,7 @@ var testConfig = &ch.ChannelConfig{
 	Protocol:      "tcp",
 	RevealTimeout: "1000",
 }
-var f *os.File
+
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var disable = flag.Bool("disable", false, "disable transfer test")
 var transferAmount = flag.Uint("amount", 0, "test transfer amount")
@@ -46,9 +46,13 @@ func main() {
 	if *cpuProfile != "" {
 		cupF, err := os.Create(*cpuProfile)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("could not create CPU profile: ", err)
 		}
-		pprof.StartCPUProfile(cupF)
+		defer cupF.Close()
+		if err := pprof.StartCPUProfile(cupF); err != nil {
+			log.Fatal("could not start CPU profile: ", err)
+		}
+
 		defer pprof.StopCPUProfile()
 	}
 	if *transferAmount != 0 {
@@ -93,10 +97,6 @@ func main() {
 			return
 		}
 		log.Info("deposit successful")
-		//time.Sleep(7 * time.Second)
-		//for {
-		//	time.Sleep(7 * time.Second)
-		//}
 
 		for {
 			state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
@@ -168,8 +168,8 @@ func loopTest(channel *ch.Channel, amount uint, target common.Address, times uin
 	//channel.Service.ChannelClose(tokenAddress, target, 3)
 
 	log.Info("[loopTest] finished")
-
 }
+
 func logCurrentBalance(channel *ch.Channel, target common.Address) {
 	ticker := time.NewTicker(config.MIN_GEN_BLOCK_TIME * time.Second)
 
