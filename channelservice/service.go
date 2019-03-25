@@ -39,7 +39,7 @@ type ChannelService struct {
 	messageHandler                *MessageHandler
 	config                        map[string]string
 	transport                     *transport.Transport
-	targetsToIndentifierToStatues map[common.Address]*sync.Map
+	targetsToIdentifierToStatues  map[common.Address]*sync.Map
 	ReceiveNotificationChannels   map[chan *transfer.EventPaymentReceivedSuccess]struct{}
 	channelWithdrawStatus         *sync.Map
 
@@ -57,6 +57,7 @@ type ChannelService struct {
 
 	tokennetworkidsToConnectionmanagers map[common.TokenNetworkID]*ConnectionManager
 	lastFilterBlock                     common.BlockHeight
+	statusLock                         sync.RWMutex
 }
 
 type PaymentStatus struct {
@@ -95,7 +96,7 @@ func NewChannelService(chain *network.BlockchainService,
 	//self.defaultSecretRegistry = defaultSecretRegistry
 	self.config = config
 	self.Account = chain.GetAccount()
-	self.targetsToIndentifierToStatues = make(map[common.Address]*sync.Map)
+	self.targetsToIdentifierToStatues =  make(map[common.Address]*sync.Map)
 	self.tokennetworkidsToConnectionmanagers = make(map[common.TokenNetworkID]*ConnectionManager)
 	self.ReceiveNotificationChannels = make(map[chan *transfer.EventPaymentReceivedSuccess]struct{})
 	self.channelWithdrawStatus = new(sync.Map)
@@ -312,19 +313,25 @@ func (self *ChannelService) RegisterPaymentStatus(target common.Address, identif
 		paymentDone:            make(chan bool, 1),
 	}
 
-	if payments, exist := self.targetsToIndentifierToStatues[common.Address(target)]; exist {
+	self.statusLock.Lock()
+	defer self.statusLock.Unlock()
+
+	if payments, exist := self.targetsToIdentifierToStatues[common.Address(target)]; exist {
 		payments.Store(identifier, status)
 	} else {
 		payments := new(sync.Map)
-
 		payments.Store(identifier, status)
-		self.targetsToIndentifierToStatues[common.Address(target)] = payments
+		self.targetsToIdentifierToStatues[common.Address(target)] = payments
 	}
+
 	return status
 }
 
 func (self *ChannelService) GetPaymentStatus(target common.Address, identifier common.PaymentID) (status *PaymentStatus, exist bool) {
-	payments, exist := self.targetsToIndentifierToStatues[common.Address(target)]
+	self.statusLock.RLock()
+	defer self.statusLock.RUnlock()
+
+	payments, exist := self.targetsToIdentifierToStatues[common.Address(target)]
 	if exist {
 		paymentStatus, ok := payments.Load(identifier)
 		if ok {
@@ -336,7 +343,10 @@ func (self *ChannelService) GetPaymentStatus(target common.Address, identifier c
 }
 
 func (self *ChannelService) RemovePaymentStatus(target common.Address, identifier common.PaymentID) (ok bool) {
-	payments, exist := self.targetsToIndentifierToStatues[common.Address(target)]
+	self.statusLock.Lock()
+	defer self.statusLock.Unlock()
+
+	payments, exist := self.targetsToIdentifierToStatues[common.Address(target)]
 	if exist {
 		_, ok := payments.Load(identifier)
 		if ok {

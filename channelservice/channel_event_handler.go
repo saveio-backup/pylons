@@ -20,7 +20,7 @@ func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event tr
 	switch event.(type) {
 	case *transfer.SendDirectTransfer:
 		sendDirectTransfer := event.(*transfer.SendDirectTransfer)
-		self.HandleSendDirecttransfer(channel, sendDirectTransfer)
+		self.HandleSendDirectTransfer(channel, sendDirectTransfer)
 	case *transfer.SendProcessed:
 		sendProcessed := event.(*transfer.SendProcessed)
 		self.HandleSendProcessed(channel, sendProcessed)
@@ -87,7 +87,7 @@ func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event tr
 	return
 }
 
-func (self ChannelEventHandler) HandleSendDirecttransfer(channel *ChannelService, sendDirectTransfer *transfer.SendDirectTransfer) {
+func (self ChannelEventHandler) HandleSendDirectTransfer(channel *ChannelService, sendDirectTransfer *transfer.SendDirectTransfer) {
 	message := messages.MessageFromSendEvent(sendDirectTransfer)
 	if message != nil {
 		err := channel.Sign(message)
@@ -139,7 +139,7 @@ func (self ChannelEventHandler) HandlePaymentSentSuccess(channel *ChannelService
 	}
 
 	channel.RemovePaymentStatus(target, identifier)
-	//log.Info("set paymentDone to true")
+	log.Debug("set paymentDone to true")
 	paymentStatus.paymentDone <- true
 
 	return

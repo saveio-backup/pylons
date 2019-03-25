@@ -2,12 +2,13 @@ package main
 
 import (
 	"flag"
-	"math/rand"
 	"os"
 	"os/signal"
 	"runtime/pprof"
 	"syscall"
 	"time"
+	"math/rand"
+	"fmt"
 
 	"github.com/oniio/oniChain-go-sdk/ong"
 	"github.com/oniio/oniChain-go-sdk/wallet"
@@ -38,7 +39,8 @@ var disable = flag.Bool("disable", false, "disable transfer test")
 var transferAmount = flag.Uint("amount", 0, "test transfer amount")
 
 func main() {
-	log.InitLog(2, log.Stdout)
+	log.Init(log.PATH, log.Stdout)
+	//log.InitLog(2, log.Stdout)
 	flag.Parse()
 	var amount uint
 	amount = 1000
@@ -112,7 +114,7 @@ func main() {
 		}
 		if *disable == false {
 			log.Info("begin direct transfer test...")
-			go loopTest(channel, 1, common.Address(target), amount, 0)
+			go multiTest(channel, 1, common.Address(target), amount, 0)
 		}
 	} else {
 		log.Fatal("setup channel failed, exit")
@@ -121,6 +123,7 @@ func main() {
 
 	waitToExit()
 }
+
 func loopTest(channel *ch.Channel, amount uint, target common.Address, times uint, interval int) {
 	r := rand.NewSource(time.Now().UnixNano())
 	log.Info("wait for loopTest canTransfer...")
@@ -167,7 +170,55 @@ func loopTest(channel *ch.Channel, amount uint, target common.Address, times uin
 	//log.Info("[loopTest] channelClose")
 	//channel.Service.ChannelClose(tokenAddress, target, 3)
 
-	log.Info("[loopTest] finished")
+}
+
+func multiTest(channel *ch.Channel, amount uint, target common.Address, times uint, interval int) {
+	log.Info("wait for multiTest canTransfer...")
+	for {
+		if channel.Service.CanTransfer(target, common.TokenAmount(amount)) {
+			log.Info("multiTest can transfer!")
+			break
+		} else {
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
+	var err error
+	statuses := make([]chan bool, times)
+
+	f :=  func(statuses []chan bool, index uint) error {
+		statuses[index], err = channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(index+1))
+		if err != nil {
+			log.Error("[multiTest] direct transfer failed:", err)
+			return fmt.Errorf("[multiTest] direct transfer failed:", err)
+		}
+		return nil
+	}
+
+	time1 := time.Now().Unix()
+	for index1 := uint(0); index1 < times; index1++ {
+		go f(statuses, index1)
+	}
+
+	for index2 := uint(0); index2 < times; index2++ {
+		log.Debug("[multiTest] wait for payment status update...")
+		if statuses[index2] == nil  {
+			time.Sleep(5* time.Millisecond)
+			continue
+		}
+		ret := <-statuses[index2]
+		if !ret {
+			log.Error("[multiTest] direct transfer failed")
+			break
+		} else {
+			//log.Info("[multiTest] direct transfer successfully")
+		}
+	}
+
+	time2 := time.Now().Unix()
+	timeDuration := time2 - time1
+	log.Infof("[multiTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", times, timeDuration, times/uint(timeDuration))
+	log.Info("[multiTest] direct transfer test done")
 }
 
 func logCurrentBalance(channel *ch.Channel, target common.Address) {

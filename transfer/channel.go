@@ -1631,6 +1631,7 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 		transferAmount := newTransferredAmount - previousTransferredAmount
 
 		channelState.PartnerState.BalanceProof = directTransfer.BalanceProof
+
 		paymentReceivedSuccess := &EventPaymentReceivedSuccess{
 			PaymentNetworkIdentifier: channelState.PaymentNetworkIdentifier,
 			TokenNetworkIdentifier:   channelState.TokenNetworkIdentifier,
@@ -1639,11 +1640,13 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 			Initiator:                common.InitiatorAddress(channelState.PartnerState.Address),
 		}
 
-		sendProcessed := new(SendProcessed)
-		sendProcessed.Recipient = common.Address(directTransfer.BalanceProof.Sender)
-		sendProcessed.ChannelIdentifier = 0
-		sendProcessed.MessageIdentifier = directTransfer.MessageIdentifier
-
+		sendProcessed := &SendProcessed{
+			SendMessageEvent:SendMessageEvent{
+				Recipient : common.Address(directTransfer.BalanceProof.Sender),
+				ChannelIdentifier: 0,
+				MessageIdentifier: directTransfer.MessageIdentifier,
+			},
+		}
 		events = append(events, paymentReceivedSuccess)
 		events = append(events, sendProcessed)
 	} else {

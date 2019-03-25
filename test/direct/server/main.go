@@ -8,6 +8,7 @@ import (
 	"runtime/pprof"
 	"syscall"
 	"time"
+	"fmt"
 
 	"github.com/oniio/oniChain-go-sdk/ong"
 	"github.com/oniio/oniChain-go-sdk/wallet"
@@ -93,7 +94,7 @@ func main() {
 	}
 	if *disable == false {
 		log.Info("begin direct transfer test...")
-		go loopTest(channel, 1, common.Address(target), amount, 0)
+		go multiTest(channel, 1, common.Address(target), amount, 0)
 	}
 
 	waitToExit()
@@ -136,6 +137,56 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times uint
 		}
 	}
 	log.Info("[loopTest] direct transfer test done")
+}
+
+
+func multiTest(channel *ch.Channel, amount uint, target common.Address, times uint, interval int) {
+	log.Info("wait for multiTest canTransfer...")
+	for {
+		if channel.Service.CanTransfer(target, common.TokenAmount(amount)) {
+			log.Info("multiTest can transfer!")
+			break
+		} else {
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
+	var err error
+	statuses := make([]chan bool, times)
+
+	f :=  func(statuses []chan bool, index uint) error {
+		statuses[index], err = channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(index+1))
+		if err != nil {
+			log.Error("[multiTest] direct transfer failed:", err)
+			return fmt.Errorf("[multiTest] direct transfer failed:", err)
+		}
+		return nil
+	}
+
+	time1 := time.Now().Unix()
+	for index1 := uint(0); index1 < times; index1++ {
+		go f(statuses, index1)
+	}
+
+	for index2 := uint(0); index2 < times; index2++ {
+		log.Debug("[multiTest] wait for payment status update...")
+		if statuses[index2] == nil  {
+			time.Sleep(5* time.Millisecond)
+			continue
+		}
+		ret := <-statuses[index2]
+		if !ret {
+			log.Error("[multiTest] direct transfer failed")
+			break
+		} else {
+			//log.Info("[multiTest] direct transfer successfully")
+		}
+	}
+
+	time2 := time.Now().Unix()
+	timeDuration := time2 - time1
+	log.Infof("[multiTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", times, timeDuration, times/uint(timeDuration))
+	log.Info("[multiTest] direct transfer test done")
 }
 
 func logCurrentBalance(channel *ch.Channel, target common.Address) {
