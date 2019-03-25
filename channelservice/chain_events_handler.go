@@ -3,7 +3,7 @@ package channelservice
 import (
 	"strconv"
 
-	"github.com/oniio/oniChain-go-sdk/ong"
+	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain/common/log"
 	scUtils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
@@ -27,7 +27,7 @@ func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 	if common.AddressEqual(self.address, participant1) || common.AddressEqual(self.address, participant2) {
 		isParticipant = true
 	}
-	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
+	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 	if isParticipant {
 
 		channelProxy := self.chain.PaymentChannel(common.Address(tokenNetworkIdentifier), channelIdentifier, event)
@@ -43,7 +43,7 @@ func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 				revealTimeout = common.BlockHeight(ret)
 			}
 		}
-		tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+		tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 		defaultRegister := common.PaymentNetworkID(scUtils.MicroPayContractAddress)
 		channelState := SetupChannelState(tokenAddress, defaultRegister,
 			common.TokenNetworkAddress(tokenNetworkIdentifier), revealTimeout, channelProxy, blockNumber)
@@ -88,7 +88,7 @@ func (self ChannelService) handleChannelNewBalance(event map[string]interface{})
 	depositBlockHeight := event["blockHeight"].(common.BlockHeight)
 	totalDeposit := event["totalDeposit"].(common.TokenAmount)
 
-	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
+	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 
 	previousChannelState := transfer.GetChannelStateByTokenNetworkIdentifier(
 		self.StateFromChannel(), tokenNetworkIdentifier, channelIdentifier)
@@ -138,7 +138,7 @@ func (self ChannelService) handleChannelNewBalance(event map[string]interface{})
 
 func (self ChannelService) HandleChannelClose(event map[string]interface{}) {
 
-	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
+	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 
 	var channelIdentifier common.ChannelID
 	var transactionHash common.TransactionHash
@@ -182,7 +182,7 @@ func (self ChannelService) HandleChannelUpdateTransfer(event map[string]interfac
 	nonce := event["nonce"].(common.Nonce)
 
 	chainState := self.StateFromChannel()
-	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
+	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(chainState,
 		tokenNetworkIdentifier, channelIdentifier)
 
@@ -198,7 +198,7 @@ func (self ChannelService) HandleChannelUpdateTransfer(event map[string]interfac
 }
 
 func (self ChannelService) HandleChannelSettled(event map[string]interface{}) {
-	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
+	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 
 	var transactionHash common.TransactionHash
 
@@ -230,7 +230,7 @@ func (self ChannelService) HandleChannelWithdraw(event map[string]interface{}) {
 	blockNumber := event["blockHeight"].(common.BlockHeight)
 	totalWithdraw := event["totalWithdraw"].(common.TokenAmount)
 
-	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
+	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 
 	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(
 		self.StateFromChannel(), tokenNetworkIdentifier, channelIdentifier)
@@ -273,7 +273,7 @@ func (self ChannelService) HandleWithdrawSuccess(channelId common.ChannelID) {
 }
 
 func (self ChannelService) HandleChannelBatchUnlock(event map[string]interface{}) {
-	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
+	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 
 	transactionHash := event["transactionHash"].(common.TransactionHash)
 	blockNumber := event["blockHeight"].(common.BlockHeight)

@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/oniio/oniChain-go-sdk/ong"
+	"flag"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain-go-sdk/wallet"
 	chaincomm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChain/smartcontract/service/native/utils"
 	ch "github.com/oniio/oniChannel"
 	"github.com/oniio/oniChannel/common"
-	"os"
-	"os/signal"
-	"syscall"
 	"github.com/oniio/oniChannel/transfer"
-	"flag"
 )
 
 var testConfig = &ch.ChannelConfig{
@@ -77,7 +78,7 @@ func main() {
 }
 
 func mediaTransfer(channel *ch.Channel, loopTimes int64) {
-	for ; ;  {
+	for {
 		if isNode1OnLine {
 			break
 		}
@@ -85,7 +86,7 @@ func mediaTransfer(channel *ch.Channel, loopTimes int64) {
 	}
 
 	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
-	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 
 	targetAddress, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
 	target := common.Address(targetAddress)
@@ -131,7 +132,7 @@ func receivePayment(channel *ch.Channel) {
 
 func currentBalance(channel *ch.Channel) {
 	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
-	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 
 	partnerAddress, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
 	partner := common.Address(partnerAddress)
@@ -141,9 +142,9 @@ func currentBalance(channel *ch.Channel) {
 		if chanState != nil {
 			var ourLocked, parLocked common.TokenAmount
 			ourBalance := chanState.OurState.GetGasBalance()
-			outCtBal   := chanState.OurState.ContractBalance
+			outCtBal := chanState.OurState.ContractBalance
 			parBalance := chanState.PartnerState.GetGasBalance()
-			parCtBal   := chanState.PartnerState.ContractBalance
+			parCtBal := chanState.PartnerState.ContractBalance
 
 			if chanState.OurState.BalanceProof != nil {
 				ourLocked = chanState.OurState.BalanceProof.LockedAmount

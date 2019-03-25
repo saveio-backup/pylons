@@ -16,7 +16,7 @@ import (
 	"reflect"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/oniio/oniChain-go-sdk/ong"
+	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain/account"
 	comm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
@@ -491,8 +491,8 @@ func (self *ChannelService) StateFromChannel() *transfer.ChainState {
 func (self *ChannelService) InitializeTokenNetwork() {
 
 	tokenNetworkState := transfer.NewTokenNetworkState(self.address)
-	tokenNetworkState.Address = common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
-	tokenNetworkState.TokenAddress = common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+	tokenNetworkState.Address = common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
+	tokenNetworkState.TokenAddress = common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 	newTokenNetwork := &transfer.ContractReceiveNewTokenNetwork{PaymentNetworkIdentifier: common.PaymentNetworkID(scUtils.MicroPayContractAddress),
 		TokenNetwork: tokenNetworkState}
 
@@ -628,7 +628,7 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 		log.Infof("channel between %s and %s haven`t setup. start to create new one", regAddr, patAddr)
 	}
 
-	tokenNetwork := self.chain.NewTokenNetwork(common.Address(ong.ONG_CONTRACT_ADDRESS))
+	tokenNetwork := self.chain.NewTokenNetwork(common.Address(usdt.USDT_CONTRACT_ADDRESS))
 	channelId := tokenNetwork.NewNettingChannel(partnerAddress, constants.SETTLE_TIMEOUT)
 	if channelId == 0 {
 		log.Error("open channel failed")
@@ -636,7 +636,7 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 	}
 	log.Info("wait for new channel ... ")
 	channelState := WaitForNewChannel(self, common.PaymentNetworkID(self.mircoAddress),
-		common.TokenAddress(ong.ONG_CONTRACT_ADDRESS), partnerAddress,
+		common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), partnerAddress,
 		float32(constants.OPEN_CHANNEL_RETRY_TIMEOUT), constants.OPEN_CHANNEL_RETRY_TIMES)
 	if channelState == nil {
 		log.Error("setup channel timeout")
@@ -813,7 +813,7 @@ func (self *ChannelService) TransferAsync(registryAddress common.PaymentNetworkI
 
 func (self *ChannelService) CanTransfer(target common.Address, amount common.TokenAmount) bool {
 	chainState := self.StateFromChannel()
-	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
 	channelState := transfer.GetChannelStateFor(chainState, paymentNetworkIdentifier, tokenAddress, target)
 	if channelState.OurState.ContractBalance < amount {
@@ -830,7 +830,7 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 		return nil, fmt.Errorf("target address is invalid")
 	}
 	chainState := self.StateFromChannel()
-	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(chainState,
 		paymentNetworkIdentifier, tokenAddress)

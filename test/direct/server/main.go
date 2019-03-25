@@ -10,7 +10,7 @@ import (
 	"time"
 	"fmt"
 
-	"github.com/oniio/oniChain-go-sdk/ong"
+	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain-go-sdk/wallet"
 	chaincomm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/config"
@@ -198,7 +198,7 @@ func logCurrentBalance(channel *ch.Channel, target common.Address) {
 
 			chainState := channel.Service.StateFromChannel()
 			channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(common.Address(utils.MicroPayContractAddress)),
-				common.TokenAddress(ong.ONG_CONTRACT_ADDRESS), target)
+				common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), target)
 			if channelState == nil {
 				log.Infof("test channel with %s haven`t been connected", "AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
 				break

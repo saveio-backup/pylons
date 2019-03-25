@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/oniio/oniChain-go-sdk/ong"
+	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain-go-sdk/wallet"
 	chaincomm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
@@ -50,7 +50,7 @@ func main() {
 	}
 
 	log.Init(log.PATH, log.Stdout)
-	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 
 	wallet, err := wallet.OpenWallet("./wallet.dat")
 	if err != nil {
@@ -98,7 +98,7 @@ func main() {
 
 func mediaTransfer(channel *ch.Channel, loopTimes int64) {
 	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
-	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 
 	targetAddress, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
 	target := common.Address(targetAddress)
@@ -143,7 +143,7 @@ func receivePayment(channel *ch.Channel) {
 
 func currentBalance(channel *ch.Channel) {
 	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
-	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 
 	partnerAddress, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
 	partner := common.Address(partnerAddress)

@@ -334,7 +334,7 @@ func (self *TokenNetwork) CanTransfer(participant1 common.Address,
 //token balance should divided by Decimals of token
 func (self *TokenNetwork) GetGasBalance() (common.TokenAmount, error) {
 
-	bal, err := self.ChainClient.Native.Ong.BalanceOf(comm.Address(self.nodeAddress))
+	bal, err := self.ChainClient.Native.Usdt.BalanceOf(comm.Address(self.nodeAddress))
 	currentBalance := common.TokenAmount(bal)
 	if err != nil {
 		log.Errorf("GetGasBalance err:%s", err)

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/oniio/oniChain-go-sdk/ong"
+	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain-go-sdk/wallet"
 	chaincomm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
@@ -25,7 +25,7 @@ var testConfig = &ch.ChannelConfig{
 
 func main() {
 	log.Init(log.PATH, log.Stdout)
-	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 
 	wallet, err := wallet.OpenWallet("./wallet.dat")
 	if err != nil {
@@ -74,7 +74,7 @@ func main() {
 
 func currentBalance(channel *ch.Channel) {
 	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
-	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 
 	partnerAddress, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
 	partner := common.Address(partnerAddress)
