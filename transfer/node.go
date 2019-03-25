@@ -6,6 +6,7 @@ import (
 	"github.com/oniio/oniChain/common/log"
 	scUtils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
+	"encoding/hex"
 )
 
 func getNetworks(chainState *ChainState, paymentNetworkIdentifier common.PaymentNetworkID,
@@ -123,7 +124,7 @@ func subDispatchToPaymentTask(chainState *ChainState, stateChange StateChange,
 			delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
 		}
 	} else {
-		log.Info("subTask is nil")
+		log.Warn("subTask is nil, HashValue: ", hex.EncodeToString(secretHash[:]))
 	}
 
 	return &TransitionResult{NewState: chainState, Events: events}
@@ -463,7 +464,7 @@ func handleNewPaymentNetwork(chainState *ChainState,
 	return &TransitionResult{chainState, events}
 }
 
-func handleTokenadded(chainState *ChainState, stateChange *ContractReceiveNewTokenNetwork) *TransitionResult {
+func handleTokenAdded(chainState *ChainState, stateChange *ContractReceiveNewTokenNetwork) *TransitionResult {
 	maybeAddTokenNetwork(chainState, stateChange.PaymentNetworkIdentifier, stateChange.TokenNetwork)
 	return &TransitionResult{chainState, nil}
 }
@@ -609,7 +610,7 @@ func handleStateChangeForNode(chainStateArg State, stateChange StateChange) *Tra
 		iteration = handleNewPaymentNetwork(chainState, contractReceiveNewPaymentNetwork)
 	case *ContractReceiveNewTokenNetwork:
 		contractReceiveNewTokenNetwork, _ := stateChange.(*ContractReceiveNewTokenNetwork)
-		iteration = handleTokenadded(chainState, contractReceiveNewTokenNetwork)
+		iteration = handleTokenAdded(chainState, contractReceiveNewTokenNetwork)
 	case *ContractReceiveChannelClosed:
 		contractReceiveChannelClosed, _ := stateChange.(*ContractReceiveChannelClosed)
 		iteration = handleContractReceiveChannelClosed(chainState, contractReceiveChannelClosed)

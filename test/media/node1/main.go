@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 	"fmt"
+	"flag"
 )
 
 var testConfig = &ch.ChannelConfig{
@@ -25,7 +26,12 @@ var testConfig = &ch.ChannelConfig{
 	RevealTimeout: "1000",
 }
 
+var disable = flag.Bool("disable", false, "disable transfer test")
+var transferAmount = flag.Int64("amount", 1000, "test transfer amount")
+
 func main() {
+	flag.Parse()
+
 	log.Init(log.PATH, log.Stdout)
 	tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
 
@@ -64,8 +70,9 @@ func main() {
 	if err != nil {
 		log.Error("[SetTotalChannelDeposit] error: ", err.Error())
 	}
-
-	go mediaTransfer(channel, 1000)
+	if *disable == false {
+		go mediaTransfer(channel, *transferAmount)
+	}
 	go receivePayment(channel)
 	go currentBalance(channel)
 

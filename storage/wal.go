@@ -36,10 +36,9 @@ func RestoreToStateChange(transitionFunction transfer.StateTransitionCallback,
 	wal.StateManager = stateManager
 	wal.Storage = storage
 
-	for _, changes := range unAppliedStateChanges {
-		wal.StateManager.Dispatch(changes)
+	for _, change := range unAppliedStateChanges {
+		wal.StateManager.Dispatch(change)
 	}
-
 	return wal
 }
 

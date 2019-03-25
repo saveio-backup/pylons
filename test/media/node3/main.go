@@ -15,6 +15,7 @@ import (
 	"os/signal"
 	"syscall"
 	"github.com/oniio/oniChannel/transfer"
+	"flag"
 )
 
 var testConfig = &ch.ChannelConfig{
@@ -26,7 +27,13 @@ var testConfig = &ch.ChannelConfig{
 }
 
 var isNode1OnLine = false
+
+var disable = flag.Bool("disable", false, "disable transfer test")
+var transferAmount = flag.Int64("amount", 1000, "test transfer amount")
+
 func main() {
+	flag.Parse()
+
 	log.Init(log.PATH, log.Stdout)
 	wallet, err := wallet.OpenWallet("./wallet.dat")
 	if err != nil {
@@ -60,7 +67,9 @@ func main() {
 	}
 	log.Info("[StartService]")
 
-	go mediaTransfer(channel, 1000)
+	if *disable == false {
+		go mediaTransfer(channel, *transferAmount)
+	}
 	go receivePayment(channel)
 	go currentBalance(channel)
 

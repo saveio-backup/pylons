@@ -165,6 +165,9 @@ func (self *SQLiteStorage) writeStateChange(stateChange transfer.StateChange, st
 		log.Errorf("[writeStateChange] stateChange type: %s jsonext.Marshal error: %s",
 			reflect.TypeOf(stateChange).String(), err.Error())
 	}
+	if serializedData == nil {
+		log.Errorf("[writeStateChange] stateChange type: %s jsonext.Marshal error: serializedData == nil")
+	}
 
 	self.StateSync.Add(1)
 	self.writeStateLock.Lock()
@@ -176,11 +179,17 @@ func (self *SQLiteStorage) writeStateChange(stateChange transfer.StateChange, st
 	}
 	defer stmt.Close()
 
-	sqlRes, _ := stmt.Exec(serializedData)
-	lastRowId, _ := sqlRes.LastInsertId()
-
+	sqlRes, err := stmt.Exec(serializedData)
+	if err != nil {
+		log.Errorf("[writeStateChange] stmt.Exec stateChange type: %s error: %s",
+			reflect.TypeOf(stateChange).String(), err.Error())
+	}
+	lastRowId, err := sqlRes.LastInsertId()
+	if err != nil {
+		log.Errorf("[writeStateChange] sqlRes.LastInsertId stateChange type: %s error: %s",
+			reflect.TypeOf(stateChange).String(), err.Error())
+	}
 	*stateChangeId = int(lastRowId)
-
 }
 
 func (self *SQLiteStorage) writeStateSnapshot(stateChangeId int, snapshot transfer.State) int {
@@ -189,14 +198,26 @@ func (self *SQLiteStorage) writeStateSnapshot(stateChangeId int, snapshot transf
 		log.Error("[writeStateSnapshot] state type: %s  jsonext.Marshal error: ",
 			reflect.TypeOf(snapshot).String(), err.Error())
 	}
+	if serializedData == nil {
+		log.Errorf("[writeStateSnapshot] state type: %s jsonext.Marshal error: serializedData == nil",
+			reflect.TypeOf(snapshot).String())
+	}
 	self.writeStateLock.Lock()
 	defer self.writeStateLock.Unlock()
 
 	stmt, _ := self.connState.Prepare("INSERT INTO state_snapshot(statechange_id, data) VALUES(?, ?)")
 	defer stmt.Close()
-	sqlRes, _ := stmt.Exec(stateChangeId, serializedData)
+	sqlRes, err := stmt.Exec(stateChangeId, serializedData)
+	if err != nil {
+		log.Errorf("[writeStateSnapshot] stmt.Exec state type: %s error: %s",
+			reflect.TypeOf(snapshot).String(), err.Error())
+	}
 
-	lastRowId, _ := sqlRes.LastInsertId()
+
+	lastRowId, err := sqlRes.LastInsertId()
+	if err != nil {
+		log.Errorf("[writeStateSnapshot] sqlRes.LastInsertId error: %s", err.Error())
+	}
 	return int(lastRowId)
 }
 
@@ -251,8 +272,10 @@ func (self *SQLiteStorage) getLatestStateSnapshot() (int, transfer.State) {
 func (self *SQLiteStorage) getSnapshotClosestToStateChange(stateChangeId interface{}) (int, transfer.State) {
 	var rows *sql.Rows
 	var realStateChangeId int
+
 	self.writeStateLock.Lock()
 	defer self.writeStateLock.Unlock()
+
 	latest := false
 	switch stateChangeId.(type) {
 	case string:
@@ -262,8 +285,10 @@ func (self *SQLiteStorage) getSnapshotClosestToStateChange(stateChangeId interfa
 	}
 
 	if latest == true {
-		rows, _ = self.connState.Query("SELECT identifier FROM state_changes ORDER BY identifier DESC LIMIT 1")
-
+		rows, err := self.connState.Query("SELECT identifier FROM state_changes ORDER BY identifier DESC LIMIT 1")
+		if err != nil {
+			log.Info("[getSnapshotClosestToStateChange] self.connState.Query error: ", err.Error())
+		}
 		for rows.Next() {
 			rows.Scan(&realStateChangeId)
 			break
@@ -271,7 +296,10 @@ func (self *SQLiteStorage) getSnapshotClosestToStateChange(stateChangeId interfa
 		rows.Close()
 	}
 
-	rows, _ = self.connState.Query("SELECT statechange_id, data FROM state_snapshot WHERE statechange_id <= ? ORDER BY identifier DESC LIMIT 1", realStateChangeId)
+	rows, err := self.connState.Query("SELECT statechange_id, data FROM state_snapshot WHERE statechange_id <= ? ORDER BY identifier DESC LIMIT 1", realStateChangeId)
+	if err != nil {
+		log.Info("[getSnapshotClosestToStateChange] self.connState.Query error: ", err.Error())
+	}
 	defer rows.Close()
 
 	var lastAppliedStateChangeId int
@@ -280,7 +308,10 @@ func (self *SQLiteStorage) getSnapshotClosestToStateChange(stateChangeId interfa
 	for rows.Next() {
 		err := rows.Scan(&lastAppliedStateChangeId, &snapshotData)
 		if err == nil {
-			v, _ := jsonext.UnmarshalExt(snapshotData, nil, transfer.CreateObjectByClassId)
+			v, err := jsonext.UnmarshalExt(snapshotData, nil, transfer.CreateObjectByClassId)
+			if err != nil {
+				log.Info("[getSnapshotClosestToStateChange] jsonext.UnmarshalExt error: ", err.Error())
+			}
 			if snapshotState, ok := v.(transfer.State); ok {
 				return lastAppliedStateChangeId, snapshotState
 			} else {
@@ -585,9 +616,14 @@ func (self *SQLiteStorage) getStateChangesByIdentifier(fromIdentifier interface{
 	result := make([]transfer.StateChange, 0)
 	for rows.Next() {
 		err := rows.Scan(&stateChangeData)
-		if err == nil {
+		if err == nil{
+			if stateChangeData == nil {
+				log.Errorf("[getStateChangesByIdentifier] jsonext.UnmarshalExt Error: stateChangeData is nil")
+				continue
+			}
 			v, err := jsonext.UnmarshalExt(stateChangeData, nil, transfer.CreateObjectByClassId)
 			if err != nil {
+				log.Errorf("[getStateChangesByIdentifier] jsonext.UnmarshalExt Error: %s", err.Error())
 				continue
 			}
 			if stateChange, ok := v.(transfer.StateChange); ok {

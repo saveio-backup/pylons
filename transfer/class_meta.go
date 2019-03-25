@@ -567,6 +567,10 @@ func CreateStateChangeByClassId(classId int) interface{} {
 		result = new(ReceiveProcessed)
 	case ActionInitInitiatorClassId:
 		result = new(ActionInitInitiator)
+	case ActionInitMediatorClassId:
+		result = new(ActionInitMediator)
+	case ActionInitTargetClassId:
+		result = new(ActionInitTarget)
 	case ReceiveSecretRequestClassId:
 		result = new(ReceiveSecretRequest)
 	case ReceiveSecretRevealClassId:

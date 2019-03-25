@@ -122,9 +122,25 @@ func DeepCopy(src State) *ChainState {
 	//if src == nil {
 	//	return nil
 	//} else if chainState, ok := src.(*ChainState); ok {
-	//	serializedData, _ := jsonext.Marshal(chainState)
-	//	res, _ := jsonext.UnmarshalExt(serializedData, nil, CreateObjectByClassId)
-	//	result, _ = res.(*ChainState)
+	//	log.Info("[DeepCopy] src Type: ", reflect.TypeOf(chainState).String())
+	//
+	//	log.Info("[DeepCopy] SecretHashesToTask Len: ", len(chainState.PaymentMapping.SecretHashesToTask))
+	//	serializedData, err := jsonext.Marshal(chainState)
+	//	if err != nil {
+	//		log.Error("[DeepCopy] jsonext.Marshal Error: ", err.Error())
+	//	}
+	//	if serializedData == nil {
+	//		log.Error("[DeepCopy] jsonext.Marshal Error: serializedData is nil.")
+	//	}
+	//
+	//	result = NewChainState()
+	//
+	//	_, err = jsonext.UnmarshalExt(serializedData, &result, CreateObjectByClassId)
+	//
+	//	if err != nil {
+	//		log.Error("[DeepCopy] jsonext.UnmarshalExt Error: ", err.Error())
+	//	}
+	//	//result, _ = res.(*ChainState)
 	//	result.AdjustChainState()
 	//}
 	//
@@ -164,7 +180,6 @@ func DeepCopy(src State) *ChainState {
 			}
 		}
 		value.NodeAddressesToNetworkStates = new(sync.Map)
-
 		chainState.NodeAddressesToNetworkStates.Range(func(addr, state interface{}) bool {
 			value.NodeAddressesToNetworkStates.Store(addr, state)
 			return true
