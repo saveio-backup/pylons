@@ -81,25 +81,24 @@ func currentBalance(channel *ch.Channel) {
 
 	for {
 		chanState := channel.Service.GetChannel(registryAddress, tokenAddress, partner)
-		log.Info()
 		if chanState != nil {
-			log.Info("[CurrentBalance] Local Balance: ", chanState.OurState.GetGasBalance())
-			log.Info("[CurrentBalance] Local ContractBalance: ", chanState.OurState.ContractBalance)
+			var ourLocked, parLocked common.TokenAmount
+			ourBalance := chanState.OurState.GetGasBalance()
+			outCtBal   := chanState.OurState.ContractBalance
+			parBalance := chanState.PartnerState.GetGasBalance()
+			parCtBal   := chanState.PartnerState.ContractBalance
+
 			if chanState.OurState.BalanceProof != nil {
-				log.Info("[CurrentBalance] Local LockedAmount: ", chanState.OurState.BalanceProof.LockedAmount)
-			} else {
-				log.Warn("[CurrentBalance] OurBalance is nil")
+				ourLocked = chanState.OurState.BalanceProof.LockedAmount
+			}
+			if chanState.PartnerState.BalanceProof != nil {
+				parLocked = chanState.PartnerState.BalanceProof.LockedAmount
 			}
 
-			log.Info("[CurrentBalance] Partner Balance: ", chanState.PartnerState.GetGasBalance())
-			log.Info("[CurrentBalance] Partner ContractBalance: ", chanState.PartnerState.ContractBalance)
-			if chanState.PartnerState.BalanceProof != nil {
-				log.Info("[CurrentBalance] Partner LockedAmount: ", chanState.PartnerState.BalanceProof.LockedAmount)
-			} else {
-				log.Warn("[CurrentBalance] PartnerBalance is nil")
-			}
+			log.Infof("[Balance] Our[BL: %d CT: %d LK: %d] Par[BL: %d CT: %d LK: %d]",
+				ourBalance, outCtBal, ourLocked, parBalance, parCtBal, parLocked)
 		}
-		time.Sleep(3 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 }
 

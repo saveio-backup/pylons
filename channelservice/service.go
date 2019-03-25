@@ -175,7 +175,6 @@ func (self *ChannelService) Start() error {
 
 	var lastLogBlockHeight common.BlockHeight
 	self.Wal = storage.RestoreToStateChange(transfer.StateTransition, sqliteStorage, "latest")
-	log.Info("channel service start: [RestoreToStateChange] finished")
 
 	if self.Wal.StateManager.CurrentState == nil {
 		var stateChange transfer.StateChange
@@ -568,7 +567,7 @@ func (self *ChannelService) GetChannel(registryAddress common.PaymentNetworkID, 
 	if channelList.Len() != 0 {
 		result = channelList.Back().Value.(*transfer.NettingChannelState)
 	} else {
-		log.Info("[GetChannelList] Len = 0")
+		log.Debug("[GetChannelList] Len = 0")
 	}
 
 	return result
@@ -751,7 +750,7 @@ func (self *ChannelService) GetChannelList(registryAddress common.PaymentNetwork
 		if channelState != nil {
 			result.PushBack(channelState)
 		} else {
-			log.Info("[GetChannelList] channelState == nil")
+			log.Debug("[GetChannelList] channelState == nil")
 		}
 	} else if tokenAddress != common.EmptyTokenAddress {
 		result = transfer.ListChannelStateForTokenNetwork(chainState, registryAddress,

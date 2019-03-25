@@ -97,19 +97,19 @@ func mediaTransfer(channel *ch.Channel, loopTimes int64) {
 		if err != nil {
 			log.Error("[MediaTransfer] MediaTransfer: ", err.Error())
 		} else {
-			log.Info("[MediaTransfer] MediaTransfer Return")
+			log.Debug("[MediaTransfer] MediaTransfer Return")
 		}
 		r := <-ret
 		if !r {
 			log.Error("[MediaTransfer] MediaTransfer Failed")
 			time.Sleep(time.Second)
 		} else {
-			log.Info("[MediaTransfer] MediaTransfer Success")
+			log.Debug("[MediaTransfer] MediaTransfer Success")
 		}
 	}
 	time2 := time.Now().Unix()
 	timeDuration := time2 - time1
-	fmt.Printf("[MediaTransfer] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", loopTimes, timeDuration, loopTimes/timeDuration)
+	log.Infof("[MediaTransfer] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", loopTimes, timeDuration, loopTimes/timeDuration)
 }
 
 func receivePayment(channel *ch.Channel) {
@@ -119,12 +119,12 @@ func receivePayment(channel *ch.Channel) {
 
 	var msg *transfer.EventPaymentReceivedSuccess
 	for i := 1; ; i++ {
-		log.Info("[ReceivePayment] WaitForReceiveNotification")
+		log.Debug("[ReceivePayment] WaitForReceiveNotification")
 		select {
 		case msg = <-notificationChannel:
 			isNode1OnLine = true
 			addr := common.ToBase58(common.Address(msg.Initiator))
-			log.Infof("[ReceivePayment] Initiator: %v, Amount: %v Times: %v\n", addr, msg.Amount, i)
+			log.Infof("[ReceivePayment] Initiator: %v, Amount: %v Times: %v", addr, msg.Amount, i)
 		}
 	}
 }
@@ -138,26 +138,24 @@ func currentBalance(channel *ch.Channel) {
 
 	for {
 		chanState := channel.Service.GetChannel(registryAddress, tokenAddress, partner)
-		log.Info()
 		if chanState != nil {
-			log.Info("[CurrentBalance] Local Balance: ", chanState.OurState.GetGasBalance())
-			log.Info("[CurrentBalance] Local ContractBalance: ", chanState.OurState.ContractBalance)
+			var ourLocked, parLocked common.TokenAmount
+			ourBalance := chanState.OurState.GetGasBalance()
+			outCtBal   := chanState.OurState.ContractBalance
+			parBalance := chanState.PartnerState.GetGasBalance()
+			parCtBal   := chanState.PartnerState.ContractBalance
+
 			if chanState.OurState.BalanceProof != nil {
-				log.Info("[CurrentBalance] Local LockedAmount: ", chanState.OurState.BalanceProof.LockedAmount)
-			} else {
-				log.Warn("[CurrentBalance] OurBalance is nil")
+				ourLocked = chanState.OurState.BalanceProof.LockedAmount
 			}
-
-
-			log.Info("[CurrentBalance] Partner Balance: ", chanState.PartnerState.GetGasBalance())
-			log.Info("[CurrentBalance] Partner ContractBalance: ", chanState.PartnerState.ContractBalance)
 			if chanState.PartnerState.BalanceProof != nil {
-				log.Info("[CurrentBalance] Partner LockedAmount: ", chanState.PartnerState.BalanceProof.LockedAmount)
-			} else {
-				log.Warn("[CurrentBalance] PartnerBalance is nil")
+				parLocked = chanState.PartnerState.BalanceProof.LockedAmount
 			}
+
+			log.Infof("[Balance] Our[BL: %d CT: %d LK: %d] Par[BL: %d CT: %d LK: %d]",
+				ourBalance, outCtBal, ourLocked, parBalance, parCtBal, parLocked)
 		}
-		time.Sleep(3 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 }
 

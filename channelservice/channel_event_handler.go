@@ -375,22 +375,22 @@ func (self ChannelEventHandler) HandleSendSecretRequest(channel *ChannelService,
 
 func (self ChannelEventHandler) HandleEventUnlockClaimSuccess(channel *ChannelService,
 	unlockClaimSuccess *transfer.EventUnlockClaimSuccess) {
-	log.Info("[OnChannelEvent] Unlock Claim Success PaymentId: ", unlockClaimSuccess.Identifier)
+	log.Debug("[OnChannelEvent] Unlock Claim Success PaymentId: ", unlockClaimSuccess.Identifier)
 }
 
 func (self ChannelEventHandler) HandleEventUnlockClaimFailed(channel *ChannelService,
 	unlockClaimFailed *transfer.EventUnlockClaimFailed) {
-	log.Info("[OnChannelEvent] Unlock Claim Failed PaymentId: ", unlockClaimFailed.Identifier)
+	log.Debug("[OnChannelEvent] Unlock Claim Failed PaymentId: ", unlockClaimFailed.Identifier)
 }
 
 func (self ChannelEventHandler) HandleEventUnlockSuccess(channel *ChannelService,
 	unlockSuccess *transfer.EventUnlockSuccess) {
-	log.Info("[OnChannelEvent] Unlock Success PaymentId: ", unlockSuccess.Identifier)
+	log.Debug("[OnChannelEvent] Unlock Success PaymentId: ", unlockSuccess.Identifier)
 }
 
 func (self ChannelEventHandler) HandleEventUnlockFailed(channel *ChannelService,
 	unlockFailed *transfer.EventUnlockFailed) {
-	log.Info("[OnChannelEvent] Unlock Failed PaymentId: ", unlockFailed.Identifier)
+	log.Debug("[OnChannelEvent] Unlock Failed PaymentId: ", unlockFailed.Identifier)
 }
 
 func (self ChannelEventHandler) HandleSendWithdrawRequest(channel *ChannelService, withdrawRequestEvent *transfer.SendWithdrawRequest) {

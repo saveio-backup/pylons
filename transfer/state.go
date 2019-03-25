@@ -122,9 +122,6 @@ func DeepCopy(src State) *ChainState {
 	//if src == nil {
 	//	return nil
 	//} else if chainState, ok := src.(*ChainState); ok {
-	//	log.Info("[DeepCopy] src Type: ", reflect.TypeOf(chainState).String())
-	//
-	//	log.Info("[DeepCopy] SecretHashesToTask Len: ", len(chainState.PaymentMapping.SecretHashesToTask))
 	//	serializedData, err := jsonext.Marshal(chainState)
 	//	if err != nil {
 	//		log.Error("[DeepCopy] jsonext.Marshal Error: ", err.Error())
@@ -134,9 +131,7 @@ func DeepCopy(src State) *ChainState {
 	//	}
 	//
 	//	result = NewChainState()
-	//
 	//	_, err = jsonext.UnmarshalExt(serializedData, &result, CreateObjectByClassId)
-	//
 	//	if err != nil {
 	//		log.Error("[DeepCopy] jsonext.UnmarshalExt Error: ", err.Error())
 	//	}
