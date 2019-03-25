@@ -140,7 +140,6 @@ func DeepCopy(src State) *ChainState {
 	//	if err != nil {
 	//		log.Error("[DeepCopy] jsonext.UnmarshalExt Error: ", err.Error())
 	//	}
-	//	//result, _ = res.(*ChainState)
 	//	result.AdjustChainState()
 	//}
 	//

@@ -170,6 +170,10 @@ func (self MediatorTransferState) ClassId() int {
 }
 
 // class meta for StateChange
+func (self AuthenticatedSenderStateChange) ClassId() int {
+	return AuthenticatedSenderStateChangeClassId
+}
+
 func (self ContractReceiveStateChange) ClassId() int {
 	return ContractReceiveStateChangeClassId
 }
@@ -318,6 +322,14 @@ func (self ContractReceiveChannelWithdraw) ClassId() int {
 // class meta for Event
 func (self SendMessageEvent) ClassId() int {
 	return SendMessageEventClassId
+}
+
+func (self ContractSendEvent) ClassId() int {
+	return ContractSendEventClassId
+}
+
+func (self ContractSendExpireAbleEvent) ClassId() int {
+	return ContractSendExpireAbleEventClassId
 }
 
 func (self EventPaymentSentSuccess) ClassId() int {
@@ -502,6 +514,8 @@ func CreateStateByClassId(classId int) interface{} {
 		result = new(InitiatorTransferState)
 	case InitiatorPaymentStateClassId:
 		result = new(InitiatorPaymentState)
+	case MediatorTransferStateClassId:
+		result = new(MediatorTransferState)
 	case TargetTransferStateClassId:
 		result = new(TargetTransferState)
 	}
@@ -577,6 +591,10 @@ func CreateStateChangeByClassId(classId int) interface{} {
 		result = new(ReceiveSecretReveal)
 	case ReceiveLockExpiredClassId:
 		result = new(ReceiveLockExpired)
+	case ReceiveTransferRefundCancelRouteClassId:
+		result = new(ReceiveTransferRefundCancelRoute)
+	case ReceiveTransferRefundClassId:
+		result = new(ReceiveTransferRefund)
 	case ActionWithdrawClassId:
 		result = new(ActionWithdraw)
 	case ReceiveWithdrawRequestClassId:
