@@ -180,6 +180,26 @@ func (this *Withdraw) DataToSign() []byte {
 	return transfer.PackWithdraw(channelId, participant, withdrawAmount)
 }
 
+func (this *CooperativeSettleRequest) DataToSign() []byte {
+	channelId := common.ChannelID(int(this.ChannelIdentifier.ChannelId))
+	participant1 := ConvertAddress(this.Participant1)
+	participant1Balance := common.TokenAmount(this.Participant1Balance.TokenAmount)
+	participant2 := ConvertAddress(this.Participant2)
+	participant2Balance := common.TokenAmount(this.Participant2Balance.TokenAmount)
+
+	return transfer.PackCooperativeSettle(channelId, participant1, participant1Balance, participant2, participant2Balance)
+}
+
+func (this *CooperativeSettle) DataToSign() []byte {
+	channelId := common.ChannelID(int(this.ChannelIdentifier.ChannelId))
+	participant1 := ConvertAddress(this.Participant1)
+	participant1Balance := common.TokenAmount(this.Participant1Balance.TokenAmount)
+	participant2 := ConvertAddress(this.Participant2)
+	participant2Balance := common.TokenAmount(this.Participant2Balance.TokenAmount)
+
+	return transfer.PackCooperativeSettle(channelId, participant1, participant1Balance, participant2, participant2Balance)
+}
+
 func MessageHash(data []byte) []byte {
 	sum := sha256.Sum256(data)
 	return sum[:]
@@ -206,6 +226,10 @@ func MessageFromSendEvent(event interface{}) proto.Message {
 		return WithdrawRequestFromEvent(event.(*transfer.SendWithdrawRequest))
 	case *transfer.SendWithdraw:
 		return WithdrawFromEvent(event.(*transfer.SendWithdraw))
+	case *transfer.SendCooperativeSettleRequest:
+		return CooperativeSettleRequestFromEvent(event.(*transfer.SendCooperativeSettleRequest))
+	case *transfer.SendCooperativeSettle:
+		return CooperativeSettleFromEvent(event.(*transfer.SendCooperativeSettle))
 	default:
 		log.Debug("Unknown event type: ", reflect.TypeOf(event).String())
 	}
@@ -372,11 +396,36 @@ func WithdrawFromEvent(event *transfer.SendWithdraw) proto.Message {
 	return msg
 }
 
-/*
-ParticipantSignature   common.Signature
-	ParticipantAddress     common.Address
-	ParticipantPublicKey   common.PubKe
-*/
+func CooperativeSettleRequestFromEvent(event *transfer.SendCooperativeSettleRequest) proto.Message {
+	msg := &CooperativeSettleRequest{
+		TokenNetworkAddress: &TokenNetworkAddress{event.TokenNetworkIdentifier[:]},
+		MessageIdentifier:   &MessageID{MessageId: (uint64)(event.MessageIdentifier)},
+		ChannelIdentifier:   &ChannelID{uint64(event.ChannelIdentifier)},
+		Participant1:        &Address{Address: event.Participant1[:]},
+		Participant1Balance: &TokenAmount{uint64(event.Participant1Balance)},
+		Participant2:        &Address{Address: event.Participant2[:]},
+		Participant2Balance: &TokenAmount{uint64(event.Participant2Balance)},
+	}
+	return msg
+}
+
+func CooperativeSettleFromEvent(event *transfer.SendCooperativeSettle) proto.Message {
+	msg := &CooperativeSettle{
+		TokenNetworkAddress: &TokenNetworkAddress{event.TokenNetworkIdentifier[:]},
+		MessageIdentifier:   &MessageID{MessageId: (uint64)(event.MessageIdentifier)},
+		ChannelIdentifier:   &ChannelID{uint64(event.ChannelIdentifier)},
+		Participant1:        &Address{Address: event.Participant1[:]},
+		Participant1Balance: &TokenAmount{uint64(event.Participant1Balance)},
+		Participant2:        &Address{Address: event.Participant2[:]},
+		Participant2Balance: &TokenAmount{uint64(event.Participant2Balance)},
+		Participant1Signature: &SignedMessage{
+			Signature: event.Participant1Signature,
+			Sender:    &Address{Address: event.Participant1Address[:]},
+			Publickey: event.Participant1PublicKey,
+		},
+	}
+	return msg
+}
 
 func Sign(account *account.Account, message SignedMessageInterface) error {
 	log.Debug("[Sign]: ", reflect.TypeOf(message).String())
@@ -459,7 +508,20 @@ func Sign(account *account.Account, message SignedMessageInterface) error {
 			Sender:    &Address{Address: account.Address[:]},
 			Publickey: pubKey,
 		}
-
+	case *CooperativeSettleRequest:
+		msg := message.(*CooperativeSettleRequest)
+		msg.Participant1Signature = &SignedMessage{
+			Signature: sigData,
+			Sender:    &Address{Address: account.Address[:]},
+			Publickey: pubKey,
+		}
+	case *CooperativeSettle:
+		msg := message.(*CooperativeSettle)
+		msg.Participant2Signature = &SignedMessage{
+			Signature: sigData,
+			Sender:    &Address{Address: account.Address[:]},
+			Publickey: pubKey,
+		}
 	default:
 		return fmt.Errorf("[Sign] Unknow message type to sign ", reflect.TypeOf(message).String())
 	}

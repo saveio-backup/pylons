@@ -138,6 +138,43 @@ type EventInvalidReceivedWithdraw struct {
 	Reason                 string
 }
 
+type SendCooperativeSettleRequest struct {
+	SendMessageEvent
+	TokenNetworkIdentifier common.TokenNetworkID
+	Participant1           common.Address
+	Participant1Balance    common.TokenAmount
+	Participant2           common.Address
+	Participant2Balance    common.TokenAmount
+}
+
+type SendCooperativeSettle struct {
+	SendMessageEvent
+	TokenNetworkIdentifier common.TokenNetworkID
+	Participant1           common.Address
+	Participant1Balance    common.TokenAmount
+	Participant2           common.Address
+	Participant2Balance    common.TokenAmount
+	Participant1Signature  common.Signature
+	Participant1Address    common.Address
+	Participant1PublicKey  common.PubKey
+}
+
+type ContractSendChannelCooperativeSettle struct {
+	ContractSendEvent
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	Participant1           common.Address
+	Participant1Balance    common.TokenAmount
+	Participant2           common.Address
+	Participant2Balance    common.TokenAmount
+	Participant1Signature  common.Signature
+	Participant1Address    common.Address
+	Participant1PublicKey  common.PubKey
+	Participant2Signature  common.Signature
+	Participant2Address    common.Address
+	Participant2PublicKey  common.PubKey
+}
+
 type EventInvalidReceivedTransferRefund struct {
 	PaymentIdentifier common.PaymentID
 	Reason            string

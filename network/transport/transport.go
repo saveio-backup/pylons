@@ -36,20 +36,24 @@ const (
 	OpcodeLockExpired
 	OpcodeWithdrawRequest
 	OpcodeWithdraw
+	OpcodeCooperativeSettleRequest
+	OpcodeCooperativeSettle
 )
 
 var opcodes = map[opcode.Opcode]proto.Message{
-	OpcodeProcessed:       &messages.Processed{},
-	OpcodeDelivered:       &messages.Delivered{},
-	OpcodeSecrectRequest:  &messages.SecretRequest{},
-	OpcodeRevealSecret:    &messages.RevealSecret{},
-	OpcodeSecrectMsg:      &messages.Secret{},
-	OpcodeDirectTransfer:  &messages.DirectTransfer{},
-	OpcodeLockedTransfer:  &messages.LockedTransfer{},
-	OpcodeRefundTransfer:  &messages.RefundTransfer{},
-	OpcodeLockExpired:     &messages.LockExpired{},
-	OpcodeWithdrawRequest: &messages.WithdrawRequest{},
-	OpcodeWithdraw:        &messages.Withdraw{},
+	OpcodeProcessed:                &messages.Processed{},
+	OpcodeDelivered:                &messages.Delivered{},
+	OpcodeSecrectRequest:           &messages.SecretRequest{},
+	OpcodeRevealSecret:             &messages.RevealSecret{},
+	OpcodeSecrectMsg:               &messages.Secret{},
+	OpcodeDirectTransfer:           &messages.DirectTransfer{},
+	OpcodeLockedTransfer:           &messages.LockedTransfer{},
+	OpcodeRefundTransfer:           &messages.RefundTransfer{},
+	OpcodeLockExpired:              &messages.LockExpired{},
+	OpcodeWithdrawRequest:          &messages.WithdrawRequest{},
+	OpcodeWithdraw:                 &messages.Withdraw{},
+	OpcodeCooperativeSettleRequest: &messages.CooperativeSettleRequest{},
+	OpcodeCooperativeSettle:        &messages.CooperativeSettle{},
 }
 
 type ChannelServiceInterface interface {
@@ -159,6 +163,10 @@ func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Me
 		msgID = (msg.(*messages.WithdrawRequest)).MessageIdentifier
 	case *messages.Withdraw:
 		msgID = (msg.(*messages.Withdraw)).MessageIdentifier
+	case *messages.CooperativeSettleRequest:
+		msgID = (msg.(*messages.CooperativeSettleRequest)).MessageIdentifier
+	case *messages.CooperativeSettle:
+		msgID = (msg.(*messages.CooperativeSettle)).MessageIdentifier
 	default:
 		log.Error("[SendAsync] Unknown message type to send async: ", reflect.TypeOf(msg).String())
 		return fmt.Errorf("Unknown message type to send async")
@@ -437,8 +445,17 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 		msg := message.(*messages.Withdraw)
 		address = messages.ConvertAddress(msg.PartnerSignature.Sender)
 		msgID = msg.MessageIdentifier
+	case *messages.CooperativeSettleRequest:
+		msg := message.(*messages.CooperativeSettleRequest)
+		address = messages.ConvertAddress(msg.Participant1Signature.Sender)
+		msgID = msg.MessageIdentifier
+	case *messages.CooperativeSettle:
+		msg := message.(*messages.CooperativeSettle)
+		address = messages.ConvertAddress(msg.Participant2Signature.Sender)
+		msgID = msg.MessageIdentifier
 	default:
 		log.Warn("[ReceiveMessage] unkown Msg type: ", reflect.TypeOf(message).String())
+		return
 	}
 
 	deliveredMessage := &messages.Delivered{

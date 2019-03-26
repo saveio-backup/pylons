@@ -750,6 +750,30 @@ func (self *ChannelService) ChannelBatchClose(tokenAddress common.TokenAddress, 
 	return
 }
 
+//fwtodo: may need to add channel to notify the result ? following send will be disallowed
+func (self *ChannelService) ChannelCooperativeSettle(tokenAddress common.TokenAddress, partnerAddress common.Address) error {
+
+	chainState := self.StateFromChannel()
+	registryAddress := common.PaymentNetworkID(self.mircoAddress)
+	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(
+		chainState, registryAddress, tokenAddress)
+
+	channelState := transfer.GetChannelStateByTokenNetworkAndPartner(chainState, tokenNetworkIdentifier, partnerAddress)
+	if channelState == nil {
+		return fmt.Errorf("ChannelCooperativeSettle error, no channel found with the partner")
+	}
+
+	identifier := channelState.GetIdentifier()
+
+	ChannelCooperativeSettle := new(transfer.ActionCooperativeSettle)
+	ChannelCooperativeSettle.TokenNetworkIdentifier = tokenNetworkIdentifier
+	ChannelCooperativeSettle.ChannelIdentifier = identifier
+
+	self.HandleStateChange(ChannelCooperativeSettle)
+
+	return nil
+}
+
 func (self *ChannelService) GetChannelList(registryAddress common.PaymentNetworkID,
 	tokenAddress common.TokenAddress, partnerAddress common.Address) *list.List {
 

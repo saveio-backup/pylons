@@ -81,6 +81,15 @@ func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event tr
 	case *transfer.EventInvalidReceivedWithdraw:
 		eventInvalidReceivedWithdraw := event.(*transfer.EventInvalidReceivedWithdraw)
 		self.HandleInvalidReceivedWithdraw(channel, eventInvalidReceivedWithdraw)
+	case *transfer.SendCooperativeSettleRequest:
+		sendCooperativeSettleRequest := event.(*transfer.SendCooperativeSettleRequest)
+		self.HandleSendCooperativeSettleRequest(channel, sendCooperativeSettleRequest)
+	case *transfer.SendCooperativeSettle:
+		sendCooperativeSettle := event.(*transfer.SendCooperativeSettle)
+		self.HandleSendCooperativeSettle(channel, sendCooperativeSettle)
+	case *transfer.ContractSendChannelCooperativeSettle:
+		contractSendChannelCooperativeSettle := event.(*transfer.ContractSendChannelCooperativeSettle)
+		self.HandleContractSendChannelCooperativeSettle(channel, contractSendChannelCooperativeSettle)
 	default:
 		log.Warn("[OnChannelEvent] Not known type: ", reflect.TypeOf(event).String())
 	}
@@ -482,4 +491,62 @@ func (self ChannelEventHandler) HandleInvalidReceivedWithdraw(channel *ChannelSe
 
 	transfer.DeleteWithdrawTransaction(channelState)
 
+}
+
+func (self ChannelEventHandler) HandleSendCooperativeSettleRequest(channel *ChannelService, cooperativeSettleRequestEvent *transfer.SendCooperativeSettleRequest) {
+	cooperativeSettleRequestMessage := messages.MessageFromSendEvent(cooperativeSettleRequestEvent)
+	if cooperativeSettleRequestMessage != nil {
+		err := channel.Sign(cooperativeSettleRequestMessage)
+		if err != nil {
+			log.Error("[HandleSendCooperativeSettleRequest] ", err.Error())
+			return
+		}
+		queueId := &transfer.QueueIdentifier{
+			Recipient:         common.Address(cooperativeSettleRequestEvent.Recipient),
+			ChannelIdentifier: cooperativeSettleRequestEvent.ChannelIdentifier,
+		}
+		channel.transport.SendAsync(queueId, cooperativeSettleRequestMessage)
+	} else {
+		log.Warn("[HandleSendCooperativeSettleRequest] Message is nil")
+	}
+	return
+}
+
+func (self ChannelEventHandler) HandleSendCooperativeSettle(channel *ChannelService, cooperativeSettleEvent *transfer.SendCooperativeSettle) {
+	cooperativeSettleMessage := messages.MessageFromSendEvent(cooperativeSettleEvent)
+	if cooperativeSettleMessage != nil {
+		err := channel.Sign(cooperativeSettleMessage)
+		if err != nil {
+			log.Error("[HandleSendCooperativeSettle] ", err.Error())
+			return
+		}
+		queueId := &transfer.QueueIdentifier{
+			Recipient:         common.Address(cooperativeSettleEvent.Recipient),
+			ChannelIdentifier: cooperativeSettleEvent.ChannelIdentifier,
+		}
+		channel.transport.SendAsync(queueId, cooperativeSettleMessage)
+	} else {
+		log.Warn("[HandleSendCooperativeSettleRequest] Message is nil")
+	}
+	return
+}
+
+func (self ChannelEventHandler) HandleContractSendChannelCooperativeSettle(channel *ChannelService, channelCooperativeSettleEvent *transfer.ContractSendChannelCooperativeSettle) {
+	log.Debug("in HandleContractSendChannelCooperativeSettle")
+	args := channel.GetPaymentChannelArgs(channelCooperativeSettleEvent.TokenNetworkIdentifier, channelCooperativeSettleEvent.ChannelIdentifier)
+	if args == nil {
+		panic("error in HandleContractSendChannelCooperativeSettle, cannot get paymentchannel args")
+	}
+
+	//channelProxy := channel.chain.PaymentChannel(common.Address(channelCooperativeSettleEvent.TokenNetworkIdentifier), channelCooperativeSettleEvent.ChannelIdentifier, args)
+	channelProxy := channel.chain.PaymentChannel(common.Address(channelCooperativeSettleEvent.TokenNetworkIdentifier), channelCooperativeSettleEvent.ChannelIdentifier, args)
+
+	go func() {
+		err := channelProxy.CooperativeSettle(channelCooperativeSettleEvent.Participant1, channelCooperativeSettleEvent.Participant1Balance,
+			channelCooperativeSettleEvent.Participant2, channelCooperativeSettleEvent.Participant2Balance, channelCooperativeSettleEvent.Participant1Signature,
+			channelCooperativeSettleEvent.Participant1PublicKey, channelCooperativeSettleEvent.Participant2Signature, channelCooperativeSettleEvent.Participant2PublicKey)
+		if err != nil {
+			log.Warnf("[HandleContractSendChannelCooperativeSettle] error: %s", err)
+		}
+	}()
 }

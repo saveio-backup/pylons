@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"encoding/hex"
+
 	"github.com/oniio/oniChain/common/log"
 	scUtils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
@@ -540,7 +541,7 @@ func handleReceiveUnlock(chainState *ChainState, stateChange *ReceiveUnlock) *Tr
 
 func handleStateChangeForNode(chainStateArg State, stateChange StateChange) *TransitionResult {
 	chainState := chainStateArg.(*ChainState)
-	log.Debug("[handleStateChangeForNode] stateChange type: ", reflect.TypeOf(stateChange).String())
+
 	var iteration *TransitionResult
 	switch stateChange.(type) {
 	case *Block:
@@ -600,6 +601,18 @@ func handleStateChangeForNode(chainStateArg State, stateChange StateChange) *Tra
 	case *ContractReceiveChannelWithdraw:
 		contractReceiveWithdraw, _ := stateChange.(*ContractReceiveChannelWithdraw)
 		iteration = handleTokenNetworkAction(chainState, stateChange, contractReceiveWithdraw.TokenNetworkIdentifier)
+	case *ActionCooperativeSettle:
+		actionCooperativeSettle, _ := stateChange.(*ActionCooperativeSettle)
+		iteration = handleTokenNetworkAction(chainState, stateChange, actionCooperativeSettle.TokenNetworkIdentifier)
+	case *ReceiveCooperativeSettleRequest:
+		receiveCooperativeSettleRequest, _ := stateChange.(*ReceiveCooperativeSettleRequest)
+		iteration = handleTokenNetworkAction(chainState, stateChange, receiveCooperativeSettleRequest.TokenNetworkIdentifier)
+	case *ReceiveCooperativeSettle:
+		receiveCooperativeSettle, _ := stateChange.(*ReceiveCooperativeSettle)
+		iteration = handleTokenNetworkAction(chainState, stateChange, receiveCooperativeSettle.TokenNetworkIdentifier)
+	case *ContractReceiveChannelCooperativeSettled:
+		contractReceiveChannelCooperativeSettled, _ := stateChange.(*ContractReceiveChannelCooperativeSettled)
+		iteration = handleTokenNetworkAction(chainState, stateChange, contractReceiveChannelCooperativeSettled.TokenNetworkIdentifier)
 	case *ActionChangeNodeNetworkState:
 		actionChangeNodeNetworkState, _ := stateChange.(*ActionChangeNodeNetworkState)
 		iteration = handleNodeChangeNetworkState(chainState, actionChangeNodeNetworkState)
@@ -719,6 +732,7 @@ func isTransactionPending(chainState *ChainState, transaction Event, stateChange
 }
 
 func updateQueues(iteration *TransitionResult, stateChange StateChange) {
+	log.Debug("[updateQueses] for stateChange: ", reflect.TypeOf(stateChange).String())
 	var events []Event
 	chainState := iteration.NewState.(*ChainState)
 	if GetContractReceiveStateChange(stateChange) != nil {

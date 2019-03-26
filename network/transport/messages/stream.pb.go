@@ -34,7 +34,7 @@ type ChainID struct {
 func (m *ChainID) Reset()      { *m = ChainID{} }
 func (*ChainID) ProtoMessage() {}
 func (*ChainID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{0}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{0}
 }
 func (m *ChainID) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -77,7 +77,7 @@ type TokenAmount struct {
 func (m *TokenAmount) Reset()      { *m = TokenAmount{} }
 func (*TokenAmount) ProtoMessage() {}
 func (*TokenAmount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{1}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{1}
 }
 func (m *TokenAmount) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -120,7 +120,7 @@ type Locksroot struct {
 func (m *Locksroot) Reset()      { *m = Locksroot{} }
 func (*Locksroot) ProtoMessage() {}
 func (*Locksroot) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{2}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{2}
 }
 func (m *Locksroot) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -163,7 +163,7 @@ type ChannelID struct {
 func (m *ChannelID) Reset()      { *m = ChannelID{} }
 func (*ChannelID) ProtoMessage() {}
 func (*ChannelID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{3}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{3}
 }
 func (m *ChannelID) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -206,7 +206,7 @@ type TokenNetworkAddress struct {
 func (m *TokenNetworkAddress) Reset()      { *m = TokenNetworkAddress{} }
 func (*TokenNetworkAddress) ProtoMessage() {}
 func (*TokenNetworkAddress) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{4}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{4}
 }
 func (m *TokenNetworkAddress) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -249,7 +249,7 @@ type MessageID struct {
 func (m *MessageID) Reset()      { *m = MessageID{} }
 func (*MessageID) ProtoMessage() {}
 func (*MessageID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{5}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{5}
 }
 func (m *MessageID) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -292,7 +292,7 @@ type PaymentID struct {
 func (m *PaymentID) Reset()      { *m = PaymentID{} }
 func (*PaymentID) ProtoMessage() {}
 func (*PaymentID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{6}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{6}
 }
 func (m *PaymentID) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -335,7 +335,7 @@ type PaymentAmount struct {
 func (m *PaymentAmount) Reset()      { *m = PaymentAmount{} }
 func (*PaymentAmount) ProtoMessage() {}
 func (*PaymentAmount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{7}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{7}
 }
 func (m *PaymentAmount) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -378,7 +378,7 @@ type SecretHash struct {
 func (m *SecretHash) Reset()      { *m = SecretHash{} }
 func (*SecretHash) ProtoMessage() {}
 func (*SecretHash) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{8}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{8}
 }
 func (m *SecretHash) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -421,7 +421,7 @@ type BlockExpiration struct {
 func (m *BlockExpiration) Reset()      { *m = BlockExpiration{} }
 func (*BlockExpiration) ProtoMessage() {}
 func (*BlockExpiration) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{9}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{9}
 }
 func (m *BlockExpiration) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -464,7 +464,7 @@ type SecretType struct {
 func (m *SecretType) Reset()      { *m = SecretType{} }
 func (*SecretType) ProtoMessage() {}
 func (*SecretType) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{10}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{10}
 }
 func (m *SecretType) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -507,7 +507,7 @@ type Address struct {
 func (m *Address) Reset()      { *m = Address{} }
 func (*Address) ProtoMessage() {}
 func (*Address) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{11}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{11}
 }
 func (m *Address) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -552,7 +552,7 @@ type HashTimeLock struct {
 func (m *HashTimeLock) Reset()      { *m = HashTimeLock{} }
 func (*HashTimeLock) ProtoMessage() {}
 func (*HashTimeLock) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{12}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{12}
 }
 func (m *HashTimeLock) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -613,7 +613,7 @@ type SignedMessage struct {
 func (m *SignedMessage) Reset()      { *m = SignedMessage{} }
 func (*SignedMessage) ProtoMessage() {}
 func (*SignedMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{13}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{13}
 }
 func (m *SignedMessage) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -679,7 +679,7 @@ type EnvelopeMessage struct {
 func (m *EnvelopeMessage) Reset()      { *m = EnvelopeMessage{} }
 func (*EnvelopeMessage) ProtoMessage() {}
 func (*EnvelopeMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{14}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{14}
 }
 func (m *EnvelopeMessage) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -773,7 +773,7 @@ type Processed struct {
 func (m *Processed) Reset()      { *m = Processed{} }
 func (*Processed) ProtoMessage() {}
 func (*Processed) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{15}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{15}
 }
 func (m *Processed) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -825,7 +825,7 @@ type Delivered struct {
 func (m *Delivered) Reset()      { *m = Delivered{} }
 func (*Delivered) ProtoMessage() {}
 func (*Delivered) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{16}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{16}
 }
 func (m *Delivered) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -881,7 +881,7 @@ type SecretRequest struct {
 func (m *SecretRequest) Reset()      { *m = SecretRequest{} }
 func (*SecretRequest) ProtoMessage() {}
 func (*SecretRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{17}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{17}
 }
 func (m *SecretRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -963,7 +963,7 @@ type Secret struct {
 func (m *Secret) Reset()      { *m = Secret{} }
 func (*Secret) ProtoMessage() {}
 func (*Secret) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{18}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{18}
 }
 func (m *Secret) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1030,7 +1030,7 @@ type RevealSecret struct {
 func (m *RevealSecret) Reset()      { *m = RevealSecret{} }
 func (*RevealSecret) ProtoMessage() {}
 func (*RevealSecret) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{19}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{19}
 }
 func (m *RevealSecret) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1092,7 +1092,7 @@ type DirectTransfer struct {
 func (m *DirectTransfer) Reset()      { *m = DirectTransfer{} }
 func (*DirectTransfer) ProtoMessage() {}
 func (*DirectTransfer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{20}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{20}
 }
 func (m *DirectTransfer) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1169,7 +1169,7 @@ type LockedTransferBase struct {
 func (m *LockedTransferBase) Reset()      { *m = LockedTransferBase{} }
 func (*LockedTransferBase) ProtoMessage() {}
 func (*LockedTransferBase) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{21}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{21}
 }
 func (m *LockedTransferBase) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1251,7 +1251,7 @@ type LockedTransfer struct {
 func (m *LockedTransfer) Reset()      { *m = LockedTransfer{} }
 func (*LockedTransfer) ProtoMessage() {}
 func (*LockedTransfer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{22}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{22}
 }
 func (m *LockedTransfer) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1316,7 +1316,7 @@ type RefundTransfer struct {
 func (m *RefundTransfer) Reset()      { *m = RefundTransfer{} }
 func (*RefundTransfer) ProtoMessage() {}
 func (*RefundTransfer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{23}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{23}
 }
 func (m *RefundTransfer) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1363,7 +1363,7 @@ type LockExpired struct {
 func (m *LockExpired) Reset()      { *m = LockExpired{} }
 func (*LockExpired) ProtoMessage() {}
 func (*LockExpired) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{24}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{24}
 }
 func (m *LockExpired) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1432,7 +1432,7 @@ type WithdrawRequest struct {
 func (m *WithdrawRequest) Reset()      { *m = WithdrawRequest{} }
 func (*WithdrawRequest) ProtoMessage() {}
 func (*WithdrawRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{25}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{25}
 }
 func (m *WithdrawRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1516,7 +1516,7 @@ type Withdraw struct {
 func (m *Withdraw) Reset()      { *m = Withdraw{} }
 func (*Withdraw) ProtoMessage() {}
 func (*Withdraw) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_3dd3cb028a1557c0, []int{26}
+	return fileDescriptor_stream_9d2f4cd204746317, []int{26}
 }
 func (m *Withdraw) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1594,6 +1594,212 @@ func (m *Withdraw) GetPartnerSignature() *SignedMessage {
 	return nil
 }
 
+type CooperativeSettleRequest struct {
+	TokenNetworkAddress   *TokenNetworkAddress `protobuf:"bytes,1,opt,name=token_network_address,json=tokenNetworkAddress" json:"token_network_address,omitempty"`
+	MessageIdentifier     *MessageID           `protobuf:"bytes,2,opt,name=message_identifier,json=messageIdentifier" json:"message_identifier,omitempty"`
+	ChannelIdentifier     *ChannelID           `protobuf:"bytes,3,opt,name=channel_identifier,json=channelIdentifier" json:"channel_identifier,omitempty"`
+	Participant1          *Address             `protobuf:"bytes,4,opt,name=participant1" json:"participant1,omitempty"`
+	Participant1Balance   *TokenAmount         `protobuf:"bytes,5,opt,name=participant1_balance,json=participant1Balance" json:"participant1_balance,omitempty"`
+	Participant2          *Address             `protobuf:"bytes,6,opt,name=participant2" json:"participant2,omitempty"`
+	Participant2Balance   *TokenAmount         `protobuf:"bytes,7,opt,name=participant2_balance,json=participant2Balance" json:"participant2_balance,omitempty"`
+	Participant1Signature *SignedMessage       `protobuf:"bytes,8,opt,name=participant1_signature,json=participant1Signature" json:"participant1_signature,omitempty"`
+}
+
+func (m *CooperativeSettleRequest) Reset()      { *m = CooperativeSettleRequest{} }
+func (*CooperativeSettleRequest) ProtoMessage() {}
+func (*CooperativeSettleRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_stream_9d2f4cd204746317, []int{27}
+}
+func (m *CooperativeSettleRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CooperativeSettleRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CooperativeSettleRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *CooperativeSettleRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CooperativeSettleRequest.Merge(dst, src)
+}
+func (m *CooperativeSettleRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *CooperativeSettleRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_CooperativeSettleRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CooperativeSettleRequest proto.InternalMessageInfo
+
+func (m *CooperativeSettleRequest) GetTokenNetworkAddress() *TokenNetworkAddress {
+	if m != nil {
+		return m.TokenNetworkAddress
+	}
+	return nil
+}
+
+func (m *CooperativeSettleRequest) GetMessageIdentifier() *MessageID {
+	if m != nil {
+		return m.MessageIdentifier
+	}
+	return nil
+}
+
+func (m *CooperativeSettleRequest) GetChannelIdentifier() *ChannelID {
+	if m != nil {
+		return m.ChannelIdentifier
+	}
+	return nil
+}
+
+func (m *CooperativeSettleRequest) GetParticipant1() *Address {
+	if m != nil {
+		return m.Participant1
+	}
+	return nil
+}
+
+func (m *CooperativeSettleRequest) GetParticipant1Balance() *TokenAmount {
+	if m != nil {
+		return m.Participant1Balance
+	}
+	return nil
+}
+
+func (m *CooperativeSettleRequest) GetParticipant2() *Address {
+	if m != nil {
+		return m.Participant2
+	}
+	return nil
+}
+
+func (m *CooperativeSettleRequest) GetParticipant2Balance() *TokenAmount {
+	if m != nil {
+		return m.Participant2Balance
+	}
+	return nil
+}
+
+func (m *CooperativeSettleRequest) GetParticipant1Signature() *SignedMessage {
+	if m != nil {
+		return m.Participant1Signature
+	}
+	return nil
+}
+
+type CooperativeSettle struct {
+	TokenNetworkAddress   *TokenNetworkAddress `protobuf:"bytes,1,opt,name=token_network_address,json=tokenNetworkAddress" json:"token_network_address,omitempty"`
+	MessageIdentifier     *MessageID           `protobuf:"bytes,2,opt,name=message_identifier,json=messageIdentifier" json:"message_identifier,omitempty"`
+	ChannelIdentifier     *ChannelID           `protobuf:"bytes,3,opt,name=channel_identifier,json=channelIdentifier" json:"channel_identifier,omitempty"`
+	Participant1          *Address             `protobuf:"bytes,4,opt,name=participant1" json:"participant1,omitempty"`
+	Participant1Balance   *TokenAmount         `protobuf:"bytes,5,opt,name=participant1_balance,json=participant1Balance" json:"participant1_balance,omitempty"`
+	Participant2          *Address             `protobuf:"bytes,6,opt,name=participant2" json:"participant2,omitempty"`
+	Participant2Balance   *TokenAmount         `protobuf:"bytes,7,opt,name=participant2_balance,json=participant2Balance" json:"participant2_balance,omitempty"`
+	Participant1Signature *SignedMessage       `protobuf:"bytes,8,opt,name=participant1_signature,json=participant1Signature" json:"participant1_signature,omitempty"`
+	Participant2Signature *SignedMessage       `protobuf:"bytes,9,opt,name=participant2_signature,json=participant2Signature" json:"participant2_signature,omitempty"`
+}
+
+func (m *CooperativeSettle) Reset()      { *m = CooperativeSettle{} }
+func (*CooperativeSettle) ProtoMessage() {}
+func (*CooperativeSettle) Descriptor() ([]byte, []int) {
+	return fileDescriptor_stream_9d2f4cd204746317, []int{28}
+}
+func (m *CooperativeSettle) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CooperativeSettle) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CooperativeSettle.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (dst *CooperativeSettle) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CooperativeSettle.Merge(dst, src)
+}
+func (m *CooperativeSettle) XXX_Size() int {
+	return m.Size()
+}
+func (m *CooperativeSettle) XXX_DiscardUnknown() {
+	xxx_messageInfo_CooperativeSettle.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CooperativeSettle proto.InternalMessageInfo
+
+func (m *CooperativeSettle) GetTokenNetworkAddress() *TokenNetworkAddress {
+	if m != nil {
+		return m.TokenNetworkAddress
+	}
+	return nil
+}
+
+func (m *CooperativeSettle) GetMessageIdentifier() *MessageID {
+	if m != nil {
+		return m.MessageIdentifier
+	}
+	return nil
+}
+
+func (m *CooperativeSettle) GetChannelIdentifier() *ChannelID {
+	if m != nil {
+		return m.ChannelIdentifier
+	}
+	return nil
+}
+
+func (m *CooperativeSettle) GetParticipant1() *Address {
+	if m != nil {
+		return m.Participant1
+	}
+	return nil
+}
+
+func (m *CooperativeSettle) GetParticipant1Balance() *TokenAmount {
+	if m != nil {
+		return m.Participant1Balance
+	}
+	return nil
+}
+
+func (m *CooperativeSettle) GetParticipant2() *Address {
+	if m != nil {
+		return m.Participant2
+	}
+	return nil
+}
+
+func (m *CooperativeSettle) GetParticipant2Balance() *TokenAmount {
+	if m != nil {
+		return m.Participant2Balance
+	}
+	return nil
+}
+
+func (m *CooperativeSettle) GetParticipant1Signature() *SignedMessage {
+	if m != nil {
+		return m.Participant1Signature
+	}
+	return nil
+}
+
+func (m *CooperativeSettle) GetParticipant2Signature() *SignedMessage {
+	if m != nil {
+		return m.Participant2Signature
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*ChainID)(nil), "messages.ChainID")
 	proto.RegisterType((*TokenAmount)(nil), "messages.TokenAmount")
@@ -1622,6 +1828,8 @@ func init() {
 	proto.RegisterType((*LockExpired)(nil), "messages.LockExpired")
 	proto.RegisterType((*WithdrawRequest)(nil), "messages.WithdrawRequest")
 	proto.RegisterType((*Withdraw)(nil), "messages.Withdraw")
+	proto.RegisterType((*CooperativeSettleRequest)(nil), "messages.CooperativeSettleRequest")
+	proto.RegisterType((*CooperativeSettle)(nil), "messages.CooperativeSettle")
 }
 func (this *ChainID) VerboseEqual(that interface{}) error {
 	if that == nil {
@@ -3375,6 +3583,204 @@ func (this *Withdraw) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *CooperativeSettleRequest) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*CooperativeSettleRequest)
+	if !ok {
+		that2, ok := that.(CooperativeSettleRequest)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *CooperativeSettleRequest")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *CooperativeSettleRequest but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *CooperativeSettleRequest but is not nil && this == nil")
+	}
+	if !this.TokenNetworkAddress.Equal(that1.TokenNetworkAddress) {
+		return fmt.Errorf("TokenNetworkAddress this(%v) Not Equal that(%v)", this.TokenNetworkAddress, that1.TokenNetworkAddress)
+	}
+	if !this.MessageIdentifier.Equal(that1.MessageIdentifier) {
+		return fmt.Errorf("MessageIdentifier this(%v) Not Equal that(%v)", this.MessageIdentifier, that1.MessageIdentifier)
+	}
+	if !this.ChannelIdentifier.Equal(that1.ChannelIdentifier) {
+		return fmt.Errorf("ChannelIdentifier this(%v) Not Equal that(%v)", this.ChannelIdentifier, that1.ChannelIdentifier)
+	}
+	if !this.Participant1.Equal(that1.Participant1) {
+		return fmt.Errorf("Participant1 this(%v) Not Equal that(%v)", this.Participant1, that1.Participant1)
+	}
+	if !this.Participant1Balance.Equal(that1.Participant1Balance) {
+		return fmt.Errorf("Participant1Balance this(%v) Not Equal that(%v)", this.Participant1Balance, that1.Participant1Balance)
+	}
+	if !this.Participant2.Equal(that1.Participant2) {
+		return fmt.Errorf("Participant2 this(%v) Not Equal that(%v)", this.Participant2, that1.Participant2)
+	}
+	if !this.Participant2Balance.Equal(that1.Participant2Balance) {
+		return fmt.Errorf("Participant2Balance this(%v) Not Equal that(%v)", this.Participant2Balance, that1.Participant2Balance)
+	}
+	if !this.Participant1Signature.Equal(that1.Participant1Signature) {
+		return fmt.Errorf("Participant1Signature this(%v) Not Equal that(%v)", this.Participant1Signature, that1.Participant1Signature)
+	}
+	return nil
+}
+func (this *CooperativeSettleRequest) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*CooperativeSettleRequest)
+	if !ok {
+		that2, ok := that.(CooperativeSettleRequest)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !this.TokenNetworkAddress.Equal(that1.TokenNetworkAddress) {
+		return false
+	}
+	if !this.MessageIdentifier.Equal(that1.MessageIdentifier) {
+		return false
+	}
+	if !this.ChannelIdentifier.Equal(that1.ChannelIdentifier) {
+		return false
+	}
+	if !this.Participant1.Equal(that1.Participant1) {
+		return false
+	}
+	if !this.Participant1Balance.Equal(that1.Participant1Balance) {
+		return false
+	}
+	if !this.Participant2.Equal(that1.Participant2) {
+		return false
+	}
+	if !this.Participant2Balance.Equal(that1.Participant2Balance) {
+		return false
+	}
+	if !this.Participant1Signature.Equal(that1.Participant1Signature) {
+		return false
+	}
+	return true
+}
+func (this *CooperativeSettle) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*CooperativeSettle)
+	if !ok {
+		that2, ok := that.(CooperativeSettle)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *CooperativeSettle")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *CooperativeSettle but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *CooperativeSettle but is not nil && this == nil")
+	}
+	if !this.TokenNetworkAddress.Equal(that1.TokenNetworkAddress) {
+		return fmt.Errorf("TokenNetworkAddress this(%v) Not Equal that(%v)", this.TokenNetworkAddress, that1.TokenNetworkAddress)
+	}
+	if !this.MessageIdentifier.Equal(that1.MessageIdentifier) {
+		return fmt.Errorf("MessageIdentifier this(%v) Not Equal that(%v)", this.MessageIdentifier, that1.MessageIdentifier)
+	}
+	if !this.ChannelIdentifier.Equal(that1.ChannelIdentifier) {
+		return fmt.Errorf("ChannelIdentifier this(%v) Not Equal that(%v)", this.ChannelIdentifier, that1.ChannelIdentifier)
+	}
+	if !this.Participant1.Equal(that1.Participant1) {
+		return fmt.Errorf("Participant1 this(%v) Not Equal that(%v)", this.Participant1, that1.Participant1)
+	}
+	if !this.Participant1Balance.Equal(that1.Participant1Balance) {
+		return fmt.Errorf("Participant1Balance this(%v) Not Equal that(%v)", this.Participant1Balance, that1.Participant1Balance)
+	}
+	if !this.Participant2.Equal(that1.Participant2) {
+		return fmt.Errorf("Participant2 this(%v) Not Equal that(%v)", this.Participant2, that1.Participant2)
+	}
+	if !this.Participant2Balance.Equal(that1.Participant2Balance) {
+		return fmt.Errorf("Participant2Balance this(%v) Not Equal that(%v)", this.Participant2Balance, that1.Participant2Balance)
+	}
+	if !this.Participant1Signature.Equal(that1.Participant1Signature) {
+		return fmt.Errorf("Participant1Signature this(%v) Not Equal that(%v)", this.Participant1Signature, that1.Participant1Signature)
+	}
+	if !this.Participant2Signature.Equal(that1.Participant2Signature) {
+		return fmt.Errorf("Participant2Signature this(%v) Not Equal that(%v)", this.Participant2Signature, that1.Participant2Signature)
+	}
+	return nil
+}
+func (this *CooperativeSettle) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*CooperativeSettle)
+	if !ok {
+		that2, ok := that.(CooperativeSettle)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !this.TokenNetworkAddress.Equal(that1.TokenNetworkAddress) {
+		return false
+	}
+	if !this.MessageIdentifier.Equal(that1.MessageIdentifier) {
+		return false
+	}
+	if !this.ChannelIdentifier.Equal(that1.ChannelIdentifier) {
+		return false
+	}
+	if !this.Participant1.Equal(that1.Participant1) {
+		return false
+	}
+	if !this.Participant1Balance.Equal(that1.Participant1Balance) {
+		return false
+	}
+	if !this.Participant2.Equal(that1.Participant2) {
+		return false
+	}
+	if !this.Participant2Balance.Equal(that1.Participant2Balance) {
+		return false
+	}
+	if !this.Participant1Signature.Equal(that1.Participant1Signature) {
+		return false
+	}
+	if !this.Participant2Signature.Equal(that1.Participant2Signature) {
+		return false
+	}
+	return true
+}
 func (this *ChainID) GoString() string {
 	if this == nil {
 		return "nil"
@@ -3810,6 +4216,75 @@ func (this *Withdraw) GoString() string {
 	}
 	if this.PartnerSignature != nil {
 		s = append(s, "PartnerSignature: "+fmt.Sprintf("%#v", this.PartnerSignature)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *CooperativeSettleRequest) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 12)
+	s = append(s, "&messages.CooperativeSettleRequest{")
+	if this.TokenNetworkAddress != nil {
+		s = append(s, "TokenNetworkAddress: "+fmt.Sprintf("%#v", this.TokenNetworkAddress)+",\n")
+	}
+	if this.MessageIdentifier != nil {
+		s = append(s, "MessageIdentifier: "+fmt.Sprintf("%#v", this.MessageIdentifier)+",\n")
+	}
+	if this.ChannelIdentifier != nil {
+		s = append(s, "ChannelIdentifier: "+fmt.Sprintf("%#v", this.ChannelIdentifier)+",\n")
+	}
+	if this.Participant1 != nil {
+		s = append(s, "Participant1: "+fmt.Sprintf("%#v", this.Participant1)+",\n")
+	}
+	if this.Participant1Balance != nil {
+		s = append(s, "Participant1Balance: "+fmt.Sprintf("%#v", this.Participant1Balance)+",\n")
+	}
+	if this.Participant2 != nil {
+		s = append(s, "Participant2: "+fmt.Sprintf("%#v", this.Participant2)+",\n")
+	}
+	if this.Participant2Balance != nil {
+		s = append(s, "Participant2Balance: "+fmt.Sprintf("%#v", this.Participant2Balance)+",\n")
+	}
+	if this.Participant1Signature != nil {
+		s = append(s, "Participant1Signature: "+fmt.Sprintf("%#v", this.Participant1Signature)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *CooperativeSettle) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 13)
+	s = append(s, "&messages.CooperativeSettle{")
+	if this.TokenNetworkAddress != nil {
+		s = append(s, "TokenNetworkAddress: "+fmt.Sprintf("%#v", this.TokenNetworkAddress)+",\n")
+	}
+	if this.MessageIdentifier != nil {
+		s = append(s, "MessageIdentifier: "+fmt.Sprintf("%#v", this.MessageIdentifier)+",\n")
+	}
+	if this.ChannelIdentifier != nil {
+		s = append(s, "ChannelIdentifier: "+fmt.Sprintf("%#v", this.ChannelIdentifier)+",\n")
+	}
+	if this.Participant1 != nil {
+		s = append(s, "Participant1: "+fmt.Sprintf("%#v", this.Participant1)+",\n")
+	}
+	if this.Participant1Balance != nil {
+		s = append(s, "Participant1Balance: "+fmt.Sprintf("%#v", this.Participant1Balance)+",\n")
+	}
+	if this.Participant2 != nil {
+		s = append(s, "Participant2: "+fmt.Sprintf("%#v", this.Participant2)+",\n")
+	}
+	if this.Participant2Balance != nil {
+		s = append(s, "Participant2Balance: "+fmt.Sprintf("%#v", this.Participant2Balance)+",\n")
+	}
+	if this.Participant1Signature != nil {
+		s = append(s, "Participant1Signature: "+fmt.Sprintf("%#v", this.Participant1Signature)+",\n")
+	}
+	if this.Participant2Signature != nil {
+		s = append(s, "Participant2Signature: "+fmt.Sprintf("%#v", this.Participant2Signature)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -4995,6 +5470,212 @@ func (m *Withdraw) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func (m *CooperativeSettleRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CooperativeSettleRequest) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.TokenNetworkAddress != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.TokenNetworkAddress.Size()))
+		n61, err := m.TokenNetworkAddress.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n61
+	}
+	if m.MessageIdentifier != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.MessageIdentifier.Size()))
+		n62, err := m.MessageIdentifier.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n62
+	}
+	if m.ChannelIdentifier != nil {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.ChannelIdentifier.Size()))
+		n63, err := m.ChannelIdentifier.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n63
+	}
+	if m.Participant1 != nil {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.Participant1.Size()))
+		n64, err := m.Participant1.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n64
+	}
+	if m.Participant1Balance != nil {
+		dAtA[i] = 0x2a
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.Participant1Balance.Size()))
+		n65, err := m.Participant1Balance.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n65
+	}
+	if m.Participant2 != nil {
+		dAtA[i] = 0x32
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.Participant2.Size()))
+		n66, err := m.Participant2.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n66
+	}
+	if m.Participant2Balance != nil {
+		dAtA[i] = 0x3a
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.Participant2Balance.Size()))
+		n67, err := m.Participant2Balance.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n67
+	}
+	if m.Participant1Signature != nil {
+		dAtA[i] = 0x42
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.Participant1Signature.Size()))
+		n68, err := m.Participant1Signature.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n68
+	}
+	return i, nil
+}
+
+func (m *CooperativeSettle) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CooperativeSettle) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.TokenNetworkAddress != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.TokenNetworkAddress.Size()))
+		n69, err := m.TokenNetworkAddress.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n69
+	}
+	if m.MessageIdentifier != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.MessageIdentifier.Size()))
+		n70, err := m.MessageIdentifier.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n70
+	}
+	if m.ChannelIdentifier != nil {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.ChannelIdentifier.Size()))
+		n71, err := m.ChannelIdentifier.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n71
+	}
+	if m.Participant1 != nil {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.Participant1.Size()))
+		n72, err := m.Participant1.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n72
+	}
+	if m.Participant1Balance != nil {
+		dAtA[i] = 0x2a
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.Participant1Balance.Size()))
+		n73, err := m.Participant1Balance.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n73
+	}
+	if m.Participant2 != nil {
+		dAtA[i] = 0x32
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.Participant2.Size()))
+		n74, err := m.Participant2.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n74
+	}
+	if m.Participant2Balance != nil {
+		dAtA[i] = 0x3a
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.Participant2Balance.Size()))
+		n75, err := m.Participant2Balance.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n75
+	}
+	if m.Participant1Signature != nil {
+		dAtA[i] = 0x42
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.Participant1Signature.Size()))
+		n76, err := m.Participant1Signature.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n76
+	}
+	if m.Participant2Signature != nil {
+		dAtA[i] = 0x4a
+		i++
+		i = encodeVarintStream(dAtA, i, uint64(m.Participant2Signature.Size()))
+		n77, err := m.Participant2Signature.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n77
+	}
+	return i, nil
+}
+
 func encodeVarintStream(dAtA []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -5542,6 +6223,92 @@ func (m *Withdraw) Size() (n int) {
 	return n
 }
 
+func (m *CooperativeSettleRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.TokenNetworkAddress != nil {
+		l = m.TokenNetworkAddress.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.MessageIdentifier != nil {
+		l = m.MessageIdentifier.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.ChannelIdentifier != nil {
+		l = m.ChannelIdentifier.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.Participant1 != nil {
+		l = m.Participant1.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.Participant1Balance != nil {
+		l = m.Participant1Balance.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.Participant2 != nil {
+		l = m.Participant2.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.Participant2Balance != nil {
+		l = m.Participant2Balance.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.Participant1Signature != nil {
+		l = m.Participant1Signature.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	return n
+}
+
+func (m *CooperativeSettle) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.TokenNetworkAddress != nil {
+		l = m.TokenNetworkAddress.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.MessageIdentifier != nil {
+		l = m.MessageIdentifier.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.ChannelIdentifier != nil {
+		l = m.ChannelIdentifier.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.Participant1 != nil {
+		l = m.Participant1.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.Participant1Balance != nil {
+		l = m.Participant1Balance.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.Participant2 != nil {
+		l = m.Participant2.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.Participant2Balance != nil {
+		l = m.Participant2Balance.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.Participant1Signature != nil {
+		l = m.Participant1Signature.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	if m.Participant2Signature != nil {
+		l = m.Participant2Signature.Size()
+		n += 1 + l + sovStream(uint64(l))
+	}
+	return n
+}
+
 func sovStream(x uint64) (n int) {
 	for {
 		n++
@@ -5870,6 +6637,41 @@ func (this *Withdraw) String() string {
 		`WithdrawAmount:` + strings.Replace(fmt.Sprintf("%v", this.WithdrawAmount), "TokenAmount", "TokenAmount", 1) + `,`,
 		`ParticipantSignature:` + strings.Replace(fmt.Sprintf("%v", this.ParticipantSignature), "SignedMessage", "SignedMessage", 1) + `,`,
 		`PartnerSignature:` + strings.Replace(fmt.Sprintf("%v", this.PartnerSignature), "SignedMessage", "SignedMessage", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *CooperativeSettleRequest) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&CooperativeSettleRequest{`,
+		`TokenNetworkAddress:` + strings.Replace(fmt.Sprintf("%v", this.TokenNetworkAddress), "TokenNetworkAddress", "TokenNetworkAddress", 1) + `,`,
+		`MessageIdentifier:` + strings.Replace(fmt.Sprintf("%v", this.MessageIdentifier), "MessageID", "MessageID", 1) + `,`,
+		`ChannelIdentifier:` + strings.Replace(fmt.Sprintf("%v", this.ChannelIdentifier), "ChannelID", "ChannelID", 1) + `,`,
+		`Participant1:` + strings.Replace(fmt.Sprintf("%v", this.Participant1), "Address", "Address", 1) + `,`,
+		`Participant1Balance:` + strings.Replace(fmt.Sprintf("%v", this.Participant1Balance), "TokenAmount", "TokenAmount", 1) + `,`,
+		`Participant2:` + strings.Replace(fmt.Sprintf("%v", this.Participant2), "Address", "Address", 1) + `,`,
+		`Participant2Balance:` + strings.Replace(fmt.Sprintf("%v", this.Participant2Balance), "TokenAmount", "TokenAmount", 1) + `,`,
+		`Participant1Signature:` + strings.Replace(fmt.Sprintf("%v", this.Participant1Signature), "SignedMessage", "SignedMessage", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *CooperativeSettle) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&CooperativeSettle{`,
+		`TokenNetworkAddress:` + strings.Replace(fmt.Sprintf("%v", this.TokenNetworkAddress), "TokenNetworkAddress", "TokenNetworkAddress", 1) + `,`,
+		`MessageIdentifier:` + strings.Replace(fmt.Sprintf("%v", this.MessageIdentifier), "MessageID", "MessageID", 1) + `,`,
+		`ChannelIdentifier:` + strings.Replace(fmt.Sprintf("%v", this.ChannelIdentifier), "ChannelID", "ChannelID", 1) + `,`,
+		`Participant1:` + strings.Replace(fmt.Sprintf("%v", this.Participant1), "Address", "Address", 1) + `,`,
+		`Participant1Balance:` + strings.Replace(fmt.Sprintf("%v", this.Participant1Balance), "TokenAmount", "TokenAmount", 1) + `,`,
+		`Participant2:` + strings.Replace(fmt.Sprintf("%v", this.Participant2), "Address", "Address", 1) + `,`,
+		`Participant2Balance:` + strings.Replace(fmt.Sprintf("%v", this.Participant2Balance), "TokenAmount", "TokenAmount", 1) + `,`,
+		`Participant1Signature:` + strings.Replace(fmt.Sprintf("%v", this.Participant1Signature), "SignedMessage", "SignedMessage", 1) + `,`,
+		`Participant2Signature:` + strings.Replace(fmt.Sprintf("%v", this.Participant2Signature), "SignedMessage", "SignedMessage", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9600,6 +10402,667 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowStream
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CooperativeSettleRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CooperativeSettleRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TokenNetworkAddress", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.TokenNetworkAddress == nil {
+				m.TokenNetworkAddress = &TokenNetworkAddress{}
+			}
+			if err := m.TokenNetworkAddress.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MessageIdentifier", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.MessageIdentifier == nil {
+				m.MessageIdentifier = &MessageID{}
+			}
+			if err := m.MessageIdentifier.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChannelIdentifier", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ChannelIdentifier == nil {
+				m.ChannelIdentifier = &ChannelID{}
+			}
+			if err := m.ChannelIdentifier.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Participant1", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Participant1 == nil {
+				m.Participant1 = &Address{}
+			}
+			if err := m.Participant1.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Participant1Balance", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Participant1Balance == nil {
+				m.Participant1Balance = &TokenAmount{}
+			}
+			if err := m.Participant1Balance.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Participant2", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Participant2 == nil {
+				m.Participant2 = &Address{}
+			}
+			if err := m.Participant2.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Participant2Balance", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Participant2Balance == nil {
+				m.Participant2Balance = &TokenAmount{}
+			}
+			if err := m.Participant2Balance.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Participant1Signature", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Participant1Signature == nil {
+				m.Participant1Signature = &SignedMessage{}
+			}
+			if err := m.Participant1Signature.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipStream(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthStream
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowStream
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CooperativeSettle: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CooperativeSettle: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TokenNetworkAddress", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.TokenNetworkAddress == nil {
+				m.TokenNetworkAddress = &TokenNetworkAddress{}
+			}
+			if err := m.TokenNetworkAddress.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MessageIdentifier", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.MessageIdentifier == nil {
+				m.MessageIdentifier = &MessageID{}
+			}
+			if err := m.MessageIdentifier.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChannelIdentifier", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ChannelIdentifier == nil {
+				m.ChannelIdentifier = &ChannelID{}
+			}
+			if err := m.ChannelIdentifier.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Participant1", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Participant1 == nil {
+				m.Participant1 = &Address{}
+			}
+			if err := m.Participant1.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Participant1Balance", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Participant1Balance == nil {
+				m.Participant1Balance = &TokenAmount{}
+			}
+			if err := m.Participant1Balance.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Participant2", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Participant2 == nil {
+				m.Participant2 = &Address{}
+			}
+			if err := m.Participant2.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Participant2Balance", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Participant2Balance == nil {
+				m.Participant2Balance = &TokenAmount{}
+			}
+			if err := m.Participant2Balance.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Participant1Signature", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Participant1Signature == nil {
+				m.Participant1Signature = &SignedMessage{}
+			}
+			if err := m.Participant1Signature.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Participant2Signature", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStream
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStream
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Participant2Signature == nil {
+				m.Participant2Signature = &SignedMessage{}
+			}
+			if err := m.Participant2Signature.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipStream(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthStream
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func skipStream(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
@@ -9706,83 +11169,90 @@ var (
 )
 
 func init() {
-	proto.RegisterFile("network/transport/messages/stream.proto", fileDescriptor_stream_3dd3cb028a1557c0)
+	proto.RegisterFile("network/transport/messages/stream.proto", fileDescriptor_stream_9d2f4cd204746317)
 }
 
-var fileDescriptor_stream_3dd3cb028a1557c0 = []byte{
-	// 1178 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x58, 0xcf, 0x6f, 0x1b, 0x45,
-	0x14, 0xce, 0xda, 0x8e, 0x1d, 0x3f, 0xdb, 0x71, 0x3c, 0x49, 0x4a, 0x5a, 0xa5, 0x0b, 0x2c, 0x45,
-	0x25, 0x55, 0x1a, 0x97, 0x56, 0x45, 0x02, 0x21, 0x50, 0x5d, 0x57, 0xc2, 0x52, 0x8a, 0xda, 0x4d,
-	0x10, 0x47, 0x6b, 0xed, 0x7d, 0xb1, 0x57, 0x71, 0x76, 0x97, 0xd9, 0x71, 0x42, 0x6e, 0x1c, 0x10,
-	0x67, 0xae, 0xfc, 0x07, 0xdc, 0x10, 0x27, 0xb8, 0x71, 0xe5, 0xd8, 0x63, 0x8e, 0x4d, 0x72, 0xe1,
-	0x04, 0xfc, 0x07, 0xa0, 0x9d, 0x9d, 0x99, 0xfd, 0x81, 0x1b, 0x9c, 0x28, 0x87, 0xaa, 0xea, 0x6d,
-	0xdf, 0xf8, 0x7b, 0x6f, 0xde, 0x7c, 0xef, 0xbd, 0x6f, 0x26, 0x81, 0x9b, 0x2e, 0xb2, 0x03, 0x8f,
-	0xee, 0x36, 0x19, 0xb5, 0xdc, 0xc0, 0xf7, 0x28, 0x6b, 0xee, 0x61, 0x10, 0x58, 0x03, 0x0c, 0x9a,
-	0x01, 0xa3, 0x68, 0xed, 0x6d, 0xf8, 0xd4, 0x63, 0x1e, 0x99, 0x93, 0xcb, 0xd7, 0x8c, 0x81, 0x37,
-	0xf0, 0x9a, 0x7c, 0xb5, 0x37, 0xde, 0x69, 0x86, 0x16, 0x37, 0xf8, 0x57, 0x84, 0x36, 0x6e, 0x40,
-	0xe9, 0xe1, 0xd0, 0x72, 0xdc, 0x4e, 0x9b, 0x5c, 0x85, 0xb9, 0x7e, 0xf8, 0xd9, 0x75, 0xec, 0x15,
-	0xed, 0x2d, 0xed, 0xbd, 0x82, 0x59, 0xe2, 0x76, 0xc7, 0x36, 0xee, 0x40, 0x65, 0xdb, 0xdb, 0x45,
-	0xf7, 0xc1, 0x9e, 0x37, 0x76, 0x19, 0x79, 0x1b, 0xaa, 0x2c, 0x34, 0xbb, 0x16, 0xb7, 0x05, 0xba,
-	0xc2, 0x62, 0x88, 0xb1, 0x06, 0xe5, 0x4d, 0xaf, 0xbf, 0x1b, 0x50, 0xcf, 0x63, 0x64, 0x15, 0xca,
-	0x23, 0x69, 0x70, 0x70, 0xd5, 0x8c, 0x17, 0x8c, 0x5b, 0x50, 0x7e, 0x38, 0xb4, 0x5c, 0x17, 0x47,
-	0x9d, 0x36, 0xb9, 0x0e, 0xd0, 0x8f, 0x8c, 0x38, 0x8d, 0xb2, 0x58, 0xe9, 0xd8, 0x46, 0x07, 0x16,
-	0x79, 0x22, 0x9f, 0x47, 0x64, 0x3c, 0xb0, 0x6d, 0x8a, 0x41, 0x40, 0xee, 0xc2, 0x72, 0x94, 0x90,
-	0x20, 0xa9, 0x6b, 0x45, 0x3f, 0x88, 0xcd, 0x16, 0xd9, 0x7f, 0x7d, 0xc2, 0x6d, 0x1f, 0x47, 0x4c,
-	0x45, 0xdb, 0x0a, 0xda, 0x12, 0xdb, 0x8a, 0x95, 0x8e, 0x1d, 0x62, 0x9f, 0x58, 0x87, 0x7b, 0xe8,
-	0xb2, 0x08, 0xeb, 0x47, 0x46, 0x02, 0x2b, 0x56, 0x3a, 0xb6, 0xf1, 0x01, 0xd4, 0x04, 0x56, 0xb0,
-	0xf5, 0x2e, 0xcc, 0x4b, 0x7c, 0x8a, 0xaf, 0x9a, 0x9f, 0x84, 0x19, 0xb7, 0x01, 0xb6, 0xb0, 0x4f,
-	0x91, 0x7d, 0x66, 0x05, 0x43, 0xf2, 0x26, 0x54, 0x02, 0x6e, 0x75, 0x87, 0x56, 0x30, 0x14, 0xe7,
-	0x80, 0x40, 0x01, 0x8c, 0x8f, 0xa1, 0xde, 0x0a, 0x39, 0x7c, 0xf4, 0xb5, 0xef, 0x50, 0x8b, 0x39,
-	0x9e, 0x4b, 0xd6, 0x60, 0xa1, 0x17, 0x2e, 0x75, 0x51, 0xad, 0x89, 0xad, 0xea, 0xbd, 0x34, 0xd4,
-	0xb8, 0x21, 0x37, 0xdb, 0x3e, 0xf4, 0x91, 0x5c, 0x81, 0x62, 0x14, 0x59, 0xec, 0x23, 0x2c, 0xe3,
-	0x1d, 0x28, 0x49, 0x86, 0x57, 0xa0, 0x94, 0xe6, 0x54, 0x9a, 0xc6, 0xcf, 0x1a, 0x54, 0xc3, 0x8c,
-	0xb6, 0x9d, 0x3d, 0x0c, 0x4b, 0x4e, 0x9a, 0x50, 0x4c, 0x9c, 0xb3, 0x72, 0xf7, 0x8d, 0x0d, 0xd9,
-	0x91, 0x1b, 0x29, 0x62, 0x4c, 0x01, 0x23, 0x1f, 0x02, 0x24, 0x32, 0xce, 0x71, 0xa7, 0xab, 0xb1,
-	0x53, 0xe6, 0x98, 0x66, 0x02, 0x4c, 0xee, 0xa7, 0x69, 0xca, 0x73, 0xdf, 0xa5, 0xd8, 0x37, 0x66,
-	0x34, 0x45, 0xde, 0x3e, 0xd4, 0xb6, 0x9c, 0x81, 0x8b, 0xb6, 0xe8, 0x80, 0xb0, 0x43, 0x03, 0x67,
-	0xe0, 0x5a, 0x6c, 0x4c, 0x51, 0x76, 0xa8, 0x5a, 0x20, 0x6b, 0x21, 0x3f, 0xae, 0x8d, 0x54, 0x24,
-	0xd7, 0x88, 0x37, 0x10, 0xfc, 0x98, 0x02, 0x10, 0x06, 0xf2, 0xc7, 0xbd, 0x91, 0xd3, 0xdf, 0xc5,
-	0x43, 0x9e, 0x4e, 0xd5, 0x8c, 0x17, 0x8c, 0xa3, 0x3c, 0xd4, 0x1f, 0xb9, 0xfb, 0x38, 0xf2, 0x7c,
-	0x94, 0x5b, 0xaf, 0x67, 0xc6, 0x2e, 0x15, 0x5e, 0xcc, 0xa6, 0x9a, 0x44, 0xb2, 0x04, 0xb3, 0xae,
-	0xe7, 0xf6, 0x91, 0x67, 0x52, 0x30, 0x23, 0x83, 0xb4, 0x81, 0x70, 0x59, 0xd8, 0x41, 0x4a, 0xd1,
-	0x96, 0x6d, 0x16, 0xb1, 0xb1, 0x1c, 0x47, 0x4b, 0xcc, 0xb0, 0xd9, 0x48, 0x38, 0x88, 0x46, 0xfd,
-	0x08, 0x6a, 0x21, 0xd5, 0x71, 0x80, 0xc2, 0x59, 0x01, 0xaa, 0x11, 0x56, 0xf8, 0xbe, 0x9f, 0x1c,
-	0xf1, 0x59, 0xee, 0xb7, 0x18, 0xfb, 0x29, 0x29, 0x48, 0xcc, 0x3d, 0x69, 0x01, 0x89, 0x47, 0x1d,
-	0x5d, 0xe6, 0xec, 0x38, 0x48, 0x57, 0x8a, 0x59, 0x5f, 0xa5, 0x0d, 0x66, 0x43, 0xe9, 0x80, 0x44,
-	0x93, 0xa7, 0x2f, 0x1a, 0xfc, 0x12, 0x0f, 0x73, 0x3d, 0x93, 0x7a, 0x5a, 0x02, 0x26, 0xea, 0x02,
-	0xb9, 0x9f, 0x6c, 0x85, 0xb9, 0x6c, 0x07, 0xa7, 0xda, 0x26, 0xd1, 0x23, 0xc6, 0x77, 0x1a, 0x94,
-	0x9f, 0x50, 0xaf, 0x8f, 0x41, 0x80, 0x76, 0x78, 0xb6, 0x58, 0x4f, 0xd4, 0xd9, 0xb4, 0xec, 0xd9,
-	0x94, 0x00, 0x99, 0x0d, 0x25, 0x36, 0xea, 0x6c, 0xa9, 0x44, 0x72, 0x53, 0x27, 0xf2, 0x83, 0x06,
-	0xe5, 0x36, 0x8e, 0x9c, 0x7d, 0xa4, 0x68, 0x93, 0x2f, 0x60, 0xd5, 0x96, 0x46, 0xf7, 0x7c, 0x29,
-	0x5d, 0x53, 0x8e, 0x8f, 0x2f, 0x2b, 0xb7, 0xbf, 0x72, 0x50, 0x8b, 0x46, 0xd2, 0xc4, 0xaf, 0xc6,
-	0x18, 0xb0, 0x4b, 0x21, 0xaa, 0x05, 0x24, 0x16, 0x64, 0x15, 0x23, 0x97, 0x8d, 0xa1, 0x14, 0xdc,
-	0x6c, 0x28, 0xb5, 0x4e, 0x1c, 0xe8, 0x22, 0x42, 0x42, 0x6e, 0x2b, 0xad, 0x3b, 0x73, 0x56, 0x26,
-	0x2b, 0xdd, 0xec, 0xf9, 0x94, 0x2e, 0xc1, 0x78, 0x71, 0x6a, 0xc6, 0xbf, 0xcd, 0x41, 0x31, 0xca,
-	0x9d, 0xb4, 0x61, 0x01, 0x85, 0xf6, 0xc8, 0x4e, 0x10, 0x44, 0x27, 0x52, 0xc8, 0xa8, 0x93, 0x59,
-	0xc7, 0x8c, 0x5c, 0x4d, 0x2e, 0x58, 0xee, 0x12, 0x0a, 0x96, 0x3f, 0x57, 0xc1, 0xd6, 0xd5, 0x9d,
-	0x55, 0x98, 0x5c, 0xab, 0xf0, 0x66, 0x53, 0x37, 0xd9, 0x2f, 0x1a, 0x54, 0x4d, 0xdc, 0x47, 0x6b,
-	0x24, 0xc8, 0xb8, 0x8c, 0xbe, 0x8b, 0x53, 0xc8, 0xfd, 0x7f, 0x0a, 0x17, 0x2d, 0xe0, 0xaf, 0x39,
-	0x98, 0x6f, 0x3b, 0x14, 0xfb, 0x6c, 0x5b, 0x08, 0xf6, 0x2b, 0x56, 0xc8, 0x9b, 0x30, 0xcb, 0x65,
-	0x58, 0xd4, 0x71, 0xc2, 0xdd, 0x1a, 0xfd, 0x4e, 0x9a, 0x50, 0xa6, 0xd8, 0x77, 0x7c, 0x07, 0x5d,
-	0x79, 0xc5, 0x4c, 0x00, 0xc7, 0x18, 0xe3, 0x8f, 0x1c, 0x90, 0x4d, 0x7e, 0x49, 0x49, 0xea, 0x5a,
-	0x56, 0x80, 0xaf, 0xe9, 0x9b, 0x8e, 0x3e, 0x72, 0x0b, 0x0a, 0xa1, 0x1e, 0x89, 0x5e, 0xbd, 0x12,
-	0x63, 0x93, 0xaf, 0x3d, 0x93, 0x63, 0x8c, 0xdf, 0x34, 0x98, 0x4f, 0x53, 0x4d, 0x3e, 0x85, 0x6a,
-	0xcf, 0x0a, 0xb2, 0x14, 0xaf, 0xa6, 0x1f, 0x05, 0xe9, 0xd2, 0x98, 0x95, 0xd0, 0x43, 0x32, 0xbc,
-	0x06, 0x45, 0x66, 0xd1, 0x81, 0x1a, 0xaf, 0x49, 0xaf, 0xae, 0x08, 0x10, 0x9e, 0xcd, 0x71, 0x1d,
-	0xe6, 0x58, 0xcc, 0x93, 0xfc, 0x4d, 0x3a, 0x9b, 0xc2, 0x90, 0x05, 0xc8, 0xef, 0x20, 0x72, 0xce,
-	0x6a, 0x66, 0xf8, 0x69, 0xb4, 0x60, 0xde, 0xc4, 0x9d, 0xb1, 0x1b, 0x1f, 0xe0, 0x0e, 0x14, 0x29,
-	0x5f, 0x11, 0xa9, 0xaf, 0xbc, 0x28, 0x75, 0x53, 0xe0, 0x8c, 0x7f, 0x34, 0xa8, 0x6c, 0x4a, 0x09,
-	0x47, 0xfb, 0x25, 0xea, 0xb4, 0x54, 0xf1, 0xf3, 0x53, 0x14, 0x3f, 0x73, 0x1f, 0x16, 0xa6, 0x7c,
-	0x58, 0xff, 0x94, 0x87, 0xfa, 0x97, 0x0e, 0x1b, 0xda, 0xd4, 0x3a, 0x90, 0x57, 0xfc, 0xd3, 0xb3,
-	0xfe, 0x38, 0xbb, 0xd8, 0x1b, 0xed, 0x92, 0x86, 0x6f, 0xc2, 0xf3, 0x33, 0x7f, 0xae, 0xe7, 0xe7,
-	0x3d, 0xa8, 0xf8, 0x16, 0x65, 0x4e, 0xdf, 0xf1, 0x2d, 0xf5, 0x06, 0x98, 0x40, 0x6c, 0x12, 0x45,
-	0x3e, 0x81, 0xfa, 0x81, 0xa0, 0x48, 0x3e, 0xb4, 0x67, 0xcf, 0x7a, 0x3c, 0xcc, 0x4b, 0xb4, 0x78,
-	0x6a, 0x6f, 0xc2, 0x72, 0x22, 0x5c, 0x77, 0xea, 0x4b, 0x65, 0x29, 0xe1, 0xb5, 0xa5, 0xee, 0x97,
-	0x3f, 0xf3, 0x30, 0x27, 0x2b, 0xf6, 0xba, 0x54, 0x2f, 0x73, 0xa9, 0x48, 0x1b, 0x1a, 0xe1, 0xba,
-	0x8b, 0x34, 0x11, 0xa9, 0x74, 0x76, 0xa4, 0x05, 0xe1, 0xa1, 0xa2, 0xb4, 0xd6, 0x8f, 0x8e, 0xf5,
-	0x99, 0xe7, 0xc7, 0xba, 0xf6, 0xf7, 0xb1, 0xae, 0x7d, 0x73, 0xa2, 0x6b, 0x3f, 0x9e, 0xe8, 0xda,
-	0xef, 0x27, 0xba, 0xf6, 0xec, 0x44, 0xd7, 0x9e, 0x9f, 0xe8, 0xda, 0xf7, 0xa7, 0xfa, 0xcc, 0xb3,
-	0x53, 0x7d, 0xe6, 0xe8, 0x54, 0x9f, 0xe9, 0x15, 0xf9, 0xbf, 0x89, 0xee, 0xfd, 0x1b, 0x00, 0x00,
-	0xff, 0xff, 0x8f, 0xe3, 0x7a, 0x75, 0x7f, 0x12, 0x00, 0x00,
+var fileDescriptor_stream_9d2f4cd204746317 = []byte{
+	// 1289 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x58, 0xcf, 0x6f, 0x1b, 0xc5,
+	0x17, 0xcf, 0xfa, 0x67, 0xfc, 0x6c, 0xc7, 0xf1, 0xa4, 0xed, 0x37, 0xad, 0x5a, 0x7f, 0x61, 0x29,
+	0x2a, 0xa9, 0xd2, 0xb8, 0x71, 0x15, 0x24, 0x10, 0x02, 0xd5, 0x71, 0xa5, 0x5a, 0x4a, 0xab, 0x76,
+	0x13, 0xc4, 0xd1, 0x5a, 0x7b, 0x5f, 0xec, 0x55, 0x9c, 0xdd, 0x65, 0x77, 0x9c, 0x90, 0x1b, 0x07,
+	0xc4, 0xb9, 0x57, 0xfe, 0x03, 0x6e, 0x88, 0x13, 0xdc, 0x38, 0xc2, 0xb1, 0xc7, 0x1c, 0x9b, 0xe4,
+	0xc2, 0x09, 0xf8, 0x0f, 0x40, 0xbb, 0x3b, 0x33, 0x3b, 0xbb, 0x75, 0x5c, 0x27, 0xca, 0xa1, 0x82,
+	0xdc, 0xfc, 0x26, 0x9f, 0xf7, 0xe6, 0x33, 0x9f, 0xf7, 0x63, 0x66, 0x03, 0x77, 0x2c, 0xa4, 0xfb,
+	0xb6, 0xbb, 0x53, 0xa7, 0xae, 0x6e, 0x79, 0x8e, 0xed, 0xd2, 0xfa, 0x2e, 0x7a, 0x9e, 0xde, 0x47,
+	0xaf, 0xee, 0x51, 0x17, 0xf5, 0xdd, 0x15, 0xc7, 0xb5, 0xa9, 0x4d, 0x66, 0xf9, 0xf2, 0x0d, 0xb5,
+	0x6f, 0xf7, 0xed, 0x7a, 0xb0, 0xda, 0x1d, 0x6d, 0xd7, 0x7d, 0x2b, 0x30, 0x82, 0x5f, 0x21, 0x5a,
+	0xbd, 0x0d, 0xf9, 0xf5, 0x81, 0x6e, 0x5a, 0xed, 0x16, 0xb9, 0x0e, 0xb3, 0x3d, 0xff, 0x67, 0xc7,
+	0x34, 0x16, 0x95, 0x77, 0x94, 0x0f, 0x32, 0x5a, 0x3e, 0xb0, 0xdb, 0x86, 0x7a, 0x1f, 0x8a, 0x5b,
+	0xf6, 0x0e, 0x5a, 0x0f, 0x77, 0xed, 0x91, 0x45, 0xc9, 0xbb, 0x50, 0xa2, 0xbe, 0xd9, 0xd1, 0x03,
+	0x9b, 0xa1, 0x8b, 0x34, 0x82, 0xa8, 0x4b, 0x50, 0xd8, 0xb0, 0x7b, 0x3b, 0x9e, 0x6b, 0xdb, 0x94,
+	0xdc, 0x84, 0xc2, 0x90, 0x1b, 0x01, 0xb8, 0xa4, 0x45, 0x0b, 0xea, 0x5d, 0x28, 0xac, 0x0f, 0x74,
+	0xcb, 0xc2, 0x61, 0xbb, 0x45, 0x6e, 0x01, 0xf4, 0x42, 0x23, 0xa2, 0x51, 0x60, 0x2b, 0x6d, 0x43,
+	0x6d, 0xc3, 0x42, 0x40, 0xe4, 0x69, 0x28, 0xc6, 0x43, 0xc3, 0x70, 0xd1, 0xf3, 0x48, 0x03, 0xae,
+	0x86, 0x84, 0x98, 0x48, 0x1d, 0x3d, 0xfc, 0x03, 0xdb, 0x6c, 0x81, 0xbe, 0xee, 0xe3, 0x6f, 0xfb,
+	0x24, 0x54, 0x2a, 0xdc, 0x96, 0xc9, 0x26, 0x6d, 0xcb, 0x56, 0xda, 0x86, 0x8f, 0x7d, 0xa6, 0x1f,
+	0xec, 0xa2, 0x45, 0x43, 0xac, 0x13, 0x1a, 0x12, 0x96, 0xad, 0xb4, 0x0d, 0xf5, 0x43, 0x28, 0x33,
+	0x2c, 0x53, 0xeb, 0x7d, 0x98, 0xe3, 0xf8, 0x98, 0x5e, 0x65, 0x47, 0x86, 0xa9, 0xf7, 0x00, 0x36,
+	0xb1, 0xe7, 0x22, 0x7d, 0xac, 0x7b, 0x03, 0xf2, 0x7f, 0x28, 0x7a, 0x81, 0xd5, 0x19, 0xe8, 0xde,
+	0x80, 0x9d, 0x03, 0x3c, 0x01, 0x50, 0x3f, 0x81, 0x4a, 0xd3, 0xd7, 0xf0, 0xd1, 0x57, 0x8e, 0xe9,
+	0xea, 0xd4, 0xb4, 0x2d, 0xb2, 0x04, 0xf3, 0x5d, 0x7f, 0xa9, 0x83, 0x62, 0x8d, 0x6d, 0x55, 0xe9,
+	0xc6, 0xa1, 0xea, 0x6d, 0xbe, 0xd9, 0xd6, 0x81, 0x83, 0xe4, 0x1a, 0xe4, 0xc2, 0xc8, 0x6c, 0x1f,
+	0x66, 0xa9, 0xef, 0x41, 0x9e, 0x2b, 0xbc, 0x08, 0xf9, 0xb8, 0xa6, 0xdc, 0x54, 0x7f, 0x54, 0xa0,
+	0xe4, 0x33, 0xda, 0x32, 0x77, 0xd1, 0x4f, 0x39, 0xa9, 0x43, 0x4e, 0x3a, 0x67, 0xb1, 0xf1, 0xbf,
+	0x15, 0x5e, 0x91, 0x2b, 0x31, 0x61, 0x34, 0x06, 0x23, 0x1f, 0x01, 0x48, 0x8c, 0x53, 0x81, 0xd3,
+	0xf5, 0xc8, 0x29, 0x71, 0x4c, 0x4d, 0x02, 0x93, 0xb5, 0xb8, 0x4c, 0xe9, 0xc0, 0xf7, 0x4a, 0xe4,
+	0x1b, 0x29, 0x1a, 0x13, 0x6f, 0x0f, 0xca, 0x9b, 0x66, 0xdf, 0x42, 0x83, 0x55, 0x80, 0x5f, 0xa1,
+	0x9e, 0xd9, 0xb7, 0x74, 0x3a, 0x72, 0x91, 0x57, 0xa8, 0x58, 0x20, 0x4b, 0xbe, 0x3e, 0x96, 0x81,
+	0x2e, 0x23, 0x57, 0x8d, 0x36, 0x60, 0xfa, 0x68, 0x0c, 0xe0, 0x07, 0x72, 0x46, 0xdd, 0xa1, 0xd9,
+	0xdb, 0xc1, 0x83, 0x80, 0x4e, 0x49, 0x8b, 0x16, 0xd4, 0xc3, 0x34, 0x54, 0x1e, 0x59, 0x7b, 0x38,
+	0xb4, 0x1d, 0xe4, 0x5b, 0x2f, 0x27, 0xda, 0x2e, 0x16, 0x9e, 0xf5, 0xa6, 0xe8, 0x44, 0x72, 0x05,
+	0xb2, 0x96, 0x6d, 0xf5, 0x30, 0x60, 0x92, 0xd1, 0x42, 0x83, 0xb4, 0x80, 0x04, 0x63, 0x61, 0x1b,
+	0x5d, 0x17, 0x0d, 0x5e, 0x66, 0xa1, 0x1a, 0x57, 0xa3, 0x68, 0x52, 0x0f, 0x6b, 0x55, 0xc9, 0x81,
+	0x15, 0xea, 0xc7, 0x50, 0xf6, 0xa5, 0x8e, 0x02, 0x64, 0x26, 0x05, 0x28, 0x85, 0x58, 0xe6, 0xbb,
+	0x2a, 0xb7, 0x78, 0x36, 0xf0, 0x5b, 0x88, 0xfc, 0xc4, 0x28, 0x90, 0xfa, 0x9e, 0x34, 0x81, 0x44,
+	0xad, 0x8e, 0x16, 0x35, 0xb7, 0x4d, 0x74, 0x17, 0x73, 0x49, 0x5f, 0x31, 0x1b, 0xb4, 0xaa, 0x98,
+	0x03, 0x1c, 0x4d, 0x9e, 0x9f, 0xd6, 0xf8, 0xf9, 0x20, 0xcc, 0xad, 0x04, 0xf5, 0xf8, 0x08, 0x18,
+	0x3b, 0x17, 0xc8, 0x9a, 0x5c, 0x0a, 0xb3, 0xc9, 0x0a, 0x8e, 0x95, 0x8d, 0x54, 0x23, 0xea, 0xb7,
+	0x0a, 0x14, 0x9e, 0xb9, 0x76, 0x0f, 0x3d, 0x0f, 0x0d, 0xff, 0x6c, 0xd1, 0x3c, 0x11, 0x67, 0x53,
+	0x92, 0x67, 0x13, 0x03, 0x48, 0xab, 0x8a, 0x61, 0x23, 0xce, 0x16, 0x23, 0x92, 0x9a, 0x9a, 0xc8,
+	0x77, 0x0a, 0x14, 0x5a, 0x38, 0x34, 0xf7, 0xd0, 0x45, 0x83, 0x7c, 0x0e, 0x37, 0x0d, 0x6e, 0x74,
+	0xce, 0x46, 0xe9, 0x86, 0x70, 0x7c, 0x72, 0x51, 0xdc, 0xfe, 0x4c, 0x41, 0x39, 0x6c, 0x49, 0x0d,
+	0xbf, 0x1c, 0xa1, 0x47, 0x2f, 0x44, 0xa8, 0x26, 0x90, 0x68, 0x20, 0x8b, 0x18, 0xa9, 0x64, 0x0c,
+	0x31, 0xc1, 0xb5, 0xaa, 0x98, 0xd6, 0xd2, 0x81, 0xce, 0x33, 0x48, 0xc8, 0x3d, 0x31, 0xeb, 0x26,
+	0xf6, 0xca, 0xf8, 0x49, 0x97, 0x3d, 0xdb, 0xa4, 0x93, 0x14, 0xcf, 0x4d, 0xad, 0xf8, 0x37, 0x29,
+	0xc8, 0x85, 0xdc, 0x49, 0x0b, 0xe6, 0x91, 0xcd, 0x1e, 0x5e, 0x09, 0x4c, 0x68, 0x89, 0x42, 0x62,
+	0x3a, 0x69, 0x15, 0x4c, 0x8c, 0xab, 0xf1, 0x09, 0x4b, 0x5d, 0x40, 0xc2, 0xd2, 0x67, 0x4a, 0xd8,
+	0xb2, 0xb8, 0xb3, 0x32, 0xe3, 0x73, 0xe5, 0xdf, 0x6c, 0xe2, 0x26, 0xfb, 0x49, 0x81, 0x92, 0x86,
+	0x7b, 0xa8, 0x0f, 0x99, 0x18, 0x17, 0x51, 0x77, 0x11, 0x85, 0xd4, 0x9b, 0x29, 0x9c, 0x37, 0x81,
+	0x3f, 0xa7, 0x60, 0xae, 0x65, 0xba, 0xd8, 0xa3, 0x5b, 0x6c, 0x60, 0xff, 0xcb, 0x12, 0x79, 0x07,
+	0xb2, 0xc1, 0x18, 0x66, 0x79, 0x1c, 0x73, 0xb7, 0x86, 0x7f, 0x27, 0x75, 0x28, 0xb8, 0xd8, 0x33,
+	0x1d, 0x13, 0x2d, 0x7e, 0xc5, 0x8c, 0x01, 0x47, 0x18, 0xf5, 0xf7, 0x14, 0x90, 0x8d, 0xe0, 0x92,
+	0xe2, 0xd2, 0x35, 0x75, 0x0f, 0x2f, 0xe5, 0x9b, 0x4e, 0x3e, 0x72, 0x17, 0x32, 0xfe, 0x3c, 0x62,
+	0xb5, 0x7a, 0x2d, 0xc2, 0xca, 0xaf, 0x3d, 0x2d, 0xc0, 0xa8, 0xbf, 0x28, 0x30, 0x17, 0x97, 0x9a,
+	0x7c, 0x06, 0xa5, 0xae, 0xee, 0x25, 0x25, 0xbe, 0x19, 0x7f, 0x14, 0xc4, 0x53, 0xa3, 0x15, 0x7d,
+	0x0f, 0xae, 0xf0, 0x12, 0xe4, 0xa8, 0xee, 0xf6, 0x45, 0x7b, 0x8d, 0x7b, 0x75, 0x85, 0x00, 0xff,
+	0x6c, 0xa6, 0x65, 0x52, 0x53, 0xa7, 0x36, 0xd7, 0x6f, 0xdc, 0xd9, 0x04, 0x86, 0xcc, 0x43, 0x7a,
+	0x1b, 0x31, 0xd0, 0xac, 0xac, 0xf9, 0x3f, 0xd5, 0x26, 0xcc, 0x69, 0xb8, 0x3d, 0xb2, 0xa2, 0x03,
+	0xdc, 0x87, 0x9c, 0x1b, 0xac, 0x30, 0xea, 0x8b, 0xa7, 0x51, 0xd7, 0x18, 0x4e, 0xfd, 0x5b, 0x81,
+	0xe2, 0x06, 0x1f, 0xe1, 0x68, 0xbc, 0x45, 0x95, 0x16, 0x4b, 0x7e, 0x7a, 0x8a, 0xe4, 0x27, 0xee,
+	0xc3, 0xcc, 0x94, 0x0f, 0xeb, 0x1f, 0xd2, 0x50, 0xf9, 0xc2, 0xa4, 0x03, 0xc3, 0xd5, 0xf7, 0xf9,
+	0x15, 0xff, 0x7c, 0xd2, 0xc7, 0xd9, 0xf9, 0xde, 0x68, 0x17, 0xd4, 0x7c, 0x63, 0x9e, 0x9f, 0xe9,
+	0x33, 0x3d, 0x3f, 0x1f, 0x40, 0xd1, 0xd1, 0x5d, 0x6a, 0xf6, 0x4c, 0x47, 0x17, 0x6f, 0x80, 0x31,
+	0xc2, 0xca, 0x28, 0xf2, 0x29, 0x54, 0xf6, 0x99, 0x44, 0xfc, 0xa1, 0x9d, 0x9d, 0xf4, 0x78, 0x98,
+	0xe3, 0x68, 0xf6, 0xd4, 0xde, 0x80, 0xab, 0x52, 0xb8, 0xce, 0xd4, 0x97, 0xca, 0x15, 0xc9, 0x6b,
+	0x53, 0xdc, 0x2f, 0x7f, 0xa4, 0x61, 0x96, 0x67, 0xec, 0x32, 0x55, 0x6f, 0x73, 0xaa, 0x48, 0x0b,
+	0xaa, 0xfe, 0xba, 0x85, 0xae, 0x14, 0x29, 0x3f, 0x39, 0xd2, 0x3c, 0xf3, 0x88, 0x12, 0xfe, 0x6b,
+	0x06, 0x16, 0xd7, 0x6d, 0xdb, 0x41, 0xff, 0x61, 0xb9, 0x87, 0x9b, 0x48, 0xe9, 0x10, 0xff, 0x03,
+	0xbd, 0xba, 0x06, 0x25, 0x49, 0xd5, 0xd5, 0xd3, 0x2b, 0x20, 0x06, 0x23, 0x8f, 0x41, 0x4e, 0xc6,
+	0x6a, 0xa7, 0xab, 0x0f, 0x75, 0xff, 0xfb, 0x7b, 0x62, 0x1d, 0x2c, 0xc8, 0x2e, 0xcd, 0xd0, 0x23,
+	0x41, 0xa0, 0xc1, 0x6a, 0xe0, 0x0d, 0x04, 0x1a, 0x09, 0x02, 0x0d, 0x41, 0x20, 0x3f, 0x2d, 0x81,
+	0x06, 0x27, 0xf0, 0x14, 0xae, 0xc5, 0x8e, 0x32, 0xf5, 0x67, 0xae, 0x5c, 0xc4, 0xab, 0x51, 0x25,
+	0xbd, 0xc8, 0x42, 0xf5, 0xb5, 0x4a, 0xba, 0x2c, 0xa1, 0xcb, 0x12, 0x9a, 0xba, 0x84, 0x12, 0xf1,
+	0x1a, 0x52, 0xbc, 0xc2, 0xf4, 0xf1, 0x1a, 0x22, 0x5e, 0x73, 0xf9, 0xf0, 0xa8, 0x36, 0xf3, 0xea,
+	0xa8, 0xa6, 0xfc, 0x75, 0x54, 0x53, 0xbe, 0x3e, 0xae, 0x29, 0xdf, 0x1f, 0xd7, 0x94, 0xdf, 0x8e,
+	0x6b, 0xca, 0xcb, 0xe3, 0x9a, 0xf2, 0xea, 0xb8, 0xa6, 0xbc, 0x38, 0xa9, 0xcd, 0xbc, 0x3c, 0xa9,
+	0xcd, 0x1c, 0x9e, 0xd4, 0x66, 0xba, 0xb9, 0xe0, 0x7f, 0xe0, 0x0f, 0xfe, 0x09, 0x00, 0x00, 0xff,
+	0xff, 0x32, 0x00, 0xa5, 0x0b, 0x5c, 0x17, 0x00, 0x00,
 }

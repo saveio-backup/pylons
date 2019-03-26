@@ -1508,6 +1508,235 @@ func handleChannelWithdraw(channelState *NettingChannelState, stateChange *Contr
 	return TransitionResult{channelState, events}
 }
 
+func handleSendCooperativeSettleRequest(channelState *NettingChannelState, stateChange *ActionCooperativeSettle) TransitionResult {
+	var events []Event
+
+	if GetStatus(channelState) == ChannelStateOpened {
+		ourBalance, partnerBalance := GetCooprativeSettleBalances(channelState)
+
+		messageIdentifier := GetMsgID()
+		ourAddress := channelState.OurState.GetAddress()
+		partnerAddress := channelState.PartnerState.GetAddress()
+
+		sendCooperativeSettleRequest := &SendCooperativeSettleRequest{
+			SendMessageEvent: SendMessageEvent{
+				Recipient:         partnerAddress,
+				ChannelIdentifier: stateChange.ChannelIdentifier,
+				MessageIdentifier: messageIdentifier,
+			},
+			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
+			Participant1:           ourAddress,
+			Participant1Balance:    ourBalance,
+			Participant2:           partnerAddress,
+			Participant2Balance:    partnerBalance,
+		}
+
+		events = append(events, sendCooperativeSettleRequest)
+	} else {
+		// fwtodo: add for error case
+		/*
+			msg := fmt.Sprintf("Channel is not opened")
+			failure := &EventWithdrawRequestSentFailed{
+				ChannelIdentifier:      stateChange.ChannelIdentifier,
+				TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
+				WithdrawAmount:         stateChange.TotalWithdraw,
+				Reason:                 msg,
+			}
+			log.Warn("[handleSendWithdrawRequest] failure: ", msg)
+			events = append(events, failure)
+		*/
+	}
+	return TransitionResult{channelState, events}
+}
+
+func GetCooprativeSettleBalances(channelState *NettingChannelState) (ourBalance common.TokenAmount, partnerBalance common.TokenAmount) {
+	// B1 : balance of P1
+	// D1 : total deposit of P1
+	// W1 : total withdraw of P1
+	// T1 : transferred amount from P1 to P2
+	// Lc1: Locked amount that will be transferred to P2 (details to be confirmed)
+	// TAD : Total available deposit
+	//	(1) B1 = D1 - W1 + T2 - T1 + Lc2 - Lc1
+	//	(2) B2 = D2 - W2 + T1 - T2 + Lc1 - Lc2
+	//	(3) B1 + B2 = TAD
+
+	ourState := channelState.GetChannelEndState(0)
+	partnerState := channelState.GetChannelEndState(1)
+
+	ourBalance = calculateCooperativeSettleBalance(ourState, partnerState)
+	partnerBalance = calculateCooperativeSettleBalance(partnerState, ourState)
+
+	log.Debugf("GetCooprativeSettleBalances, ourBalance %d, partnerBalance %d", ourBalance, partnerBalance)
+
+	//fwtodo : add checking (3)
+
+	return ourBalance, partnerBalance
+}
+
+func calculateCooperativeSettleBalance(participant1 *NettingChannelEndState, participant2 *NettingChannelEndState) common.TokenAmount {
+	bpData1, _ := getCurrentBalanceProof(participant1)
+	bpData2, _ := getCurrentBalanceProof(participant2)
+
+	balance := participant1.ContractBalance - participant1.TotalWithdraw + bpData2.transferredAmount - bpData1.transferredAmount + bpData2.lockedAmount - bpData1.lockedAmount
+	return balance
+}
+
+func handleCooperativeSettleRequestReceived(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettleRequest) TransitionResult {
+	var events []Event
+
+	valid, _ := isValidCooperativeSettleRequest(channelState, stateChange)
+	if valid {
+		messageIdentifier := GetMsgID()
+		sendCooperativeSettle := &SendCooperativeSettle{
+			SendMessageEvent: SendMessageEvent{
+				Recipient:         stateChange.Participant1,
+				ChannelIdentifier: stateChange.ChannelIdentifier,
+				MessageIdentifier: messageIdentifier,
+			},
+			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
+			Participant1:           stateChange.Participant1,
+			Participant1Balance:    stateChange.Participant1Balance,
+			Participant2:           stateChange.Participant2,
+			Participant2Balance:    stateChange.Participant2Balance,
+			Participant1Signature:  stateChange.Participant1Signature,
+			Participant1Address:    stateChange.Participant1Address,
+			Participant1PublicKey:  stateChange.Participant1PublicKey,
+		}
+
+		sendProcessed := &SendProcessed{
+			SendMessageEvent: SendMessageEvent{
+				Recipient:         stateChange.Participant1,
+				ChannelIdentifier: stateChange.ChannelIdentifier,
+				MessageIdentifier: stateChange.MessageIdentifier,
+			},
+		}
+
+		events = append(events, sendCooperativeSettle)
+		events = append(events, sendProcessed)
+	} else {
+		// fwtodo: failure case
+		/*
+			failure := &EventInvalidReceivedWithdrawRequest{
+				ChannelIdentifier: stateChange.ChannelIdentifier,
+				Participant:       stateChange.Participant,
+				TotalWithdraw:     stateChange.TotalWithdraw,
+				Reason:            msg,
+			}
+			log.Warn("[handleWithdrawRequestReceived] failure: ", msg)
+			events = append(events, failure)
+		*/
+	}
+	return TransitionResult{channelState, events}
+}
+
+func isValidCooperativeSettleRequest(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettleRequest) (bool, string) {
+	/*
+		if GetStatus(channelState) != ChannelStateOpened {
+			msg := fmt.Sprintf("channel is not opened")
+			return false, msg
+		}
+		// check if participant is valid,
+		partnerState := channelState.PartnerState
+		if !common.AddressEqual(partnerState.Address, stateChange.Participant) {
+			msg := fmt.Sprintf("participant address invalid")
+			return false, msg
+		}
+
+		if !common.AddressEqual(stateChange.Participant, stateChange.ParticipantAddress) {
+			msg := fmt.Sprintf("participant address is same as the signer")
+			return false, msg
+		}
+
+		// check if withdraw is valid, make sure participant cannot withdraw more than available
+		withdrawAmount := stateChange.TotalWithdraw
+		if withdrawAmount > partnerState.ContractBalance {
+			msg := fmt.Sprintf("invalid withdraw amount, withdraw : %d is larger than partner's contract balance %d", withdrawAmount, partnerState.ContractBalance)
+			return false, msg
+		} else {
+			balanceProof := partnerState.BalanceProof
+			if balanceProof != nil {
+				availableAmount := partnerState.ContractBalance - balanceProof.TransferredAmount - balanceProof.LockedAmount
+				if withdrawAmount > availableAmount {
+					msg := fmt.Sprintf("invalid withdraw amount, withdraw : %d larger than available amount %d", withdrawAmount, availableAmount)
+					return false, msg
+				}
+			}
+		}
+
+		// verify if signature is valid
+		dataToSign := PackWithdraw(stateChange.ChannelIdentifier, stateChange.Participant, stateChange.TotalWithdraw)
+		return isValidSignature(dataToSign, stateChange.ParticipantPublicKey, stateChange.ParticipantSignature, stateChange.ParticipantAddress)
+	*/
+	return true, ""
+}
+
+func handleCooperativeSettleReceived(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettle) TransitionResult {
+	var events []Event
+
+	valid, _ := isValidCooperativeSettle(channelState, stateChange)
+	if valid {
+		contractSendChannelCooperativeSettle := &ContractSendChannelCooperativeSettle{
+			ChannelIdentifier:      stateChange.ChannelIdentifier,
+			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
+			Participant1:           stateChange.Participant1,
+			Participant1Balance:    stateChange.Participant1Balance,
+			Participant2:           stateChange.Participant2,
+			Participant2Balance:    stateChange.Participant2Balance,
+			Participant1Signature:  stateChange.Participant1Signature,
+			Participant1Address:    stateChange.Participant1Address,
+			Participant1PublicKey:  stateChange.Participant1PublicKey,
+			Participant2Signature:  stateChange.Participant2Signature,
+			Participant2Address:    stateChange.Participant2Address,
+			Participant2PublicKey:  stateChange.Participant2PublicKey,
+		}
+
+		events = append(events, contractSendChannelCooperativeSettle)
+	} else {
+		// fwtodo : error case
+		/*
+			failure := &EventInvalidReceivedWithdraw{
+				TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
+				ChannelIdentifier:      stateChange.ChannelIdentifier,
+				Participant:            stateChange.Participant,
+				TotalWithdraw:          stateChange.TotalWithdraw,
+				Reason:                 msg,
+			}
+			log.Warn("[handleWithdrawReceived] failure: ", msg)
+			events = append(events, failure)
+		*/
+	}
+	return TransitionResult{channelState, events}
+}
+func isValidCooperativeSettle(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettle) (bool, string) {
+	/*
+		if GetStatus(channelState) != ChannelStateOpened {
+			msg := fmt.Sprintf("channel is not opened")
+			return false, msg
+		}
+		// check if participant is valid,
+		ourState := channelState.OurState
+		if !common.AddressEqual(ourState.Address, stateChange.Participant) {
+			msg := fmt.Sprintf("[isValidWithdraw] participant address invalid")
+			return false, msg
+		}
+
+		// verify if signature is valid
+		dataToSign := PackWithdraw(stateChange.ChannelIdentifier, stateChange.Participant, stateChange.TotalWithdraw)
+		return isValidSignature(dataToSign, stateChange.PartnerPublicKey, stateChange.PartnerSignature, stateChange.PartnerAddress)
+	*/
+	return true, ""
+}
+
+func handleChannelCooperativeSettled(channelState *NettingChannelState, stateChange *ContractReceiveChannelCooperativeSettled) TransitionResult {
+	var events []Event
+
+	log.Debugf("[handleChannelCooperativeSettled]")
+
+	//DeleteWithdrawTransaction(channelState)
+
+	return TransitionResult{channelState, events}
+}
+
 func handleActionClose(channelState *NettingChannelState, close *ActionChannelClose,
 	blockNumber common.BlockHeight) TransitionResult {
 
@@ -1892,6 +2121,18 @@ func StateTransitionForChannel(channelState *NettingChannelState, stateChange St
 	case *ContractReceiveChannelWithdraw:
 		contractReceiveChannelWithdraw, _ := stateChange.(*ContractReceiveChannelWithdraw)
 		iteration = handleChannelWithdraw(channelState, contractReceiveChannelWithdraw)
+	case *ActionCooperativeSettle:
+		actionCooperativeSettle, _ := stateChange.(*ActionCooperativeSettle)
+		iteration = handleSendCooperativeSettleRequest(channelState, actionCooperativeSettle)
+	case *ReceiveCooperativeSettleRequest:
+		receiveCooperativeSettleRequest, _ := stateChange.(*ReceiveCooperativeSettleRequest)
+		iteration = handleCooperativeSettleRequestReceived(channelState, receiveCooperativeSettleRequest)
+	case *ReceiveCooperativeSettle:
+		receiveCooperativeSettle, _ := stateChange.(*ReceiveCooperativeSettle)
+		iteration = handleCooperativeSettleReceived(channelState, receiveCooperativeSettle)
+	case *ContractReceiveChannelCooperativeSettled:
+		contractReceiveChannelCooperativeSettled, _ := stateChange.(*ContractReceiveChannelCooperativeSettled)
+		iteration = handleChannelCooperativeSettled(channelState, contractReceiveChannelCooperativeSettled)
 	}
 
 	return iteration

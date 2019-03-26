@@ -185,3 +185,25 @@ message Withdraw{
     SignedMessage partner_signature = 7;
 }
 
+message CooperativeSettleRequest{
+    TokenNetworkAddress token_network_address = 1;
+    MessageID message_identifier = 2;
+    ChannelID channel_identifier = 3;
+    Address participant1 = 4;
+    TokenAmount participant1_balance = 5;
+    Address participant2 = 6;
+    TokenAmount participant2_balance = 7;
+    SignedMessage participant1_signature = 8;
+}
+
+message	CooperativeSettle{
+    TokenNetworkAddress token_network_address = 1;
+    MessageID message_identifier = 2;
+    ChannelID channel_identifier = 3;
+    Address participant1 = 4;
+    TokenAmount participant1_balance = 5;
+    Address participant2 = 6;
+    TokenAmount participant2_balance = 7;
+    SignedMessage participant1_signature = 8;
+    SignedMessage participant2_signature = 9;
+}

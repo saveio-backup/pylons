@@ -495,6 +495,35 @@ func (self *TokenNetwork) withDraw(channelIdentifier common.ChannelID, partner c
 	return nil
 }
 
+func (self *TokenNetwork) cooperativeSettle(channelIdentifier common.ChannelID, participant1 common.Address,
+	participant1Balance common.TokenAmount, participant2 common.Address, participant2Balance common.TokenAmount,
+	participant1Signature common.Signature, participant1PubKey common.PubKey, participant2Signature common.Signature, participant2PubKey common.PubKey) error {
+
+	var opLock *sync.Mutex
+
+	if self.CheckForOutdatedChannel(self.nodeAddress, participant2, channelIdentifier) == false {
+		return errors.New("channel out dated")
+	}
+
+	opLock = self.getOperationLock(participant2)
+	opLock.Lock()
+	defer opLock.Unlock()
+
+	txHash, err := self.ChannelClient.CooperativeSettle(uint64(channelIdentifier), comm.Address(participant1), uint64(participant1Balance),
+		comm.Address(participant2), uint64(participant2Balance), []byte(participant1Signature), participant1PubKey, []byte(participant2Signature), participant2PubKey)
+	if err != nil {
+		log.Errorf("CooperativeSettle err:%s", err)
+		return err
+	}
+	log.Infof("CooperativeSettle tx hash:%s\n", txHash)
+	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
+	if err != nil {
+		log.Errorf("CooperativeSettle WaitForGenerateBlock err:%s", err)
+		return err
+	}
+
+	return nil
+}
 func (self *TokenNetwork) unlock(channelIdentifier common.ChannelID, partner common.Address,
 	merkleTreeLeaves *list.List) {
 

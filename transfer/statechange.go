@@ -64,6 +64,48 @@ type ContractReceiveChannelWithdraw struct {
 	TotalWithdraw          common.TokenAmount
 }
 
+type ActionCooperativeSettle struct {
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+}
+
+type ReceiveCooperativeSettleRequest struct {
+	TokenNetworkIdentifier common.TokenNetworkID
+	MessageIdentifier      common.MessageID
+	ChannelIdentifier      common.ChannelID
+	Participant1           common.Address
+	Participant1Balance    common.TokenAmount
+	Participant2           common.Address
+	Participant2Balance    common.TokenAmount
+	Participant1Signature  common.Signature
+	Participant1Address    common.Address
+	Participant1PublicKey  common.PubKey
+}
+
+type ReceiveCooperativeSettle struct {
+	TokenNetworkIdentifier common.TokenNetworkID
+	MessageIdentifier      common.MessageID
+	ChannelIdentifier      common.ChannelID
+	Participant1           common.Address
+	Participant1Balance    common.TokenAmount
+	Participant2           common.Address
+	Participant2Balance    common.TokenAmount
+	Participant1Signature  common.Signature
+	Participant1Address    common.Address
+	Participant1PublicKey  common.PubKey
+	Participant2Signature  common.Signature
+	Participant2Address    common.Address
+	Participant2PublicKey  common.PubKey
+}
+
+type ContractReceiveChannelCooperativeSettled struct {
+	ContractReceiveStateChange
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	Participant1Amount     common.TokenAmount
+	Participant2Amount     common.TokenAmount
+}
+
 type ContractReceiveChannelNew struct {
 	ContractReceiveStateChange
 	TokenNetworkIdentifier common.TokenNetworkID

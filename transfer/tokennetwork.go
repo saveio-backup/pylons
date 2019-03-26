@@ -32,6 +32,12 @@ func GetChannelIdentifier(stateChange StateChange) common.ChannelID {
 	case *ReceiveWithdraw:
 		receiveWithdraw, _ := stateChange.(*ReceiveWithdraw)
 		result = receiveWithdraw.ChannelIdentifier
+	case *ReceiveCooperativeSettleRequest:
+		receiveCooperativeSettleRequest, _ := stateChange.(*ReceiveCooperativeSettleRequest)
+		result = receiveCooperativeSettleRequest.ChannelIdentifier
+	case *ReceiveCooperativeSettle:
+		receiveCooperativeSettle, _ := stateChange.(*ReceiveCooperativeSettle)
+		result = receiveCooperativeSettle.ChannelIdentifier
 	}
 
 	return result
@@ -125,12 +131,10 @@ func GetSenderMessageEvent(event Event) *SendMessageEvent {
 		v, _ := event.(*SendWithdrawRequest)
 		result.Recipient = v.Recipient
 		result.ChannelIdentifier = v.ChannelIdentifier
-		/*
-			case *SendWithdraw:
-				v, _ := event.(*SendWithdraw)
-				result.Recipient = v.Recipient
-				result.ChannelIdentifier = v.ChannelIdentifier
-		*/
+	case *SendCooperativeSettleRequest:
+		v, _ := event.(*SendCooperativeSettleRequest)
+		result.Recipient = v.Recipient
+		result.ChannelIdentifier = v.ChannelIdentifier
 	default:
 		//log.Warn("[GetSenderMessageEvent] eventType: ", reflect.TypeOf(event).String())
 		result = nil
@@ -363,6 +367,39 @@ func handleWithdraw(tokenNetworkState *TokenNetworkState, stateChange StateChang
 	return subDispatchToChannelById(tokenNetworkState, stateChange, blockNumber)
 }
 
+func handleActionCooperativeSettle(paymentNetworkIdentifier common.PaymentNetworkID,
+	tokenNetworkState *TokenNetworkState, stateChange *ActionCooperativeSettle,
+	blockNumber common.BlockHeight) TransitionResult {
+
+	var events []Event
+
+	channelState, ok := tokenNetworkState.ChannelIdentifiersToChannels[stateChange.ChannelIdentifier]
+	if ok && GetStatus(channelState) == ChannelStateOpened {
+		iteration := StateTransitionForChannel(channelState, stateChange, blockNumber)
+		events = iteration.Events
+	}
+
+	return TransitionResult{tokenNetworkState, events}
+}
+
+func handleReceiveCooperativeSettleRequest(paymentNetworkIdentifier common.PaymentNetworkID,
+	tokenNetworkState *TokenNetworkState, stateChange StateChange,
+	blockNumber common.BlockHeight) TransitionResult {
+
+	return subDispatchToChannelById(tokenNetworkState, stateChange, blockNumber)
+}
+func handleReceiveCooperativeSettle(paymentNetworkIdentifier common.PaymentNetworkID,
+	tokenNetworkState *TokenNetworkState, stateChange StateChange,
+	blockNumber common.BlockHeight) TransitionResult {
+
+	return subDispatchToChannelById(tokenNetworkState, stateChange, blockNumber)
+}
+func handleCoopeativeSettle(tokenNetworkState *TokenNetworkState, stateChange StateChange,
+	blockNumber common.BlockHeight) TransitionResult {
+
+	return subDispatchToChannelById(tokenNetworkState, stateChange, blockNumber)
+}
+
 func stateTransitionForNetwork(paymentNetworkIdentifier common.PaymentNetworkID,
 	tokenNetworkState *TokenNetworkState, stateChange StateChange,
 	blockNumber common.BlockHeight) TransitionResult {
@@ -406,6 +443,16 @@ func stateTransitionForNetwork(paymentNetworkIdentifier common.PaymentNetworkID,
 		iteration = handleReceiveWithdraw(paymentNetworkIdentifier, tokenNetworkState, stateChange, blockNumber)
 	case *ContractReceiveChannelWithdraw:
 		iteration = handleWithdraw(tokenNetworkState, stateChange, blockNumber)
+	case *ActionCooperativeSettle:
+		actionCooperativeSettle, _ := stateChange.(*ActionCooperativeSettle)
+		iteration = handleActionCooperativeSettle(paymentNetworkIdentifier, tokenNetworkState,
+			actionCooperativeSettle, blockNumber)
+	case *ReceiveCooperativeSettleRequest:
+		iteration = handleReceiveWithdrawRequest(paymentNetworkIdentifier, tokenNetworkState, stateChange, blockNumber)
+	case *ReceiveCooperativeSettle:
+		iteration = handleReceiveWithdrawRequest(paymentNetworkIdentifier, tokenNetworkState, stateChange, blockNumber)
+	case *ContractReceiveChannelCooperativeSettled:
+		iteration = handleCoopeativeSettle(tokenNetworkState, stateChange, blockNumber)
 	}
 
 	return iteration

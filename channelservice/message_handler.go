@@ -38,6 +38,10 @@ func (self *MessageHandler) OnMessage(channel *ChannelService, message interface
 		self.HandleMessageWithdrawRequest(channel, message.(*messages.WithdrawRequest))
 	case *messages.Withdraw:
 		self.HandleMessageWithdraw(channel, message.(*messages.Withdraw))
+	case *messages.CooperativeSettleRequest:
+		self.HandleMessageCooperativeSettleRequest(channel, message.(*messages.CooperativeSettleRequest))
+	case *messages.CooperativeSettle:
+		self.HandleMessageCooperativeSettle(channel, message.(*messages.CooperativeSettle))
 	default:
 		log.Warn("[OnMessage] Unkown message. ", reflect.TypeOf(message).String())
 	}
@@ -240,6 +244,63 @@ func (self *MessageHandler) HandleMessageWithdraw(channel *ChannelService, messa
 		}
 		channel.HandleStateChange(stateChange)
 	}
+}
+
+func (self *MessageHandler) HandleMessageCooperativeSettleRequest(channel *ChannelService, message *messages.CooperativeSettleRequest) {
+	var tokenNetworkIdentifier common.TokenNetworkID
+
+	copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
+
+	stateChange := &transfer.ReceiveCooperativeSettleRequest{
+		TokenNetworkIdentifier: tokenNetworkIdentifier,
+		MessageIdentifier:      common.MessageID(message.MessageIdentifier.MessageId),
+		ChannelIdentifier:      common.ChannelID(message.ChannelIdentifier.ChannelId),
+		Participant1:           messages.ConvertAddress(message.Participant1),
+		Participant1Balance:    common.TokenAmount(message.Participant1Balance.TokenAmount),
+		Participant2:           messages.ConvertAddress(message.Participant2),
+		Participant2Balance:    common.TokenAmount(message.Participant2Balance.TokenAmount),
+		Participant1Signature:  message.Participant1Signature.Signature,
+		Participant1Address:    messages.ConvertAddress(message.Participant1Signature.Sender),
+		Participant1PublicKey:  message.Participant1Signature.Publickey,
+	}
+	channel.HandleStateChange(stateChange)
+}
+
+func (self *MessageHandler) HandleMessageCooperativeSettle(channel *ChannelService, message *messages.CooperativeSettle) {
+	var tokenNetworkIdentifier common.TokenNetworkID
+
+	channelId := common.ChannelID(message.ChannelIdentifier.ChannelId)
+
+	copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
+
+	// ne need to check here?
+	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(channel.StateFromChannel(),
+		tokenNetworkIdentifier, channelId)
+	if channelState == nil {
+		return
+	}
+
+	// fwtodo : need to check if we send a cooperative settle
+	//withdrawTx := transfer.GetWithdrawTransaction(channelState)
+	//if withdrawTx != nil {
+	//}
+
+	stateChange := &transfer.ReceiveCooperativeSettle{
+		TokenNetworkIdentifier: tokenNetworkIdentifier,
+		MessageIdentifier:      common.MessageID(message.MessageIdentifier.MessageId),
+		ChannelIdentifier:      common.ChannelID(message.ChannelIdentifier.ChannelId),
+		Participant1:           messages.ConvertAddress(message.Participant1),
+		Participant1Balance:    common.TokenAmount(message.Participant1Balance.TokenAmount),
+		Participant2:           messages.ConvertAddress(message.Participant2),
+		Participant2Balance:    common.TokenAmount(message.Participant2Balance.TokenAmount),
+		Participant1Signature:  message.Participant1Signature.Signature,
+		Participant1Address:    messages.ConvertAddress(message.Participant1Signature.Sender),
+		Participant1PublicKey:  message.Participant1Signature.Publickey,
+		Participant2Signature:  message.Participant2Signature.Signature,
+		Participant2Address:    messages.ConvertAddress(message.Participant2Signature.Sender),
+		Participant2PublicKey:  message.Participant2Signature.Publickey,
+	}
+	channel.HandleStateChange(stateChange)
 }
 
 func BalanceProofFromEnvelope(message *messages.EnvelopeMessage, dataToSign []byte) *transfer.BalanceProofSignedState {

@@ -136,6 +136,13 @@ func (self *PaymentChannel) Withdraw(partner common.Address, totalWithdraw commo
 	return self.TokenNetwork.withDraw(self.channelIdentifier, partner, totalWithdraw, partnerSignature, partnerPubKey, signature, pubKey)
 }
 
+func (self *PaymentChannel) CooperativeSettle(participant1 common.Address, participant1Balance common.TokenAmount, participant2 common.Address, participant2Balance common.TokenAmount,
+	participant1Signature common.Signature, participant1PubKey common.PubKey, participant2Signature common.Signature, participant2PubKey common.PubKey) error {
+
+	return self.TokenNetwork.cooperativeSettle(self.channelIdentifier, participant1, participant1Balance,
+		participant2, participant2Balance, participant1Signature, participant1PubKey, participant2Signature, participant2PubKey)
+}
+
 func (self *PaymentChannel) UpdateTransfer(nonce common.Nonce, balanceHash common.BalanceHash,
 	additionalHash common.AdditionalHash, partnerSignature common.Signature,
 	signature common.Signature, closePubkey, nonClosePubkey common.PubKey) {

@@ -272,6 +272,49 @@ func (self ChannelService) HandleWithdrawSuccess(channelId common.ChannelID) {
 	return
 }
 
+func (self ChannelService) HandleChannelCooperativeSettled(event map[string]interface{}) {
+	log.Info("[HandleChannelCooperativeSettled]")
+	var transactionHash common.TransactionHash
+
+	channelIdentifier := event["channelID"].(common.ChannelID)
+	blockNumber := event["blockHeight"].(common.BlockHeight)
+	participant1Amount := event["participant1_amount"].(common.TokenAmount)
+	participant2Amount := event["participant2_amount"].(common.TokenAmount)
+
+	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
+
+	chainState := self.StateFromChannel()
+	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(chainState,
+		tokenNetworkIdentifier, channelIdentifier)
+
+	if channelState != nil {
+		channelCooperativeSettled := &transfer.ContractReceiveChannelCooperativeSettled{
+			ContractReceiveStateChange: transfer.ContractReceiveStateChange{
+				TransactionHash: transactionHash,
+				BlockHeight:     blockNumber,
+			},
+			TokenNetworkIdentifier: tokenNetworkIdentifier,
+			Participant1Amount:     participant1Amount,
+			Participant2Amount:     participant2Amount,
+		}
+
+		self.HandleStateChange(channelCooperativeSettled)
+	} else {
+		//[TODO] generate ContractReceiveRouteClosed when supporting route
+		channelClosed := &transfer.ContractReceiveRouteClosed{
+			ContractReceiveStateChange: transfer.ContractReceiveStateChange{
+				TransactionHash: transactionHash,
+				BlockHeight:     blockNumber,
+			},
+			TokenNetworkIdentifier: tokenNetworkIdentifier,
+			ChannelIdentifier:      channelIdentifier,
+		}
+		self.HandleStateChange(channelClosed)
+	}
+
+	return
+}
+
 func (self ChannelService) HandleChannelBatchUnlock(event map[string]interface{}) {
 	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 
@@ -338,6 +381,8 @@ func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 		channel.HandleChannelUpdateTransfer(events)
 	} else if eventName == "SetTotalWithdraw" {
 		channel.HandleChannelWithdraw(events)
+	} else if eventName == "chanCooperativeSettled" {
+		channel.HandleChannelCooperativeSettled(events)
 	}
 
 	return
@@ -409,6 +454,10 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 		case "totalDeposit":
 			fallthrough
 		case "totalWithdraw":
+			fallthrough
+		case "participant1_amount":
+			fallthrough
+		case "participant2_amount":
 			events[item] = common.TokenAmount(value.(float64))
 		case "nonce":
 			events[item] = common.Nonce(value.(float64))

@@ -63,6 +63,10 @@ const (
 	ReceiveWithdrawRequestClassId
 	ReceiveWithdrawClassId
 	ContractReceiveChannelWithdrawClassId
+	ActionCooperativeSettleClassId
+	ReceiveCooperativeSettleRequestClassId
+	ReceiveCooperativeSettleClassId
+	ContractReceiveChannelCooperativeSettledClassId
 )
 
 //event
@@ -102,6 +106,9 @@ const (
 	EventWithdrawRequestSentFailedClassId
 	EventInvalidReceivedWithdrawRequestClassId
 	EventInvalidReceivedWithdrawClassId
+	SendCooperativeSettleRequestClassId
+	SendCooperativeSettleClassId
+	ContractSendChannelCooperativeSettleClassId
 )
 
 // class meta for State
@@ -309,14 +316,33 @@ func (self ActionInitMediator) ClassId() int {
 func (self ActionWithdraw) ClassId() int {
 	return ActionWithdrawClassId
 }
+
 func (self ReceiveWithdrawRequest) ClassId() int {
 	return ReceiveWithdrawRequestClassId
 }
+
 func (self ReceiveWithdraw) ClassId() int {
 	return ReceiveWithdrawClassId
 }
+
 func (self ContractReceiveChannelWithdraw) ClassId() int {
 	return ContractReceiveChannelWithdrawClassId
+}
+
+func (self ActionCooperativeSettle) ClassId() int {
+	return ActionCooperativeSettleClassId
+}
+
+func (self ReceiveCooperativeSettleRequest) ClassId() int {
+	return ReceiveCooperativeSettleRequestClassId
+}
+
+func (self ReceiveCooperativeSettle) ClassId() int {
+	return ReceiveCooperativeSettleClassId
+}
+
+func (self ContractReceiveChannelCooperativeSettled) ClassId() int {
+	return ContractReceiveChannelCooperativeSettledClassId
 }
 
 // class meta for Event
@@ -458,6 +484,18 @@ func (self EventInvalidReceivedWithdrawRequest) ClassId() int {
 
 func (self EventInvalidReceivedWithdraw) ClassId() int {
 	return EventInvalidReceivedWithdrawClassId
+}
+
+func (self SendCooperativeSettleRequest) ClassId() int {
+	return SendCooperativeSettleRequestClassId
+}
+
+func (self SendCooperativeSettle) ClassId() int {
+	return SendCooperativeSettleClassId
+}
+
+func (self ContractSendChannelCooperativeSettle) ClassId() int {
+	return ContractSendChannelCooperativeSettleClassId
 }
 
 // create class instance based on ClassId
@@ -603,6 +641,14 @@ func CreateStateChangeByClassId(classId int) interface{} {
 		result = new(ReceiveWithdraw)
 	case ContractReceiveChannelWithdrawClassId:
 		result = new(ContractReceiveChannelWithdraw)
+	case ActionCooperativeSettleClassId:
+		result = new(ActionCooperativeSettle)
+	case ReceiveCooperativeSettleRequestClassId:
+		result = new(ReceiveCooperativeSettleRequest)
+	case ReceiveCooperativeSettleClassId:
+		result = new(ReceiveCooperativeSettle)
+	case ContractReceiveChannelCooperativeSettledClassId:
+		result = new(ContractReceiveChannelCooperativeSettled)
 	}
 
 	return result
@@ -682,6 +728,12 @@ func CreateEventByClassId(classId int) interface{} {
 		return new(EventInvalidReceivedWithdrawRequest)
 	case EventInvalidReceivedWithdrawClassId:
 		return new(EventInvalidReceivedWithdraw)
+	case SendCooperativeSettleRequestClassId:
+		return new(SendCooperativeSettleRequest)
+	case SendCooperativeSettleClassId:
+		return new(SendCooperativeSettle)
+	case ContractSendChannelCooperativeSettleClassId:
+		return new(ContractSendChannelCooperativeSettle)
 	}
 
 	return result

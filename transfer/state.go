@@ -416,6 +416,7 @@ type TransactionExecutionStatus struct {
 type NettingChannelEndState struct {
 	Address                            common.Address
 	ContractBalance                    common.TokenAmount
+	TotalWithdraw                      common.TokenAmount
 	SecretHashesToLockedLocks          SecretHashToLock
 	SecretHashesToUnLockedLocks        SecretHashToPartialUnlockProof
 	SecretHashesToOnChainUnLockedLocks SecretHashToPartialUnlockProof

@@ -40,6 +40,10 @@ func (this *NetComponent) Receive(ctx *network.ComponentContext) error {
 		this.Net.Receive(msg, addr)
 	case *messages.Withdraw:
 		this.Net.Receive(msg, addr)
+	case *messages.CooperativeSettleRequest:
+		this.Net.Receive(msg, addr)
+	case *messages.CooperativeSettle:
+		this.Net.Receive(msg, addr)
 	}
 	return nil
 }
