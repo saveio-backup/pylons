@@ -226,6 +226,7 @@ func (self *MessageHandler) HandleMessageWithdraw(channel *ChannelService, messa
 		return
 	}
 
+	// only process incoming withdraw message if we sent a withdraw request before
 	withdrawTx := transfer.GetWithdrawTransaction(channelState)
 	if withdrawTx != nil {
 		stateChange := &transfer.ReceiveWithdraw{

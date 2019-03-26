@@ -1584,7 +1584,7 @@ func calculateCooperativeSettleBalance(participant1 *NettingChannelEndState, par
 func handleCooperativeSettleRequestReceived(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettleRequest) TransitionResult {
 	var events []Event
 
-	valid, _ := isValidCooperativeSettleRequest(channelState, stateChange)
+	valid, msg := isValidCooperativeSettleRequest(channelState, stateChange)
 	if valid {
 		messageIdentifier := GetMsgID()
 		sendCooperativeSettle := &SendCooperativeSettle{
@@ -1622,58 +1622,52 @@ func handleCooperativeSettleRequestReceived(channelState *NettingChannelState, s
 				TotalWithdraw:     stateChange.TotalWithdraw,
 				Reason:            msg,
 			}
-			log.Warn("[handleWithdrawRequestReceived] failure: ", msg)
 			events = append(events, failure)
 		*/
+		log.Warn("[handleCooperativeSettleRequestReceived] failure: ", msg)
 	}
 	return TransitionResult{channelState, events}
 }
 
 func isValidCooperativeSettleRequest(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettleRequest) (bool, string) {
-	/*
-		if GetStatus(channelState) != ChannelStateOpened {
-			msg := fmt.Sprintf("channel is not opened")
-			return false, msg
-		}
-		// check if participant is valid,
-		partnerState := channelState.PartnerState
-		if !common.AddressEqual(partnerState.Address, stateChange.Participant) {
-			msg := fmt.Sprintf("participant address invalid")
-			return false, msg
-		}
+	if GetStatus(channelState) != ChannelStateOpened {
+		msg := fmt.Sprintf("channel is not opened")
+		return false, msg
+	}
 
-		if !common.AddressEqual(stateChange.Participant, stateChange.ParticipantAddress) {
-			msg := fmt.Sprintf("participant address is same as the signer")
-			return false, msg
-		}
+	ourState := channelState.GetChannelEndState(0)
+	partnerState := channelState.GetChannelEndState(1)
 
-		// check if withdraw is valid, make sure participant cannot withdraw more than available
-		withdrawAmount := stateChange.TotalWithdraw
-		if withdrawAmount > partnerState.ContractBalance {
-			msg := fmt.Sprintf("invalid withdraw amount, withdraw : %d is larger than partner's contract balance %d", withdrawAmount, partnerState.ContractBalance)
-			return false, msg
-		} else {
-			balanceProof := partnerState.BalanceProof
-			if balanceProof != nil {
-				availableAmount := partnerState.ContractBalance - balanceProof.TransferredAmount - balanceProof.LockedAmount
-				if withdrawAmount > availableAmount {
-					msg := fmt.Sprintf("invalid withdraw amount, withdraw : %d larger than available amount %d", withdrawAmount, availableAmount)
-					return false, msg
-				}
-			}
-		}
+	if !common.AddressEqual(partnerState.Address, stateChange.Participant1) {
+		msg := fmt.Sprintf("participant1 address invalid")
+		return false, msg
+	} else if !common.AddressEqual(ourState.Address, stateChange.Participant2) {
+		msg := fmt.Sprintf("participant2 address invalid")
+		return false, msg
+	} else if !common.AddressEqual(stateChange.Participant1, stateChange.Participant1Address) {
+		msg := fmt.Sprintf("participant address is same as the signer")
+		return false, msg
+	}
 
-		// verify if signature is valid
-		dataToSign := PackWithdraw(stateChange.ChannelIdentifier, stateChange.Participant, stateChange.TotalWithdraw)
-		return isValidSignature(dataToSign, stateChange.ParticipantPublicKey, stateChange.ParticipantSignature, stateChange.ParticipantAddress)
-	*/
-	return true, ""
+	// calculate the final balance and compare with incoming balance values
+	ourBalance := calculateCooperativeSettleBalance(ourState, partnerState)
+	partnerBalance := calculateCooperativeSettleBalance(partnerState, ourState)
+
+	if ourBalance != stateChange.Participant2Balance || partnerBalance != stateChange.Participant1Balance {
+		msg := fmt.Sprintf("invliad balance : ourBalance %d, partnerBalance %d, participant1 balance %d, participant2 balance %d",
+			ourBalance, partnerBalance, stateChange.Participant1Balance, stateChange.Participant2Balance)
+		return false, msg
+	}
+	// verify if signature is valid
+	dataToSign := PackCooperativeSettle(stateChange.ChannelIdentifier, stateChange.Participant1, stateChange.Participant1Balance,
+		stateChange.Participant2, stateChange.Participant2Balance)
+	return isValidSignature(dataToSign, stateChange.Participant1PublicKey, stateChange.Participant1Signature, stateChange.Participant1Address)
 }
 
 func handleCooperativeSettleReceived(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettle) TransitionResult {
 	var events []Event
 
-	valid, _ := isValidCooperativeSettle(channelState, stateChange)
+	valid, msg := isValidCooperativeSettle(channelState, stateChange)
 	if valid {
 		contractSendChannelCooperativeSettle := &ContractSendChannelCooperativeSettle{
 			ChannelIdentifier:      stateChange.ChannelIdentifier,
@@ -1701,30 +1695,53 @@ func handleCooperativeSettleReceived(channelState *NettingChannelState, stateCha
 				TotalWithdraw:          stateChange.TotalWithdraw,
 				Reason:                 msg,
 			}
-			log.Warn("[handleWithdrawReceived] failure: ", msg)
 			events = append(events, failure)
 		*/
+		log.Warn("[handleCooperativeSettleReceived] failure: ", msg)
 	}
 	return TransitionResult{channelState, events}
 }
 func isValidCooperativeSettle(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettle) (bool, string) {
-	/*
-		if GetStatus(channelState) != ChannelStateOpened {
-			msg := fmt.Sprintf("channel is not opened")
-			return false, msg
-		}
-		// check if participant is valid,
-		ourState := channelState.OurState
-		if !common.AddressEqual(ourState.Address, stateChange.Participant) {
-			msg := fmt.Sprintf("[isValidWithdraw] participant address invalid")
-			return false, msg
-		}
+	if GetStatus(channelState) != ChannelStateOpened {
+		msg := fmt.Sprintf("channel is not opened")
+		return false, msg
+	}
 
-		// verify if signature is valid
-		dataToSign := PackWithdraw(stateChange.ChannelIdentifier, stateChange.Participant, stateChange.TotalWithdraw)
-		return isValidSignature(dataToSign, stateChange.PartnerPublicKey, stateChange.PartnerSignature, stateChange.PartnerAddress)
-	*/
-	return true, ""
+	ourState := channelState.GetChannelEndState(0)
+	partnerState := channelState.GetChannelEndState(1)
+
+	if !common.AddressEqual(ourState.Address, stateChange.Participant1) {
+		msg := fmt.Sprintf("participant1 address invalid")
+		return false, msg
+	} else if !common.AddressEqual(partnerState.Address, stateChange.Participant2) {
+		msg := fmt.Sprintf("participant2 address invalid")
+		return false, msg
+	} else if !common.AddressEqual(stateChange.Participant1, stateChange.Participant1Address) {
+		msg := fmt.Sprintf("participant1 address is same as the signer")
+		return false, msg
+	} else if !common.AddressEqual(stateChange.Participant2, stateChange.Participant2Address) {
+		msg := fmt.Sprintf("participant1 address is same as the signer")
+		return false, msg
+	}
+
+	// calculate again the final balance and compare with incoming balance values
+	ourBalance := calculateCooperativeSettleBalance(ourState, partnerState)
+	partnerBalance := calculateCooperativeSettleBalance(partnerState, ourState)
+
+	if ourBalance != stateChange.Participant1Balance || partnerBalance != stateChange.Participant2Balance {
+		msg := fmt.Sprintf("invliad balance : ourBalance %d, partnerBalance %d, participant1 balance %d, participant2 balance %d",
+			ourBalance, partnerBalance, stateChange.Participant1Balance, stateChange.Participant2Balance)
+		return false, msg
+	}
+
+	dataToSign := PackCooperativeSettle(stateChange.ChannelIdentifier, stateChange.Participant1, stateChange.Participant1Balance,
+		stateChange.Participant2, stateChange.Participant2Balance)
+	ok, errStr := isValidSignature(dataToSign, stateChange.Participant1PublicKey, stateChange.Participant1Signature, stateChange.Participant1Address)
+	if !ok {
+		msg := fmt.Sprintf("participant1 siganature invalid : %s", errStr)
+		return false, msg
+	}
+	return isValidSignature(dataToSign, stateChange.Participant2PublicKey, stateChange.Participant2Signature, stateChange.Participant2Address)
 }
 
 func handleChannelCooperativeSettled(channelState *NettingChannelState, stateChange *ContractReceiveChannelCooperativeSettled) TransitionResult {
