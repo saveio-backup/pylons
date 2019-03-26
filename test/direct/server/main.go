@@ -8,7 +8,6 @@ import (
 	"runtime/pprof"
 	"syscall"
 	"time"
-	"fmt"
 
 	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain-go-sdk/wallet"
@@ -36,13 +35,14 @@ var testConfig = &ch.ChannelConfig{
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var disable = flag.Bool("disable", false, "disable transfer test")
-var transferAmount = flag.Uint("amount", 0, "test transfer amount")
+var transferAmount = flag.Int("amount", 1000, "test transfer amount")
+var multiEnable = flag.Bool("multi", false, "enable multi routes test")
+var routeNum = flag.Int("route", 5, "route number")
 
 func main() {
 	log.InitLog(2, log.Stdout)
 	flag.Parse()
-	var amount uint
-	amount = 1000
+
 	if *cpuProfile != "" {
 
 		cupF, err := os.Create(*cpuProfile)
@@ -52,9 +52,7 @@ func main() {
 		pprof.StartCPUProfile(cupF)
 		defer pprof.StopCPUProfile()
 	}
-	if *transferAmount != 0 {
-		amount = *transferAmount
-	}
+
 	wallet, err := wallet.OpenWallet(WALLET_PATH)
 	if err != nil {
 		log.Fatal("wallet.Open error:%s", err)
@@ -93,28 +91,29 @@ func main() {
 		<-time.After(time.Duration(3000) * time.Millisecond)
 	}
 	if *disable == false {
-		log.Info("begin direct transfer test...")
-		go multiTest(channel, 1, common.Address(target), amount, 0)
+		if *multiEnable {
+			log.Info("begin direct multi route transfer test...")
+			go multiRouteTest(channel, 1, common.Address(target), *transferAmount, 0, *routeNum)
+		} else {
+			log.Info("begin direct single route transfer test...")
+			go singleRouteTest(channel, 1, common.Address(target), 1000, 0, *routeNum)
+		}
 	}
 
 	waitToExit()
 }
 
-func loopTest(channel *ch.Channel, amount int, target common.Address, times uint, interval int) {
+var chInt chan int
+
+func loopTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routeId int) {
 	r := rand.NewSource(time.Now().UnixNano())
 	log.Info("wait for loopTest canTransfer...")
-	for {
-		if channel.Service.CanTransfer(target, common.TokenAmount(amount)) {
-			log.Info("loopTest can transfer!")
-			break
-		} else {
-			time.Sleep(100 * time.Millisecond)
-		}
-	}
-	for index := uint(0); index < times; index++ {
+
+	for index := int(0); index < times; index++ {
 		if interval > 0 {
 			<-time.After(time.Duration(interval) * time.Millisecond)
 		}
+
 		state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
 		if state != transfer.NetworkReachable {
 			log.Error("[loopTest] peer AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg is not reachable ")
@@ -136,57 +135,55 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times uint
 			log.Info("[loopTest] direct transfer successfully")
 		}
 	}
-	log.Info("[loopTest] direct transfer test done")
+
+	chInt <- routeId
 }
 
-
-func multiTest(channel *ch.Channel, amount uint, target common.Address, times uint, interval int) {
-	log.Info("wait for multiTest canTransfer...")
+func singleRouteTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routingNum int) {
+	chInt = make(chan int, 1)
 	for {
 		if channel.Service.CanTransfer(target, common.TokenAmount(amount)) {
-			log.Info("multiTest can transfer!")
+			log.Info("loopTest can transfer!")
 			break
 		} else {
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
 
-	var err error
-	statuses := make([]chan bool, times)
+	time1 := time.Now().Unix()
 
-	f :=  func(statuses []chan bool, index uint) error {
-		statuses[index], err = channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(index+1))
-		if err != nil {
-			log.Error("[multiTest] direct transfer failed:", err)
-			return fmt.Errorf("[multiTest] direct transfer failed:", err)
+	loopTest(channel, amount, target, times, interval, routingNum)
+
+	time2 := time.Now().Unix()
+	timeDuration := time2 - time1
+	log.Infof("[singleRouteTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", times, timeDuration, times/int(timeDuration))
+}
+
+func multiRouteTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routingNum int) {
+	chInt = make(chan int, routingNum)
+	for {
+		if channel.Service.CanTransfer(target, common.TokenAmount(amount)) {
+			log.Info("loopTest can transfer!")
+			break
+		} else {
+			time.Sleep(100 * time.Millisecond)
 		}
-		return nil
 	}
 
 	time1 := time.Now().Unix()
-	for index1 := uint(0); index1 < times; index1++ {
-		go f(statuses, index1)
+
+	for i := 0; i < routingNum; i++ {
+		go loopTest(channel, amount, target, times, interval, i)
 	}
 
-	for index2 := uint(0); index2 < times; index2++ {
-		log.Debug("[multiTest] wait for payment status update...")
-		if statuses[index2] == nil  {
-			time.Sleep(5* time.Millisecond)
-			continue
-		}
-		ret := <-statuses[index2]
-		if !ret {
-			log.Error("[multiTest] direct transfer failed")
-			break
-		} else {
-			//log.Info("[multiTest] direct transfer successfully")
-		}
+	for i := 0; i < routingNum; i++ {
+		<- chInt
 	}
 
 	time2 := time.Now().Unix()
 	timeDuration := time2 - time1
-	log.Infof("[multiTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", times, timeDuration, times/uint(timeDuration))
-	log.Info("[multiTest] direct transfer test done")
+	log.Infof("[multiRouteTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n",
+		times * routingNum, timeDuration, (times * routingNum)/int(timeDuration))
 }
 
 func logCurrentBalance(channel *ch.Channel, target common.Address) {

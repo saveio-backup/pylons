@@ -30,7 +30,7 @@ var testConfig = &ch.ChannelConfig{
 var isNode1OnLine = false
 
 var disable = flag.Bool("disable", false, "disable transfer test")
-var transferAmount = flag.Int64("amount", 1000, "test transfer amount")
+var transferAmount = flag.Int64("amount", 100, "test transfer amount")
 
 func main() {
 	flag.Parse()
@@ -69,7 +69,8 @@ func main() {
 	log.Info("[StartService]")
 
 	if *disable == false {
-		go mediaTransfer(channel, *transferAmount)
+		//go mediaTransfer(channel, *transferAmount)
+		go multiMediaTest(channel, *transferAmount)
 	}
 	go receivePayment(channel)
 	go currentBalance(channel)
@@ -111,6 +112,59 @@ func mediaTransfer(channel *ch.Channel, loopTimes int64) {
 	time2 := time.Now().Unix()
 	timeDuration := time2 - time1
 	log.Infof("[MediaTransfer] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", loopTimes, timeDuration, loopTimes/timeDuration)
+}
+
+func multiMediaTest(channel *ch.Channel, loopTimes int64) {
+	for ; ;  {
+		if isNode1OnLine {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+
+	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
+	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
+
+	targetAddress, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
+	target := common.Address(targetAddress)
+	log.Info("wait for multiMediaTest canTransfer...")
+
+	var err error
+	statuses := make([]chan bool, loopTimes)
+
+	f :=  func(statuses []chan bool, index int64) error {
+		statuses[index], err = channel.Service.MediaTransfer(registryAddress, tokenAddress, 1, target, common.PaymentID(index + 1))
+		if err != nil {
+			log.Error("[multiMediaTest] media transfer failed:", err)
+			return fmt.Errorf("[multiMediaTest] media transfer failed:", err)
+		}
+		return nil
+	}
+
+	time1 := time.Now().Unix()
+	for index1 := int64(0); index1 < loopTimes; index1++ {
+		go f(statuses, index1)
+	}
+
+	for index2 := int64(0); index2 < loopTimes; index2++ {
+		log.Debug("[multiMediaTest] wait for payment status update...")
+		if statuses[index2] == nil  {
+			time.Sleep(5* time.Millisecond)
+			continue
+		}
+		ret := <-statuses[index2]
+		if !ret {
+			log.Error("[multiMediaTest] media transfer failed")
+			break
+		} else {
+			//log.Info("[multiMediaTest] media transfer successfully")
+		}
+	}
+
+	time2 := time.Now().Unix()
+	timeDuration := time2 - time1
+	log.Infof("[multiMediaTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", loopTimes, timeDuration, loopTimes/timeDuration)
+	log.Info("[multiMediaTest] media transfer test done")
 }
 
 func receivePayment(channel *ch.Channel) {

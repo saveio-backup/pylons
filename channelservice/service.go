@@ -816,6 +816,12 @@ func (self *ChannelService) CanTransfer(target common.Address, amount common.Tok
 	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 	paymentNetworkIdentifier := common.PaymentNetworkID(self.mircoAddress)
 	channelState := transfer.GetChannelStateFor(chainState, paymentNetworkIdentifier, tokenAddress, target)
+	if chainState == nil {
+		return false
+	}
+	if channelState.OurState == nil {
+		return false
+	}
 	if channelState.OurState.ContractBalance < amount {
 		return false
 	} else {
