@@ -213,7 +213,6 @@ func (self *SQLiteStorage) writeStateSnapshot(stateChangeId int, snapshot transf
 			reflect.TypeOf(snapshot).String(), err.Error())
 	}
 
-
 	lastRowId, err := sqlRes.LastInsertId()
 	if err != nil {
 		log.Errorf("[writeStateSnapshot] sqlRes.LastInsertId error: %s", err.Error())
@@ -616,7 +615,7 @@ func (self *SQLiteStorage) getStateChangesByIdentifier(fromIdentifier interface{
 	result := make([]transfer.StateChange, 0)
 	for rows.Next() {
 		err := rows.Scan(&stateChangeData)
-		if err == nil{
+		if err == nil {
 			if stateChangeData == nil {
 				log.Errorf("[getStateChangesByIdentifier] jsonext.UnmarshalExt Error: stateChangeData is nil")
 				continue

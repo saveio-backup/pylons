@@ -47,19 +47,19 @@ func NewTopology(nodes map[common.Address]int64, edges map[common.EdgeId]int64) 
 func (self *Topology) GetShortPath(node common.Address) ShortPathTree {
 	var sp ShortPathTree
 	lst := list.New()
-	for n := range self.nodes  {
+	for n := range self.nodes {
 		if n != node {
 			lst.PushBack(n)
 		}
 	}
 
 	//for e := lst.Front(); e != nil ; e = e.Next()  {
-		//fmt.Println(e.Value.(common.Address))
+	//fmt.Println(e.Value.(common.Address))
 	//}
 	//fmt.Println()
 
 	var lastLstLen = lst.Len()
-	for e := lst.Front(); lst.Len() != 0; e = e.Next(){
+	for e := lst.Front(); lst.Len() != 0; e = e.Next() {
 		if e == nil {
 			e = lst.Front()
 		}
@@ -76,9 +76,9 @@ func (self *Topology) GetShortPath(node common.Address) ShortPathTree {
 		} else {
 			exist3 := false
 			pathCount := len(sp)
-			for i := 0; i < pathCount; i++  {
+			for i := 0; i < pathCount; i++ {
 				tmpPathLen := len(sp[i])
-				pathLastNode := sp[i][tmpPathLen - 1]
+				pathLastNode := sp[i][tmpPathLen-1]
 				//fmt.Println("PathLastNode |  n : ", pathLastNode, "| ", n)
 				if _, exist2 := self.edges[pathLastNode]; exist2 {
 					//fmt.Println("exist2")

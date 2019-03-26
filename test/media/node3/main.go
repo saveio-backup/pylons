@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"time"
-
 	"flag"
 	"os"
 	"os/signal"
 	"syscall"
+	"math/rand"
 
 	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain-go-sdk/wallet"
@@ -30,7 +30,9 @@ var testConfig = &ch.ChannelConfig{
 var isNode1OnLine = false
 
 var disable = flag.Bool("disable", false, "disable transfer test")
-var transferAmount = flag.Int64("amount", 100, "test transfer amount")
+var transferAmount = flag.Int("amount", 1000, "test transfer amount")
+var multiEnable = flag.Bool("multi", false, "enable multi routes test")
+var routeNum = flag.Int("route", 5, "route number")
 
 func main() {
 	flag.Parse()
@@ -69,8 +71,13 @@ func main() {
 	log.Info("[StartService]")
 
 	if *disable == false {
-		//go mediaTransfer(channel, *transferAmount)
-		go multiMediaTest(channel, *transferAmount)
+		if *multiEnable {
+			log.Info("begin media multi route transfer test...")
+			go multiRouteTest(channel, 1, common.Address(addr1), *transferAmount, 0, *routeNum)
+		} else {
+			log.Info("begin media single route transfer test...")
+			go singleRouteTest(channel, 1, common.Address(addr1), *transferAmount, 0, *routeNum)
+		}
 	}
 	go receivePayment(channel)
 	go currentBalance(channel)
@@ -78,7 +85,11 @@ func main() {
 	waitToExit()
 }
 
-func mediaTransfer(channel *ch.Channel, loopTimes int64) {
+var chInt chan int
+
+func loopTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routeId int) {
+	r := rand.NewSource(time.Now().UnixNano())
+	log.Info("wait for loopTest canTransfer...")
 	for {
 		if isNode1OnLine {
 			break
@@ -89,82 +100,71 @@ func mediaTransfer(channel *ch.Channel, loopTimes int64) {
 	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
 	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 
-	targetAddress, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
-	target := common.Address(targetAddress)
-
-	time1 := time.Now().Unix()
-	for i := int64(1); i <= loopTimes; i++ {
-		log.Info("[MediaTransfer] MediaTransfer times: ", i)
-		ret, err := channel.Service.MediaTransfer(registryAddress, tokenAddress, 1, common.Address(target), common.PaymentID(i))
+	for index := int(0); index < times; index++ {
+		status, err := channel.Service.MediaTransfer(registryAddress, tokenAddress, common.TokenAmount(amount),
+			target, common.PaymentID(r.Int63()))
 		if err != nil {
-			log.Error("[MediaTransfer] MediaTransfer: ", err.Error())
-		} else {
-			log.Debug("[MediaTransfer] MediaTransfer Return")
+			log.Error("[loopTest] direct transfer failed:", err)
+			break
 		}
-		r := <-ret
-		if !r {
-			log.Error("[MediaTransfer] MediaTransfer Failed")
-			time.Sleep(time.Second)
+
+		ret := <-status
+		if !ret {
+			log.Error("[loopTest] direct transfer failed")
+			break
 		} else {
-			log.Debug("[MediaTransfer] MediaTransfer Success")
+			//log.Info("[loopTest] direct transfer successfully")
 		}
 	}
-	time2 := time.Now().Unix()
-	timeDuration := time2 - time1
-	log.Infof("[MediaTransfer] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", loopTimes, timeDuration, loopTimes/timeDuration)
+
+	//tokenAddress := common.TokenAddress(ong.ONG_CONTRACT_ADDRESS)
+	//log.Info("[loopTest] channelClose")
+	//channel.Service.ChannelClose(tokenAddress, target, 3)
+
+	chInt <- routeId
 }
 
-func multiMediaTest(channel *ch.Channel, loopTimes int64) {
-	for ; ;  {
+func singleRouteTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routingNum int) {
+	chInt = make(chan int, 1)
+	for {
 		if isNode1OnLine {
 			break
 		}
 		time.Sleep(time.Second)
 	}
 
-	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
-	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
+	time1 := time.Now().Unix()
+	loopTest(channel, amount, target, times, interval, routingNum)
 
-	targetAddress, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
-	target := common.Address(targetAddress)
-	log.Info("wait for multiMediaTest canTransfer...")
+	time2 := time.Now().Unix()
+	timeDuration := time2 - time1
+	log.Infof("[singleRouteTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n",
+		times, timeDuration, times/int(timeDuration))
+}
 
-	var err error
-	statuses := make([]chan bool, loopTimes)
-
-	f :=  func(statuses []chan bool, index int64) error {
-		statuses[index], err = channel.Service.MediaTransfer(registryAddress, tokenAddress, 1, target, common.PaymentID(index + 1))
-		if err != nil {
-			log.Error("[multiMediaTest] media transfer failed:", err)
-			return fmt.Errorf("[multiMediaTest] media transfer failed:", err)
+func multiRouteTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routingNum int) {
+	chInt = make(chan int, routingNum)
+	for {
+		if isNode1OnLine {
+			break
 		}
-		return nil
+		time.Sleep(time.Second)
 	}
 
 	time1 := time.Now().Unix()
-	for index1 := int64(0); index1 < loopTimes; index1++ {
-		go f(statuses, index1)
+
+	for i := 0; i < routingNum; i++ {
+		go loopTest(channel, amount, target, times, interval, i)
 	}
 
-	for index2 := int64(0); index2 < loopTimes; index2++ {
-		log.Debug("[multiMediaTest] wait for payment status update...")
-		if statuses[index2] == nil  {
-			time.Sleep(5* time.Millisecond)
-			continue
-		}
-		ret := <-statuses[index2]
-		if !ret {
-			log.Error("[multiMediaTest] media transfer failed")
-			break
-		} else {
-			//log.Info("[multiMediaTest] media transfer successfully")
-		}
+	for i := 0; i < routingNum; i++ {
+		<-chInt
 	}
 
 	time2 := time.Now().Unix()
 	timeDuration := time2 - time1
-	log.Infof("[multiMediaTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", loopTimes, timeDuration, loopTimes/timeDuration)
-	log.Info("[multiMediaTest] media transfer test done")
+	log.Infof("[multiRouteTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n",
+		times*routingNum, timeDuration, (times*routingNum)/int(timeDuration))
 }
 
 func receivePayment(channel *ch.Channel) {

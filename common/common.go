@@ -237,7 +237,6 @@ func (self EdgeId) GetAddr2() Address {
 	return tmp
 }
 
-
 func (self EdgeId) MarshalText() (text []byte, err error) {
 	var scratch [64]byte
 	var e bytes.Buffer
@@ -283,7 +282,6 @@ func (self *EdgeId) UnmarshalText(text []byte) error {
 
 	return nil
 }
-
 
 func (self TokenAddress) String() string {
 	str, err := jsonext.Marshal(self)

@@ -9,13 +9,13 @@ import (
 	ch "github.com/oniio/oniChannel"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/transfer"
+	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 	"flag"
 	"runtime/pprof"
-	"fmt"
 )
 
 var testConfig = &ch.ChannelConfig{
@@ -29,7 +29,9 @@ var testConfig = &ch.ChannelConfig{
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var disable = flag.Bool("disable", false, "disable transfer test")
-var transferAmount = flag.Int64("amount", 100, "test transfer amount")
+var transferAmount = flag.Int("amount", 500, "test transfer amount")
+var multiEnable = flag.Bool("multi", false, "enable multi routes test")
+var routeNum = flag.Int("route", 5, "route number")
 
 func main() {
 	flag.Parse()
@@ -89,8 +91,13 @@ func main() {
 		log.Error("[SetTotalChannelDeposit] error: ", err.Error())
 	}
 	if *disable == false {
-		//go mediaTransfer(channel, *transferAmount)
-		go multiMediaTest(channel, *transferAmount)
+		if *multiEnable {
+			log.Info("begin media multi route transfer test...")
+			go multiRouteTest(channel, 1, common.Address(target), *transferAmount, 0, *routeNum)
+		} else {
+			log.Info("begin media single route transfer test...")
+			go singleRouteTest(channel, 1, common.Address(target), *transferAmount, 0, *routeNum)
+		}
 	}
 	go receivePayment(channel)
 	go currentBalance(channel)
@@ -98,79 +105,64 @@ func main() {
 	waitToExit()
 }
 
-func mediaTransfer(channel *ch.Channel, loopTimes int64) {
+var chInt chan int
+
+func loopTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routeId int) {
+	r := rand.NewSource(time.Now().UnixNano())
+	log.Info("wait for loopTest canTransfer...")
+
 	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
 	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 
-	targetAddress, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
-	target := common.Address(targetAddress)
-
-	time1 := time.Now().Unix()
-	for i := int64(1); i <= loopTimes; i++ {
-		log.Info("[MediaTransfer] Transfer times: ", i)
-		ret, err := channel.Service.MediaTransfer(registryAddress, tokenAddress, 1, common.Address(target), common.PaymentID(i))
+	for index := int(0); index < times; index++ {
+		if interval > 0 {
+			<-time.After(time.Duration(interval) * time.Millisecond)
+		}
+		status, err := channel.Service.MediaTransfer(registryAddress, tokenAddress, common.TokenAmount(amount),
+			target, common.PaymentID(r.Int63()))
 		if err != nil {
-			log.Error("[MediaTransfer] MediaTransfer: ", err.Error())
-		} else {
-			log.Debug("[MediaTransfer] MediaTransfer Calls Return")
+			log.Error("[loopTest] direct transfer failed:", err)
+			break
 		}
-		r := <-ret
-		if !r {
-			log.Error("[MediaTransfer] MediaTransfer Failed")
-			time.Sleep(time.Second)
-		} else {
-			log.Debug("[MediaTransfer] MediaTransfer Success")
-		}
-	}
-	time2 := time.Now().Unix()
-	timeDuration := time2 - time1
-	log.Infof("[MediaTransfer] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", loopTimes, timeDuration, loopTimes/timeDuration)
-}
 
-func multiMediaTest(channel *ch.Channel, loopTimes int64) {
-	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
-	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
-
-	targetAddress, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
-	target := common.Address(targetAddress)
-	log.Info("wait for multiMediaTest canTransfer...")
-
-	var err error
-	statuses := make([]chan bool, loopTimes)
-
-	f :=  func(statuses []chan bool, index int64) error {
-		statuses[index], err = channel.Service.MediaTransfer(registryAddress, tokenAddress, 1, target, common.PaymentID(index + 1))
-		if err != nil {
-			log.Error("[multiMediaTest] media transfer failed:", err.Error())
-			return fmt.Errorf("[multiMediaTest] media transfer failed: %s", err.Error())
-		}
-		return nil
-	}
-
-	time1 := time.Now().Unix()
-	for index1 := int64(0); index1 < loopTimes; index1++ {
-		go f(statuses, index1)
-	}
-
-	for index2 := int64(0); index2 < loopTimes; index2++ {
-		log.Debug("[multiMediaTest] wait for payment status update...")
-		if statuses[index2] == nil  {
-			time.Sleep(5* time.Millisecond)
-			continue
-		}
-		ret := <-statuses[index2]
+		ret := <-status
 		if !ret {
-			log.Error("[multiMediaTest] media transfer failed")
+			log.Error("[loopTest] direct transfer failed")
 			break
 		} else {
-			//log.Info("[multiMediaTest] media transfer successfully")
+			//log.Info("[loopTest] direct transfer successfully")
 		}
+	}
+	chInt <- routeId
+}
+
+func singleRouteTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routingNum int) {
+	chInt = make(chan int, 1)
+	time1 := time.Now().Unix()
+
+	loopTest(channel, amount, target, times, interval, routingNum)
+
+	time2 := time.Now().Unix()
+	timeDuration := time2 - time1
+	log.Infof("[singleRouteTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", times, timeDuration, times/int(timeDuration))
+}
+
+func multiRouteTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routingNum int) {
+	chInt = make(chan int, routingNum)
+	time1 := time.Now().Unix()
+
+	for i := 0; i < routingNum; i++ {
+		go loopTest(channel, amount, target, times, interval, i)
+	}
+
+	for i := 0; i < routingNum; i++ {
+		<-chInt
 	}
 
 	time2 := time.Now().Unix()
 	timeDuration := time2 - time1
-	log.Infof("[multiMediaTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", loopTimes, timeDuration, loopTimes/timeDuration)
-	log.Info("[multiMediaTest] media transfer test done")
+	log.Infof("[multiRouteTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n",
+		times*routingNum, timeDuration, (times*routingNum)/int(timeDuration))
 }
 
 func receivePayment(channel *ch.Channel) {
@@ -201,9 +193,9 @@ func currentBalance(channel *ch.Channel) {
 		if chanState != nil {
 			var ourLocked, parLocked common.TokenAmount
 			ourBalance := chanState.OurState.GetGasBalance()
-			outCtBal   := chanState.OurState.ContractBalance
+			outCtBal := chanState.OurState.ContractBalance
 			parBalance := chanState.PartnerState.GetGasBalance()
-			parCtBal   := chanState.PartnerState.ContractBalance
+			parCtBal := chanState.PartnerState.ContractBalance
 
 			if chanState.OurState.BalanceProof != nil {
 				ourLocked = chanState.OurState.BalanceProof.LockedAmount

@@ -644,25 +644,23 @@ func getBalance(sender *NettingChannelEndState, receiver *NettingChannelEndState
 }
 
 func getCurrentBalanceProof(endState *NettingChannelEndState) (*BalanceProofData, error) {
-	var locksRoot common.Locksroot
-	var nonce common.Nonce
-	var transferredAmount, lockedAmount common.TokenAmount
-
 	balanceProof := endState.BalanceProof
 
 	if balanceProof != nil {
-		locksRoot = balanceProof.LocksRoot
-		nonce = (common.Nonce)(balanceProof.Nonce)
-		transferredAmount = balanceProof.TransferredAmount
-		lockedAmount = (common.TokenAmount)(getAmountLocked(endState))
+		return &BalanceProofData{
+			locksRoot:         balanceProof.LocksRoot,
+			nonce:             (common.Nonce)(balanceProof.Nonce),
+			transferredAmount: balanceProof.TransferredAmount,
+			lockedAmount:      (common.TokenAmount)(getAmountLocked(endState)),
+		}, nil
 	} else {
-		locksRoot = common.Locksroot{}
-		nonce = 0
-		transferredAmount = 0
-		lockedAmount = 0
+		return &BalanceProofData{
+			locksRoot:         common.Locksroot{},
+			nonce:             0,
+			transferredAmount: 0,
+			lockedAmount:      0,
+		}, nil
 	}
-
-	return &BalanceProofData{locksRoot, nonce, transferredAmount, lockedAmount}, nil
 }
 
 func GetDistributable(sender *NettingChannelEndState, receiver *NettingChannelEndState) common.TokenAmount {
@@ -1641,8 +1639,8 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 		}
 
 		sendProcessed := &SendProcessed{
-			SendMessageEvent:SendMessageEvent{
-				Recipient : common.Address(directTransfer.BalanceProof.Sender),
+			SendMessageEvent: SendMessageEvent{
+				Recipient:         common.Address(directTransfer.BalanceProof.Sender),
 				ChannelIdentifier: 0,
 				MessageIdentifier: directTransfer.MessageIdentifier,
 			},

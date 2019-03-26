@@ -373,10 +373,10 @@ func (this *Transport) StartHealthCheck(address common.Address) {
 }
 
 func (this *Transport) SetNodeNetworkState(address common.Address, state string) {
-	log.Debugf("[syncPeerState] SetNodeNetworkState is called")
+	log.Debugf("[SetNodeNetworkState] is called")
 	chainState := this.ChannelService.StateFromChannel()
 	if chainState != nil {
-		log.Debugf("[syncPeerState] SetNodeNetworkState set state %s", state)
+		log.Debugf("[SetNodeNetworkState] set %s state %s", common.ToBase58(address), state)
 		chainState.NodeAddressesToNetworkStates.Store(address, state)
 	}
 }

@@ -3,8 +3,8 @@ package transfer
 import (
 	"testing"
 
-	chainComm "github.com/oniio/oniChain/common"
 	"fmt"
+	chainComm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/common/constants"
 )

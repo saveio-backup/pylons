@@ -1,16 +1,16 @@
 package transfer
 
 import (
-	"testing"
 	"fmt"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/utils/jsonext"
+	"testing"
 )
 
 func TestActionInitTargetMarshal(t *testing.T) {
 	var initTarget1 ActionInitTarget
 	initTarget1.Route = &RouteState{
-		NodeAddress:common.EmptyAddress,
+		NodeAddress:       common.EmptyAddress,
 		ChannelIdentifier: common.ChannelID(0),
 	}
 
@@ -29,23 +29,21 @@ func TestActionInitTargetMarshal(t *testing.T) {
 	}
 
 	lock := &HashTimeLockState{
-		Amount: 0,
-		Expiration:0,
+		Amount:     0,
+		Expiration: 0,
 		SecretHash: common.EmptySecretHash,
-		Encoded:[]byte{0x01, 0x02, 0x03, 0x04},
-		LockHash: common.EmptySecretHash,
+		Encoded:    []byte{0x01, 0x02, 0x03, 0x04},
+		LockHash:   common.EmptySecretHash,
 	}
-
 
 	initTarget1.Transfer = &LockedTransferSignedState{
 		MessageIdentifier: GetMsgID(),
 		PaymentIdentifier: common.PaymentID(0),
-		Token: common.EmptyAddress,
-		BalanceProof:balanceProof,
-		Lock: lock,
-		Initiator: common.InitiatorAddress(common.EmptyAddress),
-		Target:common.EmptyAddress,
-
+		Token:             common.EmptyAddress,
+		BalanceProof:      balanceProof,
+		Lock:              lock,
+		Initiator:         common.InitiatorAddress(common.EmptyAddress),
+		Target:            common.EmptyAddress,
 	}
 
 	data, err := jsonext.Marshal(initTarget1)

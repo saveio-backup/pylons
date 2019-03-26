@@ -96,7 +96,7 @@ func main() {
 			go multiRouteTest(channel, 1, common.Address(target), *transferAmount, 0, *routeNum)
 		} else {
 			log.Info("begin direct single route transfer test...")
-			go singleRouteTest(channel, 1, common.Address(target), 1000, 0, *routeNum)
+			go singleRouteTest(channel, 1, common.Address(target), *transferAmount, 0, *routeNum)
 		}
 	}
 
@@ -132,7 +132,7 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times int,
 			log.Error("[loopTest] direct transfer failed:")
 			break
 		} else {
-			log.Info("[loopTest] direct transfer successfully")
+			//log.Info("[loopTest] direct transfer successfully")
 		}
 	}
 
@@ -177,13 +177,13 @@ func multiRouteTest(channel *ch.Channel, amount int, target common.Address, time
 	}
 
 	for i := 0; i < routingNum; i++ {
-		<- chInt
+		<-chInt
 	}
 
 	time2 := time.Now().Unix()
 	timeDuration := time2 - time1
 	log.Infof("[multiRouteTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n",
-		times * routingNum, timeDuration, (times * routingNum)/int(timeDuration))
+		times*routingNum, timeDuration, (times*routingNum)/int(timeDuration))
 }
 
 func logCurrentBalance(channel *ch.Channel, target common.Address) {

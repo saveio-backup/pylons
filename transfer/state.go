@@ -254,7 +254,7 @@ func NewTokenNetworkState(localAddr common.Address) *TokenNetworkState {
 }
 
 func (self *TokenNetworkState) AddRoute(addr1 common.Address, addr2 common.Address, channelId common.ChannelID) {
-	log.Infof("AddRoute addr: %v addr: %v", common.ToBase58(addr1), common.ToBase58(addr2))
+	log.Infof("[AddRoute] [%v] [%v]", common.ToBase58(addr1), common.ToBase58(addr2))
 
 	networkGraphState := self.NetworkGraph
 
@@ -294,7 +294,7 @@ func (self *TokenNetworkState) DelRoute(channelId common.ChannelID) {
 		addr1 := self.ChannelIdentifiersToChannels[channelId].OurState.Address
 		addr2 := self.ChannelIdentifiersToChannels[channelId].PartnerState.Address
 
-		log.Infof("DelRoute addr: %v addr: %v", common.ToBase58(addr1), common.ToBase58(addr2))
+		log.Infof("[DelRoute] [%v] [%v]", common.ToBase58(addr1), common.ToBase58(addr2))
 
 		var node1Node2, node2Node1 common.EdgeId
 		copy(node1Node2[:constants.ADDR_LEN], addr1[:])

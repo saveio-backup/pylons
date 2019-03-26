@@ -34,14 +34,14 @@ type ChannelService struct {
 	chain           *network.BlockchainService
 	queryStartBlock common.BlockHeight
 
-	Account                       *account.Account
-	channelEventHandler           *ChannelEventHandler
-	messageHandler                *MessageHandler
-	config                        map[string]string
-	transport                     *transport.Transport
-	targetsToIdentifierToStatues  map[common.Address]*sync.Map
-	ReceiveNotificationChannels   map[chan *transfer.EventPaymentReceivedSuccess]struct{}
-	channelWithdrawStatus         *sync.Map
+	Account                      *account.Account
+	channelEventHandler          *ChannelEventHandler
+	messageHandler               *MessageHandler
+	config                       map[string]string
+	transport                    *transport.Transport
+	targetsToIdentifierToStatues map[common.Address]*sync.Map
+	ReceiveNotificationChannels  map[chan *transfer.EventPaymentReceivedSuccess]struct{}
+	channelWithdrawStatus        *sync.Map
 
 	address            common.Address
 	mircoAddress       common.Address
@@ -57,7 +57,7 @@ type ChannelService struct {
 
 	tokennetworkidsToConnectionmanagers map[common.TokenNetworkID]*ConnectionManager
 	lastFilterBlock                     common.BlockHeight
-	statusLock                         sync.RWMutex
+	statusLock                          sync.RWMutex
 }
 
 type PaymentStatus struct {
@@ -96,7 +96,7 @@ func NewChannelService(chain *network.BlockchainService,
 	//self.defaultSecretRegistry = defaultSecretRegistry
 	self.config = config
 	self.Account = chain.GetAccount()
-	self.targetsToIdentifierToStatues =  make(map[common.Address]*sync.Map)
+	self.targetsToIdentifierToStatues = make(map[common.Address]*sync.Map)
 	self.tokennetworkidsToConnectionmanagers = make(map[common.TokenNetworkID]*ConnectionManager)
 	self.ReceiveNotificationChannels = make(map[chan *transfer.EventPaymentReceivedSuccess]struct{})
 	self.channelWithdrawStatus = new(sync.Map)

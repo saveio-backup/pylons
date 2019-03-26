@@ -42,7 +42,7 @@ func GetBestRoutes(chainState *transfer.ChainState, tokenNetworkId common.TokenN
 	for i = 0; i < sptLen; i++ {
 		sp := spt[i]
 		spLen := len(sp)
-		if sp[spLen - 1] == toAddress {
+		if sp[spLen-1] == toAddress {
 			break
 		}
 	}

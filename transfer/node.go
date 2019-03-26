@@ -3,10 +3,10 @@ package transfer
 import (
 	"reflect"
 
+	"encoding/hex"
 	"github.com/oniio/oniChain/common/log"
 	scUtils "github.com/oniio/oniChain/smartcontract/service/native/utils"
 	"github.com/oniio/oniChannel/common"
-	"encoding/hex"
 )
 
 func getNetworks(chainState *ChainState, paymentNetworkIdentifier common.PaymentNetworkID,

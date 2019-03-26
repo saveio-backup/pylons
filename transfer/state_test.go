@@ -1,12 +1,11 @@
 package transfer
 
 import (
-	"testing"
 	"encoding/json"
 	"fmt"
 	"github.com/oniio/oniChannel/common"
+	"testing"
 )
-
 
 type TokenNetwork struct {
 	Nodes map[common.Address]int64

@@ -8,10 +8,10 @@ import (
 	"github.com/oniio/oniChain/smartcontract/service/native/utils"
 	ch "github.com/oniio/oniChannel"
 	"github.com/oniio/oniChannel/common"
-	"time"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 var testConfig = &ch.ChannelConfig{
@@ -84,9 +84,9 @@ func currentBalance(channel *ch.Channel) {
 		if chanState != nil {
 			var ourLocked, parLocked common.TokenAmount
 			ourBalance := chanState.OurState.GetGasBalance()
-			outCtBal   := chanState.OurState.ContractBalance
+			outCtBal := chanState.OurState.ContractBalance
 			parBalance := chanState.PartnerState.GetGasBalance()
-			parCtBal   := chanState.PartnerState.ContractBalance
+			parCtBal := chanState.PartnerState.ContractBalance
 
 			if chanState.OurState.BalanceProof != nil {
 				ourLocked = chanState.OurState.BalanceProof.LockedAmount

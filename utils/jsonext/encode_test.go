@@ -14,7 +14,6 @@ import (
 	"strconv"
 	"testing"
 	"unicode"
-
 )
 
 type Optionals struct {
@@ -988,7 +987,7 @@ func TestMarshalMapValue(t *testing.T) {
 	a[id] = 1
 
 	data, err := Marshal(a)
-	if err!= nil {
+	if err != nil {
 		fmt.Println(err.Error())
 	}
 	fmt.Println(data)
