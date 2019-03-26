@@ -175,6 +175,24 @@ type ContractSendChannelCooperativeSettle struct {
 	Participant2PublicKey  common.PubKey
 }
 
+type EventCooperativeSettleRequestSentFailed struct {
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	Reason                 string
+}
+
+type EventInvalidReceivedCooperativeSettleRequest struct {
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	Reason                 string
+}
+
+type EventInvalidReceivedCooperativeSettle struct {
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	Reason                 string
+}
+
 type EventInvalidReceivedTransferRefund struct {
 	PaymentIdentifier common.PaymentID
 	Reason            string

@@ -1533,18 +1533,14 @@ func handleSendCooperativeSettleRequest(channelState *NettingChannelState, state
 
 		events = append(events, sendCooperativeSettleRequest)
 	} else {
-		// fwtodo: add for error case
-		/*
-			msg := fmt.Sprintf("Channel is not opened")
-			failure := &EventWithdrawRequestSentFailed{
-				ChannelIdentifier:      stateChange.ChannelIdentifier,
-				TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
-				WithdrawAmount:         stateChange.TotalWithdraw,
-				Reason:                 msg,
-			}
-			log.Warn("[handleSendWithdrawRequest] failure: ", msg)
-			events = append(events, failure)
-		*/
+		msg := fmt.Sprintf("Channel is not opened")
+		failure := &EventCooperativeSettleRequestSentFailed{
+			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
+			ChannelIdentifier:      stateChange.ChannelIdentifier,
+			Reason:                 msg,
+		}
+		log.Warn("[handleSendCooperativeSettleRequest] failure: ", msg)
+		events = append(events, failure)
 	}
 	return TransitionResult{channelState, events}
 }
@@ -1614,17 +1610,13 @@ func handleCooperativeSettleRequestReceived(channelState *NettingChannelState, s
 		events = append(events, sendCooperativeSettle)
 		events = append(events, sendProcessed)
 	} else {
-		// fwtodo: failure case
-		/*
-			failure := &EventInvalidReceivedWithdrawRequest{
-				ChannelIdentifier: stateChange.ChannelIdentifier,
-				Participant:       stateChange.Participant,
-				TotalWithdraw:     stateChange.TotalWithdraw,
-				Reason:            msg,
-			}
-			events = append(events, failure)
-		*/
+		failure := &EventInvalidReceivedCooperativeSettleRequest{
+			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
+			ChannelIdentifier:      stateChange.ChannelIdentifier,
+			Reason:                 msg,
+		}
 		log.Warn("[handleCooperativeSettleRequestReceived] failure: ", msg)
+		events = append(events, failure)
 	}
 	return TransitionResult{channelState, events}
 }
@@ -1686,18 +1678,13 @@ func handleCooperativeSettleReceived(channelState *NettingChannelState, stateCha
 
 		events = append(events, contractSendChannelCooperativeSettle)
 	} else {
-		// fwtodo : error case
-		/*
-			failure := &EventInvalidReceivedWithdraw{
-				TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
-				ChannelIdentifier:      stateChange.ChannelIdentifier,
-				Participant:            stateChange.Participant,
-				TotalWithdraw:          stateChange.TotalWithdraw,
-				Reason:                 msg,
-			}
-			events = append(events, failure)
-		*/
+		failure := &EventInvalidReceivedCooperativeSettle{
+			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
+			ChannelIdentifier:      stateChange.ChannelIdentifier,
+			Reason:                 msg,
+		}
 		log.Warn("[handleCooperativeSettleReceived] failure: ", msg)
+		events = append(events, failure)
 	}
 	return TransitionResult{channelState, events}
 }

@@ -109,6 +109,9 @@ const (
 	SendCooperativeSettleRequestClassId
 	SendCooperativeSettleClassId
 	ContractSendChannelCooperativeSettleClassId
+	EventCooperativeSettleRequestSentFailedClassId
+	EventInvalidReceivedCooperativeSettleRequestClassId
+	EventInvalidReceivedCooperativeSettleClassId
 )
 
 // class meta for State
@@ -498,6 +501,18 @@ func (self ContractSendChannelCooperativeSettle) ClassId() int {
 	return ContractSendChannelCooperativeSettleClassId
 }
 
+func (self EventCooperativeSettleRequestSentFailed) ClassId() int {
+	return EventCooperativeSettleRequestSentFailedClassId
+}
+
+func (self EventInvalidReceivedCooperativeSettleRequest) ClassId() int {
+	return EventInvalidReceivedCooperativeSettleRequestClassId
+}
+
+func (self EventInvalidReceivedCooperativeSettle) ClassId() int {
+	return EventInvalidReceivedCooperativeSettleClassId
+}
+
 // create class instance based on ClassId
 
 func CreateObjectByClassId(classId int) interface{} {
@@ -734,6 +749,12 @@ func CreateEventByClassId(classId int) interface{} {
 		return new(SendCooperativeSettle)
 	case ContractSendChannelCooperativeSettleClassId:
 		return new(ContractSendChannelCooperativeSettle)
+	case EventCooperativeSettleRequestSentFailedClassId:
+		return new(EventCooperativeSettleRequestSentFailed)
+	case EventInvalidReceivedCooperativeSettleRequestClassId:
+		return new(EventInvalidReceivedCooperativeSettleRequest)
+	case EventInvalidReceivedCooperativeSettleClassId:
+		return new(EventInvalidReceivedCooperativeSettle)
 	}
 
 	return result
