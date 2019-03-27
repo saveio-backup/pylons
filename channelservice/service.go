@@ -678,6 +678,9 @@ func (self *ChannelService) SetTotalChannelDeposit(tokenAddress common.TokenAddr
 		return err
 	}
 
+	if totalDeposit < channelState.OurState.ContractBalance {
+		return errors.New("totalDeposit must big than contractBalance")
+	}
 	addedNum := totalDeposit - channelState.OurState.ContractBalance
 	if balance < addedNum {
 		return errors.New("gas balance not enough")
