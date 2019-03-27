@@ -76,31 +76,43 @@ func MdIsChannelUsable(candidateChannelState *NettingChannelState, transferAmoun
 	distributable := GetDistributable(candidateChannelState.OurState,
 		candidateChannelState.PartnerState)
 
-	//
 	log.Debug(lockTimeout, candidateChannelState.SettleTimeout, candidateChannelState.RevealTimeout,
 		pendingTransfersCount, transferAmount, distributable)
 
 	channelState := GetStatus(candidateChannelState)
 	log.Debug("channelState: ", channelState)
 
-	isValid := IsValidAmount(candidateChannelState.OurState, common.TokenAmount(transferAmount))
-	if isValid {
-		log.Debug("Amount valid")
-	} else {
-		log.Error("Amount is not valid")
-	}
-	usable := lockTimeout > 0 &&
-		GetStatus(candidateChannelState) == ChannelStateOpened &&
-		candidateChannelState.SettleTimeout >= lockTimeout &&
-		candidateChannelState.RevealTimeout < lockTimeout &&
-		pendingTransfersCount < MAXIMUM_PENDING_TRANSFERS &&
-		transferAmount <= common.PaymentAmount(distributable) &&
-		IsValidAmount(candidateChannelState.OurState, common.TokenAmount(transferAmount))
 
-	if !usable {
-		log.Warn("MdIsChannelUsable channel is not usable.")
+	if lockTimeout <= 0 {
+		log.Error("[MdIsChannelUsable] lockTimeout is not valid")
+		return false
 	}
-	return usable
+	if channelState != ChannelStateOpened {
+		log.Error("[MdIsChannelUsable] ChannelState is not Opened")
+		return false
+	}
+	if candidateChannelState.SettleTimeout < lockTimeout {
+		log.Error("[MdIsChannelUsable] ChannelState.SettleTimeout < lockTimeout")
+		return false
+	}
+	if candidateChannelState.RevealTimeout >= lockTimeout {
+		log.Error("[MdIsChannelUsable] ChannelState.RevealTimeout >= lockTimeout")
+		return false
+	}
+	if pendingTransfersCount >= MAXIMUM_PENDING_TRANSFERS {
+		log.Error("[MdIsChannelUsable] pendingTransfersCount >= MAXIMUM_PENDING_TRANSFERS")
+		return false
+	}
+	if transferAmount > common.PaymentAmount(distributable) {
+		log.Error("[MdIsChannelUsable] transferAmount > distributable")
+		return false
+	}
+	if !IsValidAmount(candidateChannelState.OurState, common.TokenAmount(transferAmount)) {
+		log.Error("[MdIsChannelUsable] transferAmount is not valid")
+		return false
+	}
+
+	return true
 }
 
 func MdIsSendTransferAlmostEqual(send *LockedTransferUnsignedState, received *LockedTransferSignedState) bool {
