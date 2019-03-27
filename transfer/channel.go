@@ -742,6 +742,7 @@ func GetStatus(channelState *NettingChannelState) string {
 	} else {
 		result = ChannelStateOpened
 	}
+	log.Debugf("[GetStatus] result: %s", result)
 
 	return result
 }
@@ -1531,6 +1532,9 @@ func handleSendCooperativeSettleRequest(channelState *NettingChannelState, state
 			Participant2Balance:    partnerBalance,
 		}
 
+		//record there is an cooperative settlement ongoing
+		channelState.SettleTransaction = &TransactionExecutionStatus{0, 0, ""}
+
 		events = append(events, sendCooperativeSettleRequest)
 	} else {
 		msg := fmt.Sprintf("Channel is not opened")
@@ -1607,6 +1611,9 @@ func handleCooperativeSettleRequestReceived(channelState *NettingChannelState, s
 			},
 		}
 
+		//record there is an cooperative settlement ongoing
+		channelState.SettleTransaction = &TransactionExecutionStatus{0, 0, ""}
+
 		events = append(events, sendCooperativeSettle)
 		events = append(events, sendProcessed)
 	} else {
@@ -1678,6 +1685,7 @@ func handleCooperativeSettleReceived(channelState *NettingChannelState, stateCha
 
 		events = append(events, contractSendChannelCooperativeSettle)
 	} else {
+		channelState.SettleTransaction = nil
 		failure := &EventInvalidReceivedCooperativeSettle{
 			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
 			ChannelIdentifier:      stateChange.ChannelIdentifier,
@@ -1689,7 +1697,7 @@ func handleCooperativeSettleReceived(channelState *NettingChannelState, stateCha
 	return TransitionResult{channelState, events}
 }
 func isValidCooperativeSettle(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettle) (bool, string) {
-	if GetStatus(channelState) != ChannelStateOpened {
+	if GetStatus(channelState) != ChannelStateSettling {
 		msg := fmt.Sprintf("channel is not opened")
 		return false, msg
 	}
@@ -1733,10 +1741,13 @@ func isValidCooperativeSettle(channelState *NettingChannelState, stateChange *Re
 
 func handleChannelCooperativeSettled(channelState *NettingChannelState, stateChange *ContractReceiveChannelCooperativeSettled) TransitionResult {
 	var events []Event
-
 	log.Debugf("[handleChannelCooperativeSettled]")
 
-	//DeleteWithdrawTransaction(channelState)
+	if stateChange.ChannelIdentifier == channelState.Identifier {
+		setSettled(channelState, stateChange.BlockHeight)
+		// set to nil to delete the channel
+		channelState = nil
+	}
 
 	return TransitionResult{channelState, events}
 }

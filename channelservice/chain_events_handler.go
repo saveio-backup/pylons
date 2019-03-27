@@ -294,6 +294,7 @@ func (self ChannelService) HandleChannelCooperativeSettled(event map[string]inte
 				BlockHeight:     blockNumber,
 			},
 			TokenNetworkIdentifier: tokenNetworkIdentifier,
+			ChannelIdentifier:      channelIdentifier,
 			Participant1Amount:     participant1Amount,
 			Participant2Amount:     participant2Amount,
 		}

@@ -686,6 +686,23 @@ func isTransactionEffectSatisfied(chainState *ChainState, transaction Event,
 		}
 	}
 
+	if receiveChannelWithdraw, ok := stateChange.(*ContractReceiveChannelWithdraw); ok {
+		if sendChannelWithdraw, ok := transaction.(*ContractReceiveChannelWithdraw); ok {
+			if receiveChannelWithdraw.ChannelIdentifier == sendChannelWithdraw.ChannelIdentifier &&
+				receiveChannelWithdraw.Participant == sendChannelWithdraw.Participant {
+				return true
+			}
+		}
+	}
+
+	if receiveChannelCooperativeSettled, ok := stateChange.(*ContractReceiveChannelCooperativeSettled); ok {
+		if sendChannelCooperativeSettle, ok := transaction.(*ContractReceiveChannelCooperativeSettled); ok {
+			if receiveChannelCooperativeSettled.ChannelIdentifier == sendChannelCooperativeSettle.ChannelIdentifier {
+				return true
+			}
+		}
+	}
+
 	return false
 }
 

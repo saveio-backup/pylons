@@ -38,6 +38,9 @@ func GetChannelIdentifier(stateChange StateChange) common.ChannelID {
 	case *ReceiveCooperativeSettle:
 		receiveCooperativeSettle, _ := stateChange.(*ReceiveCooperativeSettle)
 		result = receiveCooperativeSettle.ChannelIdentifier
+	case *ContractReceiveChannelCooperativeSettled:
+		contractReceiveChannelCooperativeSettled, _ := stateChange.(*ContractReceiveChannelCooperativeSettled)
+		result = contractReceiveChannelCooperativeSettled.ChannelIdentifier
 	}
 
 	return result
@@ -153,6 +156,10 @@ func GetContractSendEvent(event Event) *ContractSendEvent {
 		return new(ContractSendEvent)
 	case *ContractSendChannelUpdateTransfer:
 		return new(ContractSendEvent)
+	case *ContractSendChannelWithdraw:
+		return new(ContractSendEvent)
+	case *ContractSendChannelCooperativeSettle:
+		return new(ContractSendEvent)
 	}
 
 	return result
@@ -172,6 +179,10 @@ func GetContractReceiveStateChange(stateChange StateChange) *ContractReceiveStat
 	case *ContractReceiveChannelNewBalance:
 		return match
 	case *ContractReceiveUpdateTransfer:
+		return match
+	case *ContractReceiveChannelWithdraw:
+		return match
+	case *ContractReceiveChannelCooperativeSettled:
 		return match
 	}
 
@@ -197,6 +208,7 @@ func subDispatchToChannelById(tokenNetworkState *TokenNetworkState,
 		partnerToChannels := tokenNetworkState.PartnerAddressesToChannels[channelState.PartnerState.Address]
 
 		if reflect.ValueOf(result.NewState).IsNil() {
+			log.Debugf("channel for channelIdentifier %d is deleted", channelIdentifier)
 			delete(idsToChannels, channelIdentifier)
 			delete(partnerToChannels, channelIdentifier)
 		} else {
