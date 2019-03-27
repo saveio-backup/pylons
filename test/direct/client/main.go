@@ -131,17 +131,6 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times int,
 	log.Info("wait for loopTest canTransfer...")
 
 	for index := int(0); index < times; index++ {
-		if interval > 0 {
-			<-time.After(time.Duration(interval) * time.Millisecond)
-		}
-
-		state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
-		if state != transfer.NetworkReachable {
-			log.Error("[loopTest] peer Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC is not reachable ")
-			continue
-		} else {
-			//log.Info("[loopTest] peer Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC is reachable ")
-		}
 		status, err := channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(r.Int63()))
 		if err != nil {
 			log.Error("[loopTest] direct transfer failed:", err)

@@ -232,6 +232,8 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 			log.Debugf("[DeliverChan] msgId := <-queue.DeliverChan: %s item = %+v\n",
 				reflect.TypeOf(item.message).String(), item.messageId)
 			if msgId.MessageId == item.messageId.MessageId {
+				this.addressQueueMap.Delete(msgId.MessageId)
+
 				queue.Pop()
 				t.Stop()
 				if queue.Len() != 0 {

@@ -9,6 +9,7 @@ import (
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/common/constants"
+	"sync"
 )
 
 func Min(x, y uint64) uint64 {
@@ -599,8 +600,12 @@ func ValidLockedTransferCheck(channelState *NettingChannelState, senderState *Ne
 	}
 }
 
+var nonceLock sync.Mutex
+
 func getAmountLocked(endState *NettingChannelEndState) common.Balance {
 	var totalPending, totalUnclaimed, totalUnclaimedOnChain common.TokenAmount
+	nonceLock.Lock()
+	defer nonceLock.Unlock()
 
 	for _, lock := range endState.SecretHashesToLockedLocks {
 		totalPending = totalPending + lock.Amount
