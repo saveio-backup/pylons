@@ -1504,6 +1504,17 @@ func isValidWithdraw(channelState *NettingChannelState, stateChange *ReceiveWith
 func handleChannelWithdraw(channelState *NettingChannelState, stateChange *ContractReceiveChannelWithdraw) TransitionResult {
 	var events []Event
 
+	ourState := channelState.GetChannelEndState(0)
+	partnerState := channelState.GetChannelEndState(1)
+
+	log.Infof("handleChannelWithdraw withdraw amount is %d", stateChange.TotalWithdraw)
+
+	if common.AddressEqual(stateChange.Participant, ourState.GetAddress()) {
+		ourState.TotalWithdraw = stateChange.TotalWithdraw
+	} else {
+		partnerState.TotalWithdraw = stateChange.TotalWithdraw
+	}
+
 	DeleteWithdrawTransaction(channelState)
 
 	return TransitionResult{channelState, events}

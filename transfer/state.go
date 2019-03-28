@@ -428,6 +428,10 @@ func (self *NettingChannelEndState) GetContractBalance() common.TokenAmount {
 	return self.ContractBalance
 }
 
+func (self *NettingChannelEndState) GetTotalWithdraw() common.TokenAmount {
+	return self.TotalWithdraw
+}
+
 func (self *NettingChannelEndState) GetGasBalance() common.TokenAmount {
 	var amount common.TokenAmount
 

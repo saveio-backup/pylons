@@ -32,6 +32,9 @@ func GetChannelIdentifier(stateChange StateChange) common.ChannelID {
 	case *ReceiveWithdraw:
 		receiveWithdraw, _ := stateChange.(*ReceiveWithdraw)
 		result = receiveWithdraw.ChannelIdentifier
+	case *ContractReceiveChannelWithdraw:
+		contractReceiveChannelWithdraw, _ := stateChange.(*ContractReceiveChannelWithdraw)
+		result = contractReceiveChannelWithdraw.ChannelIdentifier
 	case *ReceiveCooperativeSettleRequest:
 		receiveCooperativeSettleRequest, _ := stateChange.(*ReceiveCooperativeSettleRequest)
 		result = receiveCooperativeSettleRequest.ChannelIdentifier

@@ -454,9 +454,10 @@ func (self ChannelEventHandler) HandleContractSendChannelWithdraw(channel *Chann
 		err := channelProxy.Withdraw(channelWithdrawEvent.PartnerAddress, channelWithdrawEvent.TotalWithdraw, channelWithdrawEvent.PartnerSignature, channelWithdrawEvent.PartnerPublicKey,
 			channelWithdrawEvent.ParticipantSignature, channelWithdrawEvent.ParticipantPublicKey)
 		if err != nil {
+			log.Warnf("HandleContractSendChannelWithdraw, proxy returns: %s", err)
 			ok := channel.WithdrawResultNotify(channelWithdrawEvent.ChannelIdentifier, false)
 			if !ok {
-				panic("error in HandleContractSendChannelWithdraw, no withdraw status found in the map")
+				log.Warnf("error in HandleContractSendChannelWithdraw, no withdraw status found in the map")
 			}
 		}
 	}()
