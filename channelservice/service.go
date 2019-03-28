@@ -109,30 +109,65 @@ func NewChannelService(chain *network.BlockchainService,
 	self.transport = transport
 	self.alarm = NewAlarmTask(chain)
 
-	if _, exist := config["database_path"]; exist == false {
-		self.setDefaultDBPath()
-	} else {
-		self.databasePath = config["database_path"]
-		if self.databasePath == "." || self.databasePath == "" {
-			self.setDefaultDBPath()
-		}
+	networkId, err := self.chain.ChainClient.GetNetworkId()
+	if err != nil {
+		log.Error("get network id failed:", err)
+		return nil
 	}
+	log.Info("[NewChannelService], NetworkId: ", networkId)
+
+	customDBPath, _ := config["database_path"]
+	self.setDBPath(customDBPath, networkId)
 
 	return self
 }
-func (self *ChannelService) setDefaultDBPath() {
-	fullname, err := GetFullDatabasePath()
-	if err == nil {
-		databaseDir := filepath.Dir(self.databasePath)
-		os.Mkdir(databaseDir, os.ModeDir)
-		self.databasePath = fullname
-		self.databaseDir = databaseDir
-		log.Info("database set to", fullname)
+
+func (self *ChannelService) setDBPath(customDBPath string, dbId uint32) {
+	var dbPath string
+
+	if filepath.IsAbs(customDBPath) {
+		dbPath = customDBPath
+		log.Info("[setDBPath] dbPath: ", dbPath)
 	} else {
-		self.databasePath = ":memory:"
-		self.databaseDir = ""
-		log.Warn("get full db path failed,use memory database")
+		currentPath, err := GetFullDatabasePath()
+		if err != nil {
+			self.databaseDir = ""
+			self.databasePath = ":memory:"
+			log.Warn("[setDBPath] get full db path failed,use memory database")
+			return
+		}
+		log.Info("[setDBPath] currentPath: ", currentPath)
+		if customDBPath == "" || customDBPath == "." {
+			dbPath = currentPath
+			log.Info("[setDBPath] dbPath: ", dbPath)
+		} else {
+			customPath := strings.Trim(customDBPath, ".")
+			customPath = strings.Trim(customPath, "/")
+			customPath = strings.Trim(customPath, "\\")
+
+			dbPath = filepath.Join(currentPath, customPath)
+			log.Info("[setDBPath] dbPath: ", dbPath)
+			if !common.PathExists(dbPath) {
+				err := os.Mkdir(dbPath, os.ModePerm)
+				if err != nil {
+					log.Error("[setDBPath] Mkdir error: ", err.Error())
+				}
+			}
+		}
 	}
+
+	dbDirName := fmt.Sprintf("channelDB-%d", dbId)
+
+	self.databaseDir = filepath.Join(dbPath, dbDirName)
+	if !common.PathExists(self.databaseDir) {
+		err := os.Mkdir(self.databaseDir, os.ModePerm)
+		if err != nil {
+			log.Error("[setDBPath] Mkdir error: ", err.Error())
+		}
+	}
+
+	self.databasePath = filepath.Join(self.databaseDir, "channel.db")
+	log.Info("[setDBPath] database set to", self.databasePath)
 }
 
 func (self *ChannelService) Start() error {
@@ -1102,8 +1137,8 @@ func (self *ChannelService) GetHostAddr(nodeAddress common.Address) (string, err
 //	log.Infof("peer %s registe address: %s", regAddr.ToBase58(), nodeAddr)
 //	return nodeAddr
 //}
-func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAddress common.Address, totalWithdraw common.TokenAmount) (chan bool, error) {
 
+func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAddress common.Address, totalWithdraw common.TokenAmount) (chan bool, error) {
 	chainState := self.StateFromChannel()
 	partAddr, _ := comm.AddressParseFromBytes(partnerAddress[:])
 	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.mircoAddress), tokenAddress, partnerAddress)
@@ -1239,5 +1274,5 @@ func GetFullDatabasePath() (string, error) {
 	if i < 0 {
 		return "", errors.New(`error: Can't find "/" or "\".`)
 	}
-	return string(path[0:i+1]) + "channel.db", nil
+	return string(path[0:i+1]), nil
 }

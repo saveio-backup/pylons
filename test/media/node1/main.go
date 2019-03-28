@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain-go-sdk/wallet"
 	chaincomm "github.com/oniio/oniChain/common"
@@ -12,10 +13,9 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"runtime/pprof"
 	"syscall"
 	"time"
-	"flag"
-	"runtime/pprof"
 )
 
 var testConfig = &ch.ChannelConfig{

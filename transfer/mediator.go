@@ -82,7 +82,6 @@ func MdIsChannelUsable(candidateChannelState *NettingChannelState, transferAmoun
 	channelState := GetStatus(candidateChannelState)
 	log.Debug("channelState: ", channelState)
 
-
 	if lockTimeout <= 0 {
 		log.Error("[MdIsChannelUsable] lockTimeout is not valid")
 		return false
@@ -1248,15 +1247,6 @@ func handleOffchainSecretReveal(mediatorState *MediatorTransferState, mediatorSt
 	hasPayerTransferExpired := TransferExpired(transferPair.PayerTransfer,
 		payerChannel, blockNumber)
 
-	//if isSecretUnknown {
-	//	fmt.Println("1")
-	//}
-	//if isValidReveal {
-	//	fmt.Println("2")
-	//}
-	//if !hasPayerTransferExpired {
-	//	fmt.Println("3")
-	//}
 	if isSecretUnknown && isValidReveal && !hasPayerTransferExpired {
 		secretHash := sha256.Sum256(mediatorStateChange.Secret)
 		iteration, err = secretLearned(mediatorState, channelIdentifiersToChannels,

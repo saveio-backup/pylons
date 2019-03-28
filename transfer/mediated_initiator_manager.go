@@ -95,7 +95,6 @@ func ImHandleInit(paymentState *InitiatorPaymentState, stateChange *ActionInitIn
 	var events []Event
 
 	if paymentState == nil {
-
 		subIteration := InitTryNewRoute(nil, channelIdToChannels,
 			stateChange.Routes, stateChange.TransferDescription, blockNumber)
 

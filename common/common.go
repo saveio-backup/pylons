@@ -10,6 +10,7 @@ import (
 	chainCom "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/utils/jsonext"
+	"os"
 )
 
 func AddressEqual(address1 Address, address2 Address) bool {
@@ -436,4 +437,15 @@ func SecretRandom(len int) []byte {
 func ToBase58(address Address) string {
 	addr := chainCom.Address(address)
 	return addr.ToBase58()
+}
+
+func PathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return false
 }

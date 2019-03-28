@@ -2,12 +2,6 @@ package main
 
 import (
 	"flag"
-	"os"
-	"os/signal"
-	"runtime/pprof"
-	"syscall"
-	"time"
-	"math/rand"
 	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain-go-sdk/wallet"
 	chaincomm "github.com/oniio/oniChain/common"
@@ -17,12 +11,19 @@ import (
 	ch "github.com/oniio/oniChannel"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/transfer"
+	"math/rand"
+	"os"
+	"os/signal"
+	"runtime/pprof"
+	"syscall"
+	"time"
 )
 
 var (
 	WALLET_PATH = "./wallet.dat" //address:AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg
 	WALLET_PWD  = []byte("123")
 )
+
 var testConfig = &ch.ChannelConfig{
 	ClientType:    "rpc",
 	ChainNodeURL:  "http://127.0.0.1:20336",
@@ -30,6 +31,7 @@ var testConfig = &ch.ChannelConfig{
 	//MappingAddress: "10.0.1.105:3000",
 	Protocol:      "tcp",
 	RevealTimeout: "1000",
+	DBPath:        "/Users/ggxxjj123/gowork/src/github.com/oniio/oniChannel/test/direct/",
 }
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")

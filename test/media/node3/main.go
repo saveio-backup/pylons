@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"time"
 	"flag"
+	"fmt"
+	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
-	"math/rand"
+	"time"
 
 	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain-go-sdk/wallet"
