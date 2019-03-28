@@ -281,7 +281,7 @@ func (self ChannelService) HandleChannelCooperativeSettled(event map[string]inte
 	participant1Amount := event["participant1_amount"].(common.TokenAmount)
 	participant2Amount := event["participant2_amount"].(common.TokenAmount)
 
-	tokenNetworkIdentifier := common.TokenNetworkID(ong.ONG_CONTRACT_ADDRESS)
+	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 
 	chainState := self.StateFromChannel()
 	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(chainState,
