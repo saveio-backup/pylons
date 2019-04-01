@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"math"
 
+	"sync"
+
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/common/constants"
-	"sync"
 )
 
 func Min(x, y uint64) uint64 {
@@ -643,7 +644,8 @@ func getBalance(sender *NettingChannelEndState, receiver *NettingChannelEndState
 		receiverTransferredAmount = receiver.BalanceProof.TransferredAmount
 	}
 
-	result := sender.ContractBalance - senderTransferredAmount + receiverTransferredAmount
+	//result := sender.ContractBalance - senderTransferredAmount + receiverTransferredAmount
+	result := sender.ContractBalance - sender.TotalWithdraw - senderTransferredAmount + receiverTransferredAmount
 	return (common.Balance)(result)
 
 }
@@ -1302,8 +1304,18 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 
 func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *ActionWithdraw) TransitionResult {
 	var events []Event
+	var msg string
 
+	isOpen := false
+	isValid := false
 	if GetStatus(channelState) == ChannelStateOpened {
+		isOpen = true
+		isValid, msg = isValidWithdrawAmount(channelState.GetChannelEndState(0), channelState.GetChannelEndState(1), stateChange.TotalWithdraw)
+	} else {
+		msg = fmt.Sprintf("Channel is not opened")
+	}
+
+	if isOpen && isValid {
 		messageIdentifier := GetMsgID()
 		sendWithdrawRequest := &SendWithdrawRequest{
 			SendMessageEvent: SendMessageEvent{
@@ -1320,7 +1332,6 @@ func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *A
 		events = append(events, sendWithdrawRequest)
 		RecordWithdrawTransaction(channelState)
 	} else {
-		msg := fmt.Sprintf("Channel is not opened")
 		failure := &EventWithdrawRequestSentFailed{
 			ChannelIdentifier:      stateChange.ChannelIdentifier,
 			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
@@ -1331,6 +1342,36 @@ func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *A
 		events = append(events, failure)
 	}
 	return TransitionResult{channelState, events}
+}
+
+func isValidWithdrawAmount(participant *NettingChannelEndState, partner *NettingChannelEndState, totalWithdraw common.TokenAmount) (bool, string) {
+	currentWithdraw := participant.GetTotalWithdraw()
+	amountToWithdraw := totalWithdraw - currentWithdraw
+
+	if totalWithdraw < currentWithdraw {
+		msg := fmt.Sprintf("total withdraw smaller than current")
+		return false, msg
+	}
+
+	if amountToWithdraw <= 0 {
+		msg := fmt.Sprintf("amount to withdraw no larger than 0")
+		return false, msg
+	}
+
+	totalDeposit := participant.GetContractBalance() + partner.GetContractBalance()
+	if totalWithdraw+participant.GetTotalWithdraw() > totalDeposit {
+		msg := fmt.Sprintf("withdraw from both side : totalWithdraw %d, partner totalWithdraw %d is larger than total deposit %d",
+			totalWithdraw, partner.GetTotalWithdraw(), totalDeposit)
+		return false, msg
+	}
+
+	distributable := GetDistributable(participant, partner)
+	if totalWithdraw > distributable {
+		msg := fmt.Sprintf("total withdraw %d is larger than  distributable %d", totalWithdraw, distributable)
+		return false, msg
+	}
+
+	return true, ""
 }
 
 func RecordWithdrawTransaction(channelState *NettingChannelState) {
@@ -1407,20 +1448,9 @@ func isValidWithdrawRequest(channelState *NettingChannelState, stateChange *Rece
 		return false, msg
 	}
 
-	// check if withdraw is valid, make sure participant cannot withdraw more than available
-	withdrawAmount := stateChange.TotalWithdraw
-	if withdrawAmount > partnerState.ContractBalance {
-		msg := fmt.Sprintf("invalid withdraw amount, withdraw : %d is larger than partner's contract balance %d", withdrawAmount, partnerState.ContractBalance)
+	isValid, msg := isValidWithdrawAmount(channelState.GetChannelEndState(1), channelState.GetChannelEndState(0), stateChange.TotalWithdraw)
+	if !isValid {
 		return false, msg
-	} else {
-		balanceProof := partnerState.BalanceProof
-		if balanceProof != nil {
-			availableAmount := partnerState.ContractBalance - balanceProof.TransferredAmount - balanceProof.LockedAmount
-			if withdrawAmount > availableAmount {
-				msg := fmt.Sprintf("invalid withdraw amount, withdraw : %d larger than available amount %d", withdrawAmount, availableAmount)
-				return false, msg
-			}
-		}
 	}
 
 	// verify if signature is valid
