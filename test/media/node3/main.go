@@ -23,7 +23,7 @@ var testConfig = &ch.ChannelConfig{
 	ClientType:    "rpc",
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3002",
-	Protocol:      "tcp",
+	Protocol:      "udp",
 	RevealTimeout: "1000",
 }
 
@@ -59,9 +59,9 @@ func main() {
 	addr2, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
 	addr3, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
 
-	channel.Service.SetHostAddr(common.Address(addr1), "tcp://127.0.0.1:3000")
-	channel.Service.SetHostAddr(common.Address(addr2), "tcp://127.0.0.1:3001")
-	channel.Service.SetHostAddr(common.Address(addr3), "tcp://127.0.0.1:3002")
+	channel.Service.SetHostAddr(common.Address(addr1), "udp://127.0.0.1:3000")
+	channel.Service.SetHostAddr(common.Address(addr2), "udp://127.0.0.1:3001")
+	channel.Service.SetHostAddr(common.Address(addr3), "udp://127.0.0.1:3002")
 
 	err = channel.StartService()
 	if err != nil {

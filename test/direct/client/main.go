@@ -2,6 +2,13 @@ package main
 
 import (
 	"flag"
+	"math/rand"
+	"os"
+	"os/signal"
+	"runtime/pprof"
+	"syscall"
+	"time"
+
 	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain-go-sdk/wallet"
 	chaincomm "github.com/oniio/oniChain/common"
@@ -11,12 +18,6 @@ import (
 	ch "github.com/oniio/oniChannel"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/transfer"
-	"math/rand"
-	"os"
-	"os/signal"
-	"runtime/pprof"
-	"syscall"
-	"time"
 )
 
 var (
@@ -29,7 +30,7 @@ var testConfig = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3000",
 	//MappingAddress: "10.0.1.105:3000",
-	Protocol:      "tcp",
+	Protocol:      "udp",
 	RevealTimeout: "1000",
 	DBPath:        "/Users/ggxxjj123/gowork/src/github.com/oniio/oniChannel/test/direct/",
 }
@@ -75,7 +76,7 @@ func main() {
 	}
 
 	target, _ := chaincomm.AddressFromBase58("Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
-	channel.Service.SetHostAddr(common.Address(target), "tcp://127.0.0.1:3001")
+	channel.Service.SetHostAddr(common.Address(target), "udp://127.0.0.1:3001")
 
 	err = channel.StartService()
 	if err != nil {

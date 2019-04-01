@@ -29,7 +29,7 @@ var testConfig = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3001",
 	//MappingAddress: "10.0.1.105:3001",
-	Protocol:      "tcp",
+	Protocol:      "udp",
 	RevealTimeout: "1000",
 }
 
@@ -71,7 +71,7 @@ func main() {
 	}
 
 	target, _ := chaincomm.AddressFromBase58("AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
-	channel.Service.SetHostAddr(common.Address(target), "tcp://127.0.0.1:3000")
+	channel.Service.SetHostAddr(common.Address(target), "udp://127.0.0.1:3000")
 
 	err = channel.StartService()
 	if err != nil {

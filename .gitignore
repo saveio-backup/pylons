@@ -30,3 +30,4 @@ channel
 *.db-wal
 main
 client
+*.log

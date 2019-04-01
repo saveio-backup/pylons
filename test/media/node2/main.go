@@ -1,6 +1,11 @@
 package main
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain-go-sdk/wallet"
 	chaincomm "github.com/oniio/oniChain/common"
@@ -8,10 +13,6 @@ import (
 	"github.com/oniio/oniChain/smartcontract/service/native/utils"
 	ch "github.com/oniio/oniChannel"
 	"github.com/oniio/oniChannel/common"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 var testConfig = &ch.ChannelConfig{
@@ -19,7 +20,7 @@ var testConfig = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3001",
 	//MappingAddress: "10.0.1.105:3000",
-	Protocol:      "tcp",
+	Protocol:      "udp",
 	RevealTimeout: "1000",
 }
 
@@ -47,9 +48,9 @@ func main() {
 	local, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
 	target, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
 
-	channel.Service.SetHostAddr(common.Address(initiator), "tcp://127.0.0.1:3000")
-	channel.Service.SetHostAddr(common.Address(local), "tcp://127.0.0.1:3001")
-	channel.Service.SetHostAddr(common.Address(target), "tcp://127.0.0.1:3002")
+	channel.Service.SetHostAddr(common.Address(initiator), "udp://127.0.0.1:3000")
+	channel.Service.SetHostAddr(common.Address(local), "udp://127.0.0.1:3001")
+	channel.Service.SetHostAddr(common.Address(target), "udp://127.0.0.1:3002")
 
 	err = channel.StartService()
 	if err != nil {
