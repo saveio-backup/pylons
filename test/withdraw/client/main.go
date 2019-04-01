@@ -21,37 +21,42 @@ import (
 )
 
 var (
-	WALLET_PATH = "./wallet.dat" //address:Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC
-	WALLET_PWD  = []byte("123456")
+	WALLET_PATH = "./wallet.dat" //address:AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg
+	WALLET_PWD  = []byte("123")
 	FACOTR      = 1000000000
 )
 var testConfig = &ch.ChannelConfig{
 	ClientType:    "rpc",
 	ChainNodeURL:  "http://127.0.0.1:20336",
-	ListenAddress: "127.0.0.1:3001",
-	//MappingAddress: "10.0.1.105:3001",
+	ListenAddress: "127.0.0.1:3000",
+	//MappingAddress: "10.0.1.105:3000",
 	Protocol:      "tcp",
 	RevealTimeout: "1000",
+	DBPath:        "C:\\fuwei\\Go\\src\\github.com\\oniio\\oniChannel\\test\\withdraw\\client",
 }
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var disable = flag.Bool("disable", false, "disable transfer test")
 var transferAmount = flag.Int("amount", 1000, "test transfer amount")
-var withdrawAmount = flag.Int("withdrawamount", 0, "test withdraw amount")
+var multiEnable = flag.Bool("multi", false, "enable multi routes test")
+var withdrawAmount = flag.Int("withdrawamount", 1000, "test withdraw amount")
 var routeNum = flag.Int("route", 5, "route number")
 var timeout = flag.Int("timeout", 0, "timeout in second before withdraw")
+var chclose = flag.Bool("close", false, "close channel")
 
 func main() {
 	log.InitLog(2, log.Stdout)
 	flag.Parse()
-
 	if *cpuProfile != "" {
-
 		cupF, err := os.Create(*cpuProfile)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("could not create CPU profile: ", err)
 		}
-		pprof.StartCPUProfile(cupF)
+		defer cupF.Close()
+		if err := pprof.StartCPUProfile(cupF); err != nil {
+			log.Fatal("could not start CPU profile: ", err)
+		}
+
 		defer pprof.StopCPUProfile()
 	}
 
@@ -72,8 +77,8 @@ func main() {
 		return
 	}
 
-	target, _ := chaincomm.AddressFromBase58("AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
-	channel.Service.SetHostAddr(common.Address(target), "tcp://127.0.0.1:3000")
+	target, _ := chaincomm.AddressFromBase58("Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
+	channel.Service.SetHostAddr(common.Address(target), "tcp://127.0.0.1:3001")
 
 	err = channel.StartService()
 	if err != nil {
@@ -81,29 +86,56 @@ func main() {
 		return
 	}
 	time.Sleep(time.Second)
+	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 
 	go logCurrentBalance(channel, common.Address(target))
-	for {
-		state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
-		if state == transfer.NetworkReachable {
-			log.Info("connect peer AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg successful")
-			break
+	channelID := channel.Service.OpenChannel(tokenAddress, common.Address(target))
+	depositAmount := common.TokenAmount(1000 * FACOTR)
+	if channelID != 0 {
+		log.Infof("start to deposit %d token to channel", depositAmount)
+		err = channel.Service.SetTotalChannelDeposit(tokenAddress, common.Address(target), depositAmount)
+		if err != nil {
+			log.Fatal(err)
+			return
 		}
-		log.Infof("peer state = %s wait for connect ...", state)
-		<-time.After(time.Duration(3000) * time.Millisecond)
-	}
-	if *disable == false {
-		log.Info("begin direct single route transfer test...")
-		go singleRouteTest(channel, 1*FACOTR, common.Address(target), *transferAmount, 0, *routeNum)
-	}
+		log.Info("deposit successful")
 
-	amount := *withdrawAmount * FACOTR
-	if amount != 0 {
+		for {
+			state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
+			if state == transfer.NetworkReachable {
+				log.Info("connect peer Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC successful")
+				break
+			} else {
+				log.Error("connect peer Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC failed")
+			}
+
+			log.Infof("peer state = %s wait for connect ...", state)
+			<-time.After(time.Duration(3000) * time.Millisecond)
+		}
+
+		chInt = make(chan int, 1)
+
+		if *disable == false {
+			log.Info("begin direct single route transfer test...")
+			go singleRouteTest(channel, 1*FACOTR, common.Address(target), *transferAmount, 0, *routeNum)
+		}
+
+		amount := *withdrawAmount * FACOTR
 		withdrawTest(channel, amount, common.Address(target))
+
+		if *chclose {
+			log.Infof("start to close channel")
+			channel.Service.ChannelClose(common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), common.Address(target), 0.5)
+			log.Infof("channel closed")
+		}
+	} else {
+		log.Fatal("setup channel failed, exit")
+		return
 	}
 
 	waitToExit()
 }
+
 func withdrawTest(channel *ch.Channel, withdrawAmount int, target common.Address) {
 	if *disable == false {
 		<-chInt
@@ -143,23 +175,24 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times int,
 
 		ret := <-status
 		if !ret {
-			log.Error("[loopTest] direct transfer failed:")
+			log.Error("[loopTest] direct transfer failed")
 			break
 		} else {
 			//log.Info("[loopTest] direct transfer successfully")
 		}
 	}
 
+	//tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
+	//log.Info("[loopTest] channelClose")
+	//channel.Service.ChannelClose(tokenAddress, target, 3)
+
 	chInt <- routeId
 }
 
 func singleRouteTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routingNum int) {
-	chInt = make(chan int, 1)
 	for {
 		if channel.Service.CanTransfer(target, common.TokenAmount(amount)) {
 			log.Info("loopTest can transfer!")
-			//wait extra second to make sure client updated the netting channel state for the new balance event
-			time.Sleep(2 * time.Second)
 			break
 		} else {
 			time.Sleep(100 * time.Millisecond)
@@ -181,14 +214,14 @@ func logCurrentBalance(channel *ch.Channel, target common.Address) {
 	for {
 		select {
 		case <-ticker.C:
-
 			chainState := channel.Service.StateFromChannel()
 			channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(common.Address(utils.MicroPayContractAddress)),
 				common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), target)
 			if channelState == nil {
-				log.Infof("test channel with %s haven`t been connected", "AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
+				log.Infof("test channel with %s haven`t been connected", "Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
 				break
 			}
+
 			state := channelState.GetChannelEndState(0)
 			log.Infof("current balance = %d, transfered = %d, withdraw = %d", state.GetContractBalance(), state.GetContractBalance()-state.GetGasBalance(), state.GetTotalWithdraw())
 			state = channelState.GetChannelEndState(1)
