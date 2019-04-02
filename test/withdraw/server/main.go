@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	chainsdk "github.com/oniio/oniChain-go-sdk"
 	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain-go-sdk/wallet"
 	chaincomm "github.com/oniio/oniChain/common"
@@ -33,6 +34,9 @@ var testConfig = &ch.ChannelConfig{
 	Protocol:      "tcp",
 	RevealTimeout: "1000",
 }
+var chainClient *chainsdk.Chain
+var our chaincomm.Address
+var target chaincomm.Address
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var disable = flag.Bool("disable", false, "disable transfer test")
@@ -66,13 +70,20 @@ func main() {
 		return
 	}
 
+	chainClient = chainsdk.NewChain()
+	chainClient.NewRpcClient().SetAddress(testConfig.ChainNodeURL)
+	chainClient.SetDefaultAccount(account)
+
+	log.Infof("asset balance before open channel : %d", getAssetBalance(account.Address))
+
 	channel, err := ch.NewChannelService(testConfig, account)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	target, _ := chaincomm.AddressFromBase58("AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
+	target, _ = chaincomm.AddressFromBase58("AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
+	our, _ = chaincomm.AddressFromBase58("Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
 	channel.Service.SetHostAddr(common.Address(target), "tcp://127.0.0.1:3000")
 
 	err = channel.StartService()
@@ -175,7 +186,7 @@ func singleRouteTest(channel *ch.Channel, amount int, target common.Address, tim
 	//log.Infof("[singleRouteTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", times, timeDuration, times/int(timeDuration))
 }
 
-func logCurrentBalance(channel *ch.Channel, target common.Address) {
+func logCurrentBalance(channel *ch.Channel, targetAddr common.Address) {
 	ticker := time.NewTicker(config.MIN_GEN_BLOCK_TIME * time.Second)
 
 	for {
@@ -184,7 +195,7 @@ func logCurrentBalance(channel *ch.Channel, target common.Address) {
 
 			chainState := channel.Service.StateFromChannel()
 			channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(common.Address(utils.MicroPayContractAddress)),
-				common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), target)
+				common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), targetAddr)
 			if channelState == nil {
 				log.Infof("test channel with %s haven`t been connected", "AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
 				break
@@ -193,8 +204,20 @@ func logCurrentBalance(channel *ch.Channel, target common.Address) {
 			log.Infof("current balance = %d, transfered = %d, withdraw = %d", state.GetContractBalance(), state.GetContractBalance()-state.GetGasBalance(), state.GetTotalWithdraw())
 			state = channelState.GetChannelEndState(1)
 			log.Infof("partner balance = %d, transfered = %d, withdraw = %d", state.GetContractBalance(), state.GetContractBalance()-state.GetGasBalance(), state.GetTotalWithdraw())
+
+			log.Infof("current asset balance = %d, partner asset balance = %d", getAssetBalance(our), getAssetBalance(target))
 		}
 	}
+}
+
+func getAssetBalance(address chaincomm.Address) uint64 {
+	bal, err := chainClient.Native.Usdt.BalanceOf(address)
+	if err != nil {
+		log.Fatal(err)
+		return 0
+	}
+
+	return bal
 }
 
 func waitToExit() {
