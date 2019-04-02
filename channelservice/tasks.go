@@ -73,7 +73,7 @@ func (self *AlarmTask) LoopUntilStop() {
 				if latestBlockHeight > lastBlockHeight+1 {
 					log.Infof("missing block(s), latest Block number %d, last Block number %d", latestBlockHeight, lastBlockHeight)
 				}
-				self.runCallbacks(latestBlockHeight, blockHash)
+				go self.runCallbacks(latestBlockHeight, blockHash)
 			}
 		}
 	}
