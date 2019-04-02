@@ -14,7 +14,7 @@ import (
 
 //NOTE, Event here come from blockchain filter
 //Not the Event from transfer dir!
-func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
+func (self *ChannelService) HandleChannelNew(event map[string]interface{}) {
 	var transactionHash common.TransactionHash
 	log.Debug("[HandleChannelNew]")
 	var isParticipant bool
@@ -78,7 +78,7 @@ func (self ChannelService) HandleChannelNew(event map[string]interface{}) {
 	return
 }
 
-func (self ChannelService) handleChannelNewBalance(event map[string]interface{}) {
+func (self *ChannelService) handleChannelNewBalance(event map[string]interface{}) {
 	log.Debug("[handleChannelNewBalance]")
 	var transactionHash common.TransactionHash
 	var isParticipant bool
@@ -136,7 +136,7 @@ func (self ChannelService) handleChannelNewBalance(event map[string]interface{})
 	return
 }
 
-func (self ChannelService) HandleChannelClose(event map[string]interface{}) {
+func (self *ChannelService) HandleChannelClose(event map[string]interface{}) {
 
 	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 
@@ -173,7 +173,7 @@ func (self ChannelService) HandleChannelClose(event map[string]interface{}) {
 	}
 }
 
-func (self ChannelService) HandleChannelUpdateTransfer(event map[string]interface{}) {
+func (self *ChannelService) HandleChannelUpdateTransfer(event map[string]interface{}) {
 
 	var transactionHash common.TransactionHash
 
@@ -197,7 +197,7 @@ func (self ChannelService) HandleChannelUpdateTransfer(event map[string]interfac
 	return
 }
 
-func (self ChannelService) HandleChannelSettled(event map[string]interface{}) {
+func (self *ChannelService) HandleChannelSettled(event map[string]interface{}) {
 	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 
 	var transactionHash common.TransactionHash
@@ -220,7 +220,7 @@ func (self ChannelService) HandleChannelSettled(event map[string]interface{}) {
 	return
 }
 
-func (self ChannelService) HandleChannelWithdraw(event map[string]interface{}) {
+func (self *ChannelService) HandleChannelWithdraw(event map[string]interface{}) {
 	log.Info("[HandleChannelWithdraw]")
 	var transactionHash common.TransactionHash
 	var isParticipant bool
@@ -261,7 +261,7 @@ func (self ChannelService) HandleChannelWithdraw(event map[string]interface{}) {
 	return
 }
 
-func (self ChannelService) HandleWithdrawSuccess(channelId common.ChannelID) {
+func (self *ChannelService) HandleWithdrawSuccess(channelId common.ChannelID) {
 	ok := self.WithdrawResultNotify(channelId, true)
 	if !ok {
 		// when process saved event after restart, there is no withdraw status,but there
@@ -272,7 +272,7 @@ func (self ChannelService) HandleWithdrawSuccess(channelId common.ChannelID) {
 	return
 }
 
-func (self ChannelService) HandleChannelCooperativeSettled(event map[string]interface{}) {
+func (self *ChannelService) HandleChannelCooperativeSettled(event map[string]interface{}) {
 	log.Info("[HandleChannelCooperativeSettled]")
 	var transactionHash common.TransactionHash
 
@@ -316,7 +316,7 @@ func (self ChannelService) HandleChannelCooperativeSettled(event map[string]inte
 	return
 }
 
-func (self ChannelService) HandleChannelBatchUnlock(event map[string]interface{}) {
+func (self *ChannelService) HandleChannelBatchUnlock(event map[string]interface{}) {
 	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 
 	transactionHash := event["transactionHash"].(common.TransactionHash)
@@ -343,7 +343,7 @@ func (self ChannelService) HandleChannelBatchUnlock(event map[string]interface{}
 	self.HandleStateChange(unlockStateChange)
 }
 
-func (self ChannelService) HandleSecretRevealed(event map[string]interface{}) {
+func (self *ChannelService) HandleSecretRevealed(event map[string]interface{}) {
 	secretRegistryAddress := event["secretRegistryAddress"].(common.SecretRegistryAddress)
 	transactionHash := event["transactionHash"].(common.TransactionHash)
 	blockNumber := event["blockHeight"].(common.BlockHeight)
