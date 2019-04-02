@@ -32,7 +32,6 @@ var testConfig = &ch.ChannelConfig{
 	//MappingAddress: "10.0.1.105:3000",
 	Protocol:      "tcp",
 	RevealTimeout: "1000",
-	DBPath:        "C:\\fuwei\\Go\\src\\github.com\\oniio\\oniChannel\\test\\withdraw\\client",
 }
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
