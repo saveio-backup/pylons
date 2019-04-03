@@ -443,9 +443,9 @@ func (self *NettingChannelEndState) GetGasBalance() common.TokenAmount {
 	//}
 
 	if self.BalanceProof != nil {
-		return self.ContractBalance - self.BalanceProof.TransferredAmount
+		return self.ContractBalance - self.TotalWithdraw - self.BalanceProof.TransferredAmount
 	} else {
-		return self.ContractBalance
+		return self.ContractBalance - self.TotalWithdraw
 	}
 
 	return amount
