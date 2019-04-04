@@ -24,7 +24,7 @@ var testConfig = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3002",
 	Protocol:      "udp",
-	RevealTimeout: "1000",
+	//RevealTimeout: "1000",
 }
 
 var isNode1OnLine = false

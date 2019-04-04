@@ -24,8 +24,8 @@ var testConfig = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3000",
 	//MappingAddress: "10.0.1.105:3000",
-	Protocol:      "udp",
-	RevealTimeout: "1000",
+	Protocol: "udp",
+	//RevealTimeout: "1000",
 }
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")

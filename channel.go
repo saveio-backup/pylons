@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 
 	"github.com/oniio/oniChain/account"
 	"github.com/oniio/oniChain/common/log"
@@ -11,6 +12,7 @@ import (
 	"github.com/oniio/oniChain/smartcontract/service/native/utils"
 	ch "github.com/oniio/oniChannel/channelservice"
 	"github.com/oniio/oniChannel/common"
+	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/network"
 	"github.com/oniio/oniChannel/network/transport"
 	"github.com/oniio/oniChannel/transfer"
@@ -34,6 +36,7 @@ type ChannelConfig struct {
 	MappingAddress string // ip + port, used to register in Endpoint contract when use address mapping
 
 	DBPath        string
+	SettleTimeout string
 	RevealTimeout string
 }
 
@@ -49,6 +52,23 @@ func DefaultChannelConfig() *ChannelConfig {
 }
 
 func NewChannelService(config *ChannelConfig, account *account.Account) (*Channel, error) {
+	ipPort := config.ListenAddress
+	if config.MappingAddress != "" {
+		ipPort = config.MappingAddress
+	}
+
+	h, p, err := net.SplitHostPort(ipPort)
+	if err != nil {
+		log.Fatal("invalid listenning url ", ipPort)
+		return nil, err
+	}
+
+	settleTimeout, revealTimeout, err := getTimeout(config)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
 	blockChainService := network.NewBlockchainService(config.ClientType, config.ChainNodeURL, account)
 	if blockChainService == nil {
 		log.Fatal("createing blockchain service failed")
@@ -62,16 +82,6 @@ func NewChannelService(config *ChannelConfig, account *account.Account) (*Channe
 		log.Fatal("can not get current block height from blockchain service")
 		return nil, fmt.Errorf("GetCurrentBlockHeight error:%s", err)
 	}
-	ipPort := config.ListenAddress
-	if config.MappingAddress != "" {
-		ipPort = config.MappingAddress
-	}
-
-	h, p, err := net.SplitHostPort(ipPort)
-	if err != nil {
-		log.Fatal("invalid listenning url ", ipPort)
-		return nil, err
-	}
 
 	// construct the option map
 	option := map[string]string{
@@ -79,7 +89,8 @@ func NewChannelService(config *ChannelConfig, account *account.Account) (*Channe
 		"protocol":       config.Protocol,
 		"host":           h,
 		"port":           p,
-		"reveal_timeout": config.RevealTimeout,
+		"settle_timeout": strconv.Itoa(settleTimeout),
+		"reveal_timeout": strconv.Itoa(revealTimeout),
 	}
 
 	service := ch.NewChannelService(blockChainService, common.BlockHeight(startBlock), transport,
@@ -91,6 +102,33 @@ func NewChannelService(config *ChannelConfig, account *account.Account) (*Channe
 		Service: service,
 	}
 	return channel, nil
+}
+
+func getTimeout(config *ChannelConfig) (settle int, reveal int, err error) {
+	settleTimeout := constants.SETTLE_TIMEOUT
+	if config.SettleTimeout != "" {
+		settleTimeout, err = strconv.Atoi(config.SettleTimeout)
+		if err != nil {
+			log.Fatal("invalid settle timeout")
+			return 0, 0, err
+		}
+	}
+
+	revealTimeout := constants.DEFAULT_REVEAL_TIMEOUT
+	if config.RevealTimeout != "" {
+		revealTimeout, err = strconv.Atoi(config.RevealTimeout)
+		if err != nil {
+			log.Fatal("invalid reveal timeout")
+			return 0, 0, err
+		}
+	}
+
+	if settleTimeout < 2*revealTimeout {
+		log.Fatal("settle timeout should be at least double of revealTimeout")
+		return 0, 0, err
+	}
+
+	return settleTimeout, revealTimeout, nil
 }
 
 func setupTransport(blockChainService *network.BlockchainService, config *ChannelConfig) *transport.Transport {

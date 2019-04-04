@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -663,8 +664,14 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 		log.Infof("channel between %s and %s haven`t setup. start to create new one", regAddr, patAddr)
 	}
 
+	settleTimeout, err := strconv.Atoi(self.config["settle_timeout"])
+	if err != nil {
+		log.Error("faile to parse settle timeout", err)
+		return 0
+	}
+
 	tokenNetwork := self.chain.NewTokenNetwork(common.Address(usdt.USDT_CONTRACT_ADDRESS))
-	channelId := tokenNetwork.NewNettingChannel(partnerAddress, constants.SETTLE_TIMEOUT)
+	channelId := tokenNetwork.NewNettingChannel(partnerAddress, settleTimeout)
 	if channelId == 0 {
 		log.Error("open channel failed")
 		return 0
