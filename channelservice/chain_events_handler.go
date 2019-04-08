@@ -344,11 +344,14 @@ func (self *ChannelService) HandleChannelBatchUnlock(event map[string]interface{
 }
 
 func (self *ChannelService) HandleSecretRevealed(event map[string]interface{}) {
-	secretRegistryAddress := event["secretRegistryAddress"].(common.SecretRegistryAddress)
-	transactionHash := event["transactionHash"].(common.TransactionHash)
+	var transactionHash common.TransactionHash
+	var secretRegistryAddress common.SecretRegistryAddress
+
 	blockNumber := event["blockHeight"].(common.BlockHeight)
 	secretHash := event["secretHash"].(common.SecretHash)
 	secret := event["secret"].(common.Secret)
+	log.Infof("[HandleSecretRevealed] receive event with blockHeight: %d, secretHash : %v, secret : %v",
+		blockNumber, secretHash, secret)
 	registeredSecretStateChange := &transfer.ContractReceiveSecretReveal{
 		ContractReceiveStateChange: transfer.ContractReceiveStateChange{
 			TransactionHash: transactionHash,
@@ -384,6 +387,8 @@ func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 		channel.HandleChannelWithdraw(events)
 	} else if eventName == "chanCooperativeSettled" {
 		channel.HandleChannelCooperativeSettled(events)
+	} else if eventName == "RegisterSecret" {
+		channel.HandleSecretRevealed(events)
 	}
 
 	return
@@ -462,6 +467,22 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 			events[item] = common.TokenAmount(value.(float64))
 		case "nonce":
 			events[item] = common.Nonce(value.(float64))
+		case "secret":
+			var secret [constants.SECRET_LEN]byte
+
+			for index, data := range value.([]interface{}) {
+				value := data.(float64)
+				secret[index] = byte(value)
+			}
+			events[item] = common.Secret(secret[:])
+		case "secretHash":
+			var secretHash common.SecretHash
+
+			for index, data := range value.([]interface{}) {
+				value := data.(float64)
+				secretHash[index] = byte(value)
+			}
+			events[item] = secretHash
 		}
 	}
 	return events

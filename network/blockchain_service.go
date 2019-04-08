@@ -21,11 +21,13 @@ type BlockchainService struct {
 	currentHeight uint32
 
 	tokenNetwork               *proxies.TokenNetwork
+	secretRegistry             *proxies.SecretRegistry
 	identifierToPaymentChannel map[common.ChannelID]*proxies.PaymentChannel
 
 	discoveryCreateLock      sync.Mutex
 	tokenNetworkCreateLock   sync.Mutex
 	paymentChannelCreateLock sync.Mutex
+	secretRegistryCreateLock sync.Mutex
 }
 
 func NewBlockchainService(clientType string, url string, account *account.Account) *BlockchainService {
@@ -100,8 +102,16 @@ func (this *BlockchainService) GetBlock(param interface{}) (*types.Block, error)
 	}
 }
 
-func (this *BlockchainService) SecretRegistry(address common.Address) {
+func (this *BlockchainService) SecretRegistry(address common.SecretRegistryAddress) *proxies.SecretRegistry {
+	this.secretRegistryCreateLock.Lock()
+	defer this.secretRegistryCreateLock.Unlock()
 
+	if this.secretRegistry == nil {
+
+		this.secretRegistry = proxies.NewSecretRegistry(this.ChainClient, address)
+	}
+
+	return this.secretRegistry
 }
 
 func (this *BlockchainService) NewTokenNetwork(address common.Address) *proxies.TokenNetwork {

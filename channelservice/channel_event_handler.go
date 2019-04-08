@@ -3,6 +3,7 @@ package channelservice
 import (
 	"reflect"
 
+	"github.com/oniio/oniChain-go-sdk/usdt"
 	sdkutils "github.com/oniio/oniChain-go-sdk/utils"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChain/crypto/keypair"
@@ -54,6 +55,9 @@ func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event tr
 	case *transfer.SendSecretRequest:
 		sendSecretRequest := event.(*transfer.SendSecretRequest)
 		self.HandleSendSecretRequest(channel, sendSecretRequest)
+	case *transfer.ContractSendSecretReveal:
+		contractSendSecretReveal := event.(*transfer.ContractSendSecretReveal)
+		self.HandleContractSendSecretReveal(channel, contractSendSecretReveal)
 	case *transfer.EventUnlockClaimSuccess:
 		unlockClaimSuccess := event.(*transfer.EventUnlockClaimSuccess)
 		self.HandleEventUnlockClaimSuccess(channel, unlockClaimSuccess)
@@ -380,6 +384,11 @@ func (self ChannelEventHandler) HandleSendSecretRequest(channel *ChannelService,
 		log.Warn("[HandleSendSecretRequest] Message is nil")
 	}
 	return
+}
+
+func (self ChannelEventHandler) HandleContractSendSecretReveal(channel *ChannelService, sendSecretRevealEvent *transfer.ContractSendSecretReveal) {
+	secretRegistry := channel.chain.SecretRegistry(common.SecretRegistryAddress(usdt.USDT_CONTRACT_ADDRESS))
+	secretRegistry.RegisterSecret(sendSecretRevealEvent.Secret)
 }
 
 func (self ChannelEventHandler) HandleEventUnlockClaimSuccess(channel *ChannelService,

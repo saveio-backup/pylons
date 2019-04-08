@@ -83,7 +83,7 @@ type Secret []byte
 
 type SecretHash [constants.HASH_LEN]byte
 
-type SecretRegistryAddress []byte
+type SecretRegistryAddress [constants.ADDR_LEN]byte
 
 type Signature []byte
 
