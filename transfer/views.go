@@ -61,6 +61,12 @@ func GetNetworkStatuses(chainState *ChainState) *map[common.Address]string {
 }
 
 func GetNodeNetworkStatus(chainState *ChainState, nodeAddress common.Address) string {
+	//chainState.NodeAddressesToNetworkStates.Range(func(key, value interface{}) bool {
+	//	addr := common.ToBase58(key.(common.Address))
+	//	log.Infof("Addr : %s  State: %s", addr, value.(string))
+	//	return true
+	//})
+
 	result, exist := chainState.NodeAddressesToNetworkStates.Load(nodeAddress)
 	if !exist {
 		result = NetworkUnknown

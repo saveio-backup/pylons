@@ -3,20 +3,16 @@ package channel
 import (
 	"errors"
 	"fmt"
-	"net"
 	"strconv"
 
 	"github.com/oniio/oniChain/account"
 	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChain/crypto/keypair"
 	"github.com/oniio/oniChain/smartcontract/service/native/utils"
 	ch "github.com/oniio/oniChannel/channelservice"
 	"github.com/oniio/oniChannel/common"
 	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/network"
-	"github.com/oniio/oniChannel/network/transport"
 	"github.com/oniio/oniChannel/transfer"
-	trancrypto "github.com/oniio/oniP2p/crypto"
 )
 
 var Version = "0.1"
@@ -52,17 +48,6 @@ func DefaultChannelConfig() *ChannelConfig {
 }
 
 func NewChannelService(config *ChannelConfig, account *account.Account) (*Channel, error) {
-	ipPort := config.ListenAddress
-	if config.MappingAddress != "" {
-		ipPort = config.MappingAddress
-	}
-
-	h, p, err := net.SplitHostPort(ipPort)
-	if err != nil {
-		log.Fatal("invalid listenning url ", ipPort)
-		return nil, err
-	}
-
 	settleTimeout, revealTimeout, err := getTimeout(config)
 	if err != nil {
 		log.Fatal(err)
@@ -71,15 +56,13 @@ func NewChannelService(config *ChannelConfig, account *account.Account) (*Channe
 
 	blockChainService := network.NewBlockchainService(config.ClientType, config.ChainNodeURL, account)
 	if blockChainService == nil {
-		log.Fatal("createing blockchain service failed")
-		return nil, errors.New("createing blockchain service failed")
+		log.Fatal("creating blockChain service failed")
+		return nil, errors.New("creating blockChain service failed")
 	}
-
-	transport := setupTransport(blockChainService, config)
 
 	startBlock, err := blockChainService.ChainClient.GetCurrentBlockHeight()
 	if err != nil {
-		log.Fatal("can not get current block height from blockchain service")
+		log.Fatal("can not get current block height from blockChain service")
 		return nil, fmt.Errorf("GetCurrentBlockHeight error:%s", err)
 	}
 
@@ -87,20 +70,17 @@ func NewChannelService(config *ChannelConfig, account *account.Account) (*Channe
 	option := map[string]string{
 		"database_path":  config.DBPath,
 		"protocol":       config.Protocol,
-		"host":           h,
-		"port":           p,
+		"listenAddr":     config.ListenAddress,
+		"mappingAddr":    config.MappingAddress,
 		"settle_timeout": strconv.Itoa(settleTimeout),
 		"reveal_timeout": strconv.Itoa(revealTimeout),
 	}
 
-	service := ch.NewChannelService(blockChainService, common.BlockHeight(startBlock), transport,
-		common.Address(utils.MicroPayContractAddress), new(ch.ChannelEventHandler),
-		new(ch.MessageHandler), option)
+	service := ch.NewChannelService(blockChainService, common.BlockHeight(startBlock),
+		common.Address(utils.MicroPayContractAddress), new(ch.MessageHandler), option)
 	log.Info("channel service created, use account ", blockChainService.GetAccount().Address.ToBase58())
-	channel := &Channel{
-		Config:  config,
-		Service: service,
-	}
+
+	channel := &Channel{Config: config, Service: service}
 	return channel, nil
 }
 
@@ -124,40 +104,24 @@ func getTimeout(config *ChannelConfig) (settle int, reveal int, err error) {
 	}
 
 	if settleTimeout < 2*revealTimeout {
-		log.Fatal("settle timeout should be at least double of revealTimeout")
+		log.Fatalf("settle timeout(%d) should be at least double of revealTimeout(%d)",
+			settleTimeout, revealTimeout)
 		return 0, 0, err
 	}
 
 	return settleTimeout, revealTimeout, nil
 }
 
-func setupTransport(blockChainService *network.BlockchainService, config *ChannelConfig) *transport.Transport {
-
-	trans := transport.NewTransport(config.Protocol)
-	trans.SetAddress(config.ListenAddress)
-	trans.SetMappingAddress(config.MappingAddress)
-	bPrivate := keypair.SerializePrivateKey(blockChainService.GetAccount().PrivKey())
-	bPub := keypair.SerializePublicKey(blockChainService.GetAccount().PubKey())
-	keys := &trancrypto.KeyPair{
-		PrivateKey: bPrivate,
-		PublicKey:  bPub,
-	}
-	trans.SetKeys(keys)
-
-	return trans
-}
-
 func (this *Channel) StartService() error {
 	return this.Service.Start()
-
 }
 
 func (this *Channel) Stop() {
 	this.Service.Stop()
 }
 
-func (this *Channel) RegisterReceiveNotification(notificaitonChannel chan *transfer.EventPaymentReceivedSuccess) {
-	this.Service.ReceiveNotificationChannels[notificaitonChannel] = struct{}{}
+func (this *Channel) RegisterReceiveNotification(notificationChannel chan *transfer.EventPaymentReceivedSuccess) {
+	this.Service.ReceiveNotificationChannels[notificationChannel] = struct{}{}
 }
 
 func (this *Channel) GetVersion() string {

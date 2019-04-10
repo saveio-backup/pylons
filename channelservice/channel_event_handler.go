@@ -116,7 +116,7 @@ func (self ChannelEventHandler) HandleSendDirectTransfer(channel *ChannelService
 			ChannelIdentifier: sendDirectTransfer.ChannelIdentifier,
 		}
 
-		ret := channel.transport.SendAsync(queueId, message)
+		ret := channel.channelActor.Transport.SendAsync(queueId, message)
 		if ret != nil {
 			log.Error("send msg failed:", ret)
 		}
@@ -137,7 +137,7 @@ func (self ChannelEventHandler) HandleSendProcessed(channel *ChannelService, pro
 			ChannelIdentifier: processedEvent.ChannelIdentifier,
 		}
 
-		channel.transport.SendAsync(queueId, message)
+		channel.channelActor.Transport.SendAsync(queueId, message)
 	} else {
 		log.Warn("[HandleSendProcessed] Message is nil")
 	}
@@ -323,7 +323,7 @@ func (self ChannelEventHandler) HandleSendLockedTransfer(channel *ChannelService
 			Recipient:         common.Address(sendLockedTransfer.Recipient),
 			ChannelIdentifier: sendLockedTransfer.ChannelIdentifier,
 		}
-		channel.transport.SendAsync(queueId, mediatedTransferMessage)
+		channel.channelActor.Transport.SendAsync(queueId, mediatedTransferMessage)
 	} else {
 		log.Warn("[HandleSendLockedTransfer] Message is nil")
 	}
@@ -343,7 +343,7 @@ func (self ChannelEventHandler) HandleSendSecretReveal(channel *ChannelService, 
 			Recipient:         common.Address(revealSecretEvent.Recipient),
 			ChannelIdentifier: revealSecretEvent.ChannelIdentifier,
 		}
-		channel.transport.SendAsync(queueId, revealSecretMessage)
+		channel.channelActor.Transport.SendAsync(queueId, revealSecretMessage)
 	} else {
 		log.Warn("[HandleSendSecretReveal] Message is nil")
 	}
@@ -362,7 +362,7 @@ func (self ChannelEventHandler) HandleSendBalanceProof(channel *ChannelService, 
 			Recipient:         common.Address(balanceProofEvent.Recipient),
 			ChannelIdentifier: balanceProofEvent.ChannelIdentifier,
 		}
-		channel.transport.SendAsync(queueId, unlockMessage)
+		channel.channelActor.Transport.SendAsync(queueId, unlockMessage)
 	} else {
 		log.Warn("[HandleSendBalanceProof] Message is nil")
 	}
@@ -382,7 +382,7 @@ func (self ChannelEventHandler) HandleSendSecretRequest(channel *ChannelService,
 			Recipient:         common.Address(secretRequestEvent.Recipient),
 			ChannelIdentifier: secretRequestEvent.ChannelIdentifier,
 		}
-		channel.transport.SendAsync(queueId, secretRequestMessage)
+		channel.channelActor.Transport.SendAsync(queueId, secretRequestMessage)
 	} else {
 		log.Warn("[HandleSendSecretRequest] Message is nil")
 	}
@@ -426,7 +426,7 @@ func (self ChannelEventHandler) HandleSendWithdrawRequest(channel *ChannelServic
 			Recipient:         common.Address(withdrawRequestEvent.Recipient),
 			ChannelIdentifier: withdrawRequestEvent.ChannelIdentifier,
 		}
-		channel.transport.SendAsync(queueId, withdrawRequestMessage)
+		channel.channelActor.Transport.SendAsync(queueId, withdrawRequestMessage)
 	} else {
 		log.Warn("[HandleSendWithdrawRequest] Message is nil")
 	}
@@ -445,7 +445,7 @@ func (self ChannelEventHandler) HandleSendWithdraw(channel *ChannelService, with
 			Recipient:         common.Address(withdrawEvent.Recipient),
 			ChannelIdentifier: withdrawEvent.ChannelIdentifier,
 		}
-		channel.transport.SendAsync(queueId, withdrawMessage)
+		channel.channelActor.Transport.SendAsync(queueId, withdrawMessage)
 	} else {
 		log.Warn("[HandleSendWithdrawRequest] Message is nil")
 	}
@@ -518,7 +518,7 @@ func (self ChannelEventHandler) HandleSendCooperativeSettleRequest(channel *Chan
 			Recipient:         common.Address(cooperativeSettleRequestEvent.Recipient),
 			ChannelIdentifier: cooperativeSettleRequestEvent.ChannelIdentifier,
 		}
-		channel.transport.SendAsync(queueId, cooperativeSettleRequestMessage)
+		channel.channelActor.Transport.SendAsync(queueId, cooperativeSettleRequestMessage)
 	} else {
 		log.Warn("[HandleSendCooperativeSettleRequest] Message is nil")
 	}
@@ -537,7 +537,7 @@ func (self ChannelEventHandler) HandleSendCooperativeSettle(channel *ChannelServ
 			Recipient:         common.Address(cooperativeSettleEvent.Recipient),
 			ChannelIdentifier: cooperativeSettleEvent.ChannelIdentifier,
 		}
-		channel.transport.SendAsync(queueId, cooperativeSettleMessage)
+		channel.channelActor.Transport.SendAsync(queueId, cooperativeSettleMessage)
 	} else {
 		log.Warn("[HandleSendCooperativeSettleRequest] Message is nil")
 	}

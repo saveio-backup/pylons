@@ -7,7 +7,7 @@ import (
 
 type NetComponent struct {
 	*network.Component
-	Net *Transport
+	Net *P2pNetwork
 }
 
 func (this *NetComponent) Startup(net *network.Network) {
