@@ -909,7 +909,7 @@ func (self *ChannelService) CanTransfer(target common.Address, amount common.Tok
 	if channelState.OurState == nil {
 		return false
 	}
-	if channelState.OurState.ContractBalance < amount {
+	if channelState.OurState.GetGasBalance() < amount {
 		return false
 	} else {
 		return true
