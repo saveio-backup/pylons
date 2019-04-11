@@ -163,7 +163,6 @@ func (this *RevealSecret) DataToSign() []byte {
 	return buf.Bytes()
 }
 
-// fwtodo : remove duplicate code for withdrawrequest and withdraw
 func (this *WithdrawRequest) DataToSign() []byte {
 	channelId := common.ChannelID(int(this.ChannelIdentifier.ChannelId))
 	participant := ConvertAddress(this.Participant)

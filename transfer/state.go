@@ -385,15 +385,20 @@ type HashTimeLockState struct {
 }
 
 func (self *HashTimeLockState) CalcLockHash() common.LockHash {
+	log.Debug("[CalcLockHash]: ", self.Expiration, self.Amount, self.SecretHash)
+
+	hash := common.LockHash(common.GetHash(self.PackData()))
+	return hash
+}
+
+func (self *HashTimeLockState) PackData() []byte {
 	buf := new(bytes.Buffer)
-	log.Debug("[CalcLockHash]: ", self.Amount, self.Expiration, self.SecretHash)
-	buf.Write(Uint64ToBytes(uint64(self.Amount)))
+
 	buf.Write(Uint64ToBytes(uint64(self.Expiration)))
+	buf.Write(Uint64ToBytes(uint64(self.Amount)))
 	buf.Write(self.SecretHash[:])
 
-	encoded := buf.Bytes()
-	hash := common.LockHash(common.GetHash(encoded))
-	return hash
+	return buf.Bytes()
 }
 
 type UnlockPartialProofState struct {

@@ -319,12 +319,13 @@ func (self *ChannelService) HandleChannelCooperativeSettled(event map[string]int
 func (self *ChannelService) HandleChannelBatchUnlock(event map[string]interface{}) {
 	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 
-	transactionHash := event["transactionHash"].(common.TransactionHash)
+	var transactionHash common.TransactionHash
+
 	blockNumber := event["blockHeight"].(common.BlockHeight)
 	//channelIdentifier := event["channelID"].(common.ChannelID)
 	participant := event["participant"].(common.Address)
 	partner := event["partner"].(common.Address)
-	locksRoot := event["partner"].(common.Locksroot)
+	locksRoot := event["computedLocksroot"].(common.Locksroot)
 	unlockedAmount := event["unlockedAmount"].(common.TokenAmount)
 	returnedTokens := event["returnedTokens"].(common.TokenAmount)
 
@@ -387,8 +388,10 @@ func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 		channel.HandleChannelWithdraw(events)
 	} else if eventName == "chanCooperativeSettled" {
 		channel.HandleChannelCooperativeSettled(events)
-	} else if eventName == "RegisterSecret" {
+	} else if eventName == "SecretRevealed" {
 		channel.HandleSecretRevealed(events)
+	} else if eventName == "ChannelUnlocked" {
+		channel.HandleChannelBatchUnlock(events)
 	}
 
 	return
@@ -442,6 +445,8 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 			fallthrough
 		case "participant2":
 			fallthrough
+		case "partner":
+			fallthrough
 		case "closingParticipant":
 			var address common.Address
 
@@ -464,6 +469,10 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 		case "participant1_amount":
 			fallthrough
 		case "participant2_amount":
+			fallthrough
+		case "unlockedAmount":
+			fallthrough
+		case "returnedTokens":
 			events[item] = common.TokenAmount(value.(float64))
 		case "nonce":
 			events[item] = common.Nonce(value.(float64))
@@ -483,6 +492,14 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 				secretHash[index] = byte(value)
 			}
 			events[item] = secretHash
+		case "computedLocksroot":
+			var locksroot common.Locksroot
+
+			for index, data := range value.([]interface{}) {
+				value := data.(float64)
+				locksroot[index] = byte(value)
+			}
+			events[item] = locksroot
 		}
 	}
 	return events

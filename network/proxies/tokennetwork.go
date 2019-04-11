@@ -2,7 +2,6 @@ package proxies
 
 import (
 	"bytes"
-	"container/list"
 	"errors"
 	"strconv"
 	"sync"
@@ -525,31 +524,40 @@ func (self *TokenNetwork) cooperativeSettle(channelIdentifier common.ChannelID, 
 	return nil
 }
 func (self *TokenNetwork) unlock(channelIdentifier common.ChannelID, partner common.Address,
-	merkleTreeLeaves *list.List) {
+	merkleTreeLeaves []*transfer.HashTimeLockState) {
 
-	if merkleTreeLeaves.Len() == 0 {
+	if len(merkleTreeLeaves) == 0 {
 		return
 	}
 
 	var leavesPacked []byte
 
-	for e := merkleTreeLeaves.Front(); e != nil; e = e.Next() {
-		hashTimeLockState := e.Value.(*transfer.HashTimeLockState)
-		leavesPacked = append(leavesPacked, hashTimeLockState.Encoded...)
+	for _, lock := range merkleTreeLeaves {
+		leavesPacked = append(leavesPacked, lock.PackData()...)
 	}
 
-	//[TODO] call transaction_hash = self.proxy.transact("unlock"
-	//[TODO] call client.poll
-	// support this when support secret and route
+	txHash, err := self.ChannelClient.Unlock(uint64(channelIdentifier), comm.Address(self.nodeAddress), comm.Address(partner), leavesPacked)
+	if err != nil {
+		log.Errorf("Unlock err:%s", err)
+		return
+	}
+	log.Infof("Unlock tx hash:%s\n", txHash)
+	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
+	if err != nil {
+		log.Errorf("CooperativeSettle WaitForGenerateBlock err:%s", err)
+		return
+	}
 
-	var receiptOrNone bool
+	/*
+		var receiptOrNone bool
 
-	if receiptOrNone {
-		channelSettled := self.ChannelIsSettled(self.nodeAddress, partner, channelIdentifier)
-		if channelSettled == false {
-			return
+		if receiptOrNone {
+			channelSettled := self.ChannelIsSettled(self.nodeAddress, partner, channelIdentifier)
+			if channelSettled == false {
+				return
+			}
 		}
-	}
+	*/
 
 	return
 }

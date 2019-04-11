@@ -1,11 +1,11 @@
 package proxies
 
 import (
-	"container/list"
 	"errors"
 	"sync"
 
 	"github.com/oniio/oniChannel/common"
+	"github.com/oniio/oniChannel/transfer"
 )
 
 type PaymentChannel struct {
@@ -153,7 +153,7 @@ func (self *PaymentChannel) UpdateTransfer(nonce common.Nonce, balanceHash commo
 	return
 }
 
-func (self *PaymentChannel) Unlock(merkleTreeLeaves *list.List) {
+func (self *PaymentChannel) Unlock(merkleTreeLeaves []*transfer.HashTimeLockState) {
 	self.TokenNetwork.unlock(self.channelIdentifier, self.Participant2, merkleTreeLeaves)
 	return
 }

@@ -618,6 +618,9 @@ func handleStateChangeForNode(chainStateArg State, stateChange StateChange) *Tra
 	case *ContractReceiveChannelCooperativeSettled:
 		contractReceiveChannelCooperativeSettled, _ := stateChange.(*ContractReceiveChannelCooperativeSettled)
 		iteration = handleTokenNetworkAction(chainState, stateChange, contractReceiveChannelCooperativeSettled.TokenNetworkIdentifier)
+	case *ContractReceiveChannelBatchUnlock:
+		contractReceiveChannelBatchUnlock, _ := stateChange.(*ContractReceiveChannelBatchUnlock)
+		iteration = handleTokenNetworkAction(chainState, stateChange, contractReceiveChannelBatchUnlock.TokenNetworkIdentifier)
 	case *ActionChangeNodeNetworkState:
 		actionChangeNodeNetworkState, _ := stateChange.(*ActionChangeNodeNetworkState)
 		iteration = handleNodeChangeNetworkState(chainState, actionChangeNodeNetworkState)

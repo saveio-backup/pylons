@@ -50,20 +50,6 @@ func GetLatestKnownBalanceProofFromStateChanges(
 	storage *SQLiteStorage, chainID common.ChainID, tokenNetworkID common.TokenNetworkID,
 	channelIdentifier common.ChannelID, balanceHash common.BalanceHash, sender common.Address) *transfer.BalanceProofSignedState {
 
-	type BalanceProofSignedState struct {
-		Nonce                  common.Nonce
-		TransferredAmount      common.TokenAmount
-		LockedAmount           common.TokenAmount
-		LocksRoot              common.Locksroot
-		TokenNetworkIdentifier common.TokenNetworkID
-		ChannelIdentifier      common.ChannelID
-		MessageHash            common.Keccak256
-		Signature              common.Signature
-		Sender                 common.Address
-		ChainId                common.ChainID
-		PublicKey              common.PubKey
-	}
-
 	filters := map[string]interface{}{
 		//"BalanceProof.ChainId":                 chainID,
 		//"BalanceProof.TokenNetworkIdentifier ": tokenNetworkID,
@@ -132,4 +118,28 @@ func GetLatestKnownBalanceProofFromEvents(
 	}
 
 	return nil
+}
+
+func GetStateChangeWithBalanceProofByLocksroot(
+	storage *SQLiteStorage, chainID common.ChainID, tokenNetworkID common.TokenNetworkID,
+	channelIdentifier common.ChannelID, locksroot common.Locksroot, sender common.Address) *StateChangeRecord {
+
+	filters := map[string]interface{}{
+		"BalanceProof.ChannelIdentifier": channelIdentifier,
+		"BalanceProof.Locksroot":         locksroot,
+	}
+
+	return storage.GetLatestStateChangeByDataField(filters)
+}
+
+func GetEventWithBalanceProofByLocksroot(
+	storage *SQLiteStorage, chainID common.ChainID, tokenNetworkID common.TokenNetworkID,
+	channelIdentifier common.ChannelID, locksroot common.Locksroot) *EventRecord {
+
+	filters := map[string]interface{}{
+		"BalanceProof.ChannelIdentifier": channelIdentifier,
+		"BalanceProof.Locksroot":         locksroot,
+	}
+
+	return storage.GetLatestEventByDataField(filters)
 }

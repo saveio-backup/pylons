@@ -9,11 +9,12 @@ import (
 	"strings"
 	"sync"
 
+	"reflect"
+
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/transfer"
 	"github.com/oniio/oniChannel/utils/jsonext"
-	"reflect"
 )
 
 const ChannelDbVersion int = 6
@@ -25,8 +26,8 @@ type EventRecord struct {
 }
 
 type StateChangeRecord struct {
-	stateChnangeIdentifier int
-	Data                   transfer.StateChange
+	StateChangeIdentifier int
+	Data                  transfer.StateChange
 }
 
 func assertSqliteVersion() bool {

@@ -702,6 +702,36 @@ func getNextNonce(endState *NettingChannelEndState) common.Nonce {
 	return nonce
 }
 
+func GetBatchUnlock(endState *NettingChannelEndState) []*HashTimeLockState {
+	var orderedLocks []*HashTimeLockState
+
+	if len(endState.MerkleTree.Layers) == 0 {
+		return nil
+	}
+
+	lockhashesToLocks := make(map[common.LockHash]*HashTimeLockState)
+
+	for _, lock := range endState.SecretHashesToLockedLocks {
+		lockhashesToLocks[lock.LockHash] = lock
+	}
+
+	for _, unlock := range endState.SecretHashesToUnLockedLocks {
+		lockhashesToLocks[unlock.Lock.LockHash] = unlock.Lock
+	}
+
+	for _, unlock := range endState.SecretHashesToOnChainUnLockedLocks {
+		lockhashesToLocks[unlock.Lock.LockHash] = unlock.Lock
+	}
+
+	for _, lockHash := range endState.MerkleTree.Layers[0] {
+		if lock, exist := lockhashesToLocks[common.LockHash(lockHash)]; exist {
+			orderedLocks = append(orderedLocks, lock)
+		}
+	}
+
+	return orderedLocks
+}
+
 func MerkleTreeWidth(merkleTree *MerkleTreeState) int {
 	if len(merkleTree.Layers) == 0 {
 		return 0
@@ -2080,14 +2110,16 @@ func handleChannelSettled(channelState *NettingChannelState,
 			isSettlePending = true
 		}
 
-		var merkleTreeLeaves []common.Keccak256
+		merkleTreeLeaves := GetBatchUnlock(channelState.PartnerState)
 
-		//[TODO] support getBatchUnlock when support unlock
 		if isSettlePending == false && merkleTreeLeaves != nil && len(merkleTreeLeaves) != 0 {
 			onChainUnlock := &ContractSendChannelBatchUnlock{
-				ContractSendEvent{}, common.TokenAddress(channelState.TokenAddress),
-				channelState.TokenNetworkIdentifier, channelState.Identifier,
-				channelState.PartnerState.Address}
+				ContractSendEvent:      ContractSendEvent{},
+				TokenAddress:           common.TokenAddress(channelState.TokenAddress),
+				TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,
+				ChannelIdentifier:      channelState.Identifier,
+				Participant:            channelState.PartnerState.Address,
+			}
 
 			events = append(events, onChainUnlock)
 
@@ -2097,6 +2129,18 @@ func handleChannelSettled(channelState *NettingChannelState,
 			channelState = nil
 		}
 
+	}
+
+	return TransitionResult{channelState, events}
+}
+
+func handleChannelBatchUnlock(channelState *NettingChannelState, stateChange *ContractReceiveChannelBatchUnlock) TransitionResult {
+	var events []Event
+
+	// unlock is allowed by the smart contract only on a settled channel.
+	// ignore the unlock if the channel is not closed yet
+	if GetStatus(channelState) == ChannelStateSettled {
+		channelState = nil
 	}
 
 	return TransitionResult{channelState, events}
@@ -2189,6 +2233,9 @@ func StateTransitionForChannel(channelState *NettingChannelState, stateChange St
 	case *ContractReceiveChannelCooperativeSettled:
 		contractReceiveChannelCooperativeSettled, _ := stateChange.(*ContractReceiveChannelCooperativeSettled)
 		iteration = handleChannelCooperativeSettled(channelState, contractReceiveChannelCooperativeSettled)
+	case *ContractReceiveChannelBatchUnlock:
+		contractReceiveChannelBatchUnlock, _ := stateChange.(*ContractReceiveChannelBatchUnlock)
+		iteration = handleChannelBatchUnlock(channelState, contractReceiveChannelBatchUnlock)
 	}
 
 	return iteration

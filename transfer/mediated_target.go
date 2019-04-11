@@ -2,9 +2,10 @@ package transfer
 
 import (
 	"crypto/sha256"
+	"reflect"
+
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
-	"reflect"
 )
 
 func TgEventsForOnChainSecretReveal(targetState *TargetTransferState, channelState *NettingChannelState,
@@ -16,7 +17,10 @@ func TgEventsForOnChainSecretReveal(targetState *TargetTransferState, channelSta
 	safeToWait, _ := MdIsSafeToWait(expiration, channelState.RevealTimeout, blockNumber)
 
 	secretKnownOffChain := IsSecretKnownOffChain(channelState.PartnerState, common.SecretHash(transfer.Lock.SecretHash))
-	if !safeToWait && secretKnownOffChain {
+
+	hasOnchainRevealStarted := (targetState.State == "onchain_secret_reveal")
+	if !safeToWait && secretKnownOffChain && !hasOnchainRevealStarted {
+		targetState.State = "onchain_secret_reveal"
 		secret := GetSecret(channelState.PartnerState, common.SecretHash(transfer.Lock.SecretHash))
 		return EventsForOnChainSecretReveal(channelState, secret, expiration)
 	}

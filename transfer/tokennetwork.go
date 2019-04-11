@@ -280,6 +280,51 @@ func handleUpdatedTransfer(tokenNetworkState *TokenNetworkState, stateChange Sta
 	return subDispatchToChannelById(tokenNetworkState, stateChange, blockNumber)
 }
 
+func handleBatchUnlock(tokenNetworkState *TokenNetworkState, stateChange StateChange,
+	blockNumber common.BlockHeight) TransitionResult {
+
+	var events []Event
+
+	unlock := stateChange.(*ContractReceiveChannelBatchUnlock)
+
+	participant1 := unlock.Participant
+	participant2 := unlock.Partner
+
+	for _, channelState := range tokenNetworkState.ChannelIdentifiersToChannels {
+		areAddressesValid1 := false
+		areAddressesValid2 := false
+
+		if common.AddressEqual(channelState.OurState.Address, participant1) &&
+			common.AddressEqual(channelState.PartnerState.Address, participant2) {
+			areAddressesValid1 = true
+		}
+
+		if common.AddressEqual(channelState.OurState.Address, participant2) &&
+			common.AddressEqual(channelState.PartnerState.Address, participant1) {
+			areAddressesValid2 = true
+		}
+
+		isValidLocksroot := true
+
+		if (areAddressesValid1 || areAddressesValid2) && isValidLocksroot {
+			iteration := StateTransitionForChannel(channelState, stateChange, blockNumber)
+			events = append(events, iteration.Events[:]...)
+
+			if reflect.ValueOf(iteration.NewState).IsNil() {
+				log.Infof("handleBatchUnlock, delete channel")
+
+				delete(tokenNetworkState.ChannelIdentifiersToChannels, channelState.Identifier)
+
+				if _, exist := tokenNetworkState.PartnerAddressesToChannels[channelState.PartnerState.Address]; exist {
+					delete(tokenNetworkState.PartnerAddressesToChannels[channelState.PartnerState.Address], channelState.Identifier)
+				}
+			}
+		}
+	}
+
+	return TransitionResult{NewState: tokenNetworkState, Events: events}
+}
+
 func handleActionTransferDirect(paymentNetworkIdentifier common.PaymentNetworkID,
 	tokenNetworkState *TokenNetworkState, stateChange *ActionTransferDirect,
 	blockNumber common.BlockHeight) TransitionResult {
@@ -468,6 +513,8 @@ func stateTransitionForNetwork(paymentNetworkIdentifier common.PaymentNetworkID,
 		iteration = handleReceiveWithdrawRequest(paymentNetworkIdentifier, tokenNetworkState, stateChange, blockNumber)
 	case *ContractReceiveChannelCooperativeSettled:
 		iteration = handleCoopeativeSettle(tokenNetworkState, stateChange, blockNumber)
+	case *ContractReceiveChannelBatchUnlock:
+		iteration = handleBatchUnlock(tokenNetworkState, stateChange, blockNumber)
 	}
 
 	return iteration

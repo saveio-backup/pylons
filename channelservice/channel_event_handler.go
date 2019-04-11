@@ -94,6 +94,9 @@ func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event tr
 	case *transfer.ContractSendChannelCooperativeSettle:
 		contractSendChannelCooperativeSettle := event.(*transfer.ContractSendChannelCooperativeSettle)
 		self.HandleContractSendChannelCooperativeSettle(channel, contractSendChannelCooperativeSettle)
+	case *transfer.ContractSendChannelBatchUnlock:
+		contractSendChannelBatchUnlock := event.(*transfer.ContractSendChannelBatchUnlock)
+		self.HandleContractSendChannelUnlock(channel, contractSendChannelBatchUnlock)
 	default:
 		log.Warn("[OnChannelEvent] Not known type: ", reflect.TypeOf(event).String())
 	}
@@ -548,7 +551,6 @@ func (self ChannelEventHandler) HandleContractSendChannelCooperativeSettle(chann
 		panic("error in HandleContractSendChannelCooperativeSettle, cannot get paymentchannel args")
 	}
 
-	//channelProxy := channel.chain.PaymentChannel(common.Address(channelCooperativeSettleEvent.TokenNetworkIdentifier), channelCooperativeSettleEvent.ChannelIdentifier, args)
 	channelProxy := channel.chain.PaymentChannel(common.Address(channelCooperativeSettleEvent.TokenNetworkIdentifier), channelCooperativeSettleEvent.ChannelIdentifier, args)
 
 	go func() {
@@ -559,4 +561,81 @@ func (self ChannelEventHandler) HandleContractSendChannelCooperativeSettle(chann
 			log.Warnf("[HandleContractSendChannelCooperativeSettle] error: %s", err)
 		}
 	}()
+}
+
+func (self ChannelEventHandler) HandleContractSendChannelUnlock(channel *ChannelService, channelUnlockEvent *transfer.ContractSendChannelBatchUnlock) {
+	var chainID common.ChainID
+
+	tokenNetworkIdentifier := channelUnlockEvent.TokenNetworkIdentifier
+	channelIdentifier := channelUnlockEvent.ChannelIdentifier
+	participant := channelUnlockEvent.Participant
+	tokenAddress := channelUnlockEvent.TokenAddress
+
+	args := channel.GetPaymentChannelArgs(tokenNetworkIdentifier, channelIdentifier)
+	if args == nil {
+		panic("error in HandleContractSendChannelUnlock, cannot get paymentchannel args")
+	}
+
+	channelProxy := channel.chain.PaymentChannel(common.Address(tokenNetworkIdentifier), channelIdentifier, args)
+
+	participanatsDetails := channelProxy.TokenNetwork.DetailParticipants(channelProxy.Participant1, channelProxy.Participant2, channelIdentifier)
+
+	ourDetails := participanatsDetails.OurDetails
+	ourLocksroot := ourDetails.Locksroot
+
+	partnerDetails := participanatsDetails.PartnerDetails
+	partnerLocksroot := partnerDetails.Locksroot
+
+	emptyHash := common.Locksroot{}
+	isPartnerUnlock := false
+	if partnerDetails.Address == participant && partnerLocksroot != emptyHash {
+		isPartnerUnlock = true
+	}
+
+	isOurUnlock := false
+	if ourDetails.Address == participant && ourLocksroot != emptyHash {
+		isOurUnlock = true
+	}
+
+	stateChangeIdentifier := 0
+
+	if isPartnerUnlock {
+		stateChangeRecord := storage.GetStateChangeWithBalanceProofByLocksroot(
+			channel.Wal.Storage, chainID, tokenNetworkIdentifier, channelIdentifier,
+			partnerLocksroot, partnerDetails.Address)
+
+		if stateChangeRecord != nil {
+			stateChangeIdentifier = stateChangeRecord.StateChangeIdentifier
+		}
+	} else if isOurUnlock {
+		eventRecord := storage.GetEventWithBalanceProofByLocksroot(
+			channel.Wal.Storage, chainID, tokenNetworkIdentifier, channelIdentifier,
+			ourLocksroot)
+
+		if eventRecord != nil {
+			stateChangeIdentifier = eventRecord.StateChangeIdentifier
+		}
+	} else {
+		log.Warn("Onchain unlock already mined")
+		return
+	}
+
+	if stateChangeIdentifier == 0 {
+		panic("Failed to find state/event that match current channel locksroots")
+	}
+
+	restoredChannelState := storage.ChannelStateUntilStateChange(channel.Wal.Storage, common.PaymentNetworkID{}, tokenAddress, channelIdentifier, stateChangeIdentifier)
+
+	ourState := restoredChannelState.OurState
+	partnerState := restoredChannelState.PartnerState
+
+	var merkleTreeLeaves []*transfer.HashTimeLockState
+
+	if common.AddressEqual(partnerState.Address, participant) {
+		merkleTreeLeaves = transfer.GetBatchUnlock(partnerState)
+	} else if common.AddressEqual(ourState.Address, participant) {
+		merkleTreeLeaves = transfer.GetBatchUnlock(ourState)
+	}
+
+	channelProxy.Unlock(merkleTreeLeaves)
 }
