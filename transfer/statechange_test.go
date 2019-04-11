@@ -42,7 +42,7 @@ func TestActionInitTargetMarshal(t *testing.T) {
 		Token:             common.EmptyAddress,
 		BalanceProof:      balanceProof,
 		Lock:              lock,
-		Initiator:         common.InitiatorAddress(common.EmptyAddress),
+		Initiator:         common.EmptyAddress,
 		Target:            common.EmptyAddress,
 	}
 

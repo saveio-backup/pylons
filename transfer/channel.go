@@ -871,7 +871,7 @@ func computeMerkleTreeWithout(merkleTree *MerkleTreeState, lockHash common.LockH
 	return &result
 }
 
-func createSendLockedTransfer(channelState *NettingChannelState, initiator common.InitiatorAddress,
+func createSendLockedTransfer(channelState *NettingChannelState, initiator common.Address,
 	target common.Address, amount common.PaymentAmount, messageIdentifier common.MessageID,
 	paymentIdentifier common.PaymentID, expiration common.BlockExpiration,
 	secretHash common.SecretHash) (*SendLockedTransfer, *MerkleTreeState) {
@@ -1095,7 +1095,7 @@ func CreateUnlock(channelState *NettingChannelState, messageIdentifier common.Me
 }
 
 func sendLockedTransfer(channelState *NettingChannelState,
-	initiator common.InitiatorAddress, target common.Address,
+	initiator common.Address, target common.Address,
 	amount common.PaymentAmount, messageIdentifier common.MessageID,
 	paymentIdentifier common.PaymentID, expiration common.BlockExpiration,
 	secretHash common.SecretHash) *SendLockedTransfer {
@@ -1124,7 +1124,7 @@ func sendLockedTransfer(channelState *NettingChannelState,
 	return sendLockedTransferEvent
 }
 
-func sendRefundTransfer(channelState *NettingChannelState, initiator common.InitiatorAddress,
+func sendRefundTransfer(channelState *NettingChannelState, initiator common.Address,
 	target common.Address, amount common.PaymentAmount, messageIdentifier common.MessageID,
 	paymentIdentifier common.PaymentID, expiration common.BlockExpiration,
 	secretHash common.SecretHash) (*SendRefundTransfer, error) {
@@ -1955,7 +1955,7 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 			TokenNetworkIdentifier:   channelState.TokenNetworkIdentifier,
 			Identifier:               directTransfer.PaymentIdentifier,
 			Amount:                   transferAmount,
-			Initiator:                common.InitiatorAddress(channelState.PartnerState.Address),
+			Initiator:                channelState.PartnerState.Address,
 		}
 
 		sendProcessed := &SendProcessed{

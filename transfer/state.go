@@ -612,7 +612,7 @@ type LockedTransferSignedState struct {
 	Token             common.Address
 	BalanceProof      *BalanceProofSignedState
 	Lock              *HashTimeLockState
-	Initiator         common.InitiatorAddress
+	Initiator         common.Address
 	Target            common.Address
 }
 

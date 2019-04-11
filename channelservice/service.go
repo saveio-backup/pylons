@@ -601,7 +601,7 @@ func EventFilterForPayments(event transfer.Event, tokenNetworkIdentifier common.
 		eventPaymentReceivedSuccess := event.(*transfer.EventPaymentReceivedSuccess)
 		if partnerAddress == emptyAddress {
 			result = true
-		} else if eventPaymentReceivedSuccess.Initiator == common.InitiatorAddress(partnerAddress) {
+		} else if eventPaymentReceivedSuccess.Initiator == partnerAddress {
 			result = true
 		}
 	case *transfer.EventPaymentSentFailed:
@@ -918,7 +918,7 @@ func (self *ChannelService) CanTransfer(target common.Address, amount common.Tok
 
 func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, target common.Address,
 	identifier common.PaymentID) (chan bool, error) {
-	if target == common.ADDRESS_EMPTY {
+	if target == common.EmptyAddress {
 		log.Error("target address is invalid:", target)
 		return nil, fmt.Errorf("target address is invalid")
 	}
@@ -964,7 +964,7 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	tokenAddress common.TokenAddress, amount common.TokenAmount, target common.Address,
 	identifier common.PaymentID) (chan bool, error) {
 
-	if target == common.ADDRESS_EMPTY {
+	if target == common.EmptyAddress {
 		log.Error("target address is invalid:", target)
 		return nil, fmt.Errorf("target address is invalid")
 	}

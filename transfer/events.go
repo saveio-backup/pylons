@@ -59,7 +59,7 @@ type EventPaymentReceivedSuccess struct {
 	TokenNetworkIdentifier   common.TokenNetworkID
 	Identifier               common.PaymentID
 	Amount                   common.TokenAmount
-	Initiator                common.InitiatorAddress
+	Initiator                common.Address
 }
 
 type EventTransferReceivedInvalidDirectTransfer struct {

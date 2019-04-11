@@ -17,8 +17,6 @@ type EdgeId [constants.EDGEID_LEN]byte
 
 type Address [constants.ADDR_LEN]byte
 
-var ADDRESS_EMPTY = Address{}
-
 type Keccak256Slice []Keccak256
 
 type AddressHex string
@@ -42,8 +40,6 @@ type BlockTimeout int
 type ChannelID uint32
 
 type ChannelState int
-
-type InitiatorAddress [constants.ADDR_LEN]byte
 
 type Locksroot [constants.HASH_LEN]byte
 
