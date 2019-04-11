@@ -3,6 +3,7 @@ package transfer
 import (
 	"bytes"
 	"encoding/binary"
+	"reflect"
 
 	"github.com/oniio/oniChannel/common"
 )
@@ -47,4 +48,12 @@ func HashBalanceData(transferredAmount common.TokenAmount,
 func IsValidSecretReveal(stateChangeSecret common.Secret, transferSecretHash common.SecretHash, secret common.Secret) bool {
 	secretHash := common.GetHash(stateChangeSecret)
 	return (0 != bytes.Compare(secret, common.EmptySecret[:])) && secretHash == transferSecretHash
+}
+
+func IsStateNil(state State) bool {
+	if state == nil {
+		return true
+	}
+
+	return reflect.ValueOf(state).IsNil()
 }

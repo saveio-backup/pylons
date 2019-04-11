@@ -120,7 +120,7 @@ func subDispatchToPaymentTask(chainState *ChainState, stateChange StateChange,
 			log.Errorf("[subDispatchToPaymentTask] Unknown subTask type")
 		}
 
-		if subIteration != nil && subIteration.NewState == nil {
+		if subIteration != nil && IsStateNil(subIteration.NewState) {
 			log.Debug("[subDispatchToPaymentTask] delete SecretHashesToTask")
 			delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
 		}
@@ -158,7 +158,7 @@ func subDispatchInitiatorTask(chainState *ChainState, stateChange StateChange,
 			tokenNetworkState.ChannelIdentifiersToChannels, blockNumber)
 
 		events = append(events, iteration.Events...)
-		if iteration.NewState != nil {
+		if !IsStateNil(iteration.NewState) {
 			subTask = &InitiatorTask{
 				TokenNetworkIdentifier: tokenNetworkIdentifier,
 				ManagerState:           iteration.NewState,
@@ -206,7 +206,7 @@ func subDispatchMediatorTask(chainState *ChainState, stateChange StateChange,
 		}
 		events = iteration.Events
 
-		if iteration.NewState != nil {
+		if !IsStateNil(iteration.NewState) {
 			subTask = &MediatorTask{
 				TokenNetworkIdentifier: tokenNetworkIdentifier,
 				MediatorState:          iteration.NewState,
@@ -256,7 +256,7 @@ func subDispatchTargetTask(chainState *ChainState, stateChange StateChange,
 			return &TransitionResult{NewState: chainState, Events: nil}
 		} else {
 			events = iteration.Events
-			if iteration.NewState != nil {
+			if !IsStateNil(iteration.NewState) {
 				subTask = &TargetTask{
 					TokenNetworkIdentifier: tokenNetworkIdentifier,
 					ChannelIdentifier:      channelIdentifier,
@@ -380,7 +380,7 @@ func handleTokenNetworkAction(chainState *ChainState, stateChange StateChange,
 	if tokenNetworkState != nil {
 		iteration := stateTransitionForNetwork(paymentNetworkId, tokenNetworkState,
 			stateChange, chainState.BlockHeight)
-		if reflect.ValueOf(iteration.NewState).IsNil() {
+		if IsStateNil(iteration.NewState) {
 			paymentNetworkState = searchPaymentNetworkByTokenNetworkId(
 				chainState, tokenNetworkId)
 
@@ -807,7 +807,7 @@ func updateQueues(iteration *TransitionResult, stateChange StateChange) {
 
 func StateTransition(chainState State, stateChange StateChange) *TransitionResult {
 	iteration := handleStateChangeForNode(chainState, stateChange)
-	if iteration.NewState == nil {
+	if IsStateNil(iteration.NewState) {
 		log.Warn("[node.StateTransition] iteration.NewState is nil")
 	}
 	for _, e := range iteration.Events {

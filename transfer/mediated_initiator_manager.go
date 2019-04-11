@@ -37,7 +37,7 @@ func HandleReceiveRefundTransferCancelRoute(channelState *NettingChannelState,
 //-----------------------------------------------------------------
 
 func ImIterationFromSub(paymentState *InitiatorPaymentState, iteration *TransitionResult) *TransitionResult {
-	if iteration.NewState != nil {
+	if !IsStateNil(iteration.NewState) {
 		paymentState.Initiator = iteration.NewState.(*InitiatorTransferState)
 		return &TransitionResult{NewState: paymentState, Events: iteration.Events}
 	}
@@ -99,7 +99,7 @@ func ImHandleInit(paymentState *InitiatorPaymentState, stateChange *ActionInitIn
 			stateChange.Routes, stateChange.TransferDescription, blockNumber)
 
 		events = subIteration.Events
-		if subIteration.NewState != nil {
+		if !IsStateNil(subIteration.NewState) {
 			transferState := subIteration.NewState.(*InitiatorTransferState)
 			return &TransitionResult{NewState: transferState, Events: events}
 		}
@@ -128,7 +128,7 @@ func ImHandleCancelRoute(paymentState *InitiatorPaymentState, stateChange *Actio
 		events = append(events, cancelEvents...)
 		events = append(events, subIteration.Events...)
 
-		if subIteration.NewState != nil {
+		if !IsStateNil(subIteration.NewState) {
 			paymentState.Initiator = subIteration.NewState.(*InitiatorTransferState)
 		} else {
 			paymentState = nil
@@ -204,7 +204,7 @@ func ImHandleTransferRefundCancelRoute(paymentState *InitiatorPaymentState,
 			subIteration := ImHandleCancelRoute(paymentState, actionCancelRoute, channelIdToChannels, blockNumber)
 
 			events = append(events, subIteration.Events...)
-			if subIteration.NewState == nil {
+			if IsStateNil(subIteration.NewState) {
 				paymentState = nil
 			}
 		}

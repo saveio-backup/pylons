@@ -210,7 +210,7 @@ func subDispatchToChannelById(tokenNetworkState *TokenNetworkState,
 		}
 		partnerToChannels := tokenNetworkState.PartnerAddressesToChannels[channelState.PartnerState.Address]
 
-		if reflect.ValueOf(result.NewState).IsNil() {
+		if IsStateNil(result.NewState) {
 			log.Debugf("channel for channelIdentifier %d is deleted", channelIdentifier)
 			delete(idsToChannels, channelIdentifier)
 			delete(partnerToChannels, channelIdentifier)
@@ -310,7 +310,7 @@ func handleBatchUnlock(tokenNetworkState *TokenNetworkState, stateChange StateCh
 			iteration := StateTransitionForChannel(channelState, stateChange, blockNumber)
 			events = append(events, iteration.Events[:]...)
 
-			if reflect.ValueOf(iteration.NewState).IsNil() {
+			if IsStateNil(iteration.NewState) {
 				log.Infof("handleBatchUnlock, delete channel")
 
 				delete(tokenNetworkState.ChannelIdentifiersToChannels, channelState.Identifier)

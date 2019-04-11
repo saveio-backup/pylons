@@ -312,7 +312,7 @@ func clearIfFinalized(iteration *TransitionResult,
 	//A lock is considered finalized if it has been removed from the merkle tree
 	//offchain, either because the transfer was unlocked or expired, or because the
 	//channel was settled on chain and therefore the channel is removed."""
-	if iteration.NewState == nil {
+	if IsStateNil(iteration.NewState) {
 		log.Error("[clearIfFinalized] iteration is nil")
 		return iteration
 	}
@@ -1109,7 +1109,7 @@ func handleInit(stateChange *ActionInitMediator, channelIdentifiersToChannels ma
 		log.Debug("[handleInit]: ", reflect.TypeOf(e).String())
 	}
 
-	if iteration.NewState == nil {
+	if IsStateNil(iteration.NewState) {
 		log.Debug("[handleInit]     iteration.NewState == nil")
 	}
 
@@ -1351,7 +1351,7 @@ func handleLockExpired(mediatorState *MediatorTransferState, stateChange *Receiv
 			stateChange, blockNumber)
 
 		//Handling a receive_lock_expire should never delete the channel task
-		if result.NewState != nil && reflect.TypeOf(result.NewState).String() != "*NettingChannelState" {
+		if !IsStateNil(result.NewState) && reflect.TypeOf(result.NewState).String() != "*NettingChannelState" {
 			//"Handling a receive_lock_expire should never delete the channel task"
 		}
 
@@ -1429,7 +1429,7 @@ func MdStateTransition(mediatorState *MediatorTransferState, stateChange interfa
 	}
 
 	//# this is the place for paranoia
-	if iteration.NewState != nil {
+	if !IsStateNil(iteration.NewState) {
 		if reflect.TypeOf(iteration.NewState).String() != "*transfer.MediatorTransferState" {
 			return nil, fmt.Errorf("State Type is not MediatorTransferState ")
 		}
