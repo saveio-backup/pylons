@@ -334,6 +334,9 @@ func BalanceProofFromEnvelope(message *messages.EnvelopeMessage, dataToSign []by
 		LocksRoot:              locksRoot,
 	}
 
+	balanceProof.BalanceHash = transfer.HashBalanceData(balanceProof.TransferredAmount,
+		balanceProof.LockedAmount, balanceProof.LocksRoot)
+
 	return balanceProof
 }
 

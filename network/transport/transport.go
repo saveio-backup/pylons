@@ -128,10 +128,14 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 		// handle timeout retry
 		case <-t.C:
 			log.Debugf("[QueueSend]  <-t.C Time: %s queue: %p\n", time.Now().String(), queue)
-			log.Warn("Timeout retry")
 			if queue.Len() == 0 {
 				continue
 			}
+
+			item, _ := queue.Peek()
+			msg := item.(*QueueItem).message
+			log.Warnf("Timeout retry for msg = %+v\n", msg)
+
 			t.Reset(interval * time.Second)
 			err := this.PeekAndSend(queue, queueId)
 			if err != nil {

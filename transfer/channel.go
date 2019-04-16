@@ -930,6 +930,9 @@ func createSendLockedTransfer(channelState *NettingChannelState, initiator commo
 		ChainId:                channelState.ChainId,
 	}
 
+	balanceProof.BalanceHash = HashBalanceData(balanceProof.TransferredAmount,
+		balanceProof.LockedAmount, balanceProof.LocksRoot)
+
 	transfer := &LockedTransferUnsignedState{
 		PaymentIdentifier: paymentIdentifier,
 		Token:             token,
@@ -992,6 +995,9 @@ func createSendDirectTransfer(channelState *NettingChannelState, amount common.P
 		ChainId:                channelState.ChainId,
 	}
 
+	balanceProof.BalanceHash = HashBalanceData(balanceProof.TransferredAmount,
+		balanceProof.LockedAmount, balanceProof.LocksRoot)
+
 	sendDirectTransfer := SendDirectTransfer{
 		SendMessageEvent: SendMessageEvent{
 			Recipient:         common.Address(recipient),
@@ -1020,6 +1026,7 @@ func sendDirectTransfer(channelState *NettingChannelState, amount common.Payment
 		TokenNetworkIdentifier: directTransfer.BalanceProof.TokenNetworkIdentifier,
 		ChannelIdentifier:      directTransfer.BalanceProof.ChannelIdentifier,
 		ChainId:                directTransfer.BalanceProof.ChainId,
+		BalanceHash:            directTransfer.BalanceProof.BalanceHash,
 	}
 
 	return directTransfer
@@ -1079,6 +1086,9 @@ func CreateUnlock(channelState *NettingChannelState, messageIdentifier common.Me
 		ChainId:                channelState.ChainId,
 	}
 
+	balanceProof.BalanceHash = HashBalanceData(balanceProof.TransferredAmount,
+		balanceProof.LockedAmount, balanceProof.LocksRoot)
+
 	unlockLock := &SendBalanceProof{
 		SendMessageEvent: SendMessageEvent{
 			Recipient:         common.Address(recipient),
@@ -1115,6 +1125,7 @@ func sendLockedTransfer(channelState *NettingChannelState,
 		TokenNetworkIdentifier: transfer.BalanceProof.TokenNetworkIdentifier,
 		ChannelIdentifier:      transfer.BalanceProof.ChannelIdentifier,
 		ChainId:                transfer.BalanceProof.ChainId,
+		BalanceHash:            transfer.BalanceProof.BalanceHash,
 	}
 	channelState.OurState.MerkleTree = merkleTree
 
@@ -1166,6 +1177,7 @@ func SendUnlock(channelState *NettingChannelState, messageIdentifier common.Mess
 		TokenNetworkIdentifier: unlock.BalanceProof.TokenNetworkIdentifier,
 		ChannelIdentifier:      unlock.BalanceProof.ChannelIdentifier,
 		ChainId:                unlock.BalanceProof.ChainId,
+		BalanceHash:            unlock.BalanceProof.BalanceHash,
 	}
 	channelState.OurState.MerkleTree = merkleTree
 	DelLock(channelState.OurState, common.SecretHash(lock.SecretHash))
@@ -1222,6 +1234,9 @@ func createSendExpiredLock(senderEndState *NettingChannelEndState, lockedLock *H
 		ChannelIdentifier:      channelIdentifier,
 		ChainId:                chainId,
 	}
+
+	balanceProof.BalanceHash = HashBalanceData(balanceProof.TransferredAmount,
+		balanceProof.LockedAmount, balanceProof.LocksRoot)
 
 	sendLockExpired := &SendLockExpired{
 		SendMessageEvent: SendMessageEvent{

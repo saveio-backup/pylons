@@ -357,6 +357,7 @@ type BalanceProofUnsignedState struct {
 	TransferredAmount      common.TokenAmount
 	LockedAmount           common.TokenAmount
 	LocksRoot              common.Locksroot
+	BalanceHash            common.BalanceHash
 	TokenNetworkIdentifier common.TokenNetworkID
 	ChannelIdentifier      common.ChannelID
 	ChainId                common.ChainID
@@ -367,6 +368,7 @@ type BalanceProofSignedState struct {
 	TransferredAmount      common.TokenAmount
 	LockedAmount           common.TokenAmount
 	LocksRoot              common.Locksroot
+	BalanceHash            common.BalanceHash
 	TokenNetworkIdentifier common.TokenNetworkID
 	ChannelIdentifier      common.ChannelID
 	MessageHash            common.Keccak256

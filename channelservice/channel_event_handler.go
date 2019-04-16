@@ -199,6 +199,13 @@ func (self ChannelEventHandler) HandleContractSendChannelClose(channel *ChannelS
 			balanceProof.LocksRoot,
 		)
 
+		log.Debugf("[HandleContractSendChannelClose] ta : %d, la : %d, lr : %v, balanceHash : %v",
+			balanceProof.TransferredAmount,
+			balanceProof.LockedAmount,
+			balanceProof.LocksRoot,
+			balanceHash,
+		)
+
 		nonce = balanceProof.Nonce
 		signature = balanceProof.Signature
 		messageHash = balanceProof.MessageHash
@@ -230,6 +237,13 @@ func (self ChannelEventHandler) HandelContractSendChannelUpdate(channel *Channel
 			balanceProof.TransferredAmount,
 			balanceProof.LockedAmount,
 			balanceProof.LocksRoot,
+		)
+
+		log.Debugf("[HandelContractSendChannelUpdate] ta : %d, la : %d, lr : %v, balanceHash : %v",
+			balanceProof.TransferredAmount,
+			balanceProof.LockedAmount,
+			balanceProof.LocksRoot,
+			balanceHash,
 		)
 
 		nonClosingData := transfer.PackBalanceProofUpdate(
@@ -280,6 +294,7 @@ func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *Channel
 	}
 
 	ourBalanceHash := participanatsDetails.OurDetails.BalanceHash
+	log.Debugf("[ChannelSettle] ourBalanceHash %v", ourBalanceHash)
 	if len(ourBalanceHash) != 0 {
 		ourBalanceProof = storage.GetLatestKnownBalanceProofFromEvents(
 			channel.Wal.Storage, chainID, common.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier),
@@ -293,6 +308,7 @@ func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *Channel
 	}
 
 	partnerBalanceHash := participanatsDetails.PartnerDetails.BalanceHash
+	log.Debugf("[ChannelSettle] partnerBalanceHash %v", partnerBalanceHash)
 	if len(partnerBalanceHash) != 0 {
 		partnerBalanceProof = storage.GetLatestKnownBalanceProofFromStateChanges(
 			channel.Wal.Storage, chainID, common.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier),
@@ -305,6 +321,9 @@ func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *Channel
 		partnerLocksroot = partnerBalanceProof.LocksRoot
 	}
 
+	log.Debugf("[ChannelSettle] ourBP : %v, partnerBP : %v", ourBalanceProof, partnerBalanceProof)
+	log.Debugf("[ChannelSettle] our: tA = %d, lA : %d, locksroot : %v, partner: tA : %d, lA : %d, locksroot : %v ", ourTransferredAmount, ourLockedAmount, ourLocksroot,
+		partnerTransferredAmount, partnerLockedAmount, partnerLocksroot)
 	channelProxy.Settle(
 		ourTransferredAmount, ourLockedAmount, ourLocksroot,
 		partnerTransferredAmount, partnerLockedAmount, partnerLocksroot)

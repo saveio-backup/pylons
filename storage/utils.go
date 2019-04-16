@@ -1,9 +1,13 @@
 package storage
 
 import (
+	"encoding/json"
 	"fmt"
+	"reflect"
 
+	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChannel/common"
+	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/transfer"
 )
 
@@ -46,41 +50,69 @@ func GetEventCreateTables() string {
 	return sqlStmt
 }
 
+func formatByteSlicesForQuery(data []byte) string {
+	value, _ := json.Marshal(data)
+	valueStr := string(value)
+
+	return valueStr[1 : len(valueStr)-1]
+}
+func formatAddressForQuery(address common.Address) string {
+	str := address.String()
+	return str[1 : len(str)-1]
+}
+
+func getValuesFromBalanceProof(data interface{}) (common.TokenAmount, common.TokenAmount, common.Locksroot) {
+	var locksroot common.Locksroot
+
+	event := reflect.ValueOf(data)
+	balanceProofValue := reflect.Indirect(reflect.Indirect(event).FieldByName("BalanceProof"))
+
+	transferredAmount := common.TokenAmount(balanceProofValue.FieldByName("TransferredAmount").Uint())
+	lockedAmount := common.TokenAmount(balanceProofValue.FieldByName("LockedAmount").Uint())
+
+	locksrootValue := balanceProofValue.FieldByName("LocksRoot")
+	len := locksrootValue.Len()
+	if len != constants.HASH_LEN {
+		panic("locksroot length invalid")
+	}
+
+	for i := 0; i < len; i++ {
+		locksroot[i] = byte(locksrootValue.Index(i).Uint())
+	}
+
+	return transferredAmount, lockedAmount, locksroot
+
+}
+
 func GetLatestKnownBalanceProofFromStateChanges(
 	storage *SQLiteStorage, chainID common.ChainID, tokenNetworkID common.TokenNetworkID,
 	channelIdentifier common.ChannelID, balanceHash common.BalanceHash, sender common.Address) *transfer.BalanceProofSignedState {
+
+	//balanceHashStr := formatByteSlicesForQuery(balanceHash)
+	//sendStr := formatAddressForQuery(sender)
 
 	filters := map[string]interface{}{
 		//"BalanceProof.ChainId":                 chainID,
 		//"BalanceProof.TokenNetworkIdentifier ": tokenNetworkID,
 		"BalanceProof.ChannelIdentifier": channelIdentifier,
-		//"BalanceProof.Sender":            sender,
+		"BalanceProof.BalanceHash":       formatByteSlicesForQuery(balanceHash),
+		"BalanceProof.Sender":            formatAddressForQuery(sender),
 	}
 
 	stateChangeRecord := storage.GetLatestStateChangeByDataField(filters)
-
 	if stateChangeRecord.Data != nil {
+		var balanceProof transfer.BalanceProofSignedState
 
-		switch stateChangeRecord.Data.(type) {
-		case *transfer.ReceiveTransferDirect:
-			stateChange := stateChangeRecord.Data.(*transfer.ReceiveTransferDirect)
+		log.Debugf("[GetLatestKnownBalanceProofFromStateChanges] type: %s", reflect.ValueOf(stateChangeRecord.Data).String())
+		balanceProof.TransferredAmount, balanceProof.LockedAmount, balanceProof.LocksRoot = getValuesFromBalanceProof(stateChangeRecord.Data)
 
-			balanceProof := stateChange.BalanceProof
-			if balanceProof != nil && common.AddressEqual(balanceProof.Sender, sender) {
-				hash := transfer.HashBalanceData(
-					balanceProof.TransferredAmount,
-					balanceProof.LockedAmount,
-					balanceProof.LocksRoot,
-				)
-
-				if common.SliceEqual(hash, balanceHash) {
-					return balanceProof
-				}
-			}
-			return nil
-		}
+		log.Debugf("[GetLatestKnownBalanceProofFromStateChanges] ta : %d, la : %d, lr: %v",
+			balanceProof.TransferredAmount,
+			balanceProof.LockedAmount,
+			balanceProof.LocksRoot,
+		)
+		return &balanceProof
 	}
-
 	return nil
 }
 
@@ -88,35 +120,29 @@ func GetLatestKnownBalanceProofFromEvents(
 	storage *SQLiteStorage, chainID common.ChainID, tokenNetworkID common.TokenNetworkID,
 	channelIdentifier common.ChannelID, balanceHash common.BalanceHash) *transfer.BalanceProofUnsignedState {
 
+	//balanceHashStr := formatByteSlicesForQuery(balanceHash)
 	filters := map[string]interface{}{
 		//"BalanceProof.ChainId":                 chainID,
 		//"BalanceProof.TokenNetworkIdentifier ": tokenNetworkID,
 		"BalanceProof.ChannelIdentifier": channelIdentifier,
+		"BalanceProof.BalanceHash":       formatByteSlicesForQuery(balanceHash),
 	}
 
 	eventRecord := storage.GetLatestEventByDataField(filters)
-
 	if eventRecord.Data != nil {
-		switch eventRecord.Data.(type) {
-		case *transfer.SendDirectTransfer:
-			event := eventRecord.Data.(*transfer.SendDirectTransfer)
+		var balanceProof transfer.BalanceProofUnsignedState
 
-			balanceProof := event.BalanceProof
-			if balanceProof != nil {
-				hash := transfer.HashBalanceData(
-					balanceProof.TransferredAmount,
-					balanceProof.LockedAmount,
-					balanceProof.LocksRoot,
-				)
+		log.Debugf("[GetLatestKnownBalanceProofFromEvents] eventRecord.Data type: %s", reflect.ValueOf(eventRecord.Data).String())
 
-				if common.SliceEqual(hash, balanceHash) {
-					return balanceProof
-				}
-			}
-			return nil
-		}
+		balanceProof.TransferredAmount, balanceProof.LockedAmount, balanceProof.LocksRoot = getValuesFromBalanceProof(eventRecord.Data)
+
+		log.Debugf("[GetLatestKnownBalanceProofFromEvents] ta : %d, la : %d, lr: %v",
+			balanceProof.TransferredAmount,
+			balanceProof.LockedAmount,
+			balanceProof.LocksRoot,
+		)
+		return &balanceProof
 	}
-
 	return nil
 }
 
