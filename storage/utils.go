@@ -88,9 +88,6 @@ func GetLatestKnownBalanceProofFromStateChanges(
 	storage *SQLiteStorage, chainID common.ChainID, tokenNetworkID common.TokenNetworkID,
 	channelIdentifier common.ChannelID, balanceHash common.BalanceHash, sender common.Address) *transfer.BalanceProofSignedState {
 
-	//balanceHashStr := formatByteSlicesForQuery(balanceHash)
-	//sendStr := formatAddressForQuery(sender)
-
 	filters := map[string]interface{}{
 		//"BalanceProof.ChainId":                 chainID,
 		//"BalanceProof.TokenNetworkIdentifier ": tokenNetworkID,
@@ -120,7 +117,6 @@ func GetLatestKnownBalanceProofFromEvents(
 	storage *SQLiteStorage, chainID common.ChainID, tokenNetworkID common.TokenNetworkID,
 	channelIdentifier common.ChannelID, balanceHash common.BalanceHash) *transfer.BalanceProofUnsignedState {
 
-	//balanceHashStr := formatByteSlicesForQuery(balanceHash)
 	filters := map[string]interface{}{
 		//"BalanceProof.ChainId":                 chainID,
 		//"BalanceProof.TokenNetworkIdentifier ": tokenNetworkID,
