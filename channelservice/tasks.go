@@ -60,7 +60,7 @@ func (self *AlarmTask) LoopUntilStop() {
 	for {
 		select {
 		case <-self.stopEvent:
-			break
+			return
 		case <-time.After(time.Duration(interval) * time.Millisecond):
 			lastBlockHeight = self.lastBlockHeight
 			latestBlockHeight, blockHash, err = self.GetLatestBlock()

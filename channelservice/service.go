@@ -305,6 +305,7 @@ func (self *ChannelService) Stop() {
 	self.alarm.Stop()
 	self.p2pActor.Stop()
 	self.channelActor.Stop()
+	self.Wal.Storage.Close()
 	log.Info("channel service stopped")
 }
 
@@ -662,6 +663,17 @@ func (self *ChannelService) tokenNetworkLeave(registryAddress common.PaymentNetw
 		tokenNetworkIdentifier)
 
 	return connectionManager.Leave(registryAddress)
+}
+
+func (self *ChannelService) GetChannelIdentifier(
+	partnerAddress common.Address) common.ChannelID {
+	id, err := self.chain.ChannelClient.GetChannelIdentifier(comm.Address(self.address),
+		comm.Address(partnerAddress))
+	if err != nil {
+		log.Error("get channel identifier failed ", err)
+		return 0
+	}
+	return common.ChannelID(id)
 }
 
 func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
