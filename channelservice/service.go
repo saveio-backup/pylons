@@ -1,6 +1,7 @@
 package channelservice
 
 import (
+	"bytes"
 	"container/list"
 	"errors"
 	"fmt"
@@ -8,12 +9,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"bytes"
-	"reflect"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/oniio/oniChain-go-sdk/usdt"
@@ -45,6 +45,8 @@ type ChannelService struct {
 	targetsToIdentifierToStatues map[common.Address]*sync.Map
 	ReceiveNotificationChannels  map[chan *transfer.EventPaymentReceivedSuccess]struct{}
 	channelWithdrawStatus        *sync.Map
+	channelNewNotifier           chan *NewChannelNotification
+	isRestoreFinish              bool
 
 	address            common.Address
 	microAddress       common.Address
@@ -98,6 +100,7 @@ func NewChannelService(chain *network.BlockchainService, queryStartBlock common.
 	self.tokenNetworkIdsToConnectionManagers = make(map[common.TokenNetworkID]*ConnectionManager)
 	self.ReceiveNotificationChannels = make(map[chan *transfer.EventPaymentReceivedSuccess]struct{})
 	self.channelWithdrawStatus = new(sync.Map)
+	self.channelNewNotifier = make(chan *NewChannelNotification, 1)
 
 	// address in the blockChain service is set when import wallet
 	self.address = chain.Address
@@ -225,6 +228,7 @@ func (self *ChannelService) Start() error {
 
 	var lastLogBlockHeight common.BlockHeight
 	self.Wal = storage.RestoreToStateChange(transfer.StateTransition, sqliteStorage, "latest")
+	self.isRestoreFinish = true
 
 	if self.Wal.StateManager.CurrentState == nil {
 		var stateChange transfer.StateChange
@@ -1227,6 +1231,27 @@ func (self *ChannelService) WithdrawResultNotify(channelId common.ChannelID, res
 
 	withdrawResult <- result
 	return true
+}
+
+type NewChannelNotification struct {
+	ChannelIdentifier common.ChannelID
+	PartnerAddress    common.Address
+}
+
+func (self *ChannelService) GetNewChannelNotifier() chan *NewChannelNotification {
+	return self.channelNewNotifier
+}
+
+func (self *ChannelService) NotifyNewChannel(channelId common.ChannelID, partnerAddress common.Address) {
+	if self.isRestoreFinish {
+		notification := &NewChannelNotification{
+			ChannelIdentifier: channelId,
+			PartnerAddress:    partnerAddress,
+		}
+
+		log.Debugf("NotifiNewchannel: channel id : %v, partner address : %v", channelId, partnerAddress)
+		self.channelNewNotifier <- notification
+	}
 }
 
 func GetFullDatabasePath() (string, error) {
