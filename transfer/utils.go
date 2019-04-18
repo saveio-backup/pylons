@@ -24,12 +24,13 @@ func Uint64ToBytes(n uint64) []byte {
 }
 
 func HashBalanceData(transferredAmount common.TokenAmount,
-	lockedAmount common.TokenAmount, locksRoot common.Locksroot) []byte {
+	lockedAmount common.TokenAmount, locksRoot common.Locksroot) common.BalanceHash {
+	var balanceHash common.BalanceHash
 
 	empty := common.Locksroot{}
 
 	if transferredAmount == 0 && lockedAmount == 0 && compareLocksroot(locksRoot, empty) == true {
-		return empty[:]
+		return balanceHash
 	}
 
 	buf := new(bytes.Buffer)
@@ -42,7 +43,7 @@ func HashBalanceData(transferredAmount common.TokenAmount,
 	//[TODO] make sure sha256.Sum256 is similar with web3.utils.soliditySha3
 	sum := common.GetHash(buf.Bytes())
 
-	return sum[:]
+	return common.BalanceHash(sum)
 }
 
 func IsValidSecretReveal(stateChangeSecret common.Secret, transferSecretHash common.SecretHash, secret common.Secret) bool {

@@ -13,6 +13,7 @@ import (
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChain/smartcontract/service/native/micropayment"
 	"github.com/oniio/oniChannel/common"
+	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/transfer"
 )
 
@@ -189,13 +190,41 @@ func (self *TokenNetwork) detailParticipant(channelIdentifier common.ChannelID,
 		log.Errorf("GetChannelParticipantInfo err:%s", err)
 		return nil
 	}
+
+	var balanceHash common.BalanceHash
+
+	if len(info.BalanceHash) != 0 && len(info.BalanceHash) != constants.HASH_LEN {
+		log.Errorf("GetChannelParticipantInfo: length error for balance hash")
+		return nil
+	}
+
+	if len(info.BalanceHash) == constants.HASH_LEN {
+		for index, value := range info.BalanceHash {
+			balanceHash[index] = value
+		}
+	}
+
+	var locksroot common.Locksroot
+
+	if len(info.LocksRoot) != 0 && len(info.LocksRoot) != constants.HASH_LEN {
+		log.Errorf("GetChannelParticipantInfo: length error for balance hash")
+		return nil
+	}
+
+	if len(info.LocksRoot) == constants.HASH_LEN {
+		for index, value := range info.LocksRoot {
+			locksroot[index] = value
+		}
+	}
 	result := &ParticipantDetails{
-		Address:     common.Address(info.WalletAddr),
-		Deposit:     common.TokenAmount(info.Deposit),
-		Withdrawn:   common.TokenAmount(info.WithDrawAmount),
-		isCloser:    info.IsCloser,
-		BalanceHash: common.BalanceHash(info.BalanceHash),
-		Nonce:       common.Nonce(info.Nonce),
+		Address:      common.Address(info.WalletAddr),
+		Deposit:      common.TokenAmount(info.Deposit),
+		Withdrawn:    common.TokenAmount(info.WithDrawAmount),
+		isCloser:     info.IsCloser,
+		BalanceHash:  balanceHash,
+		Nonce:        common.Nonce(info.Nonce),
+		Locksroot:    locksroot,
+		LockedAmount: common.TokenAmount(info.LockedAmount),
 
 		// TODO: this two field is missing
 		// Locksroot:    ,
@@ -236,8 +265,12 @@ func (self *TokenNetwork) DetailParticipants(participant1 common.Address,
 		participant1, participant2 = participant2, participant1
 	}
 
-	channelIdentifier = self.inspectChannelIdentifier(participant1, participant2,
-		"detailParticipants", channelIdentifier)
+	// only query when there channel id is 0, after channel is settled, inspectChannelIdentifier returns 0
+	// but we need to get the correct info for unlock when channel id is provided correctly
+	if channelIdentifier == 0 {
+		channelIdentifier = self.inspectChannelIdentifier(participant1, participant2,
+			"detailParticipants", channelIdentifier)
+	}
 
 	ourData := self.detailParticipant(channelIdentifier, participant1, participant2)
 	partnerData := self.detailParticipant(channelIdentifier, participant2, participant1)
@@ -401,6 +434,13 @@ func (self *TokenNetwork) SetTotalDeposit(channelIdentifier common.ChannelID,
 	return nil
 }
 
+func getBalanceHashForParam(balanceHash common.BalanceHash) []byte {
+	if common.IsEmptyBalanceHash(balanceHash) {
+		return nil
+	}
+	return balanceHash[:]
+}
+
 func (self *TokenNetwork) Close(channelIdentifier common.ChannelID, partner common.Address,
 	balanceHash common.BalanceHash, nonce common.Nonce, additionalHash common.AdditionalHash,
 	signature common.Signature, partnerPubKey common.PubKey) {
@@ -419,7 +459,7 @@ func (self *TokenNetwork) Close(channelIdentifier common.ChannelID, partner comm
 	opLock.Lock()
 	defer opLock.Unlock()
 
-	txHash, err := self.ChannelClient.CloseChannel(uint64(channelIdentifier), comm.Address(self.nodeAddress), comm.Address(partner), []byte(balanceHash), uint64(nonce), []byte(additionalHash), []byte(signature), []byte(partnerPubKey))
+	txHash, err := self.ChannelClient.CloseChannel(uint64(channelIdentifier), comm.Address(self.nodeAddress), comm.Address(partner), getBalanceHashForParam(balanceHash), uint64(nonce), []byte(additionalHash), []byte(signature), []byte(partnerPubKey))
 	if err != nil {
 		log.Errorf("CloseChannel err:%s", err)
 		return
@@ -445,7 +485,7 @@ func (self *TokenNetwork) updateTransfer(channelIdentifier common.ChannelID, par
 	}
 
 	// need pubkey
-	txHash, err := self.ChannelClient.UpdateNonClosingBalanceProof(uint64(channelIdentifier), comm.Address(partner), comm.Address(self.nodeAddress), []byte(balanceHash), uint64(nonce), []byte(additionalHash), []byte(closingSignature), []byte(nonClosingSignature), closePubKey, nonClosePubKey)
+	txHash, err := self.ChannelClient.UpdateNonClosingBalanceProof(uint64(channelIdentifier), comm.Address(partner), comm.Address(self.nodeAddress), getBalanceHashForParam(balanceHash), uint64(nonce), []byte(additionalHash), []byte(closingSignature), []byte(nonClosingSignature), closePubKey, nonClosePubKey)
 	if err != nil {
 		log.Errorf("UpdateNonClosingBalanceProof err:%s", err)
 		return

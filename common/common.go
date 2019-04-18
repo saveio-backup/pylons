@@ -7,10 +7,11 @@ import (
 	"strconv"
 
 	"crypto/sha256"
+	"os"
+
 	chainCom "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChannel/common/constants"
 	"github.com/oniio/oniChannel/utils/jsonext"
-	"os"
 )
 
 func AddressEqual(address1 Address, address2 Address) bool {
@@ -392,6 +393,114 @@ func (self *SecretHash) UnmarshalText(text []byte) error {
 	return nil
 }
 
+func (self BalanceHash) String() string {
+	str, err := jsonext.Marshal(self)
+	if err != nil {
+		return "emptyBalanceHash"
+	}
+	return string(str)
+}
+
+func (self BalanceHash) MarshalText() (text []byte, err error) {
+	var scratch [64]byte
+	var e bytes.Buffer
+
+	e.WriteByte('[')
+	for i := 0; i < constants.HASH_LEN; i++ {
+		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
+		e.Write(b)
+		if i < constants.HASH_LEN-1 {
+			e.WriteByte(' ')
+		}
+
+	}
+	e.WriteByte(']')
+
+	return e.Bytes(), nil
+}
+
+func (self *BalanceHash) UnmarshalText(text []byte) error {
+	newText := text[1:]
+
+	startIdx := 0
+	for i := 0; i < constants.HASH_LEN; i++ {
+		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
+			startIdx++
+		}
+
+		toIdx := startIdx
+		for newText[toIdx] >= '0' && newText[toIdx] <= '9' {
+			toIdx++
+		}
+
+		res, err := strconv.ParseUint(string(newText[startIdx:toIdx]), 10, 8)
+
+		if err != nil {
+			return errors.New("BalanceHash TextUnmarshaler error!")
+		} else {
+			self[i] = byte(res)
+		}
+
+		startIdx = toIdx
+	}
+
+	return nil
+}
+
+func (self Locksroot) String() string {
+	str, err := jsonext.Marshal(self)
+	if err != nil {
+		return "emptyLocksroot"
+	}
+	return string(str)
+}
+
+func (self Locksroot) MarshalText() (text []byte, err error) {
+	var scratch [64]byte
+	var e bytes.Buffer
+
+	e.WriteByte('[')
+	for i := 0; i < constants.HASH_LEN; i++ {
+		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
+		e.Write(b)
+		if i < constants.HASH_LEN-1 {
+			e.WriteByte(' ')
+		}
+
+	}
+	e.WriteByte(']')
+
+	return e.Bytes(), nil
+}
+
+func (self *Locksroot) UnmarshalText(text []byte) error {
+	newText := text[1:]
+
+	startIdx := 0
+	for i := 0; i < constants.HASH_LEN; i++ {
+		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
+			startIdx++
+		}
+
+		toIdx := startIdx
+		for newText[toIdx] >= '0' && newText[toIdx] <= '9' {
+			toIdx++
+		}
+
+		res, err := strconv.ParseUint(string(newText[startIdx:toIdx]), 10, 8)
+
+		if err != nil {
+			return errors.New("Locksroot TextUnmarshaler error!")
+		} else {
+			self[i] = byte(res)
+		}
+
+		startIdx = toIdx
+	}
+
+	return nil
+}
+
 func SliceEqual(a, b []byte) bool {
 	if len(a) != len(b) {
 		return false
@@ -448,4 +557,10 @@ func PathExists(path string) bool {
 		return false
 	}
 	return false
+}
+
+func IsEmptyBalanceHash(balanceHash BalanceHash) bool {
+	var empty BalanceHash
+
+	return empty == balanceHash
 }

@@ -295,7 +295,7 @@ func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *Channel
 
 	ourBalanceHash := participanatsDetails.OurDetails.BalanceHash
 	log.Debugf("[ChannelSettle] ourBalanceHash %v", ourBalanceHash)
-	if len(ourBalanceHash) != 0 {
+	if !common.IsEmptyBalanceHash(ourBalanceHash) {
 		ourBalanceProof = storage.GetLatestKnownBalanceProofFromEvents(
 			channel.Wal.Storage, chainID, common.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier),
 			channelSettleEvent.ChannelIdentifier, ourBalanceHash)
@@ -309,7 +309,7 @@ func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *Channel
 
 	partnerBalanceHash := participanatsDetails.PartnerDetails.BalanceHash
 	log.Debugf("[ChannelSettle] partnerBalanceHash %v", partnerBalanceHash)
-	if len(partnerBalanceHash) != 0 {
+	if !common.IsEmptyBalanceHash(partnerBalanceHash) {
 		partnerBalanceProof = storage.GetLatestKnownBalanceProofFromStateChanges(
 			channel.Wal.Storage, chainID, common.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier),
 			channelSettleEvent.ChannelIdentifier, partnerBalanceHash, participanatsDetails.PartnerDetails.Address)

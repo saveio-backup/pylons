@@ -26,7 +26,7 @@ func PackBalanceProof(nonce common.Nonce, balanceHash common.BalanceHash, additi
 
 	buf.Write(Uint64ToBytes(uint64(msgType)))
 	buf.Write(Uint64ToBytes(uint64(channelId)))
-	buf.Write(balanceHash)
+	buf.Write(balanceHash[:])
 	buf.Write(Uint64ToBytes(uint64(nonce)))
 	buf.Write(additionalHash)
 	// ignore the token network address and chain ID now
@@ -46,7 +46,7 @@ func PackBalanceProofUpdate(nonce common.Nonce, balanceHash common.BalanceHash, 
 	buf.Write([]byte(mpay.BALANCEPROOF_UPDATE_MESSAGE_LENGTH))
 	buf.Write(Uint64ToBytes(uint64(mpay.BalanceProofUpdate)))
 	buf.Write(Uint64ToBytes(uint64(channelId)))
-	buf.Write(balanceHash)
+	buf.Write(balanceHash[:])
 	buf.Write(Uint64ToBytes(uint64(nonce)))
 	buf.Write(addtionalHash)
 	buf.Write(closeSignature)

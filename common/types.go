@@ -25,7 +25,7 @@ type BlockExpiration int
 
 type Balance uint64
 
-type BalanceHash []byte
+type BalanceHash [constants.HASH_LEN]byte
 
 type BlockGasLimit int
 
