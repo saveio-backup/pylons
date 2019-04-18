@@ -218,7 +218,7 @@ func GetPendingTransferPairs(transfersPair []*MediationPairState) []*MediationPa
 		payerState := transfersPair[i].PayerState
 		for _, v := range STATE_TRANSFER_FINAL {
 			if v == payerState {
-				payeeFlag = true
+				payerFlag = true
 				break
 			}
 		}
