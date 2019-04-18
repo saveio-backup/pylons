@@ -595,7 +595,7 @@ func eventsForExpiredPairs(channelIdentifiersToChannels map[common.ChannelID]*Ne
 	for _, pair := range pendingTransfersPairs {
 		payerBalanceProof := pair.PayerTransfer.BalanceProof
 		payerChannel := channelIdentifiersToChannels[payerBalanceProof.ChannelIdentifier]
-		if payerChannel != nil {
+		if payerChannel == nil {
 			continue
 		}
 
@@ -830,7 +830,7 @@ func eventsForOnChainSecretRevealIfDangerzone(channelmap map[common.ChannelID]*N
 
 	for _, pair := range GetPendingTransferPairs(transfersPair) {
 		payerChannel := GetPayerChannel(channelmap, pair)
-		if payerChannel != nil {
+		if payerChannel == nil {
 			continue
 		}
 		lock := pair.PayerTransfer.Lock
