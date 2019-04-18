@@ -119,7 +119,7 @@ func GetLock(endState *NettingChannelEndState, secretHash common.SecretHash) *Ha
 	if !exist {
 		partialUnlock, exist := endState.SecretHashesToUnLockedLocks[secretHash]
 		if !exist {
-			partialUnlock = endState.SecretHashesToOnChainUnLockedLocks[secretHash]
+			partialUnlock, exist = endState.SecretHashesToOnChainUnLockedLocks[secretHash]
 		}
 		if exist {
 			lock = partialUnlock.Lock
