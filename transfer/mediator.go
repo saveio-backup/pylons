@@ -916,7 +916,7 @@ func eventsToRemoveExpiredLocks(mediatorState *MediatorTransferState,
 		balanceProof := transferPair.PayeeTransfer.BalanceProof
 		channelIdentifier := balanceProof.ChannelIdentifier
 		channelState := channelIdentifiersToChannels[channelIdentifier]
-		if channelState != nil {
+		if channelState == nil {
 			continue
 		}
 
@@ -942,9 +942,8 @@ func eventsToRemoveExpiredLocks(mediatorState *MediatorTransferState,
 			}
 			lock = channelState.OurState.SecretHashesToLockedLocks[secretHash]
 		} else if flag2 {
-
+			lock = channelState.OurState.SecretHashesToUnLockedLocks[secretHash].Lock
 		}
-		lock = channelState.OurState.SecretHashesToUnLockedLocks[secretHash].Lock
 		if lock != nil {
 			lockExpirationThreshold := lock.Expiration + DefaultNumberOfBlockConfirmations*2
 			hasLockExpired, _ := IsLockExpired(channelState.OurState, lock, blockNumber,
