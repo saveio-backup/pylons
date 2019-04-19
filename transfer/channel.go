@@ -1404,14 +1404,15 @@ func isValidWithdrawAmount(participant *NettingChannelEndState, partner *Netting
 	}
 
 	totalDeposit := participant.GetContractBalance() + partner.GetContractBalance()
-	if totalWithdraw+participant.GetTotalWithdraw() > totalDeposit {
+	if totalWithdraw+partner.GetTotalWithdraw() > totalDeposit {
 		msg := fmt.Sprintf("withdraw from both side : totalWithdraw %d, partner totalWithdraw %d is larger than total deposit %d",
 			totalWithdraw, partner.GetTotalWithdraw(), totalDeposit)
 		return false, msg
 	}
 
+	// NOTE: GetDistributable already take current withdraw into account
 	distributable := GetDistributable(participant, partner)
-	if totalWithdraw > distributable {
+	if amountToWithdraw > distributable {
 		msg := fmt.Sprintf("total withdraw %d is larger than  distributable %d", totalWithdraw, distributable)
 		return false, msg
 	}
