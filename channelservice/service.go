@@ -995,9 +995,16 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	paymentNetworkIdentifier := common.PaymentNetworkID(self.microAddress)
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(
 		chainState, paymentNetworkIdentifier, tokenAddress)
+
 	secret := common.SecretRandom(constants.SECRET_LEN)
 	log.Debug("[MediaTransfer] Secret: ", secret)
-	//TODO: check secret used
+
+	secretHash := common.GetHash(secret)
+	secretRegistry := self.chain.SecretRegistry(common.SecretRegistryAddress(usdt.USDT_CONTRACT_ADDRESS))
+	if secretRegistry.IsSecretRegistered(secretHash) {
+		log.Errorf("SecretHash %v has been registerd onchain", secretHash)
+		return nil, fmt.Errorf("SecretHash %v has been registerd onchain", secretHash)
+	}
 
 	self.channelActor.Transport.StartHealthCheck(target)
 	if identifier == common.PaymentID(0) {
