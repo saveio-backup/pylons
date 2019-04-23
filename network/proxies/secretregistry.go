@@ -102,7 +102,7 @@ func (self *SecretRegistry) RegisterSecretBatch(secrets []common.Secret) {
 	self.openSecretTransactionsLock.Lock()
 
 	// Clear openSecretTransactions regardless of the transaction being  successfully executed or not.
-	self.openSecretTransactions = nil
+	self.openSecretTransactions = make(map[common.SecretHash]*sync.RWMutex)
 	self.openSecretTransactionsLock.Unlock()
 
 	if len(waitFor) != 0 {

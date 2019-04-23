@@ -176,6 +176,7 @@ func RegisterSecretEndState(endState *NettingChannelEndState, secret common.Secr
 func RegisterOnChainSecretEndState(endState *NettingChannelEndState, secret common.Secret,
 	secretHash common.SecretHash, secretRevealBlockNumber common.BlockHeight, deleteLock bool) {
 
+	log.Debugf("[RegisterOnChainSecretEndState] called for : %v", secretHash)
 	var pendingLock *HashTimeLockState
 
 	if IsLockLocked(endState, secretHash) == true {
@@ -186,18 +187,21 @@ func RegisterOnChainSecretEndState(endState *NettingChannelEndState, secret comm
 		pendingLock = v.Lock
 	}
 
-	//if pendingLock != nil {
-	if pendingLock.Expiration < secretRevealBlockNumber {
-		return
-	}
+	if pendingLock != nil {
+		if pendingLock.Expiration < secretRevealBlockNumber {
+			log.Debugf("[RegisterOnChainSecretEndState] secret has expired")
+			return
+		}
 
-	if deleteLock == true {
-		DelLock(endState, secretHash)
-	}
+		if deleteLock == true {
+			DelLock(endState, secretHash)
+		}
 
-	endState.SecretHashesToOnChainUnLockedLocks[secretHash] = &UnlockPartialProofState{
-		Lock:   pendingLock,
-		Secret: secret,
+		log.Debugf("[RegisterOnChainSecretEndState] register on chain unlock for : %v", secretHash)
+		endState.SecretHashesToOnChainUnLockedLocks[secretHash] = &UnlockPartialProofState{
+			Lock:   pendingLock,
+			Secret: secret,
+		}
 	}
 	return
 }

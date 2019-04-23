@@ -1083,8 +1083,11 @@ func (self *ChannelService) MediatorInit(lockedTransfer *messages.LockedTransfer
 	fromTransfer := LockedTransferSignedFromMessage(lockedTransfer)
 
 	chainState := self.StateFromChannel()
-	routes, _ := GetBestRoutes(chainState, fromTransfer.BalanceProof.TokenNetworkIdentifier,
+	routes, err := GetBestRoutes(chainState, fromTransfer.BalanceProof.TokenNetworkIdentifier,
 		self.address, common.Address(fromTransfer.Target), fromTransfer.Lock.Amount, initiatorAddr)
+	if err != nil {
+		log.Infof("[GetBestRoutes] error : %v", err)
+	}
 	fromRoute := &transfer.RouteState{
 		NodeAddress:       initiatorAddr,
 		ChannelIdentifier: fromTransfer.BalanceProof.ChannelIdentifier,

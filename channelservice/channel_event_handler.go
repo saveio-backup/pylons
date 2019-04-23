@@ -410,7 +410,8 @@ func (self ChannelEventHandler) HandleSendSecretRequest(channel *ChannelService,
 
 func (self ChannelEventHandler) HandleContractSendSecretReveal(channel *ChannelService, sendSecretRevealEvent *transfer.ContractSendSecretReveal) {
 	secretRegistry := channel.chain.SecretRegistry(common.SecretRegistryAddress(usdt.USDT_CONTRACT_ADDRESS))
-	secretRegistry.RegisterSecret(sendSecretRevealEvent.Secret)
+	// register secret in go routinue to avoid block other register
+	go secretRegistry.RegisterSecret(sendSecretRevealEvent.Secret)
 }
 
 func (self ChannelEventHandler) HandleEventUnlockClaimSuccess(channel *ChannelService,
