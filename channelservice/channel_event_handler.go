@@ -55,6 +55,9 @@ func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event tr
 	case *transfer.SendSecretRequest:
 		sendSecretRequest := event.(*transfer.SendSecretRequest)
 		self.HandleSendSecretRequest(channel, sendSecretRequest)
+	case *transfer.SendRefundTransfer:
+		sendRefundTransfer := event.(*transfer.SendRefundTransfer)
+		self.HandleSendRefundTransfer(channel, sendRefundTransfer)
 	case *transfer.ContractSendSecretReveal:
 		contractSendSecretReveal := event.(*transfer.ContractSendSecretReveal)
 		self.HandleContractSendSecretReveal(channel, contractSendSecretReveal)
@@ -404,6 +407,25 @@ func (self ChannelEventHandler) HandleSendSecretRequest(channel *ChannelService,
 		channel.channelActor.Transport.SendAsync(queueId, secretRequestMessage)
 	} else {
 		log.Warn("[HandleSendSecretRequest] Message is nil")
+	}
+	return
+}
+
+func (self ChannelEventHandler) HandleSendRefundTransfer(channel *ChannelService, refundTransferEvent *transfer.SendRefundTransfer) {
+	refundTransferMessage := messages.MessageFromSendEvent(refundTransferEvent)
+	if refundTransferMessage != nil {
+		err := channel.Sign(refundTransferMessage)
+		if err != nil {
+			log.Error("[HandleSendRefundTransfer] ", err.Error())
+			return
+		}
+		queueId := &transfer.QueueIdentifier{
+			Recipient:         common.Address(refundTransferEvent.Recipient),
+			ChannelIdentifier: refundTransferEvent.ChannelIdentifier,
+		}
+		channel.channelActor.Transport.SendAsync(queueId, refundTransferMessage)
+	} else {
+		log.Warn("[HandleSendRefundTransfer] Message is nil")
 	}
 	return
 }

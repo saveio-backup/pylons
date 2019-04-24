@@ -67,6 +67,8 @@ func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Me
 		msgID = (msg.(*messages.SecretRequest)).MessageIdentifier
 	case *messages.RevealSecret:
 		msgID = (msg.(*messages.RevealSecret)).MessageIdentifier
+	case *messages.RefundTransfer:
+		msgID = (msg.(*messages.RefundTransfer)).Refund.BaseMessage.MessageIdentifier
 	case *messages.Secret:
 		msgID = (msg.(*messages.Secret)).MessageIdentifier
 	case *messages.LockExpired:
@@ -277,6 +279,10 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 		msg := message.(*messages.LockedTransfer)
 		address = messages.ConvertAddress(msg.BaseMessage.EnvelopeMessage.Signature.Sender)
 		msgID = msg.BaseMessage.MessageIdentifier
+	case *messages.RefundTransfer:
+		msg := message.(*messages.RefundTransfer)
+		address = messages.ConvertAddress(msg.Refund.BaseMessage.EnvelopeMessage.Signature.Sender)
+		msgID = msg.Refund.BaseMessage.MessageIdentifier
 	case *messages.SecretRequest:
 		msg := message.(*messages.SecretRequest)
 		address = messages.ConvertAddress(msg.Signature.Sender)

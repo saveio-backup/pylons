@@ -506,6 +506,16 @@ func handleContractReceiveSecretReveal(chainState *ChainState, stateChange *Cont
 	return subDispatchToPaymentTask(chainState, stateChange, secretHash)
 }
 
+func handleReceiveTransferRefundCancelRoute(chainState *ChainState, stateChange *ReceiveTransferRefundCancelRoute) *TransitionResult {
+	secretHash := stateChange.Transfer.Lock.SecretHash
+	return subDispatchToPaymentTask(chainState, stateChange, common.SecretHash(secretHash))
+}
+
+func handleReceiveTransferRefund(chainState *ChainState, stateChange *ReceiveTransferRefund) *TransitionResult {
+	secretHash := stateChange.Transfer.Lock.SecretHash
+	return subDispatchToPaymentTask(chainState, stateChange, common.SecretHash(secretHash))
+}
+
 func handleProcessed(chainState *ChainState, stateChange *ReceiveProcessed) *TransitionResult {
 	var events []Event
 	for _, v := range chainState.QueueIdsToQueues {
@@ -647,6 +657,12 @@ func handleStateChangeForNode(chainStateArg State, stateChange StateChange) *Tra
 	case *ReceiveSecretRequest:
 		receiveSecretRequest, _ := stateChange.(*ReceiveSecretRequest)
 		iteration = handleReceiveSecretRequest(chainState, receiveSecretRequest)
+	case *ReceiveTransferRefundCancelRoute:
+		receiveTransferRefundCancelRoute, _ := stateChange.(*ReceiveTransferRefundCancelRoute)
+		iteration = handleReceiveTransferRefundCancelRoute(chainState, receiveTransferRefundCancelRoute)
+	case *ReceiveTransferRefund:
+		receiveTransferRefund, _ := stateChange.(*ReceiveTransferRefund)
+		iteration = handleReceiveTransferRefund(chainState, receiveTransferRefund)
 	case *ReceiveUnlock:
 		receiveUnlock, _ := stateChange.(*ReceiveUnlock)
 		iteration = handleReceiveUnlock(chainState, receiveUnlock)

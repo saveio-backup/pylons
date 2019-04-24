@@ -199,6 +199,14 @@ func (this *CooperativeSettle) DataToSign() []byte {
 	return transfer.PackCooperativeSettle(channelId, participant1, participant1Balance, participant2, participant2Balance)
 }
 
+func (this *RefundTransfer) DataToSign() []byte {
+	return this.Refund.BaseMessage.EnvelopeMessage.DataToSign(this.Pack())
+}
+
+func (this *RefundTransfer) Pack() []byte {
+	return this.Refund.Pack()
+}
+
 func MessageHash(data []byte) []byte {
 	sum := sha256.Sum256(data)
 	return sum[:]
@@ -219,6 +227,8 @@ func MessageFromSendEvent(event interface{}) proto.Message {
 		return UnlockFromEvent(event.(*transfer.SendBalanceProof))
 	case *transfer.SendSecretRequest:
 		return SecretRequestFromEvent(event.(*transfer.SendSecretRequest))
+	case *transfer.SendRefundTransfer:
+		return RefundTransferFromEvent(event.(*transfer.SendRefundTransfer))
 	case *transfer.SendLockExpired:
 		return LockExpiredFromEvent(event.(*transfer.SendLockExpired))
 	case *transfer.SendWithdrawRequest:
@@ -312,6 +322,20 @@ func SecretRequestFromEvent(event *transfer.SendSecretRequest) proto.Message {
 		Amount:            &TokenAmount{TokenAmount: uint64(event.Amount)},
 		Expiration:        &BlockExpiration{BlockExpiration: uint64(event.Expiration)},
 	}
+	return msg
+}
+
+func RefundTransferFromEvent(event *transfer.SendRefundTransfer) proto.Message {
+	lockedTransferEvent := &transfer.SendLockedTransfer{
+		SendMessageEvent: event.SendMessageEvent,
+		Transfer:         event.Transfer,
+	}
+
+	lockedTransfer := LockedTransferFromEvent(lockedTransferEvent)
+	msg := &RefundTransfer{
+		Refund: lockedTransfer.(*LockedTransfer),
+	}
+
 	return msg
 }
 
@@ -461,6 +485,13 @@ func Sign(account *account.Account, message SignedMessageInterface) error {
 	case *LockedTransfer:
 		msg := message.(*LockedTransfer)
 		msg.BaseMessage.EnvelopeMessage.Signature = &SignedMessage{
+			Signature: sigData,
+			Sender:    &Address{Address: account.Address[:]},
+			Publickey: pubKey,
+		}
+	case *RefundTransfer:
+		msg := message.(*RefundTransfer)
+		msg.Refund.BaseMessage.EnvelopeMessage.Signature = &SignedMessage{
 			Signature: sigData,
 			Sender:    &Address{Address: account.Address[:]},
 			Publickey: pubKey,

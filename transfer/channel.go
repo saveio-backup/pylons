@@ -1156,7 +1156,16 @@ func sendRefundTransfer(channelState *NettingChannelState, initiator common.Addr
 	lock := mediatedTransfer.Lock
 
 	//todo
-	//channelState.OurState.BalanceProof = mediatedTransfer.BalanceProof
+	channelState.OurState.BalanceProof = &BalanceProofSignedState{
+		Nonce:                  mediatedTransfer.BalanceProof.Nonce,
+		TransferredAmount:      mediatedTransfer.BalanceProof.TransferredAmount,
+		LockedAmount:           mediatedTransfer.BalanceProof.LockedAmount,
+		LocksRoot:              mediatedTransfer.BalanceProof.LocksRoot,
+		TokenNetworkIdentifier: mediatedTransfer.BalanceProof.TokenNetworkIdentifier,
+		ChannelIdentifier:      mediatedTransfer.BalanceProof.ChannelIdentifier,
+		ChainId:                mediatedTransfer.BalanceProof.ChainId,
+		BalanceHash:            mediatedTransfer.BalanceProof.BalanceHash,
+	}
 	channelState.OurState.MerkleTree = merkleTree
 	channelState.OurState.SecretHashesToLockedLocks[common.SecretHash(lock.SecretHash)] = lock
 
