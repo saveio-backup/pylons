@@ -44,6 +44,7 @@ var disable = flag.Bool("disable", false, "disable transfer test")
 var transferAmount = flag.Int("amount", 1000, "test transfer amount")
 var multiEnable = flag.Bool("multi", false, "enable multi routes test")
 var withdrawAmount = flag.Int("withdrawamount", 1000, "test withdraw amount")
+var withdrawTimes = flag.Int("withdrawtimes", 1, "test withdraw times")
 var routeNum = flag.Int("route", 5, "route number")
 var timeout = flag.Int("timeout", 0, "timeout in second before withdraw")
 var chclose = flag.Bool("close", false, "close channel")
@@ -152,23 +153,26 @@ func withdrawTest(channel *ch.Channel, withdrawAmount int, target common.Address
 		<-chInt
 	}
 
-	log.Infof("withdraw amount :%d", withdrawAmount)
+	for i := 1; i <= *withdrawTimes; i++ {
+		total := withdrawAmount * i
+		log.Infof("withdraw amount :%d", withdrawAmount)
 
-	if *timeout != 0 {
-		log.Infof("wait %d seconds before withdraw", *timeout)
-		time.Sleep(time.Duration(*timeout) * time.Second)
+		if *timeout != 0 {
+			log.Infof("wait %d seconds before withdraw", *timeout)
+			time.Sleep(time.Duration(*timeout) * time.Second)
+		}
+
+		log.Infof("call withdraw with amount :%d", total)
+		tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
+		resultChan, err := channel.Service.Withdraw(tokenAddress, target, common.TokenAmount(total))
+		if err != nil {
+			log.Error("withdraw failed:", err)
+			return
+		}
+
+		result := <-resultChan
+		log.Infof("withdraw result : %v", result)
 	}
-
-	log.Infof("call withdraw with amount :%d", withdrawAmount)
-	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
-	resultChan, err := channel.Service.Withdraw(tokenAddress, target, common.TokenAmount(withdrawAmount))
-	if err != nil {
-		log.Error("withdraw failed:", err)
-		return
-	}
-
-	result := <-resultChan
-	log.Infof("withdraw result : %v", result)
 }
 
 var chInt chan int
