@@ -9,7 +9,7 @@ import (
 	"crypto/sha256"
 	"os"
 
-	chainCom "github.com/oniio/oniChain/common"
+	chainCom "github.com/saveio/themis/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/utils/jsonext"
 )

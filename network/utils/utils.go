@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/oniio/oniChain/account"
-	"github.com/oniio/oniChain/common"
-	"github.com/oniio/oniChain/core/payload"
-	"github.com/oniio/oniChain/core/types"
+	"github.com/saveio/themis/account"
+	"github.com/saveio/themis/common"
+	"github.com/saveio/themis/core/payload"
+	"github.com/saveio/themis/core/types"
 )
 
 func GetVersion(data []byte) (string, error) {

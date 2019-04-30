@@ -5,8 +5,8 @@ import (
 
 	"encoding/hex"
 
-	"github.com/oniio/oniChain/common/log"
-	scUtils "github.com/oniio/oniChain/smartcontract/service/native/utils"
+	"github.com/saveio/themis/common/log"
+	scUtils "github.com/saveio/themis/smartcontract/service/native/utils"
 	"github.com/saveio/pylons/common"
 )
 

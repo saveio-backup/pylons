@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/oniio/oniChain/common/log"
+	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/transfer"
 )
 

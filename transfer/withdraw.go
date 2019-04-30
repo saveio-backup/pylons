@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 
-	mpay "github.com/oniio/oniChain/smartcontract/service/native/micropayment"
+	mpay "github.com/saveio/themis/smartcontract/service/native/micropayment"
 	"github.com/saveio/pylons/common"
 )
 

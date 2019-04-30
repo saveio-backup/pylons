@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"github.com/oniio/oniChain-go-sdk/usdt"
-	"github.com/oniio/oniChain/common/log"
+	"github.com/saveio/themis-go-sdk/usdt"
+	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/transfer"
 )

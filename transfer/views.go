@@ -4,7 +4,7 @@ import (
 	"container/list"
 	"sort"
 
-	scUtils "github.com/oniio/oniChain/smartcontract/service/native/utils"
+	scUtils "github.com/saveio/themis/smartcontract/service/native/utils"
 	"github.com/saveio/pylons/common"
 )
 

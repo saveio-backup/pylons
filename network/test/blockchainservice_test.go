@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/oniio/oniChain-go-sdk/wallet"
+	"github.com/saveio/themis-go-sdk/wallet"
 	"github.com/saveio/pylons/network"
 )
 

@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/oniio/oniChain/account"
-	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChain/smartcontract/service/native/utils"
 	ch "github.com/saveio/pylons/channelservice"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network"
 	"github.com/saveio/pylons/transfer"
+	"github.com/saveio/themis/account"
+	"github.com/saveio/themis/common/log"
+	"github.com/saveio/themis/smartcontract/service/native/utils"
 )
 
 var Version = "0.1"

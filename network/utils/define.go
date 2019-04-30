@@ -6,8 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/oniio/oniChain/common"
-	"github.com/oniio/oniChain/core/payload"
+	"github.com/saveio/themis/common"
+	"github.com/saveio/themis/core/payload"
 	"math/big"
 )
 

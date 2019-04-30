@@ -7,11 +7,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/oniio/oniChain-go-sdk/usdt"
-	"github.com/oniio/oniChain-go-sdk/wallet"
-	chaincomm "github.com/oniio/oniChain/common"
-	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChain/smartcontract/service/native/utils"
+	"github.com/saveio/themis-go-sdk/usdt"
+	"github.com/saveio/themis-go-sdk/wallet"
+	chaincomm "github.com/saveio/themis/common"
+	"github.com/saveio/themis/common/log"
+	"github.com/saveio/themis/smartcontract/service/native/utils"
 	ch "github.com/saveio/pylons"
 	"github.com/saveio/pylons/common"
 )

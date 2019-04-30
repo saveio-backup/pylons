@@ -3,11 +3,11 @@ package network
 import (
 	"sync"
 
-	chainsdk "github.com/oniio/oniChain-go-sdk"
-	chnsdk "github.com/oniio/oniChain-go-sdk/channel"
-	"github.com/oniio/oniChain/account"
-	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChain/core/types"
+	chainsdk "github.com/saveio/themis-go-sdk"
+	chnsdk "github.com/saveio/themis-go-sdk/channel"
+	"github.com/saveio/themis/account"
+	"github.com/saveio/themis/common/log"
+	"github.com/saveio/themis/core/types"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/network/proxies"
 )

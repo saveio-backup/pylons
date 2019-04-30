@@ -3,10 +3,10 @@ package channelservice
 import (
 	"reflect"
 
-	"github.com/oniio/oniChain-go-sdk/usdt"
-	sdkutils "github.com/oniio/oniChain-go-sdk/utils"
-	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChain/crypto/keypair"
+	"github.com/saveio/themis-go-sdk/usdt"
+	sdkutils "github.com/saveio/themis-go-sdk/utils"
+	"github.com/saveio/themis/common/log"
+	"github.com/saveio/themis/crypto/keypair"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/network/transport/messages"
 	"github.com/saveio/pylons/storage"

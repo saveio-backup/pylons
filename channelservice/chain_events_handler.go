@@ -3,9 +3,9 @@ package channelservice
 import (
 	"strconv"
 
-	"github.com/oniio/oniChain-go-sdk/usdt"
-	"github.com/oniio/oniChain/common/log"
-	scUtils "github.com/oniio/oniChain/smartcontract/service/native/utils"
+	"github.com/saveio/themis-go-sdk/usdt"
+	"github.com/saveio/themis/common/log"
+	scUtils "github.com/saveio/themis/smartcontract/service/native/utils"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network/proxies"

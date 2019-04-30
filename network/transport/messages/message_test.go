@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	proto "github.com/gogo/protobuf/proto"
-	"github.com/oniio/oniChain/account"
+	"github.com/saveio/themis/account"
 	"github.com/saveio/pylons/common"
 )
 

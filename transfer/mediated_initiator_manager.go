@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"reflect"
 
-	"github.com/oniio/oniChain/common/log"
+	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/common"
 )
 
