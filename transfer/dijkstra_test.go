@@ -5,8 +5,8 @@ import (
 
 	"fmt"
 	chainComm "github.com/oniio/oniChain/common"
-	"github.com/oniio/oniChannel/common"
-	"github.com/oniio/oniChannel/common/constants"
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/common/constants"
 )
 
 func TestSPT(t *testing.T) {

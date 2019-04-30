@@ -5,7 +5,7 @@ import (
 	"sort"
 
 	scUtils "github.com/oniio/oniChain/smartcontract/service/native/utils"
-	"github.com/oniio/oniChannel/common"
+	"github.com/saveio/pylons/common"
 )
 
 func GetNeighbours(chainState *ChainState) []common.Address {

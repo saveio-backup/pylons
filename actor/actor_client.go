@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChannel/common/constants"
-	"github.com/oniio/oniChannel/common"
+	"github.com/saveio/pylons/common/constants"
+	"github.com/saveio/pylons/common"
 )
 
 type VersionReq struct{}

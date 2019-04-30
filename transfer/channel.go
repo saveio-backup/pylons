@@ -9,8 +9,8 @@ import (
 	"sync"
 
 	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChannel/common"
-	"github.com/oniio/oniChannel/common/constants"
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/common/constants"
 )
 
 func Min(x, y uint64) uint64 {

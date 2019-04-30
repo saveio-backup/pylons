@@ -7,7 +7,7 @@ import (
 
 	"github.com/oniio/oniChain/common/log"
 	scUtils "github.com/oniio/oniChain/smartcontract/service/native/utils"
-	"github.com/oniio/oniChannel/common"
+	"github.com/saveio/pylons/common"
 )
 
 func getNetworks(chainState *ChainState, paymentNetworkIdentifier common.PaymentNetworkID,

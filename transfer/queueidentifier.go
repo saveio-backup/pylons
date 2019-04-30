@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/oniio/oniChannel/common"
-	"github.com/oniio/oniChannel/common/constants"
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/common/constants"
 )
 
 type QueueIdentifier struct {

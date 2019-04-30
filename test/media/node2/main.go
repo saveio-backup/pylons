@@ -11,8 +11,8 @@ import (
 	chaincomm "github.com/oniio/oniChain/common"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/oniio/oniChain/smartcontract/service/native/utils"
-	ch "github.com/oniio/oniChannel"
-	"github.com/oniio/oniChannel/common"
+	ch "github.com/saveio/pylons"
+	"github.com/saveio/pylons/common"
 )
 
 var testConfig = &ch.ChannelConfig{

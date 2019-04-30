@@ -3,8 +3,8 @@ package storage
 import (
 	"github.com/oniio/oniChain-go-sdk/usdt"
 	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChannel/common"
-	"github.com/oniio/oniChannel/transfer"
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/transfer"
 )
 
 func ChannelStateUntilStateChange(

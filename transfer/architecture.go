@@ -1,7 +1,7 @@
 package transfer
 
 import (
-	"github.com/oniio/oniChannel/common"
+	"github.com/saveio/pylons/common"
 )
 
 type State interface {

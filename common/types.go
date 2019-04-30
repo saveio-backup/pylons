@@ -3,7 +3,7 @@ package common
 import (
 	"container/list"
 
-	"github.com/oniio/oniChannel/common/constants"
+	"github.com/saveio/pylons/common/constants"
 )
 
 type PaymentType int

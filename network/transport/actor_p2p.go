@@ -6,7 +6,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	tranCrypto "github.com/oniio/oniP2p/crypto"
 	"time"
-	"github.com/oniio/oniChannel/common/constants"
+	"github.com/saveio/pylons/common/constants"
 )
 
 var P2pServerPid *actor.PID

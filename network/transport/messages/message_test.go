@@ -5,7 +5,7 @@ import (
 
 	proto "github.com/gogo/protobuf/proto"
 	"github.com/oniio/oniChain/account"
-	"github.com/oniio/oniChannel/common"
+	"github.com/saveio/pylons/common"
 )
 
 func BuildDirectTransfer(chainID common.ChainID, nonce common.Nonce, amount common.TokenAmount,

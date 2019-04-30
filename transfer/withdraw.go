@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 
 	mpay "github.com/oniio/oniChain/smartcontract/service/native/micropayment"
-	"github.com/oniio/oniChannel/common"
+	"github.com/saveio/pylons/common"
 )
 
 func PackWithdraw(channelId common.ChannelID, participant common.Address, withdrawAmount common.TokenAmount) []byte {

@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"reflect"
 
-	"github.com/oniio/oniChannel/common"
+	"github.com/saveio/pylons/common"
 )
 
 const DefaultNumberOfConfirmationsBlock int = 0

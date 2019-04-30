@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChannel/common"
+	"github.com/saveio/pylons/common"
 )
 
 func TgEventsForOnChainSecretReveal(targetState *TargetTransferState, channelState *NettingChannelState,

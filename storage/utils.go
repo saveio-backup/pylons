@@ -6,9 +6,9 @@ import (
 	"reflect"
 
 	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChannel/common"
-	"github.com/oniio/oniChannel/common/constants"
-	"github.com/oniio/oniChannel/transfer"
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/common/constants"
+	"github.com/saveio/pylons/transfer"
 )
 
 type TimestampedEvent struct {

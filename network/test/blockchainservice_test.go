@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/oniio/oniChain-go-sdk/wallet"
-	"github.com/oniio/oniChannel/network"
+	"github.com/saveio/pylons/network"
 )
 
 var (

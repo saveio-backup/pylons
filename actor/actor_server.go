@@ -3,7 +3,7 @@ package actor
 import (
 	"github.com/oniio/oniChain/account"
 	"github.com/oniio/oniChain/common/log"
-	oc "github.com/oniio/oniChannel"
+	oc "github.com/saveio/pylons"
 	"github.com/ontio/ontology-eventbus/actor"
 )
 

@@ -6,7 +6,7 @@ import (
 	"reflect"
 
 	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChannel/common"
+	"github.com/saveio/pylons/common"
 )
 
 const MAXIMUM_PENDING_TRANSFERS = 160

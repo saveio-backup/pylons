@@ -3,7 +3,7 @@ package transfer
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/oniio/oniChannel/common"
+	"github.com/saveio/pylons/common"
 	"testing"
 )
 

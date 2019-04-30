@@ -2,7 +2,7 @@ package transfer
 
 import (
 	"container/list"
-	"github.com/oniio/oniChannel/common"
+	"github.com/saveio/pylons/common"
 )
 
 // Topology represents a network topology

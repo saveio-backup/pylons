@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChannel/transfer"
+	"github.com/saveio/pylons/transfer"
 )
 
 func RestoreToStateChange(transitionFunction transfer.StateTransitionCallback,

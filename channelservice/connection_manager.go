@@ -4,8 +4,8 @@ import (
 	"container/list"
 	"sync"
 
-	"github.com/oniio/oniChannel/common"
-	"github.com/oniio/oniChannel/transfer"
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/transfer"
 )
 
 type ConnectionManager struct {

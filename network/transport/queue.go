@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChannel/network/transport/messages"
+	"github.com/saveio/pylons/network/transport/messages"
 )
 
 type Node struct {

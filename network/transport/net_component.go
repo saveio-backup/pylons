@@ -1,7 +1,7 @@
 package transport
 
 import (
-	"github.com/oniio/oniChannel/network/transport/messages"
+	"github.com/saveio/pylons/network/transport/messages"
 	"github.com/oniio/oniP2p/network"
 )
 

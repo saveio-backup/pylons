@@ -1,7 +1,7 @@
 package messages
 
 import (
-	"github.com/oniio/oniChannel/common"
+	"github.com/saveio/pylons/common"
 )
 
 func ConvertAddress(addr *Address) common.Address {

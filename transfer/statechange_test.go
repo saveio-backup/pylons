@@ -2,8 +2,8 @@ package transfer
 
 import (
 	"fmt"
-	"github.com/oniio/oniChannel/common"
-	"github.com/oniio/oniChannel/utils/jsonext"
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/utils/jsonext"
 	"testing"
 )
 

@@ -16,8 +16,8 @@ import (
 	"github.com/oniio/oniP2p/network/addressmap"
 	"github.com/oniio/oniChain/common/log"
 	"github.com/ontio/ontology-eventbus/actor"
-	"github.com/oniio/oniChannel/transfer"
-	"github.com/oniio/oniChannel/network/transport/messages"
+	"github.com/saveio/pylons/transfer"
+	"github.com/saveio/pylons/network/transport/messages"
 )
 
 const (

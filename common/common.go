@@ -10,8 +10,8 @@ import (
 	"os"
 
 	chainCom "github.com/oniio/oniChain/common"
-	"github.com/oniio/oniChannel/common/constants"
-	"github.com/oniio/oniChannel/utils/jsonext"
+	"github.com/saveio/pylons/common/constants"
+	"github.com/saveio/pylons/utils/jsonext"
 )
 
 func AddressEqual(address1 Address, address2 Address) bool {

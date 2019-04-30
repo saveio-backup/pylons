@@ -5,7 +5,7 @@ import (
 	"github.com/oniio/oniChain/common/log"
 	"github.com/ontio/ontology-eventbus/actor"
 	"time"
-	"github.com/oniio/oniChannel/common/constants"
+	"github.com/saveio/pylons/common/constants"
 )
 
 var ChannelServerPid *actor.PID

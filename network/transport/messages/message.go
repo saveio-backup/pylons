@@ -14,9 +14,9 @@ import (
 	sig "github.com/oniio/oniChain/core/signature"
 	"github.com/oniio/oniChain/core/types"
 	"github.com/oniio/oniChain/crypto/keypair"
-	"github.com/oniio/oniChannel/common"
-	"github.com/oniio/oniChannel/common/constants"
-	"github.com/oniio/oniChannel/transfer"
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/common/constants"
+	"github.com/saveio/pylons/transfer"
 )
 
 type SignedMessageInterface interface {

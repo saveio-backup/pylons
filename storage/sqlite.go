@@ -13,8 +13,8 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChannel/transfer"
-	"github.com/oniio/oniChannel/utils/jsonext"
+	"github.com/saveio/pylons/transfer"
+	"github.com/saveio/pylons/utils/jsonext"
 )
 
 const ChannelDbVersion int = 6

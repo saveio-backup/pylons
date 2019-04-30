@@ -6,7 +6,7 @@ import (
 
 	"github.com/oniio/oniChain/common/log"
 	mpay "github.com/oniio/oniChain/smartcontract/service/native/micropayment"
-	"github.com/oniio/oniChannel/common"
+	"github.com/saveio/pylons/common"
 )
 
 //[TODO] import from channel_contracts.constants import MessageTypeId
