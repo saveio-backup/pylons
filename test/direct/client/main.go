@@ -9,15 +9,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/oniio/oniChain-go-sdk/usdt"
-	"github.com/oniio/oniChain-go-sdk/wallet"
-	chaincomm "github.com/oniio/oniChain/common"
-	"github.com/oniio/oniChain/common/config"
-	"github.com/oniio/oniChain/common/log"
-	"github.com/oniio/oniChain/smartcontract/service/native/utils"
-	ch "github.com/oniio/oniChannel"
-	"github.com/oniio/oniChannel/common"
-	"github.com/oniio/oniChannel/transfer"
+	ch "github.com/saveio/pylons"
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/transfer"
+	"github.com/saveio/themis-go-sdk/usdt"
+	"github.com/saveio/themis-go-sdk/wallet"
+	chaincomm "github.com/saveio/themis/common"
+	"github.com/saveio/themis/common/config"
+	"github.com/saveio/themis/common/log"
+	"github.com/saveio/themis/smartcontract/service/native/utils"
 )
 
 var (
@@ -30,7 +30,7 @@ var testConfig = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3000",
 	//MappingAddress: "10.0.1.105:3000",
-	Protocol:      "tcp",
+	Protocol: "tcp",
 }
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")

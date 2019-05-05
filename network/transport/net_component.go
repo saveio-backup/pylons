@@ -2,7 +2,7 @@ package transport
 
 import (
 	"github.com/saveio/pylons/network/transport/messages"
-	"github.com/oniio/oniP2p/network"
+	"github.com/saveio/carrier/network"
 )
 
 type NetComponent struct {

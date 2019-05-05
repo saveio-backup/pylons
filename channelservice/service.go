@@ -29,7 +29,7 @@ import (
 	"github.com/saveio/pylons/network/transport/messages"
 	"github.com/saveio/pylons/storage"
 	"github.com/saveio/pylons/transfer"
-	tranCrypto "github.com/oniio/oniP2p/crypto"
+	tranCrypto "github.com/saveio/carrier/crypto"
 )
 
 type ChannelService struct {
