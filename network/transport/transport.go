@@ -9,11 +9,12 @@ import (
 	"reflect"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/saveio/themis/common/log"
+	"github.com/saveio/pylons/actor/client"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network/transport/messages"
 	"github.com/saveio/pylons/transfer"
+	"github.com/saveio/themis/common/log"
 )
 
 type ChannelServiceInterface interface {
@@ -196,7 +197,7 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 	//this.addressQueueMap.LoadOrStore(address, queue)
 
 	this.addressQueueMap.LoadOrStore(msgId, queue)
-	if err = P2pSend(address, msg); err != nil {
+	if err = client.P2pSend(address, msg); err != nil {
 		log.Error("[PeekAndSend] send error: ", err.Error())
 		return err
 	}
@@ -223,7 +224,7 @@ func (this *Transport) StartHealthCheck(address common.Address) {
 		log.Error("node address invalid, can`t check health")
 		return
 	}
-	P2pConnect(nodeAddress)
+	client.P2pConnect(nodeAddress)
 }
 
 func (this *Transport) SetNodeNetworkState(nodeNetAddress string, state string) {
@@ -239,8 +240,12 @@ func (this *Transport) SetNodeNetworkState(nodeNetAddress string, state string) 
 		return
 	}
 	if chainState != nil {
-		log.Debugf("[SetNodeNetworkState] set %s state %s", common.ToBase58(nodeAddress), state)
 		chainState.NodeAddressesToNetworkStates.Store(nodeAddress, state)
+		// chainState.NodeAddressesToNetworkStates.Range(func(key, value interface{}) bool {
+		// 	addr := common.ToBase58(key.(common.Address))
+		// 	log.Infof("Addr : %s  State: %s", addr, value.(string))
+		// 	return true
+		// })
 	} else {
 		log.Errorf("[SetNodeNetworkState] set %s state %s error: chainState == nil",
 			common.ToBase58(nodeAddress), state)
@@ -332,7 +337,7 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 		}
 		log.Debugf("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v",
 			reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier, nodeAddress)
-		P2pSend(nodeAddress, deliveredMessage)
+		client.P2pSend(nodeAddress, deliveredMessage)
 	} else {
 		log.Debugf("SendDeliveredMessage (%v) deliveredMessage Sign error: ", err.Error(),
 			reflect.TypeOf(message).String(), nodeAddress)

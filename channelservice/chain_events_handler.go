@@ -3,13 +3,13 @@ package channelservice
 import (
 	"strconv"
 
-	"github.com/saveio/themis-go-sdk/usdt"
-	"github.com/saveio/themis/common/log"
-	scUtils "github.com/saveio/themis/smartcontract/service/native/utils"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network/proxies"
 	"github.com/saveio/pylons/transfer"
+	"github.com/saveio/themis-go-sdk/usdt"
+	"github.com/saveio/themis/common/log"
+	scUtils "github.com/saveio/themis/smartcontract/service/native/utils"
 )
 
 //NOTE, Event here come from blockchain filter
@@ -57,7 +57,7 @@ func (self *ChannelService) HandleChannelNew(event map[string]interface{}) {
 		//register partner address in UDPTransport!
 		partnerAddress := channelState.PartnerState.Address
 		go self.NotifyNewChannel(channelIdentifier, partnerAddress)
-		self.channelActor.Transport.StartHealthCheck(partnerAddress)
+		self.Transport.StartHealthCheck(partnerAddress)
 
 	} else {
 		newRoute := &transfer.ContractReceiveRouteNew{

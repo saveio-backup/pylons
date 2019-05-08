@@ -1,13 +1,13 @@
-package transport
+package p2p
 
 import (
-	"github.com/saveio/pylons/network/transport/messages"
 	"github.com/saveio/carrier/network"
+	"github.com/saveio/pylons/network/transport/messages"
 )
 
 type NetComponent struct {
 	*network.Component
-	Net *P2pNetwork
+	Net *Network
 }
 
 func (this *NetComponent) Startup(net *network.Network) {

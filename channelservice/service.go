@@ -16,12 +16,6 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/saveio/themis-go-sdk/usdt"
-	"github.com/saveio/themis/account"
-	comm "github.com/saveio/themis/common"
-	"github.com/saveio/themis/common/log"
-	"github.com/saveio/themis/crypto/keypair"
-	scUtils "github.com/saveio/themis/smartcontract/service/native/utils"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network"
@@ -29,7 +23,11 @@ import (
 	"github.com/saveio/pylons/network/transport/messages"
 	"github.com/saveio/pylons/storage"
 	"github.com/saveio/pylons/transfer"
-	tranCrypto "github.com/saveio/carrier/crypto"
+	"github.com/saveio/themis-go-sdk/usdt"
+	"github.com/saveio/themis/account"
+	comm "github.com/saveio/themis/common"
+	"github.com/saveio/themis/common/log"
+	scUtils "github.com/saveio/themis/smartcontract/service/native/utils"
 )
 
 type ChannelService struct {
@@ -40,8 +38,7 @@ type ChannelService struct {
 	channelEventHandler          *ChannelEventHandler
 	messageHandler               *MessageHandler
 	config                       map[string]string
-	p2pActor                     *transport.P2plActorServer
-	channelActor                 *transport.ChannelActorServer
+	Transport                    *transport.Transport
 	targetsToIdentifierToStatues map[common.Address]*sync.Map
 	ReceiveNotificationChannels  map[chan *transfer.EventPaymentReceivedSuccess]struct{}
 	channelWithdrawStatus        *sync.Map
@@ -81,7 +78,8 @@ func (self *PaymentStatus) Match(paymentType common.PaymentType, tokenNetworkIde
 	}
 }
 
-func NewChannelService(chain *network.BlockchainService, queryStartBlock common.BlockHeight,
+func NewChannelService(chain *network.BlockchainService,
+	queryStartBlock common.BlockHeight,
 	microPayAddress common.Address, messageHandler *MessageHandler,
 	config map[string]string) *ChannelService {
 	var err error
@@ -106,6 +104,7 @@ func NewChannelService(chain *network.BlockchainService, queryStartBlock common.
 	self.address = chain.Address
 	self.channelEventHandler = new(ChannelEventHandler)
 	self.messageHandler = messageHandler
+	self.Transport = transport.NewTransport(self)
 	self.alarm = NewAlarmTask(chain)
 
 	networkId, err := self.chain.ChainClient.GetNetworkId()
@@ -118,24 +117,6 @@ func NewChannelService(chain *network.BlockchainService, queryStartBlock common.
 	customDBPath, _ := config["database_path"]
 	self.setDBPath(customDBPath, networkId)
 
-	bPrivate := keypair.SerializePrivateKey(chain.GetAccount().PrivKey())
-	bPub := keypair.SerializePublicKey(chain.GetAccount().PubKey())
-	keys := &tranCrypto.KeyPair{
-		PrivateKey: bPrivate,
-		PublicKey:  bPub,
-	}
-
-	self.p2pActor, err = transport.NewP2pActor(config, keys)
-	if err != nil {
-		log.Error("[NewChannelService] NewChannelActor error: ", err.Error())
-		return nil
-	}
-
-	self.channelActor, err = transport.NewChannelActor(self)
-	if err != nil {
-		log.Error("[NewChannelService] NewChannelActor error: ", err.Error())
-		return nil
-	}
 	return self
 }
 
@@ -187,37 +168,8 @@ func (self *ChannelService) setDBPath(customDBPath string, dbId uint32) {
 	log.Info("[setDBPath] database set to", self.databasePath)
 }
 
-func (self *ChannelService) Start() error {
-	// register to Endpoint contract
-	//var addr comm.Address
-	//var err error
-	//if addr, err = comm.AddressParseFromBytes(self.address[:]); err != nil {
-	//	log.Fatal("address format invalid", err)
-	//	return err
-	//}
-	//
-	//info, err := self.chain.ChannelClient.GetEndpointByAddress(addr)
-	//if err != nil {
-	//	log.Fatal("check endpoint info failed:", err)
-	//	return err
-	//}
-	//
-	//if info == nil {
-	//	log.Info("this account haven`t registered, begin registering...")
-	//	txHash, err := self.chain.ChannelClient.RegisterPaymentEndPoint([]byte(self.config["protocol"]), []byte(self.config["host"]), []byte(self.config["port"]), addr)
-	//	if err != nil {
-	//		log.Fatal("register endpoint service failed:", err)
-	//		return err
-	//	}
-	//	log.Info("wait for the confirmation of transaction...")
-	//	_, err = self.chain.ChainClient.PollForTxConfirmed(time.Duration(constants.POLL_FOR_COMFIRMED)*time.Second, txHash)
-	//	if err != nil {
-	//		log.Error("poll transaction failed:", err)
-	//		return err
-	//	}
-	//	log.Info("endpoint register succesful")
-	//}
-	//log.Info("account been registered")
+func (self *ChannelService) InitDB() error {
+
 	sqliteStorage, err := storage.NewSQLiteStorage(self.databasePath)
 	if err != nil {
 		log.Error("create db failed:", err)
@@ -265,13 +217,15 @@ func (self *ChannelService) Start() error {
 		lastLogBlockHeight = transfer.GetBlockHeight(self.StateFromChannel())
 		log.Infof("Restored state from WAL,last log BlockHeight=%d", lastLogBlockHeight)
 	}
-
-	log.Info("db setup done")
-	//set filter start block 	number
+	//set filter start block number
 	self.lastFilterBlock = lastLogBlockHeight
+	log.Info("db setup done")
+	return nil
+}
+func (self *ChannelService) StartService() error {
 
 	self.alarm.RegisterCallback(self.CallbackNewBlock)
-	err = self.alarm.FirstRun()
+	err := self.alarm.FirstRun()
 	if err != nil {
 		log.Error("run alarm call back failed:", err)
 		return err
@@ -280,16 +234,6 @@ func (self *ChannelService) Start() error {
 	//reset neighbor networkStates
 	channelState := self.StateFromChannel()
 	channelState.NodeAddressesToNetworkStates = new(sync.Map)
-
-	if err = self.channelActor.Start(); err != nil {
-		log.Error("channelActor start failed:", err)
-		return err
-	}
-
-	if err = self.p2pActor.Start(); err != nil {
-		log.Error("p2pActor start failed:", err)
-		return err
-	}
 
 	chainState := self.StateFromChannel()
 	self.InitializeTransactionsQueues(chainState)
@@ -303,8 +247,6 @@ func (self *ChannelService) Start() error {
 
 func (self *ChannelService) Stop() {
 	self.alarm.Stop()
-	self.p2pActor.Stop()
-	self.channelActor.Stop()
 	self.Wal.Storage.Close()
 	log.Info("channel service stopped")
 }
@@ -345,7 +287,7 @@ func (self *ChannelService) StartNeighboursHealthCheck() {
 
 	for _, v := range neighbours {
 		log.Debugf("[StartNeighboursHealthCheck] Neighbour: %s", common.ToBase58(v))
-		self.channelActor.Transport.StartHealthCheck(v)
+		self.Transport.StartHealthCheck(v)
 	}
 
 	return
@@ -418,7 +360,7 @@ func (self *ChannelService) InitializeMessagesQueues(chainState *transfer.ChainS
 	eventsQueues := transfer.GetAllMessageQueues(chainState)
 
 	for queueIdentifier, eventQueue := range *eventsQueues {
-		self.channelActor.Transport.StartHealthCheck(queueIdentifier.Recipient)
+		self.Transport.StartHealthCheck(queueIdentifier.Recipient)
 
 		for _, event := range eventQueue {
 
@@ -439,7 +381,7 @@ func (self *ChannelService) InitializeMessagesQueues(chainState *transfer.ChainS
 				if err != nil {
 					log.Error("[InitializeMessagesQueues] Sign: ", err.Error())
 				}
-				err = self.channelActor.Transport.SendAsync(&queueIdentifier, message)
+				err = self.Transport.SendAsync(&queueIdentifier, message)
 				if err != nil {
 					log.Error("[InitializeMessagesQueues] SendAsync: ", err.Error())
 				}
@@ -948,7 +890,7 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 		return nil, fmt.Errorf("contract balance small than transfer amount")
 	}
 
-	self.channelActor.Transport.StartHealthCheck(common.Address(target))
+	self.Transport.StartHealthCheck(common.Address(target))
 	if identifier == common.PaymentID(0) {
 		identifier = CreateDefaultIdentifier()
 	}
@@ -1006,7 +948,7 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 		return nil, fmt.Errorf("SecretHash %v has been registerd onchain", secretHash)
 	}
 
-	self.channelActor.Transport.StartHealthCheck(target)
+	self.Transport.StartHealthCheck(target)
 	if identifier == common.PaymentID(0) {
 		identifier = CreateDefaultIdentifier()
 	}
@@ -1161,11 +1103,11 @@ func (self *ChannelService) GetInternalEventsWithTimestamps(limit int, offset in
 }
 
 func (self *ChannelService) SetHostAddr(nodeAddress common.Address, hostAddr string) {
-	self.channelActor.Transport.SetHostAddr(nodeAddress, hostAddr)
+	self.Transport.SetHostAddr(nodeAddress, hostAddr)
 }
 
 func (self *ChannelService) GetHostAddr(nodeAddress common.Address) (string, error) {
-	return self.channelActor.Transport.GetHostAddr(nodeAddress)
+	return self.Transport.GetHostAddr(nodeAddress)
 }
 
 //func (self *ChannelService) Get(nodeAddress common.Address) string {

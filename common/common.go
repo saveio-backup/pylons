@@ -9,9 +9,9 @@ import (
 	"crypto/sha256"
 	"os"
 
-	chainCom "github.com/saveio/themis/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/utils/jsonext"
+	chainCom "github.com/saveio/themis/common"
 )
 
 func AddressEqual(address1 Address, address2 Address) bool {
@@ -547,7 +547,9 @@ func ToBase58(address Address) string {
 	addr := chainCom.Address(address)
 	return addr.ToBase58()
 }
-
+func FromBase58(addr string) (chainCom.Address, error) {
+	return chainCom.AddressFromBase58(addr)
+}
 func PathExists(path string) bool {
 	_, err := os.Stat(path)
 	if err == nil {

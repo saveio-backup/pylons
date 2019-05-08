@@ -17,11 +17,6 @@ import (
 
 var Version = "0.1"
 
-type Channel struct {
-	Config  *ChannelConfig
-	Service *ch.ChannelService
-}
-
 type ChannelConfig struct {
 	ClientType   string
 	ChainNodeURL string
@@ -34,6 +29,11 @@ type ChannelConfig struct {
 	DBPath        string
 	SettleTimeout string
 	RevealTimeout string
+}
+
+type Channel struct {
+	Config  *ChannelConfig
+	Service *ch.ChannelService
 }
 
 func DefaultChannelConfig() *ChannelConfig {
@@ -113,7 +113,7 @@ func getTimeout(config *ChannelConfig) (settle int, reveal int, err error) {
 }
 
 func (this *Channel) StartService() error {
-	return this.Service.Start()
+	return this.Service.StartService()
 }
 
 func (this *Channel) Stop() {

@@ -3,14 +3,14 @@ package channelservice
 import (
 	"reflect"
 
-	"github.com/saveio/themis-go-sdk/usdt"
-	sdkutils "github.com/saveio/themis-go-sdk/utils"
-	"github.com/saveio/themis/common/log"
-	"github.com/saveio/themis/crypto/keypair"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/network/transport/messages"
 	"github.com/saveio/pylons/storage"
 	"github.com/saveio/pylons/transfer"
+	"github.com/saveio/themis-go-sdk/usdt"
+	sdkutils "github.com/saveio/themis-go-sdk/utils"
+	"github.com/saveio/themis/common/log"
+	"github.com/saveio/themis/crypto/keypair"
 )
 
 type ChannelEventHandler struct {
@@ -119,7 +119,7 @@ func (self ChannelEventHandler) HandleSendDirectTransfer(channel *ChannelService
 			ChannelIdentifier: sendDirectTransfer.ChannelIdentifier,
 		}
 
-		ret := channel.channelActor.Transport.SendAsync(queueId, message)
+		ret := channel.Transport.SendAsync(queueId, message)
 		if ret != nil {
 			log.Error("send msg failed:", ret)
 		}
@@ -140,7 +140,7 @@ func (self ChannelEventHandler) HandleSendProcessed(channel *ChannelService, pro
 			ChannelIdentifier: processedEvent.ChannelIdentifier,
 		}
 
-		channel.channelActor.Transport.SendAsync(queueId, message)
+		channel.Transport.SendAsync(queueId, message)
 	} else {
 		log.Warn("[HandleSendProcessed] Message is nil")
 	}
@@ -345,7 +345,7 @@ func (self ChannelEventHandler) HandleSendLockedTransfer(channel *ChannelService
 			Recipient:         common.Address(sendLockedTransfer.Recipient),
 			ChannelIdentifier: sendLockedTransfer.ChannelIdentifier,
 		}
-		channel.channelActor.Transport.SendAsync(queueId, mediatedTransferMessage)
+		channel.Transport.SendAsync(queueId, mediatedTransferMessage)
 	} else {
 		log.Warn("[HandleSendLockedTransfer] Message is nil")
 	}
@@ -365,7 +365,7 @@ func (self ChannelEventHandler) HandleSendSecretReveal(channel *ChannelService, 
 			Recipient:         common.Address(revealSecretEvent.Recipient),
 			ChannelIdentifier: revealSecretEvent.ChannelIdentifier,
 		}
-		channel.channelActor.Transport.SendAsync(queueId, revealSecretMessage)
+		channel.Transport.SendAsync(queueId, revealSecretMessage)
 	} else {
 		log.Warn("[HandleSendSecretReveal] Message is nil")
 	}
@@ -384,7 +384,7 @@ func (self ChannelEventHandler) HandleSendBalanceProof(channel *ChannelService, 
 			Recipient:         common.Address(balanceProofEvent.Recipient),
 			ChannelIdentifier: balanceProofEvent.ChannelIdentifier,
 		}
-		channel.channelActor.Transport.SendAsync(queueId, unlockMessage)
+		channel.Transport.SendAsync(queueId, unlockMessage)
 	} else {
 		log.Warn("[HandleSendBalanceProof] Message is nil")
 	}
@@ -404,7 +404,7 @@ func (self ChannelEventHandler) HandleSendSecretRequest(channel *ChannelService,
 			Recipient:         common.Address(secretRequestEvent.Recipient),
 			ChannelIdentifier: secretRequestEvent.ChannelIdentifier,
 		}
-		channel.channelActor.Transport.SendAsync(queueId, secretRequestMessage)
+		channel.Transport.SendAsync(queueId, secretRequestMessage)
 	} else {
 		log.Warn("[HandleSendSecretRequest] Message is nil")
 	}
@@ -423,7 +423,7 @@ func (self ChannelEventHandler) HandleSendRefundTransfer(channel *ChannelService
 			Recipient:         common.Address(refundTransferEvent.Recipient),
 			ChannelIdentifier: refundTransferEvent.ChannelIdentifier,
 		}
-		channel.channelActor.Transport.SendAsync(queueId, refundTransferMessage)
+		channel.Transport.SendAsync(queueId, refundTransferMessage)
 	} else {
 		log.Warn("[HandleSendRefundTransfer] Message is nil")
 	}
@@ -468,7 +468,7 @@ func (self ChannelEventHandler) HandleSendWithdrawRequest(channel *ChannelServic
 			Recipient:         common.Address(withdrawRequestEvent.Recipient),
 			ChannelIdentifier: withdrawRequestEvent.ChannelIdentifier,
 		}
-		channel.channelActor.Transport.SendAsync(queueId, withdrawRequestMessage)
+		channel.Transport.SendAsync(queueId, withdrawRequestMessage)
 	} else {
 		log.Warn("[HandleSendWithdrawRequest] Message is nil")
 	}
@@ -487,7 +487,7 @@ func (self ChannelEventHandler) HandleSendWithdraw(channel *ChannelService, with
 			Recipient:         common.Address(withdrawEvent.Recipient),
 			ChannelIdentifier: withdrawEvent.ChannelIdentifier,
 		}
-		channel.channelActor.Transport.SendAsync(queueId, withdrawMessage)
+		channel.Transport.SendAsync(queueId, withdrawMessage)
 	} else {
 		log.Warn("[HandleSendWithdrawRequest] Message is nil")
 	}
@@ -560,7 +560,7 @@ func (self ChannelEventHandler) HandleSendCooperativeSettleRequest(channel *Chan
 			Recipient:         common.Address(cooperativeSettleRequestEvent.Recipient),
 			ChannelIdentifier: cooperativeSettleRequestEvent.ChannelIdentifier,
 		}
-		channel.channelActor.Transport.SendAsync(queueId, cooperativeSettleRequestMessage)
+		channel.Transport.SendAsync(queueId, cooperativeSettleRequestMessage)
 	} else {
 		log.Warn("[HandleSendCooperativeSettleRequest] Message is nil")
 	}
@@ -579,7 +579,7 @@ func (self ChannelEventHandler) HandleSendCooperativeSettle(channel *ChannelServ
 			Recipient:         common.Address(cooperativeSettleEvent.Recipient),
 			ChannelIdentifier: cooperativeSettleEvent.ChannelIdentifier,
 		}
-		channel.channelActor.Transport.SendAsync(queueId, cooperativeSettleMessage)
+		channel.Transport.SendAsync(queueId, cooperativeSettleMessage)
 	} else {
 		log.Warn("[HandleSendCooperativeSettleRequest] Message is nil")
 	}
