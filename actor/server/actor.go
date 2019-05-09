@@ -87,7 +87,7 @@ type MediaTransferReq struct {
 }
 
 type MediaTransferResp struct {
-	ret bool
+	ret chan bool
 	err error
 }
 
@@ -107,7 +107,7 @@ type WithdrawReq struct {
 }
 
 type WithdrawResp struct {
-	ret bool
+	ret chan bool
 	err error
 }
 
@@ -288,7 +288,8 @@ func MediaTransfer(registryAddress common.PaymentNetworkID, tokenAddress common.
 		return false, err
 	} else {
 		mediaTransferResp := ret.(MediaTransferResp)
-		return mediaTransferResp.ret, mediaTransferResp.err
+		d := <-mediaTransferResp.ret
+		return d, mediaTransferResp.err
 	}
 }
 
@@ -313,7 +314,8 @@ func WithDraw(tokenAddress common.TokenAddress, partnerAddress common.Address,
 		return false, err
 	} else {
 		withDrawResp := ret.(WithdrawResp)
-		return withDrawResp.ret, withDrawResp.err
+		d := <-withDrawResp.ret
+		return d, withDrawResp.err
 	}
 }
 

@@ -16,5 +16,5 @@ const (
 	ALARM_INTERVAL              int     = 500
 	DEFAULT_REVEAL_TIMEOUT      int     = 50
 	MAX_MSG_QUEUE               uint32  = 10000
-	REQ_TIMEOUT                         = 5
+	REQ_TIMEOUT                         = 15
 )

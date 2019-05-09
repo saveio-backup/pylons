@@ -17,6 +17,13 @@ import (
 	ch "github.com/saveio/pylons"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/transfer"
+	ch_actor "github.com/saveio/pylons/actor/server"
+	"github.com/saveio/pylons/test/p2p/actor/req"
+	"github.com/saveio/pylons/actor/client"
+	"github.com/saveio/pylons/test/p2p"
+	"github.com/saveio/themis/crypto/keypair"
+	"github.com/saveio/carrier/crypto"
+	p2p_actor "github.com/saveio/pylons/test/p2p/actor/server"
 )
 
 var testConfig = &ch.ChannelConfig{
@@ -48,46 +55,78 @@ func main() {
 		fmt.Printf("GetDefaultAccount error:%s\n", err)
 	}
 
-	channel, err := ch.NewChannelService(testConfig, account)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	log.Info("[NewChannelService]")
-
 	addr1, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
 	addr2, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
 	addr3, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
 
-	channel.Service.SetHostAddr(common.Address(addr1), "udp://127.0.0.1:3000")
-	channel.Service.SetHostAddr(common.Address(addr2), "udp://127.0.0.1:3001")
-	channel.Service.SetHostAddr(common.Address(addr3), "udp://127.0.0.1:3002")
 
-	err = channel.StartService()
+	//start channel and actor
+	ChannelActor, err := ch_actor.NewChannelActor(testConfig, account)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	log.Info("[StartService]")
+	if err = ch_actor.SetHostAddr(common.Address(addr1), "udp://127.0.0.1:3000"); err != nil {
+		log.Fatal(err)
+		return
+	}
+	if err = ch_actor.SetHostAddr(common.Address(addr2), "udp://127.0.0.1:3001"); err != nil {
+		log.Fatal(err)
+		return
+	}
+	if err = ch_actor.SetHostAddr(common.Address(addr3), "udp://127.0.0.1:3002"); err != nil {
+		log.Fatal(err)
+		return
+	}
+	chnPid := ChannelActor.GetLocalPID()
+	//start p2p and actor
+	p2pserver := p2p.NewP2P()
+	bPrivate := keypair.SerializePrivateKey(account.PrivKey())
+	bPub := keypair.SerializePublicKey(account.PubKey())
+	p2pserver.Keys = &crypto.KeyPair{
+		PrivateKey: bPrivate,
+		PublicKey:  bPub,
+	}
+
+	err = p2pserver.Start(testConfig.Protocol + "://" + testConfig.ListenAddress)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	P2pPid, err := p2p_actor.NewP2PActor(p2pserver)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	//binding channel and p2p pid
+	req.SetChannelPid(chnPid)
+	client.SetP2pPid(P2pPid)
+	//start channel service
+	err = ChannelActor.Start()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	time.Sleep(time.Second)
 
 	if *disable == false {
 		if *multiEnable {
 			log.Info("begin media multi route transfer test...")
-			go multiRouteTest(channel, 1, common.Address(addr1), *transferAmount, 0, *routeNum)
+			go multiRouteTest(1, common.Address(addr1), *transferAmount, 0, *routeNum)
 		} else {
 			log.Info("begin media single route transfer test...")
-			go singleRouteTest(channel, 1, common.Address(addr1), *transferAmount, 0, *routeNum)
+			go singleRouteTest(1, common.Address(addr1), *transferAmount, 0, *routeNum)
 		}
 	}
-	go receivePayment(channel)
-	go currentBalance(channel)
+	go receivePayment(ChannelActor.GetChannelService())
+	go currentBalance(ChannelActor.GetChannelService())
 
 	waitToExit()
 }
 
 var chInt chan int
 
-func loopTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routeId int) {
+func loopTest(amount int, target common.Address, times int, interval int, routeId int) {
 	r := rand.NewSource(time.Now().UnixNano())
 	log.Info("wait for loopTest canTransfer...")
 	for {
@@ -101,14 +140,13 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times int,
 	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 
 	for index := int(0); index < times; index++ {
-		status, err := channel.Service.MediaTransfer(registryAddress, tokenAddress, common.TokenAmount(amount),
+		ret, err := ch_actor.MediaTransfer(registryAddress, tokenAddress, common.TokenAmount(amount),
 			target, common.PaymentID(r.Int63()))
 		if err != nil {
 			log.Error("[loopTest] direct transfer failed:", err)
 			break
 		}
 
-		ret := <-status
 		if !ret {
 			log.Error("[loopTest] direct transfer failed")
 			break
@@ -124,7 +162,7 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times int,
 	chInt <- routeId
 }
 
-func singleRouteTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routingNum int) {
+func singleRouteTest(amount int, target common.Address, times int, interval int, routingNum int) {
 	chInt = make(chan int, 1)
 	for {
 		if isNode1OnLine {
@@ -134,7 +172,7 @@ func singleRouteTest(channel *ch.Channel, amount int, target common.Address, tim
 	}
 
 	time1 := time.Now().Unix()
-	loopTest(channel, amount, target, times, interval, routingNum)
+	loopTest(amount, target, times, interval, routingNum)
 
 	time2 := time.Now().Unix()
 	timeDuration := time2 - time1
@@ -142,7 +180,7 @@ func singleRouteTest(channel *ch.Channel, amount int, target common.Address, tim
 		times, timeDuration, times/int(timeDuration))
 }
 
-func multiRouteTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routingNum int) {
+func multiRouteTest(amount int, target common.Address, times int, interval int, routingNum int) {
 	chInt = make(chan int, routingNum)
 	for {
 		if isNode1OnLine {
@@ -154,7 +192,7 @@ func multiRouteTest(channel *ch.Channel, amount int, target common.Address, time
 	time1 := time.Now().Unix()
 
 	for i := 0; i < routingNum; i++ {
-		go loopTest(channel, amount, target, times, interval, i)
+		go loopTest(amount, target, times, interval, i)
 	}
 
 	for i := 0; i < routingNum; i++ {

@@ -236,9 +236,9 @@ func (this *Transport) SetNodeNetworkState(nodeNetAddress string, state string) 
 	nodeAddress := nodeAddressTmp.(common.Address)
 
 	chainState := this.ChannelService.StateFromChannel()
-	if _, ok = chainState.NodeAddressesToNetworkStates.Load(nodeAddress); ok {
-		return
-	}
+	//if _, ok = chainState.NodeAddressesToNetworkStates.Load(nodeAddress); ok {
+	//	return
+	//}
 	if chainState != nil {
 		chainState.NodeAddressesToNetworkStates.Store(nodeAddress, state)
 		// chainState.NodeAddressesToNetworkStates.Range(func(key, value interface{}) bool {

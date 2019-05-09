@@ -87,16 +87,14 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		var ret chan bool
 		ret, err := this.chSrv.Service.MediaTransfer(msg.registryAddress, msg.tokenAddress, msg.amount,
 			msg.target, msg.identifier)
-		d := <-ret
-		ctx.Sender().Request(MediaTransferResp{d, err}, ctx.Self())
+		ctx.Sender().Request(MediaTransferResp{ret, err}, ctx.Self())
 	case *CanTransferReq:
 		ret := this.chSrv.Service.CanTransfer(msg.target, msg.amount)
 		ctx.Sender().Request(CanTransferResp{ret}, ctx.Self())
 	case *WithdrawReq:
 		var ret chan bool
 		ret, err := this.chSrv.Service.Withdraw(msg.tokenAddress, msg.partnerAddress, msg.totalWithdraw)
-		d := <-ret
-		ctx.Sender().Request(WithdrawResp{d, err}, ctx.Self())
+		ctx.Sender().Request(WithdrawResp{ret, err}, ctx.Self())
 	case *ChannelReachableReq:
 		if transfer.NetworkReachable == this.chSrv.Service.GetNodeNetworkState(msg.target) {
 			ctx.Sender().Request(ChannelReachableResp{true, nil}, ctx.Self())
