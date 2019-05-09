@@ -29,5 +29,4 @@ channel
 *.db-shm
 *.db-wal
 main
-client
 *.log
