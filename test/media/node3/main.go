@@ -9,21 +9,21 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/saveio/carrier/crypto"
+	ch "github.com/saveio/pylons"
+	"github.com/saveio/pylons/actor/client"
+	ch_actor "github.com/saveio/pylons/actor/server"
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/test/p2p"
+	"github.com/saveio/pylons/test/p2p/actor/req"
+	p2p_actor "github.com/saveio/pylons/test/p2p/actor/server"
+	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis-go-sdk/usdt"
 	"github.com/saveio/themis-go-sdk/wallet"
 	chaincomm "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
-	"github.com/saveio/themis/smartcontract/service/native/utils"
-	ch "github.com/saveio/pylons"
-	"github.com/saveio/pylons/common"
-	"github.com/saveio/pylons/transfer"
-	ch_actor "github.com/saveio/pylons/actor/server"
-	"github.com/saveio/pylons/test/p2p/actor/req"
-	"github.com/saveio/pylons/actor/client"
-	"github.com/saveio/pylons/test/p2p"
 	"github.com/saveio/themis/crypto/keypair"
-	"github.com/saveio/carrier/crypto"
-	p2p_actor "github.com/saveio/pylons/test/p2p/actor/server"
+	"github.com/saveio/themis/smartcontract/service/native/utils"
 )
 
 var testConfig = &ch.ChannelConfig{
@@ -58,7 +58,6 @@ func main() {
 	addr1, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
 	addr2, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
 	addr3, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
-
 
 	//start channel and actor
 	ChannelActor, err := ch_actor.NewChannelActor(testConfig, account)
@@ -206,8 +205,11 @@ func multiRouteTest(amount int, target common.Address, times int, interval int, 
 }
 
 func receivePayment(channel *ch.Channel) {
-	var notificationChannel = make(chan *transfer.EventPaymentReceivedSuccess)
-	channel.RegisterReceiveNotification(notificationChannel)
+	notificationChannel, err := ch_actor.RegisterReceiveNotification()
+	if err != nil {
+		log.Error("[ReceivePayment] error in RegisterReceiveNotification")
+		return
+	}
 	log.Info("[ReceivePayment] RegisterReceiveNotification")
 
 	var msg *transfer.EventPaymentReceivedSuccess

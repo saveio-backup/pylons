@@ -4,10 +4,14 @@ import (
 	"github.com/ontio/ontology-eventbus/actor"
 	oc "github.com/saveio/pylons"
 	p2p_act "github.com/saveio/pylons/actor/client"
+	"github.com/saveio/pylons/channelservice"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis-go-sdk/usdt"
 	"github.com/saveio/themis/account"
+	"github.com/saveio/themis/cmd/utils"
+	cmdutils "github.com/saveio/themis/cmd/utils"
+	com "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
 )
 
@@ -68,7 +72,7 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		ctx.Sender().Request(SetHostAddrResp{}, ctx.Self())
 	case *GetHostAddrReq:
 		netAddr, err := this.chSrv.Service.GetHostAddr(msg.addr)
-		if err != nil && netAddr != "" {
+		if err == nil && netAddr != "" {
 			ctx.Sender().Request(GetHostAddrResp{msg.addr, netAddr}, ctx.Self())
 		} else {
 			ctx.Sender().Request(GetHostAddrResp{msg.addr, ""}, ctx.Self())
@@ -110,21 +114,33 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		ctx.Sender().Request(NodeStateChangeResp{}, ctx.Self())
 	case *HealthyCheckNodeReq:
 		this.chSrv.Service.Transport.StartHealthCheck(msg.Address)
-	//TBD
 	case *GetTotalDepositBalanceReq:
-		ctx.Sender().Request(GetTotalDepositBalanceResp{0, nil}, ctx.Self())
+		amount, err := this.chSrv.Service.GetTotalDepositBalance(msg.target)
+		ctx.Sender().Request(GetTotalDepositBalanceResp{uint64(amount), err}, ctx.Self())
+	case *GetTotalWithdrawReq:
+		amount, err := this.chSrv.Service.GetTotalWithdraw(msg.target)
+		ctx.Sender().Request(GetTotalWithdrawResp{uint64(amount), err}, ctx.Self())
 	case *GetAvaliableBalanceReq:
-		ctx.Sender().Request(GetAvaliableBalanceResp{0, nil}, ctx.Self())
+		amount, err := this.chSrv.Service.GetAvaliableBalance(msg.partnerAddress)
+		ctx.Sender().Request(GetAvaliableBalanceResp{uint64(amount), err}, ctx.Self())
 	case *GetCurrentBalanceReq:
-		ctx.Sender().Request(GetCurrentBalanceResp{0, nil}, ctx.Self())
+		amount, err := this.chSrv.Service.GetCurrentBalance(msg.partnerAddress)
+		ctx.Sender().Request(GetCurrentBalanceResp{uint64(amount), err}, ctx.Self())
 	case *CooperativeSettleReq:
-		ctx.Sender().Request(CooperativeSettleResp{nil}, ctx.Self())
+		tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
+		err := this.chSrv.Service.ChannelCooperativeSettle(tokenAddress, msg.partnerAddress)
+		ctx.Sender().Request(CooperativeSettleResp{err}, ctx.Self())
 	case *GetUnitPricesReq:
 		ctx.Sender().Request(GetUnitPricesResp{0, nil}, ctx.Self())
 	case *SetUnitPricesReq:
 		ctx.Sender().Request(SetUnitPricesResp{true}, ctx.Self())
 	case *GetAllChannelsReq:
-		ctx.Sender().Request(GetAllChannelsResp{nil}, ctx.Self())
+		channelInfos := this.chSrv.Service.GetAllChannelInfo()
+		ctx.Sender().Request(GetAllChannelsResp{getChannelInfosRespFromChannelInfos(channelInfos)}, ctx.Self())
+	case *RegisterRecieveNotificationReq:
+		notificationChannel := make(chan *transfer.EventPaymentReceivedSuccess)
+		this.chSrv.RegisterReceiveNotification(notificationChannel)
+		ctx.Sender().Request(RegisterRecieveNotificationResp{notificationChannel}, ctx.Self())
 	case *p2p_act.RecvMsg:
 		this.chSrv.Service.Transport.Receive(msg.Message, msg.From)
 		ctx.Sender().Request(p2p_act.P2pResp{nil}, ctx.Self())
@@ -143,4 +159,30 @@ func (this *ChannelActorServer) GetLocalPID() *actor.PID {
 
 func (this *ChannelActorServer) GetChannelService() *oc.Channel {
 	return this.chSrv
+}
+func getChannelInfosRespFromChannelInfos(channelInfos []*channelservice.ChannelInfo) *ChannelInfosResp {
+	resp := &ChannelInfosResp{}
+	totalBalance := uint64(0)
+	infos := make([]*ChannelInfo, 0)
+	for _, info := range channelInfos {
+		balance := uint64(info.Balance)
+
+		addr := com.Address(info.Address)
+		tokenAddr := com.Address(info.TokenAddr)
+		info := &ChannelInfo{
+			ChannelId:     uint32(info.ChannelId),
+			Address:       (&addr).ToBase58(),
+			Balance:       uint64(info.Balance),
+			BalanceFormat: utils.FormatUsdt(uint64(info.Balance)),
+			HostAddr:      info.HostAddr,
+			TokenAddr:     (&tokenAddr).ToBase58(),
+		}
+		totalBalance += balance
+		infos = append(infos, info)
+	}
+
+	resp.Balance = totalBalance
+	resp.BalanceFormat = cmdutils.FormatUsdt(totalBalance)
+	resp.Channels = infos
+	return resp
 }

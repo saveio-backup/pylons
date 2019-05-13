@@ -7,10 +7,11 @@ import (
 	p2p_act "github.com/saveio/pylons/actor/client"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
+	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis/common/log"
 )
 
-type channelInfo struct {
+type ChannelInfo struct {
 	ChannelId     uint32
 	Balance       uint64
 	BalanceFormat string
@@ -22,7 +23,7 @@ type channelInfo struct {
 type ChannelInfosResp struct {
 	Balance       uint64
 	BalanceFormat string
-	Channels      []*channelInfo
+	Channels      []*ChannelInfo
 }
 
 type VersionReq struct{}
@@ -138,6 +139,15 @@ type GetTotalDepositBalanceResp struct {
 	err error
 }
 
+type GetTotalWithdrawReq struct {
+	target common.Address
+}
+
+type GetTotalWithdrawResp struct {
+	ret uint64
+	err error
+}
+
 type GetAvaliableBalanceReq struct {
 	partnerAddress common.Address
 }
@@ -203,6 +213,12 @@ type HealthyCheckNodeReq struct {
 type HealthyCheckNodeResp struct{}
 
 type ProcessResp struct{}
+
+type RegisterRecieveNotificationReq struct{}
+
+type RegisterRecieveNotificationResp struct {
+	notificationChannel chan *transfer.EventPaymentReceivedSuccess
+}
 
 func GetVersion() (string, error) {
 	chReq := &VersionReq{}
@@ -355,6 +371,18 @@ func GetTotalDepositBalance(target common.Address) (uint64, error) {
 	}
 }
 
+func GetTotalWithdraw(target common.Address) (uint64, error) {
+	getTotalWithdrawReq := &GetTotalWithdrawReq{target}
+	future := ChannelServerPid.RequestFuture(getTotalWithdrawReq, constants.REQ_TIMEOUT*time.Second)
+	if ret, err := future.Result(); err != nil {
+		log.Error("[GetTotalDepositBalance] error: ", err)
+		return 0, err
+	} else {
+		getTotalWithdrawResp := ret.(GetTotalWithdrawResp)
+		return getTotalWithdrawResp.ret, getTotalWithdrawResp.err
+	}
+}
+
 func GetAvaliableBalance(partnerAddress common.Address) (uint64, error) {
 	getAvaliableBalanceReq := &GetAvaliableBalanceReq{partnerAddress}
 	future := ChannelServerPid.RequestFuture(getAvaliableBalanceReq, constants.REQ_TIMEOUT*time.Second)
@@ -449,4 +477,16 @@ func SetNodeNetworkState(address string, state string) error {
 func HealthyCheckNodeState(address common.Address) error {
 	ChannelServerPid.Tell(&HealthyCheckNodeReq{Address: address})
 	return nil
+}
+
+func RegisterReceiveNotification() (chan *transfer.EventPaymentReceivedSuccess, error) {
+	registerRecieveNotificationReq := &RegisterRecieveNotificationReq{}
+	future := ChannelServerPid.RequestFuture(registerRecieveNotificationReq, constants.REQ_TIMEOUT*time.Second)
+	if ret, err := future.Result(); err != nil {
+		log.Error("[RegisterReceiveNotification] error: ", err)
+		return nil, err
+	} else {
+		registerRecieveNotificationResp := ret.(RegisterRecieveNotificationResp)
+		return registerRecieveNotificationResp.notificationChannel, nil
+	}
 }

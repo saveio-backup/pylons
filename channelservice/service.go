@@ -1236,3 +1236,82 @@ func GetFullDatabasePath() (string, error) {
 	}
 	return string(path[0 : i+1]), nil
 }
+
+func (self *ChannelService) GetTotalDepositBalance(partnerAddress common.Address) (common.TokenAmount, error) {
+	chainState := self.StateFromChannel()
+	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.microAddress),
+		common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), partnerAddress)
+	if channelState == nil {
+		return 0, errors.New("GetTotalDepositBalance error, channel state is nil")
+	}
+	return channelState.OurState.GetContractBalance(), nil
+}
+
+func (self *ChannelService) GetTotalWithdraw(partnerAddress common.Address) (common.TokenAmount, error) {
+	chainState := self.StateFromChannel()
+	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.microAddress),
+		common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), partnerAddress)
+	if channelState == nil {
+		return 0, errors.New("GetTotalWithdraw error, channel state is nil")
+	}
+	return channelState.OurState.GetTotalWithdraw(), nil
+}
+
+func (self *ChannelService) GetCurrentBalance(partnerAddress common.Address) (common.TokenAmount, error) {
+	chainState := self.StateFromChannel()
+	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.microAddress),
+		common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), partnerAddress)
+	if channelState == nil {
+		return 0, errors.New("GetCurrentBalance error, channel state is nil")
+	}
+	return channelState.OurState.GetGasBalance(), nil
+}
+
+func (self *ChannelService) GetAvaliableBalance(partnerAddress common.Address) (common.TokenAmount, error) {
+	chainState := self.StateFromChannel()
+	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.microAddress),
+		common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), partnerAddress)
+	if channelState == nil {
+		return 0, errors.New("GetAvaliableBalance error, channel state is nil")
+	}
+	return transfer.GetDistributable(channelState.OurState, channelState.PartnerState), nil
+}
+
+type ChannelInfo struct {
+	ChannelId common.ChannelID
+	Balance   common.TokenAmount
+	Address   common.Address
+	HostAddr  string
+	TokenAddr common.TokenAddress
+}
+
+func (self *ChannelService) GetAllChannelInfo() []*ChannelInfo {
+	infos := make([]*ChannelInfo, 0)
+
+	channelList := self.GetChannelList(common.PaymentNetworkID(self.microAddress),
+		common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), common.EmptyAddress)
+
+	for e := channelList.Front(); e != nil; e = e.Next() {
+		channelState := e.Value.(*transfer.NettingChannelState)
+
+		partnerAddress := channelState.PartnerState.Address
+
+		hostAddr, err := self.GetHostAddr(partnerAddress)
+		if err != nil {
+			continue
+		}
+
+		balance := transfer.GetDistributable(channelState.OurState, channelState.PartnerState)
+
+		info := &ChannelInfo{
+			ChannelId: channelState.Identifier,
+			Address:   partnerAddress,
+			Balance:   balance,
+			HostAddr:  hostAddr,
+			TokenAddr: common.TokenAddress(channelState.TokenAddress),
+		}
+		infos = append(infos, info)
+	}
+
+	return infos
+}
