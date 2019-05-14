@@ -2,14 +2,13 @@ package proxies
 
 import (
 	"crypto/sha256"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/saveio/pylons/common"
 	chainsdk "github.com/saveio/themis-go-sdk"
 	chnsdk "github.com/saveio/themis-go-sdk/channel"
 	"github.com/saveio/themis/common/log"
-	"github.com/saveio/pylons/common"
 )
 
 type SecretRegistry struct {
@@ -117,16 +116,10 @@ func (self *SecretRegistry) RegisterSecretBatch(secrets []common.Secret) {
 }
 
 func (self *SecretRegistry) GetSecretRegistrationBlockBySecretHash(secretHash common.SecretHash) (common.BlockHeight, error) {
-
 	height, err := self.ChannelClient.GetSecretRevealBlockHeight(secretHash[:])
-	if err != nil {
-		if !strings.Contains(err.Error(), "GetStorageItem") {
-			log.Errorf("GetChannelInfo err:%s", err)
-			return 0, err
-		} else {
-			log.Debugf("secret for hash %v is not register", secretHash)
-			return 0, nil
-		}
+	if err != nil || height == 0 {
+		log.Debugf("secret for hash %v is not register", secretHash)
+		return 0, err
 	}
 
 	return common.BlockHeight(height), nil
