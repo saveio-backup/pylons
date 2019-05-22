@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
@@ -220,6 +221,11 @@ type RegisterRecieveNotificationResp struct {
 	notificationChannel chan *transfer.EventPaymentReceivedSuccess
 }
 
+type LastFilterBlockHeightReq struct{}
+type LastFilterBlockHeightResp struct {
+	Height uint32
+}
+
 func GetVersion() (string, error) {
 	chReq := &VersionReq{}
 	future := ChannelServerPid.RequestFuture(chReq, constants.REQ_TIMEOUT*time.Second)
@@ -304,6 +310,9 @@ func MediaTransfer(registryAddress common.PaymentNetworkID, tokenAddress common.
 		return false, err
 	} else {
 		mediaTransferResp := ret.(MediaTransferResp)
+		if mediaTransferResp.err != nil {
+			return false, err
+		}
 		d := <-mediaTransferResp.ret
 		return d, mediaTransferResp.err
 	}
@@ -489,4 +498,18 @@ func RegisterReceiveNotification() (chan *transfer.EventPaymentReceivedSuccess, 
 		registerRecieveNotificationResp := ret.(RegisterRecieveNotificationResp)
 		return registerRecieveNotificationResp.notificationChannel, nil
 	}
+}
+
+func GetLastFilterBlockHeight() (uint32, error) {
+	req := &LastFilterBlockHeightReq{}
+	future := ChannelServerPid.RequestFuture(req, constants.REQ_TIMEOUT*time.Second)
+	ret, err := future.Result()
+	if err != nil {
+		return 0, err
+	}
+	result, ok := ret.(LastFilterBlockHeightResp)
+	if !ok {
+		return 0, errors.New("invalid resp")
+	}
+	return result.Height, nil
 }

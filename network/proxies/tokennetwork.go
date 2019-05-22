@@ -7,14 +7,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/common/constants"
+	"github.com/saveio/pylons/transfer"
 	chainsdk "github.com/saveio/themis-go-sdk"
 	chnsdk "github.com/saveio/themis-go-sdk/channel"
 	comm "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
 	"github.com/saveio/themis/smartcontract/service/native/micropayment"
-	"github.com/saveio/pylons/common"
-	"github.com/saveio/pylons/common/constants"
-	"github.com/saveio/pylons/transfer"
 )
 
 type ChannelData struct {
@@ -696,10 +696,10 @@ func (self *TokenNetwork) settle(channelIdentifier common.ChannelID, transferred
 
 func (self *TokenNetwork) CheckForOutdatedChannel(participant1 common.Address, participant2 common.Address,
 	channelIdentifier common.ChannelID) bool {
-
 	onchainChannelDetails := self.detailChannel(participant1, participant2, 0)
 	onchainChannelIdentifier := onchainChannelDetails.ChannelIdentifier
 	if onchainChannelIdentifier != channelIdentifier {
+		log.Debugf("onchainId %d channelId: %d", onchainChannelIdentifier, channelIdentifier)
 		return false
 	} else {
 		return true

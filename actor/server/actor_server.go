@@ -144,6 +144,9 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 	case *p2p_act.RecvMsg:
 		this.chSrv.Service.Transport.Receive(msg.Message, msg.From)
 		ctx.Sender().Request(p2p_act.P2pResp{nil}, ctx.Self())
+	case *LastFilterBlockHeightReq:
+		height := this.chSrv.Service.GetLastFilterBlock()
+		ctx.Sender().Request(LastFilterBlockHeightResp{Height: uint32(height)}, ctx.Self())
 	default:
 		log.Errorf("[ChannelActorServer] receive unknown message type:%+v", msg)
 	}

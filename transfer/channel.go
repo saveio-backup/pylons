@@ -8,9 +8,9 @@ import (
 
 	"sync"
 
-	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
+	"github.com/saveio/themis/common/log"
 )
 
 func Min(x, y uint64) uint64 {
@@ -1533,10 +1533,10 @@ func isValidSignature(dataToSign []byte, publicKey common.PubKey, signature comm
 	}
 
 	signerAddress := common.GetAddressFromPubKey(pubKey)
-
 	if common.AddressEqual(senderAddress, signerAddress) == true {
 		return true, "success"
 	} else {
+		log.Debugf("pubkey:%v, senderAddr: %s", pubKey, common.ToBase58(senderAddress))
 		return false, string("Signature was valid but the expected address does not match.")
 	}
 }

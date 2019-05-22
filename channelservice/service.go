@@ -390,20 +390,24 @@ func (self *ChannelService) InitializeMessagesQueues(chainState *transfer.ChainS
 	}
 }
 
+func (self *ChannelService) GetLastFilterBlock() common.BlockHeight {
+	return self.lastFilterBlock
+}
+
 func (self *ChannelService) CallbackNewBlock(latestBlock common.BlockHeight, blockHash common.BlockHash) {
-	var events []map[string]interface{}
 
 	fromBlock := self.lastFilterBlock + 1
 	toBlock := latestBlock
-
-	events, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannel(0, uint32(fromBlock), uint32(toBlock))
-	if err != nil {
-		return
-	}
-
-	numEvents := len(events)
-	for i := 0; i < numEvents; i++ {
-		OnBlockchainEvent(self, events[i])
+	for i := fromBlock; i <= toBlock; i++ {
+		events, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannel(0, uint32(i), uint32(i))
+		if err != nil {
+			self.lastFilterBlock = fromBlock - 1
+			return
+		}
+		self.lastFilterBlock = i
+		for _, event := range events {
+			OnBlockchainEvent(self, event)
+		}
 	}
 
 	block := new(transfer.Block)
@@ -707,9 +711,12 @@ func (self *ChannelService) SetTotalChannelDeposit(tokenAddress common.TokenAddr
 	}
 	targetAddress := self.address
 	log.Info("wait for balance updated...")
-	WaitForParticipantNewBalance(self, common.PaymentNetworkID(self.microAddress), tokenAddress, partnerAddress,
+	err = WaitForParticipantNewBalance(self, common.PaymentNetworkID(self.microAddress), tokenAddress, partnerAddress,
 		targetAddress, totalDeposit, constants.DEPOSIT_RETRY_TIMEOUT)
 
+	if err != nil {
+		log.Errorf("wait for new balance failed, err", err)
+	}
 	return nil
 }
 
