@@ -401,23 +401,24 @@ func (self *ChannelService) CallbackNewBlock(latestBlock common.BlockHeight, blo
 	for i := fromBlock; i <= toBlock; i++ {
 		events, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannel(0, uint32(i), uint32(i))
 		if err != nil {
-			self.lastFilterBlock = fromBlock - 1
+			self.lastFilterBlock = i - 1
 			return
 		}
 		self.lastFilterBlock = i
 		for _, event := range events {
 			OnBlockchainEvent(self, event)
 		}
+		hash, err := self.chain.ChannelClient.Client.GetBlockHash(uint32(i))
+		if err != nil {
+			self.lastFilterBlock = i - 1
+			return
+		}
+		block := new(transfer.Block)
+		block.BlockHeight = i
+		block.BlockHash = common.BlockHash(hash[:])
+		self.HandleStateChange(block)
 	}
-
-	block := new(transfer.Block)
-	block.BlockHeight = toBlock
-	block.BlockHash = blockHash
-
-	self.HandleStateChange(block)
-
 	self.lastFilterBlock = toBlock
-	return
 }
 
 func (self *ChannelService) OnMessage(message proto.Message, from string) {
