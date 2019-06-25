@@ -56,6 +56,7 @@ type ChannelService struct {
 	alarm         *AlarmTask
 	Wal           *storage.WriteAheadLog
 	snapshotGroup int
+	firstRun      bool
 
 	tokenNetworkIdsToConnectionManagers map[common.TokenNetworkID]*ConnectionManager
 	lastFilterBlock                     common.BlockHeight
@@ -106,6 +107,7 @@ func NewChannelService(chain *network.BlockchainService,
 	self.messageHandler = messageHandler
 	self.Transport = transport.NewTransport(self)
 	self.alarm = NewAlarmTask(chain)
+	self.firstRun = true
 
 	networkId, err := self.chain.ChainClient.GetNetworkId()
 	if err != nil {
@@ -398,25 +400,57 @@ func (self *ChannelService) CallbackNewBlock(latestBlock common.BlockHeight, blo
 
 	fromBlock := self.lastFilterBlock + 1
 	toBlock := latestBlock
-	for i := fromBlock; i <= toBlock; i++ {
-		events, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannel(0, uint32(i), uint32(i))
+
+	if self.firstRun {
+		events, posMap, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannelByEventId(comm.Address(self.microAddress), self.Account.Address, 0, uint32(fromBlock), uint32(toBlock))
 		if err != nil {
-			self.lastFilterBlock = i - 1
+			log.Errorf("CallbackNewBlock error on first run : %s", err)
 			return
 		}
-		self.lastFilterBlock = i
-		for _, event := range events {
-			OnBlockchainEvent(self, event)
+
+		for i := fromBlock; i <= toBlock; i++ {
+			self.lastFilterBlock = i
+
+			if pos, ok := posMap[uint32(i)]; ok {
+				start := pos[0]
+				end := pos[1]
+				if end == 0 {
+					end = start
+				}
+
+				eventsSlice := events[start : end+1]
+				for _, event := range eventsSlice {
+					OnBlockchainEvent(self, event)
+				}
+
+			}
+			block := new(transfer.Block)
+			block.BlockHeight = i
+			block.BlockHash = common.BlockHash{}
+			self.HandleStateChange(block)
 		}
-		hash, err := self.chain.ChannelClient.Client.GetBlockHash(uint32(i))
-		if err != nil {
-			self.lastFilterBlock = i - 1
-			return
+		self.firstRun = false
+	} else {
+		for i := fromBlock; i <= toBlock; i++ {
+			events, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannel(0, uint32(i), uint32(i))
+			if err != nil {
+				self.lastFilterBlock = i - 1
+				return
+			}
+			self.lastFilterBlock = i
+			for _, event := range events {
+				OnBlockchainEvent(self, event)
+			}
+			hash, err := self.chain.ChannelClient.Client.GetBlockHash(uint32(i))
+			if err != nil {
+				self.lastFilterBlock = i - 1
+				return
+			}
+			block := new(transfer.Block)
+			block.BlockHeight = i
+			block.BlockHash = common.BlockHash(hash[:])
+			self.HandleStateChange(block)
 		}
-		block := new(transfer.Block)
-		block.BlockHeight = i
-		block.BlockHash = common.BlockHash(hash[:])
-		self.HandleStateChange(block)
 	}
 	self.lastFilterBlock = toBlock
 }
