@@ -11,7 +11,7 @@ import (
 	"github.com/saveio/carrier/crypto"
 	"github.com/saveio/carrier/crypto/ed25519"
 	"github.com/saveio/carrier/network"
-	"github.com/saveio/carrier/network/keepalive"
+	"github.com/saveio/carrier/network/components/keepalive"
 	"github.com/saveio/carrier/types/opcode"
 	act "github.com/saveio/pylons/actor/server"
 	"github.com/saveio/pylons/network/transport/messages"
