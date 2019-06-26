@@ -367,17 +367,17 @@ func (self *ChannelService) InitializeMessagesQueues(chainState *transfer.ChainS
 		for _, event := range eventQueue {
 
 			switch event.(type) {
-			case transfer.SendDirectTransfer:
-				e := event.(transfer.SendDirectTransfer)
+			case *transfer.SendDirectTransfer:
+				e := event.(*transfer.SendDirectTransfer)
 				self.RegisterPaymentStatus(common.Address(e.Recipient), e.PaymentIdentifier, common.PAYMENT_DIRECT,
 					e.BalanceProof.TransferredAmount, e.BalanceProof.TokenNetworkIdentifier)
-			case transfer.SendLockedTransfer:
-				e := event.(transfer.SendLockedTransfer)
+			case *transfer.SendLockedTransfer:
+				e := event.(*transfer.SendLockedTransfer)
 				self.RegisterPaymentStatus(common.Address(e.Recipient), e.Transfer.PaymentIdentifier, common.PAYMENT_MEDIATED,
 					e.Transfer.BalanceProof.TransferredAmount, e.Transfer.BalanceProof.TokenNetworkIdentifier)
 			}
 
-			message := messages.MessageFromSendEvent(&event)
+			message := messages.MessageFromSendEvent(event)
 			if message != nil {
 				err := self.Sign(message)
 				if err != nil {
