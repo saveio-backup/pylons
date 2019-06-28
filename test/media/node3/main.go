@@ -142,15 +142,15 @@ func loopTest(amount int, target common.Address, times int, interval int, routeI
 		ret, err := ch_actor.MediaTransfer(registryAddress, tokenAddress, common.TokenAmount(amount),
 			target, common.PaymentID(r.Int63()))
 		if err != nil {
-			log.Error("[loopTest] direct transfer failed:", err)
+			log.Error("[loopTest] media transfer failed:", err)
 			break
 		}
 
 		if !ret {
-			log.Error("[loopTest] direct transfer failed")
+			log.Error("[loopTest] media transfer failed")
 			break
 		} else {
-			//log.Info("[loopTest] direct transfer successfully")
+			//log.Info("[loopTest] media transfer successfully")
 		}
 	}
 
