@@ -1082,7 +1082,7 @@ func handleInit(stateChange *ActionInitMediator, channelIdentifiersToChannels ma
 	//# There is no corresponding channel for the message, ignore it
 	if payerChannel == nil {
 		log.Warn("[handleInit] payerChannel is nil")
-		return nil
+		return &TransitionResult{NewState: nil, Events: nil}
 	}
 	mediatorState := &MediatorTransferState{
 		SecretHash: common.SecretHash(fromTransfer.Lock.SecretHash),
@@ -1395,9 +1395,6 @@ func MdStateTransition(mediatorState *MediatorTransferState, stateChange interfa
 		if mediatorState == nil {
 			sc := stateChange.(*ActionInitMediator)
 			iteration = handleInit(sc, channelIdentifiersToChannels, blockNumber)
-			if iteration == nil {
-				log.Debug("[MdStateTransition] iteration is nil")
-			}
 		} else {
 			log.Debug("[MdStateTransition] mediatorState is not nil")
 		}
