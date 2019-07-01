@@ -1261,7 +1261,6 @@ func createSendExpiredLock(senderEndState *NettingChannelEndState, lockedLock *H
 }
 
 func EventsForExpiredLock(channelState *NettingChannelState, lockedLock *HashTimeLockState) []Event {
-
 	var lockExpired []Event
 	sendLockExpired, merkleTree := createSendExpiredLock(
 		channelState.OurState, lockedLock, channelState.ChainId,
@@ -1271,8 +1270,16 @@ func EventsForExpiredLock(channelState *NettingChannelState, lockedLock *HashTim
 
 	if sendLockExpired != nil {
 		channelState.OurState.MerkleTree = merkleTree
-		//todo
-		//channelState.OurState.BalanceProof = sendLockExpired.BalanceProof
+		channelState.OurState.BalanceProof = &BalanceProofSignedState{
+			Nonce:                  sendLockExpired.BalanceProof.Nonce,
+			TransferredAmount:      sendLockExpired.BalanceProof.TransferredAmount,
+			LockedAmount:           sendLockExpired.BalanceProof.LockedAmount,
+			LocksRoot:              sendLockExpired.BalanceProof.LocksRoot,
+			BalanceHash:            sendLockExpired.BalanceProof.BalanceHash,
+			TokenNetworkIdentifier: sendLockExpired.BalanceProof.TokenNetworkIdentifier,
+			ChannelIdentifier:      sendLockExpired.BalanceProof.ChannelIdentifier,
+			ChainId:                sendLockExpired.BalanceProof.ChainId,
+		}
 
 		DelUnclaimedLock(channelState.OurState, common.SecretHash(lockedLock.SecretHash))
 

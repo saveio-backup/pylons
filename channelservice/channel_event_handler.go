@@ -46,6 +46,9 @@ func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event tr
 	case *transfer.SendLockedTransfer:
 		sendLockedTransfer := event.(*transfer.SendLockedTransfer)
 		self.HandleSendLockedTransfer(channel, sendLockedTransfer)
+	case *transfer.SendLockExpired:
+		sendLockExpired := event.(*transfer.SendLockExpired)
+		self.HandleSendLockedExpire(channel, sendLockExpired)
 	case *transfer.SendSecretReveal:
 		sendSecretReveal := event.(*transfer.SendSecretReveal)
 		self.HandleSendSecretReveal(channel, sendSecretReveal)
@@ -100,6 +103,8 @@ func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event tr
 	case *transfer.ContractSendChannelBatchUnlock:
 		contractSendChannelBatchUnlock := event.(*transfer.ContractSendChannelBatchUnlock)
 		self.HandleContractSendChannelUnlock(channel, contractSendChannelBatchUnlock)
+	case *transfer.EventInvalidReceivedLockExpired:
+
 	default:
 		log.Warn("[OnChannelEvent] Not known type: ", reflect.TypeOf(event).String())
 	}
@@ -348,6 +353,26 @@ func (self ChannelEventHandler) HandleSendLockedTransfer(channel *ChannelService
 		channel.Transport.SendAsync(queueId, mediatedTransferMessage)
 	} else {
 		log.Warn("[HandleSendLockedTransfer] Message is nil")
+	}
+	return
+}
+
+func (self ChannelEventHandler) HandleSendLockedExpire (channel *ChannelService, sendLockExpired *transfer.SendLockExpired) {
+	sendLockExpiredEventMessage := messages.MessageFromSendEvent(sendLockExpired)
+	if sendLockExpiredEventMessage != nil {
+		err := channel.Sign(sendLockExpiredEventMessage)
+		if err != nil {
+			log.Error("[HandleSendLockedExpire] ", err.Error())
+			return
+		}
+
+		queueId := &transfer.QueueIdentifier{
+			Recipient:         common.Address(sendLockExpired.Recipient),
+			ChannelIdentifier: sendLockExpired.ChannelIdentifier,
+		}
+		channel.Transport.SendAsync(queueId, sendLockExpiredEventMessage)
+	} else {
+		log.Warn("[HandleSendLockedExpire] Message is nil")
 	}
 	return
 }

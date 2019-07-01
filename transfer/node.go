@@ -516,6 +516,11 @@ func handleReceiveTransferRefund(chainState *ChainState, stateChange *ReceiveTra
 	return subDispatchToPaymentTask(chainState, stateChange, common.SecretHash(secretHash))
 }
 
+func handleReceiveLockedExpired(chainState *ChainState, stateChange *ReceiveLockExpired) *TransitionResult {
+	secretHash := stateChange.SecretHash
+	return subDispatchToPaymentTask(chainState, stateChange, common.SecretHash(secretHash))
+}
+
 func handleProcessed(chainState *ChainState, stateChange *ReceiveProcessed) *TransitionResult {
 	var events []Event
 	for _, v := range chainState.QueueIdsToQueues {
@@ -669,6 +674,9 @@ func handleStateChangeForNode(chainStateArg State, stateChange StateChange) *Tra
 	case *ContractReceiveSecretReveal:
 		contractReceiveSecretReveal, _ := stateChange.(*ContractReceiveSecretReveal)
 		iteration = handleContractReceiveSecretReveal(chainState, contractReceiveSecretReveal)
+	case *ReceiveLockExpired:
+		receiveLockExpired, _ := stateChange.(*ReceiveLockExpired)
+		iteration = handleReceiveLockedExpired(chainState, receiveLockExpired)
 	default:
 		log.Warn("[node.handleStateChangeForNode] unknown stateChange Type: ",
 			reflect.TypeOf(stateChange).String())
