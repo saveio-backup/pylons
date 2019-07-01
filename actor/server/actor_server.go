@@ -13,6 +13,7 @@ import (
 	cmdutils "github.com/saveio/themis/cmd/utils"
 	com "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
+	"github.com/pkg/errors"
 )
 
 var ChannelServerPid *actor.PID
@@ -78,20 +79,47 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 			ctx.Sender().Request(GetHostAddrResp{msg.addr, ""}, ctx.Self())
 		}
 	case *OpenChannelReq:
-		chanId := this.chSrv.Service.OpenChannel(msg.tokenAddress, msg.target)
-		ctx.Sender().Request(OpenChannelResp{chanId}, ctx.Self())
+		go func() {
+			channelId := this.chSrv.Service.OpenChannel(msg.TokenAddress, msg.Target)
+			if channelId >100 {
+				msg.Ret.ChannelID = channelId
+				msg.Ret.Err = nil
+			} else {
+				msg.Ret.ChannelID = 0
+				msg.Ret.Err = errors.New("OpenChannel failed.")
+			}
+			msg.Ret.Done <- true
+		}()
 	case *SetTotalChannelDepositReq:
-		err := this.chSrv.Service.SetTotalChannelDeposit(msg.tokenAddress, msg.partnerAddress, msg.totalDeposit)
-		ctx.Sender().Request(SetTotalChannelDepositResp{err}, ctx.Self())
-	case *DirectTransferAsyncReq:
-		var ret chan bool
-		ret, err := this.chSrv.Service.DirectTransferAsync(msg.amount, msg.target, msg.identifier)
-		ctx.Sender().Request(DirectTransferAsyncResp{ret, err}, ctx.Self())
+		go func() {
+			msg.Ret.Err = this.chSrv.Service.SetTotalChannelDeposit(msg.TokenAddress, msg.PartnerAdder, msg.TotalDeposit)
+			msg.Ret.Done <- true
+		}()
+	case *DirectTransferReq:
+		go func() {
+			ret, err := this.chSrv.Service.DirectTransferAsync(msg.Amount, msg.Target, msg.Identifier)
+			if err == nil {
+				msg.Ret.Success = <- ret
+				msg.Ret.Err = nil
+			} else {
+				msg.Ret.Success = false
+				msg.Ret.Err = err
+			}
+			msg.Ret.Done <- true
+		}()
 	case *MediaTransferReq:
-		var ret chan bool
-		ret, err := this.chSrv.Service.MediaTransfer(msg.registryAddress, msg.tokenAddress, msg.amount,
-			msg.target, msg.identifier)
-		ctx.Sender().Request(MediaTransferResp{ret, err}, ctx.Self())
+		go func() {
+			ret, err := this.chSrv.Service.MediaTransfer(msg.RegisterAddress, msg.TokenAddress,
+				msg.Amount, msg.Target, msg.Identifier)
+			if err == nil {
+				msg.Ret.Success = <- ret
+				msg.Ret.Err = nil
+			} else {
+				msg.Ret.Success = false
+				msg.Ret.Err = err
+			}
+			msg.Ret.Done <- true
+		}()
 	case *CanTransferReq:
 		ret := this.chSrv.Service.CanTransfer(msg.target, msg.amount)
 		ctx.Sender().Request(CanTransferResp{ret}, ctx.Self())
@@ -137,7 +165,7 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 	case *GetAllChannelsReq:
 		channelInfos := this.chSrv.Service.GetAllChannelInfo()
 		ctx.Sender().Request(GetAllChannelsResp{getChannelInfosRespFromChannelInfos(channelInfos)}, ctx.Self())
-	case *RegisterRecieveNotificationReq:
+	case *RegisterReceiveNotificationReq:
 		notificationChannel := make(chan *transfer.EventPaymentReceivedSuccess)
 		this.chSrv.RegisterReceiveNotification(notificationChannel)
 		ctx.Sender().Request(RegisterRecieveNotificationResp{notificationChannel}, ctx.Self())

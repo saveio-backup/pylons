@@ -49,48 +49,56 @@ type GetHostAddrResp struct {
 	addr    common.Address
 	netAddr string
 }
-
-type OpenChannelReq struct {
-	tokenAddress common.TokenAddress
-	target       common.Address
+type OpenChannelRet struct {
+	ChannelID common.ChannelID
+	Done      chan bool
+	Err       error
 }
 
-type OpenChannelResp struct {
-	channelID common.ChannelID
+type OpenChannelReq struct {
+	TokenAddress common.TokenAddress
+	Target       common.Address
+	Ret          *OpenChannelRet
+}
+
+type SetTotalChannelDepositRet struct {
+	Done chan bool
+	Err  error
 }
 
 type SetTotalChannelDepositReq struct {
-	tokenAddress   common.TokenAddress
-	partnerAddress common.Address
-	totalDeposit   common.TokenAmount
+	TokenAddress common.TokenAddress
+	PartnerAdder common.Address
+	TotalDeposit common.TokenAmount
+	Ret          *SetTotalChannelDepositRet
 }
 
-type SetTotalChannelDepositResp struct {
-	err error
+type DirectTransferRet struct {
+	Success bool
+	Done    chan bool
+	Err     error
 }
 
-type DirectTransferAsyncReq struct {
-	amount     common.TokenAmount
-	target     common.Address
-	identifier common.PaymentID
+type DirectTransferReq struct {
+	Target     common.Address
+	Amount     common.TokenAmount
+	Identifier common.PaymentID
+	Ret        *DirectTransferRet
 }
 
-type DirectTransferAsyncResp struct {
-	ret chan bool
-	err error
+type MediaTransferRet struct {
+	Success bool
+	Done    chan bool
+	Err     error
 }
 
 type MediaTransferReq struct {
-	registryAddress common.PaymentNetworkID
-	tokenAddress    common.TokenAddress
-	amount          common.TokenAmount
-	target          common.Address
-	identifier      common.PaymentID
-}
-
-type MediaTransferResp struct {
-	ret chan bool
-	err error
+	RegisterAddress common.PaymentNetworkID
+	TokenAddress    common.TokenAddress
+	Target          common.Address
+	Amount          common.TokenAmount
+	Identifier      common.PaymentID
+	Ret             *MediaTransferRet
 }
 
 type CanTransferReq struct {
@@ -215,7 +223,7 @@ type HealthyCheckNodeResp struct{}
 
 type ProcessResp struct{}
 
-type RegisterRecieveNotificationReq struct{}
+type RegisterReceiveNotificationReq struct{}
 
 type RegisterRecieveNotificationResp struct {
 	notificationChannel chan *transfer.EventPaymentReceivedSuccess
@@ -261,61 +269,70 @@ func GetHostAddr(addr common.Address) (string, error) {
 }
 
 func OpenChannel(tokenAddress common.TokenAddress, target common.Address) (common.ChannelID, error) {
-	openChannelReq := &OpenChannelReq{tokenAddress, target}
-	future := ChannelServerPid.RequestFuture(openChannelReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[OpenChannel] error: ", err)
-		return 0, err
-	} else {
-		openChannelResp := ret.(OpenChannelResp)
-		return openChannelResp.channelID, nil
+	ret := &OpenChannelRet{
+		ChannelID: 0,
+		Done:      make(chan bool, 1),
+		Err:       nil,
 	}
+	openChannelReq := &OpenChannelReq{TokenAddress: tokenAddress, Target: target, Ret: ret}
+	ChannelServerPid.Tell(openChannelReq)
+	<-openChannelReq.Ret.Done
+	return openChannelReq.Ret.ChannelID, openChannelReq.Ret.Err
 }
 
 func SetTotalChannelDeposit(tokenAddress common.TokenAddress, partnerAddress common.Address,
 	totalDeposit common.TokenAmount) error {
-	setTotalChannelDepositReq := &SetTotalChannelDepositReq{tokenAddress,
-		partnerAddress, totalDeposit}
-	future := ChannelServerPid.RequestFuture(setTotalChannelDepositReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[SetTotalChannelDeposit] error: ", err)
-		return err
-	} else {
-		setTotalChannelDepositResp := ret.(SetTotalChannelDepositResp)
-		return setTotalChannelDepositResp.err
+	ret := &SetTotalChannelDepositRet{
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
+	setTotalChannelDepositReq := &SetTotalChannelDepositReq{
+		TokenAddress: tokenAddress,
+		PartnerAdder: partnerAddress,
+		TotalDeposit: totalDeposit,
+		Ret:          ret,
+	}
+	ChannelServerPid.Tell(setTotalChannelDepositReq)
+	<-setTotalChannelDepositReq.Ret.Done
+	return setTotalChannelDepositReq.Ret.Err
 }
 
 func DirectTransferAsync(amount common.TokenAmount, target common.Address,
 	identifier common.PaymentID) (bool, error) {
-	directTransferAsyncReq := &DirectTransferAsyncReq{amount, target, identifier}
-	future := ChannelServerPid.RequestFuture(directTransferAsyncReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[DirectTransferAsync] error: ", err)
-		return false, err
-	} else {
-		directTransferAsyncResp := ret.(DirectTransferAsyncResp)
-		d := <-directTransferAsyncResp.ret
-		return d, directTransferAsyncResp.err
+	ret := &DirectTransferRet{
+		Success: false,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	directTransferReq := &DirectTransferReq{
+		Target:     target,
+		Amount:     amount,
+		Identifier: identifier,
+		Ret:        ret,
+	}
+	ChannelServerPid.Tell(directTransferReq)
+	<-directTransferReq.Ret.Done
+	return directTransferReq.Ret.Success, directTransferReq.Ret.Err
 }
 
 func MediaTransfer(registryAddress common.PaymentNetworkID, tokenAddress common.TokenAddress,
 	amount common.TokenAmount, target common.Address, identifier common.PaymentID) (bool, error) {
-	mediaTransferReq := &MediaTransferReq{registryAddress, tokenAddress,
-		amount, target, identifier}
-	future := ChannelServerPid.RequestFuture(mediaTransferReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[MediaTransfer] error: ", err)
-		return false, err
-	} else {
-		mediaTransferResp := ret.(MediaTransferResp)
-		if mediaTransferResp.err != nil {
-			return false, err
-		}
-		d := <-mediaTransferResp.ret
-		return d, mediaTransferResp.err
+	ret := &MediaTransferRet{
+		Success: false,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	mediaTransferReq := &MediaTransferReq{
+		RegisterAddress: registryAddress,
+		TokenAddress:    tokenAddress,
+		Target:          target,
+		Amount:          amount,
+		Identifier:      identifier,
+		Ret:             ret,
+	}
+	ChannelServerPid.Tell(mediaTransferReq)
+	<-mediaTransferReq.Ret.Done
+	return mediaTransferReq.Ret.Success, mediaTransferReq.Ret.Err
 }
 
 func CanTransfer(target common.Address, amount common.TokenAmount) (bool, error) {
@@ -489,8 +506,8 @@ func HealthyCheckNodeState(address common.Address) error {
 }
 
 func RegisterReceiveNotification() (chan *transfer.EventPaymentReceivedSuccess, error) {
-	registerRecieveNotificationReq := &RegisterRecieveNotificationReq{}
-	future := ChannelServerPid.RequestFuture(registerRecieveNotificationReq, constants.REQ_TIMEOUT*time.Second)
+	registerReceiveNotificationReq := &RegisterReceiveNotificationReq{}
+	future := ChannelServerPid.RequestFuture(registerReceiveNotificationReq, constants.REQ_TIMEOUT*time.Second)
 	if ret, err := future.Result(); err != nil {
 		log.Error("[RegisterReceiveNotification] error: ", err)
 		return nil, err
