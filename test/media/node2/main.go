@@ -20,16 +20,8 @@ import (
 	"github.com/saveio/themis/crypto/keypair"
 	ch_actor "github.com/saveio/pylons/actor/server"
 	p2p_actor "github.com/saveio/pylons/test/p2p/actor/server"
+	tc "github.com/saveio/pylons/test/media/test_config"
 )
-
-var testConfig = &ch.ChannelConfig{
-	ClientType:    "rpc",
-	ChainNodeURL:  "http://127.0.0.1:20336",
-	ListenAddress: "127.0.0.1:3001",
-	//MappingAddress: "10.0.1.105:3000",
-	Protocol: "kcp",
-	//RevealTimeout: "1000",
-}
 
 func main() {
 	log.Init(log.PATH, log.Stdout)
@@ -44,25 +36,21 @@ func main() {
 		log.Error("[GetDefaultAccount] error:%s\n", err)
 	}
 
-	addr1, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
-	addr2, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
-	addr3, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
-
 	//start channel and actor
-	ChannelActor, err := ch_actor.NewChannelActor(testConfig, account)
+	ChannelActor, err := ch_actor.NewChannelActor(tc.Media, account)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(common.Address(addr1), "kcp://127.0.0.1:3000"); err != nil {
+	if err = ch_actor.SetHostAddr(tc.Initiator1Addr, tc.Initiator1.ListenAddress); err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(common.Address(addr2), "kcp://127.0.0.1:3001"); err != nil {
+	if err = ch_actor.SetHostAddr(tc.MediaAddr, tc.Media.ListenAddress); err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(common.Address(addr3), "kcp://127.0.0.1:3002"); err != nil {
+	if err = ch_actor.SetHostAddr(tc.Target1Addr, tc.Target1.ListenAddress); err != nil {
 		log.Fatal(err)
 		return
 	}
@@ -76,7 +64,7 @@ func main() {
 		PublicKey:  bPub,
 	}
 
-	err = p2pserver.Start(testConfig.Protocol + "://" + testConfig.ListenAddress)
+	err = p2pserver.Start(tc.Media.Protocol + "://" + tc.Media.ListenAddress)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -97,7 +85,7 @@ func main() {
 	}
 	time.Sleep(time.Second)
 
-	_, err = ch_actor.OpenChannel(tokenAddress, common.Address(addr3))
+	_, err = ch_actor.OpenChannel(tokenAddress, tc.Target1Addr)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -105,7 +93,7 @@ func main() {
 
 	depositAmount := common.TokenAmount(1000 * 1000000000)
 	log.Infof("start to deposit %d token to channel", depositAmount)
-	err = ch_actor.SetTotalChannelDeposit(tokenAddress, common.Address(addr3), depositAmount)
+	err = ch_actor.SetTotalChannelDeposit(tokenAddress, tc.Target1Addr, depositAmount)
 	if err != nil {
 		log.Fatal(err)
 		return

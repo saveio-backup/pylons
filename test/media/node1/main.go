@@ -24,16 +24,8 @@ import (
 	"github.com/saveio/themis/common/log"
 	"github.com/saveio/themis/crypto/keypair"
 	"github.com/saveio/themis/smartcontract/service/native/utils"
+	tc "github.com/saveio/pylons/test/media/test_config"
 )
-
-var testConfig = &ch.ChannelConfig{
-	ClientType:    "rpc",
-	ChainNodeURL:  "http://127.0.0.1:20336",
-	ListenAddress: "127.0.0.1:3000",
-	//MappingAddress: "10.0.1.105:3000",
-	Protocol: "kcp",
-	//RevealTimeout: "1000",
-}
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var disable = flag.Bool("disable", false, "disable transfer test")
@@ -72,25 +64,21 @@ func main() {
 		log.Error("GetDefaultAccount error:%s\n", err)
 	}
 
-	addr1, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
-	addr2, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
-	addr3, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
-
 	//start channel and actor
-	ChannelActor, err := ch_actor.NewChannelActor(testConfig, account)
+	ChannelActor, err := ch_actor.NewChannelActor(tc.Initiator1, account)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(common.Address(addr1), "kcp://127.0.0.1:3000"); err != nil {
+	if err = ch_actor.SetHostAddr(tc.Initiator1Addr, tc.Initiator1.ListenAddress); err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(common.Address(addr2), "kcp://127.0.0.1:3001"); err != nil {
+	if err = ch_actor.SetHostAddr(tc.MediaAddr, tc.Media.ListenAddress); err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(common.Address(addr3), "kcp://127.0.0.1:3002"); err != nil {
+	if err = ch_actor.SetHostAddr(tc.Target1Addr, tc.Target1.ListenAddress); err != nil {
 		log.Fatal(err)
 		return
 	}
@@ -104,7 +92,7 @@ func main() {
 		PublicKey:  bPub,
 	}
 
-	err = p2pserver.Start(testConfig.Protocol + "://" + testConfig.ListenAddress)
+	err = p2pserver.Start(tc.Initiator1.Protocol + "://" + tc.Initiator1.ListenAddress)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -125,7 +113,7 @@ func main() {
 	}
 	time.Sleep(time.Second)
 
-	channelId, err := ch_actor.OpenChannel(tokenAddress, common.Address(addr2))
+	channelId, err := ch_actor.OpenChannel(tokenAddress, tc.MediaAddr)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -134,7 +122,7 @@ func main() {
 	if channelId != 0 {
 		depositAmount := common.TokenAmount(1000 * 1000000000)
 		log.Infof("start to deposit %d token to channel", depositAmount)
-		err = ch_actor.SetTotalChannelDeposit(tokenAddress, common.Address(addr2), depositAmount)
+		err = ch_actor.SetTotalChannelDeposit(tokenAddress, tc.MediaAddr, depositAmount)
 		if err != nil {
 			log.Fatal(err)
 			return
@@ -142,7 +130,7 @@ func main() {
 		log.Info("deposit successful")
 
 		for {
-			ret, _ := ch_actor.ChannelReachable(common.Address(addr2))
+			ret, _ := ch_actor.ChannelReachable(tc.MediaAddr)
 			var state string
 			if ret == true {
 				state = transfer.NetworkReachable
@@ -151,7 +139,7 @@ func main() {
 			} else {
 				state = transfer.NetworkUnreachable
 				log.Warn("connect peer failed")
-				ch_actor.HealthyCheckNodeState(common.Address(addr2))
+				ch_actor.HealthyCheckNodeState(tc.MediaAddr)
 			}
 
 			log.Infof("peer state = %s wait for connect ...", state)
@@ -160,10 +148,10 @@ func main() {
 		if *disable == false {
 			if *multiEnable {
 				log.Info("begin media multi route transfer test...")
-				go multiRouteTest(1, common.Address(addr3), *transferAmount, 0, *routeNum)
+				go multiRouteTest(1, tc.Target1Addr, *transferAmount, 0, *routeNum)
 			} else {
 				log.Info("begin media single route transfer test...")
-				go singleRouteTest(1, common.Address(addr3), *transferAmount, 0, *routeNum)
+				go singleRouteTest(1, tc.Target1Addr, *transferAmount, 0, *routeNum)
 			}
 		}
 

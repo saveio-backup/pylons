@@ -24,15 +24,8 @@ import (
 	"github.com/saveio/themis/common/log"
 	"github.com/saveio/themis/crypto/keypair"
 	"github.com/saveio/themis/smartcontract/service/native/utils"
+	tc "github.com/saveio/pylons/test/media/test_config"
 )
-
-var testConfig = &ch.ChannelConfig{
-	ClientType:    "rpc",
-	ChainNodeURL:  "http://127.0.0.1:20336",
-	ListenAddress: "127.0.0.1:3002",
-	Protocol:      "kcp",
-	//RevealTimeout: "1000",
-}
 
 var isNode1OnLine = false
 
@@ -55,25 +48,21 @@ func main() {
 		fmt.Printf("GetDefaultAccount error:%s\n", err)
 	}
 
-	addr1, _ := chaincomm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
-	addr2, _ := chaincomm.AddressFromBase58("AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf")
-	addr3, _ := chaincomm.AddressFromBase58("AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng")
-
 	//start channel and actor
-	ChannelActor, err := ch_actor.NewChannelActor(testConfig, account)
+	ChannelActor, err := ch_actor.NewChannelActor(tc.Target1, account)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(common.Address(addr1), "kcp://127.0.0.1:3000"); err != nil {
+	if err = ch_actor.SetHostAddr(tc.Initiator1Addr, tc.Initiator1.ListenAddress); err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(common.Address(addr2), "kcp://127.0.0.1:3001"); err != nil {
+	if err = ch_actor.SetHostAddr(tc.MediaAddr, tc.Media.ListenAddress); err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(common.Address(addr3), "kcp://127.0.0.1:3002"); err != nil {
+	if err = ch_actor.SetHostAddr(tc.Target1Addr, tc.Target1.ListenAddress); err != nil {
 		log.Fatal(err)
 		return
 	}
@@ -87,7 +76,7 @@ func main() {
 		PublicKey:  bPub,
 	}
 
-	err = p2pserver.Start(testConfig.Protocol + "://" + testConfig.ListenAddress)
+	err = p2pserver.Start(tc.Target1.Protocol + "://" + tc.Target1.ListenAddress)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -111,10 +100,10 @@ func main() {
 	if *disable == false {
 		if *multiEnable {
 			log.Info("begin media multi route transfer test...")
-			go multiRouteTest(1, common.Address(addr1), *transferAmount, 0, *routeNum)
+			go multiRouteTest(1, tc.Initiator1Addr, *transferAmount, 0, *routeNum)
 		} else {
 			log.Info("begin media single route transfer test...")
-			go singleRouteTest(1, common.Address(addr1), *transferAmount, 0, *routeNum)
+			go singleRouteTest(1, tc.Initiator1Addr, *transferAmount, 0, *routeNum)
 		}
 	}
 	go receivePayment(ChannelActor.GetChannelService())

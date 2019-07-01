@@ -1164,28 +1164,12 @@ func (self *ChannelService) GetInternalEventsWithTimestamps(limit int, offset in
 }
 
 func (self *ChannelService) SetHostAddr(nodeAddress common.Address, hostAddr string) {
-	self.Transport.SetHostAddr(nodeAddress, hostAddr)
+	self.Transport.SetHostAddr(nodeAddress, self.config["protocol"] + "://" + hostAddr)
 }
 
 func (self *ChannelService) GetHostAddr(nodeAddress common.Address) (string, error) {
 	return self.Transport.GetHostAddr(nodeAddress)
 }
-
-//func (self *ChannelService) Get(nodeAddress common.Address) string {
-//	info, err := self.chain.ChannelClient.GetEndpointByAddress(comm.Address(nodeAddress))
-//	regAddr, _ := comm.AddressParseFromBytes(nodeAddress[:])
-//	if err != nil {
-//		log.Warnf("get %s reg info err: %s", regAddr.ToBase58(), err.Error())
-//		return ""
-//	}
-//	if info == nil {
-//		log.Warnf("node %s haven`t been registed", regAddr.ToBase58())
-//		return ""
-//	}
-//	nodeAddr := string(info.Protocol) + "://" + string(info.IP) + ":" + string(info.Port)
-//	log.Infof("peer %s registe address: %s", regAddr.ToBase58(), nodeAddr)
-//	return nodeAddr
-//}
 
 func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAddress common.Address, totalWithdraw common.TokenAmount) (chan bool, error) {
 	chainState := self.StateFromChannel()
