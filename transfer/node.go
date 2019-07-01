@@ -776,7 +776,6 @@ func isTransactionPending(chainState *ChainState, transaction Event, stateChange
 }
 
 func updateQueues(iteration *TransitionResult, stateChange StateChange) {
-	log.Debug("[updateQueses] for stateChange: ", reflect.TypeOf(stateChange).String())
 	var events []Event
 	chainState := iteration.NewState.(*ChainState)
 	if GetContractReceiveStateChange(stateChange) != nil {

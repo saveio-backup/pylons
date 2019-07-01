@@ -778,8 +778,6 @@ func GetStatus(channelState *NettingChannelState) string {
 	} else {
 		result = ChannelStateOpened
 	}
-	log.Debugf("[GetStatus] result: %s", result)
-
 	return result
 }
 

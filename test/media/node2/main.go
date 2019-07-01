@@ -27,7 +27,7 @@ var testConfig = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3001",
 	//MappingAddress: "10.0.1.105:3000",
-	Protocol: "udp",
+	Protocol: "kcp",
 	//RevealTimeout: "1000",
 }
 
@@ -54,15 +54,15 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(common.Address(addr1), "udp://127.0.0.1:3000"); err != nil {
+	if err = ch_actor.SetHostAddr(common.Address(addr1), "kcp://127.0.0.1:3000"); err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(common.Address(addr2), "udp://127.0.0.1:3001"); err != nil {
+	if err = ch_actor.SetHostAddr(common.Address(addr2), "kcp://127.0.0.1:3001"); err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(common.Address(addr3), "udp://127.0.0.1:3002"); err != nil {
+	if err = ch_actor.SetHostAddr(common.Address(addr3), "kcp://127.0.0.1:3002"); err != nil {
 		log.Fatal(err)
 		return
 	}

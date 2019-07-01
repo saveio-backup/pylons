@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -262,10 +261,8 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 	self.dispatchEventsLock.Lock()
 	defer self.dispatchEventsLock.Unlock()
 
-	log.Debug("[HandleStateChange]", reflect.TypeOf(stateChange).String())
 	eventList := self.Wal.LogAndDispatch(stateChange)
 	for _, e := range eventList {
-		log.Debug("[HandleStateChange] Range Events: ", reflect.TypeOf(e).String())
 		self.channelEventHandler.OnChannelEvent(self, e.(transfer.Event))
 	}
 	//take snapshot
