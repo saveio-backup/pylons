@@ -27,6 +27,10 @@ func (self *ChannelService) HandleChannelNew(event map[string]interface{}) {
 	if common.AddressEqual(self.address, participant1) || common.AddressEqual(self.address, participant2) {
 		isParticipant = true
 	}
+
+	log.Debugf("[HandleChannelNew] participant1 : %s, participant2 : %s, channelIdentifier : %d, blockNumber : %d, isParticipant : %v, self.address : %s",
+		common.ToBase58(participant1), common.ToBase58(participant2), channelIdentifier, blockNumber, isParticipant, common.ToBase58(self.address))
+
 	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 	if isParticipant {
 
