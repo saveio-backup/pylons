@@ -82,7 +82,7 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	err = ch_actor.SetHostAddr(common.Address(target), "tcp://127.0.0.1:3001")
+	err = ch_actor.SetHostAddr(common.Address(target), "127.0.0.1:3001")
 	if err != nil {
 		log.Fatal(err)
 		return
