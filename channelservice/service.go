@@ -232,6 +232,12 @@ func (self *ChannelService) StartService() error {
 		return err
 	}
 
+	err = self.checkAddressIntegrity()
+	if err != nil {
+		log.Errorf("check address integrity failed: %s", err)
+		return err
+	}
+
 	//reset neighbor networkStates
 	channelState := self.StateFromChannel()
 	channelState.NodeAddressesToNetworkStates = new(sync.Map)
@@ -244,6 +250,16 @@ func (self *ChannelService) StartService() error {
 	self.StartNeighboursHealthCheck()
 	self.UpdateRouteMap()
 	log.Info("channel service started")
+	return nil
+}
+
+func (self *ChannelService) checkAddressIntegrity() error {
+	chainState := self.StateFromChannel()
+
+	if chainState != nil && !common.AddressEqual(self.address, chainState.Address) {
+		return fmt.Errorf("[checkAddressIntegrity] failed, self.address : %s, chainState.Address : %s",
+			common.ToBase58(self.address), common.ToBase58(chainState.Address))
+	}
 	return nil
 }
 
@@ -1163,7 +1179,7 @@ func (self *ChannelService) GetInternalEventsWithTimestamps(limit int, offset in
 }
 
 func (self *ChannelService) SetHostAddr(nodeAddress common.Address, hostAddr string) {
-	self.Transport.SetHostAddr(nodeAddress, self.config["protocol"] + "://" + hostAddr)
+	self.Transport.SetHostAddr(nodeAddress, self.config["protocol"]+"://"+hostAddr)
 }
 
 func (self *ChannelService) GetHostAddr(nodeAddress common.Address) (string, error) {
