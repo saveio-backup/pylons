@@ -441,7 +441,6 @@ func (self *ChannelService) CallbackNewBlock(latestBlock common.BlockHeight, blo
 				for _, event := range eventsSlice {
 					OnBlockchainEvent(self, event)
 				}
-
 			}
 			block := new(transfer.Block)
 			block.BlockHeight = i

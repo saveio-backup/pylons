@@ -5,11 +5,13 @@ import (
 	"github.com/saveio/pylons/common"
 )
 
+const PROTOCOL = "udp"
+
 var Initiator1 = &ch.ChannelConfig{
 	ClientType:    "rpc",
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3001",
-	Protocol:      "udp",
+	Protocol:      PROTOCOL,
 	//RevealTimeout: "1000",
 }
 
@@ -17,7 +19,7 @@ var Initiator2 = &ch.ChannelConfig{
 	ClientType:    "rpc",
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3002",
-	Protocol:      "udp",
+	Protocol:      PROTOCOL,
 	//RevealTimeout: "1000",
 }
 
@@ -25,7 +27,7 @@ var Media = &ch.ChannelConfig{
 	ClientType:    "rpc",
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3003",
-	Protocol:      "udp",
+	Protocol:      PROTOCOL,
 	//RevealTimeout: "1000",
 }
 
@@ -33,7 +35,7 @@ var Target1 = &ch.ChannelConfig{
 	ClientType:    "rpc",
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3004",
-	Protocol:      "udp",
+	Protocol:      PROTOCOL,
 	//RevealTimeout: "1000",
 }
 
@@ -41,7 +43,7 @@ var Target2 = &ch.ChannelConfig{
 	ClientType:    "rpc",
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3005",
-	Protocol:      "udp",
+	Protocol:      PROTOCOL,
 	//RevealTimeout: "1000",
 }
 
