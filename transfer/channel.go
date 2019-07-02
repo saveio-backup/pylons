@@ -480,42 +480,49 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 	//# the secret for the locked transfer but we haven't unlocked it yet. Lock
 	//# expiry in this case could still happen which means that we have to make
 	//# sure that we check for "unclaimed" locks in our check.
-	if lock != nil {
-		lock = channelState.PartnerState.SecretHashesToUnLockedLocks[secretHash].Lock
+	if lock == nil {
+		if value, exist := channelState.PartnerState.SecretHashesToUnLockedLocks[secretHash]; exist {
+			if value != nil {
+				lock = value.Lock
+			}
+		}
 	}
 
-	var lockRegisteredOnChain []common.SecretHash
-	for secretHash := range channelState.OurState.SecretHashesToOnChainUnLockedLocks {
-		lockRegisteredOnChain = append(lockRegisteredOnChain, secretHash)
-	}
-
-	if lock != nil {
-		return nil, fmt.Errorf("Invalid LockExpired message. Lock with secrethash %s is not known. ",
-			hex.EncodeToString(secretHash[:]))
+	lockRegisteredOnChain := false
+	if _, exist := channelState.OurState.SecretHashesToOnChainUnLockedLocks[secretHash]; exist {
+		lockRegisteredOnChain = true
 	}
 
 	currentBalanceProof, err := getCurrentBalanceProof(senderState)
 	if err != nil {
 		log.Error("[IsValidLockExpired] error: ", err.Error())
 	}
-	lock.LockHash = lock.CalcLockHash()
-	merkleTree := computeMerkleTreeWithout(senderState.MerkleTree, lock.LockHash)
-
 	currentTransferredAmount := currentBalanceProof.transferredAmount
 	currentLockedAmount := currentBalanceProof.lockedAmount
-	expectedLockedAmount := currentLockedAmount - lock.Amount
+
+	var merkleTree *MerkleTreeState
+	var expectedLockedAmount common.TokenAmount
+	if lock != nil {
+		lock.LockHash = lock.CalcLockHash()
+		merkleTree = computeMerkleTreeWithout(senderState.MerkleTree, lock.LockHash)
+
+		expectedLockedAmount = currentLockedAmount - lock.Amount
+	}
 
 	isBalanceProofUsable, invalidBalanceProofMsg := IsBalanceProofUsableOnChain(
 		receivedBalanceProof, channelState, senderState)
 
 	//result: MerkleTreeOrError = (False, None, None)
 
-	if !isBalanceProofUsable {
+	if lockRegisteredOnChain {
+		return nil, fmt.Errorf("Invalid LockExpired mesage. Lock was unlocked on-chain. ")
+	} else if lock == nil {
+		return nil, fmt.Errorf("Invalid LockExpired message. Lock with secrethash %s is not known. ",
+			hex.EncodeToString(secretHash[:]))
+	} else if !isBalanceProofUsable {
 		return nil, fmt.Errorf("Invalid LockExpired message. %s ", invalidBalanceProofMsg)
 	} else if merkleTree == nil {
 		return nil, fmt.Errorf("Invalid LockExpired message. Same lockhash handled twice. ")
-	} else if lockRegisteredOnChain != nil {
-		return nil, fmt.Errorf("Invalid LockExpired mesage. Lock was unlocked on-chain. ")
 	} else {
 		locksRootWithoutLock := MerkleRoot(merkleTree.Layers)
 		hasExpired, lockExpiredMessage := IsLockExpired(receiverState, lock, blockNumber,
