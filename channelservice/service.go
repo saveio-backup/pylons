@@ -26,6 +26,7 @@ import (
 	"github.com/saveio/themis/account"
 	comm "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
+	mpay "github.com/saveio/themis/smartcontract/service/native/micropayment"
 	scUtils "github.com/saveio/themis/smartcontract/service/native/utils"
 )
 
@@ -414,22 +415,28 @@ func (self *ChannelService) UpdateRouteMap() {
 	log.Info("[UpdateRouteMap] UpdateRouteMap start...")
 	tokenNetwork := transfer.GetTokenNetworkByIdentifier(self.StateFromChannel(), common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
 	var partAddr comm.Address
-	for chanId := uint64(101); ; chanId++ {
+
+	channelCounter, err := self.chain.ChannelClient.GetChannelCounter()
+	if err != nil {
+		log.Warnf("[UpdateRouteMap] get channelCounter error %s", err)
+		return
+	}
+
+	log.Infof("[UpdateRouteMap] channel counter is %d", channelCounter)
+
+	for chanId := uint64(101); chanId <= channelCounter; chanId++ {
 		channelInfo, err := self.chain.ChannelClient.GetChannelInfo(chanId, partAddr, partAddr)
 		log.Infof("[UpdateRouteMap] channelInfo: %v", channelInfo)
-		if err == nil && channelInfo != nil && channelInfo.ChannelID == chanId &&
-			!channelInfo.Participant1.IsCloser && !channelInfo.Participant2.IsCloser {
+		if err == nil && channelInfo != nil && channelInfo.ChannelID == chanId && channelInfo.ChannelState == mpay.Opened {
 			var partAddr1, partAddr2 common.Address
 			copy(partAddr1[:], channelInfo.Participant1.WalletAddr[:20])
 			copy(partAddr2[:], channelInfo.Participant2.WalletAddr[:20])
 
 			log.Infof("[UpdateRouteMap], AddRoute ChannelId: %d", channelInfo.ChannelID)
 			tokenNetwork.AddRoute(partAddr1, partAddr2, common.ChannelID(channelInfo.ChannelID))
-		} else {
-			log.Info("[UpdateRouteMap] UpdateRouteMap finished")
-			break
 		}
 	}
+	log.Info("[UpdateRouteMap] UpdateRouteMap finished")
 }
 
 func (self *ChannelService) CallbackNewBlock(latestBlock common.BlockHeight, blockHash common.BlockHash) {
