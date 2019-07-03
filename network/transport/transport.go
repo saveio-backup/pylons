@@ -285,6 +285,10 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 		msg := message.(*messages.LockedTransfer)
 		address = messages.ConvertAddress(msg.BaseMessage.EnvelopeMessage.Signature.Sender)
 		msgID = msg.BaseMessage.MessageIdentifier
+	case *messages.LockExpired:
+		msg := message.(*messages.LockExpired)
+		address = messages.ConvertAddress(msg.EnvelopeMessage.Signature.Sender)
+		msgID = msg.MessageIdentifier
 	case *messages.RefundTransfer:
 		msg := message.(*messages.RefundTransfer)
 		address = messages.ConvertAddress(msg.Refund.BaseMessage.EnvelopeMessage.Signature.Sender)
