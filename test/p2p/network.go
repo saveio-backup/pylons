@@ -175,7 +175,8 @@ func (this *Network) Send(msg proto.Message, toAddr string) error {
 	if _, ok := this.ActivePeers.Load(toAddr); !ok {
 		return fmt.Errorf("can not send to inactive peer %s", toAddr)
 	}
-	signed, err := this.P2p.PrepareMessage(context.Background(), msg)
+	ctx := network.WithSignMessage(context.Background(), false)
+	signed, err := this.P2p.PrepareMessage(ctx, msg)
 	if err != nil {
 		return fmt.Errorf("failed to sign message")
 	}

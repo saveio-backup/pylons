@@ -69,13 +69,11 @@ func (this *P2PActor) Receive(ctx actor.Context) {
 	default:
 		log.Error("[P2PActor] receive unknown message type!")
 	}
-
 }
 
 func (this *P2PActor) Broadcast(message proto.Message) {
-	ctx := p2pNet.WithSignMessage(context.Background(), true)
+	ctx := p2pNet.WithSignMessage(context.Background(), false)
 	this.net.P2p.Broadcast(ctx, message)
-
 }
 
 func (this *P2PActor) RegMsgHandler(msgName string, handler MessageHandler) {

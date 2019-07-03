@@ -28,6 +28,7 @@ import (
 	"github.com/saveio/themis/common/log"
 	mpay "github.com/saveio/themis/smartcontract/service/native/micropayment"
 	scUtils "github.com/saveio/themis/smartcontract/service/native/utils"
+	"reflect"
 )
 
 type ChannelService struct {
@@ -222,8 +223,27 @@ func (self *ChannelService) InitDB() error {
 	//set filter start block number
 	self.lastFilterBlock = lastLogBlockHeight
 	log.Info("db setup done")
+	go func() {
+		for ; ;  {
+			time.Sleep(1 * time.Second)
+			channelState := self.StateFromChannel()
+			stateLen := len(channelState.QueueIdsToQueues)
+			log.Infof("Len(channelState.QueueIdsToQueues) = %d", stateLen)
+			if stateLen < 5 {
+				for _, v := range channelState.QueueIdsToQueues  {
+					//for _, v1 := range v {
+					//	fmt.Printf("q type : %s ", reflect.TypeOf(v1).String())
+					//}
+					//fmt.Println()
+					log.Info("QueueIdsToQueues vLen: ", len(v))
+				}
+			}
+		}
+
+	}()
 	return nil
 }
+
 func (self *ChannelService) StartService() error {
 
 	self.alarm.RegisterCallback(self.CallbackNewBlock)
@@ -375,12 +395,14 @@ func (self *ChannelService) RemovePaymentStatus(target common.Address, identifie
 
 func (self *ChannelService) InitializeMessagesQueues(chainState *transfer.ChainState) {
 	eventsQueues := transfer.GetAllMessageQueues(chainState)
+	log.Debug("InitializeMessagesQueues len(chainState.PendingTransactions): ", len(chainState.PendingTransactions))
 
 	for queueIdentifier, eventQueue := range *eventsQueues {
 		self.Transport.StartHealthCheck(queueIdentifier.Recipient)
+		log.Debug("[InitializeMessagesQueues] : ChannelIdentifier", queueIdentifier.ChannelIdentifier)
 
 		for _, event := range eventQueue {
-
+			log.Debugf("eventsQueues event type = %s", reflect.ValueOf(event).Type().String())
 			switch event.(type) {
 			case *transfer.SendDirectTransfer:
 				e := event.(*transfer.SendDirectTransfer)
@@ -398,6 +420,7 @@ func (self *ChannelService) InitializeMessagesQueues(chainState *transfer.ChainS
 				if err != nil {
 					log.Error("[InitializeMessagesQueues] Sign: ", err.Error())
 				}
+				log.Debugf("SendAsync event type = %s", reflect.ValueOf(event).Type().String())
 				err = self.Transport.SendAsync(&queueIdentifier, message)
 				if err != nil {
 					log.Error("[InitializeMessagesQueues] SendAsync: ", err.Error())

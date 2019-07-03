@@ -640,7 +640,8 @@ func eventsForExpiredPairs(channelIdentifiersToChannels map[common.ChannelID]*Ne
 	return events
 }
 
-func eventsForSecretReveal(transfersPair []*MediationPairState, secret common.Secret) []Event {
+func eventsForSecretReveal(transfersPair []*MediationPairState, payerChannelId common.ChannelID,
+	secret common.Secret) []Event {
 
 	/*
 		Reveal the secret off-chain.
@@ -967,7 +968,7 @@ func eventsToRemoveExpiredLocks(mediatorState *MediatorTransferState,
 }
 
 func secretLearned(state *MediatorTransferState, channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
-	blockNumber common.BlockHeight, secret common.Secret, secretHash common.SecretHash,
+	blockNumber common.BlockHeight, secret common.Secret, secretHash common.SecretHash, payerChannelId common.ChannelID,
 	payeeAddress common.Address) (*TransitionResult, error) {
 	/*
 		Unlock the payee lock, reveal the lock to the payer, and if necessary
@@ -981,22 +982,20 @@ func secretLearned(state *MediatorTransferState, channelIdentifiersToChannels ma
 	OnChainSecretReveal := eventsForOnChainSecretRevealIfClosed(channelIdentifiersToChannels,
 		state.TransfersPair, secret, secretHash)
 
-	offChainSecretReveal := eventsForSecretReveal(state.TransfersPair, secret)
+	offChainSecretReveal := eventsForSecretReveal(state.TransfersPair, payerChannelId, secret)
 
 	balanceProof, err := eventsForBalanceProof(channelIdentifiersToChannels, state.TransfersPair,
 		blockNumber, secret, secretHash)
 	if err != nil {
 		return nil, err
 	}
+
 	events = append(events, secretRevealEvents...)
 	events = append(events, offChainSecretReveal...)
 	events = append(events, balanceProof...)
 	events = append(events, OnChainSecretReveal...)
-	iteration := &TransitionResult{
-		NewState: state,
-		Events:   events,
-	}
 
+	iteration := &TransitionResult{NewState: state, Events: events}
 	return iteration, nil
 }
 
@@ -1218,7 +1217,7 @@ func MdHandleRefundTransfer(mediatorState *MediatorTransferState, mediatorStateC
 	return iteration
 }
 
-func handleOffchainSecretReveal(mediatorState *MediatorTransferState, mediatorStateChange *ReceiveSecretReveal,
+func handleOffChainSecretReveal(mediatorState *MediatorTransferState, mediatorStateChange *ReceiveSecretReveal,
 	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
 	blockNumber common.BlockHeight) (*TransitionResult, error) {
 
@@ -1236,24 +1235,35 @@ func handleOffchainSecretReveal(mediatorState *MediatorTransferState, mediatorSt
 	transferPair := mediatorState.TransfersPair[pairLen-1]
 
 	payerTransfer := transferPair.PayerTransfer
-	channelIdentifier := payerTransfer.BalanceProof.ChannelIdentifier
-	payerChannel := channelIdentifiersToChannels[channelIdentifier]
+	payerChannelId := payerTransfer.BalanceProof.ChannelIdentifier
+	payerChannel := channelIdentifiersToChannels[payerChannelId]
 	if payerChannel == nil {
-		//fmt.Println("[handleOffchainSecretReveal] payerChannel != nil")
 		return &TransitionResult{NewState: mediatorState, Events: nil}, nil
 	}
+
+	//payeeTransfer := transferPair.PayeeTransfer
+	//payeeChannelId := payeeTransfer.BalanceProof.ChannelIdentifier
 
 	hasPayerTransferExpired := TransferExpired(transferPair.PayerTransfer,
 		payerChannel, blockNumber)
 
 	if isSecretUnknown && isValidReveal && !hasPayerTransferExpired {
+		log.Infof("handleOffChainSecretReveal  handleOffChainSecretReveal")
 		secretHash := sha256.Sum256(mediatorStateChange.Secret)
 		iteration, err = secretLearned(mediatorState, channelIdentifiersToChannels,
-			blockNumber, mediatorStateChange.Secret,
-			secretHash, mediatorStateChange.Sender)
+			blockNumber, mediatorStateChange.Secret, secretHash, payerChannelId, mediatorStateChange.Sender)
 		if err != nil {
 			return nil, err
 		}
+
+		sendProcessed := &SendProcessed{
+			SendMessageEvent: SendMessageEvent{
+				Recipient:         common.Address(mediatorStateChange.Sender),
+				ChannelIdentifier: ChannelIdentifierGlobalQueue,
+				MessageIdentifier: mediatorStateChange.MessageIdentifier,
+			},
+		}
+		iteration.Events = append(iteration.Events, sendProcessed)
 	} else {
 		iteration = &TransitionResult{NewState: mediatorState, Events: nil}
 	}
@@ -1315,15 +1325,6 @@ func handleUnlock(mediatorState *MediatorTransferState, stateChange *ReceiveUnlo
 						SecretHash: common.SecretHash(pair.PayeeTransfer.Lock.SecretHash),
 					}
 					events = append(events, unlock)
-
-					sendProcessed := &SendProcessed{
-						SendMessageEvent: SendMessageEvent{
-							Recipient:         common.Address(balanceProofSender),
-							ChannelIdentifier: ChannelIdentifierGlobalQueue,
-							MessageIdentifier: stateChange.MessageIdentifier,
-						},
-					}
-					events = append(events, sendProcessed)
 					pair.PayerState = "payer_balance_proof"
 				}
 			}
@@ -1343,7 +1344,7 @@ func handleLockExpired(mediatorState *MediatorTransferState, stateChange *Receiv
 		balanceProof := transferPair.PayerTransfer.BalanceProof
 		channelState := channelIdentifiersToChannels[balanceProof.ChannelIdentifier]
 
-		if channelState != nil {
+		if channelState == nil {
 			return &TransitionResult{NewState: mediatorState, Events: nil}
 		}
 		result := handleReceiveLockExpired(channelState,
@@ -1406,7 +1407,7 @@ func MdStateTransition(mediatorState *MediatorTransferState, stateChange interfa
 		iteration = MdHandleRefundTransfer(mediatorState, sc, channelIdentifiersToChannels, blockNumber)
 	case *ReceiveSecretReveal:
 		sc := stateChange.(*ReceiveSecretReveal)
-		iteration, err = handleOffchainSecretReveal(mediatorState, sc, channelIdentifiersToChannels, blockNumber)
+		iteration, err = handleOffChainSecretReveal(mediatorState, sc, channelIdentifiersToChannels, blockNumber)
 		if err != nil {
 			return nil, err
 		}

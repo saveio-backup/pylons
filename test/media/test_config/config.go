@@ -5,14 +5,13 @@ import (
 	"github.com/saveio/pylons/common"
 )
 
-const PROTOCOL = "udp"
+const PROTOCOL = "tcp"
 
 var Initiator1 = &ch.ChannelConfig{
 	ClientType:    "rpc",
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3001",
 	Protocol:      PROTOCOL,
-	//RevealTimeout: "1000",
 }
 
 var Initiator2 = &ch.ChannelConfig{
@@ -20,7 +19,6 @@ var Initiator2 = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3002",
 	Protocol:      PROTOCOL,
-	//RevealTimeout: "1000",
 }
 
 var Media = &ch.ChannelConfig{
@@ -28,7 +26,6 @@ var Media = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3003",
 	Protocol:      PROTOCOL,
-	//RevealTimeout: "1000",
 }
 
 var Target1 = &ch.ChannelConfig{
@@ -36,7 +33,6 @@ var Target1 = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3004",
 	Protocol:      PROTOCOL,
-	//RevealTimeout: "1000",
 }
 
 var Target2 = &ch.ChannelConfig{
@@ -44,7 +40,6 @@ var Target2 = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3005",
 	Protocol:      PROTOCOL,
-	//RevealTimeout: "1000",
 }
 
 var Initiator1Addr common.Address

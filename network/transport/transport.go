@@ -15,6 +15,7 @@ import (
 	"github.com/saveio/pylons/network/transport/messages"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis/common/log"
+	chainComm "github.com/saveio/themis/common"
 )
 
 type ChannelServiceInterface interface {
@@ -54,8 +55,8 @@ func NewTransport(channelService ChannelServiceInterface) *Transport {
 // messages first be queued, only can be send when Delivered for previous msssage is received
 func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Message) error {
 	var msgID *messages.MessageID
-	//rec := chainComm.Address(queueId.Recipient)
-	//log.Debug("[SendAsync] %v, TO: %v.", reflect.TypeOf(msg).String(), rec.ToBase58())
+	rec := chainComm.Address(queueId.Recipient)
+	log.Debugf("[SendAsync] %v, TO: %v.", reflect.TypeOf(msg).String(), rec.ToBase58())
 	q := this.GetQueue(queueId)
 	switch msg.(type) {
 	case *messages.DirectTransfer:
@@ -84,8 +85,10 @@ func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Me
 		msgID = (msg.(*messages.CooperativeSettle)).MessageIdentifier
 	default:
 		log.Error("[SendAsync] Unknown message type to send async: ", reflect.TypeOf(msg).String())
-		return fmt.Errorf("Unknown message type to send async")
+		return fmt.Errorf("Unknown message type to send async ")
 	}
+
+	log.Infof("[SendAsync] %v, msgId: %d, TO: %v.", reflect.TypeOf(msg).String(), msgID, rec.ToBase58())
 	ok := q.Push(&QueueItem{
 		message:   msg,
 		messageId: msgID,
@@ -265,7 +268,6 @@ func (this *Transport) Receive(message proto.Message, from string) {
 
 func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 	log.Debugf("[ReceiveMessage] %v from: %v", reflect.TypeOf(message).String(), from)
-
 	if this.ChannelService != nil {
 		this.ChannelService.OnMessage(message, from)
 	}
@@ -322,10 +324,11 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 		address = messages.ConvertAddress(msg.Participant2Signature.Sender)
 		msgID = msg.MessageIdentifier
 	default:
-		log.Warn("[ReceiveMessage] unkown Msg type: ", reflect.TypeOf(message).String())
+		log.Warn("[ReceiveMessage] unknown Msg type: ", reflect.TypeOf(message).String())
 		return
 	}
 
+	log.Debugf("[ReceiveMessage] %v msgId: %v from: %v", reflect.TypeOf(message).String(), msgID, from)
 	deliveredMessage := &messages.Delivered{
 		DeliveredMessageIdentifier: msgID,
 	}
@@ -342,7 +345,12 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 		}
 		log.Debugf("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v",
 			reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier, nodeAddress)
-		client.P2pSend(nodeAddress, deliveredMessage)
+		err = client.P2pSend(nodeAddress, deliveredMessage)
+		if err != nil {
+			log.Errorf("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v error: %s",
+				reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier,
+				nodeAddress, err.Error())
+		}
 	} else {
 		log.Debugf("SendDeliveredMessage (%v) deliveredMessage Sign error: ", err.Error(),
 			reflect.TypeOf(message).String(), nodeAddress)
@@ -360,9 +368,6 @@ func (this *Transport) ReceiveDelivered(message proto.Message, from string) {
 	//	return true
 	//}
 	msg := message.(*messages.Delivered)
-	//this.addressQueueMap.Range(f)
-
-	//queue, ok := this.addressQueueMap.Load(from)
 	msgId := common.MessageID(msg.DeliveredMessageIdentifier.MessageId)
 	queue, ok := this.addressQueueMap.Load(msgId)
 	if !ok {

@@ -29,7 +29,7 @@ import (
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var disable = flag.Bool("disable", false, "disable transfer test")
-var transferAmount = flag.Int("amount", 500, "test transfer amount")
+var transferAmount = flag.Int("amount", 100, "test transfer amount")
 var multiEnable = flag.Bool("multi", false, "enable multi routes test")
 var routeNum = flag.Int("route", 5, "route number")
 
@@ -203,7 +203,9 @@ func singleRouteTest(amount int, target common.Address, times int, interval int,
 
 	time2 := time.Now().Unix()
 	timeDuration := time2 - time1
-	log.Infof("[singleRouteTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", times, timeDuration, times/int(timeDuration))
+	if timeDuration > 0 {
+		log.Infof("[singleRouteTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", times, timeDuration, times/int(timeDuration))
+	}
 }
 
 func multiRouteTest(amount int, target common.Address, times int, interval int, routingNum int) {

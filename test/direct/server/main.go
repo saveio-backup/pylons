@@ -191,7 +191,9 @@ func singleRouteTest(amount int, target common.Address, times int, interval int,
 
 	time2 := time.Now().Unix()
 	timeDuration := time2 - time1
-	log.Infof("[singleRouteTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", times, timeDuration, times/int(timeDuration))
+	if timeDuration > 0 {
+		log.Infof("[singleRouteTest] LoopTimes: %v, TimeDuration: %v, Speed: %v\n", times, timeDuration, times/int(timeDuration))
+	}
 }
 
 func multiRouteTest(amount int, target common.Address, times int, interval int, routingNum int) {

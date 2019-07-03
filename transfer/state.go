@@ -187,7 +187,7 @@ func DeepCopy(src State) *ChainState {
 			value.PendingTransactions = append(value.PendingTransactions, chainState.PendingTransactions[i])
 		}
 
-		value.QueueIdsToQueues = make(map[QueueIdentifier][]Event)
+		value.QueueIdsToQueues = make(QueueIdsToQueuesType)
 		for k, v := range chainState.QueueIdsToQueues {
 			value.QueueIdsToQueues[k] = v
 		}

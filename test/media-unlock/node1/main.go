@@ -239,7 +239,6 @@ func receivePayment(channel *ch.Channel) {
 		select {
 		case msg = <-notificationChannel:
 			addr := common.ToBase58(common.Address(msg.Initiator))
-			//log.Debugf("[ReceivePayment] Initiator: %v, Amount: %v Times: %v", addr, msg.Amount, i)
 			log.Infof("[ReceivePayment] Initiator: %v, Amount: %v Times: %v", addr, msg.Amount, i)
 		}
 	}

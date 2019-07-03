@@ -320,6 +320,14 @@ func InitHandleOffChainSecretReveal(initiatorState *InitiatorTransferState,
 	if validReveal && isChannelOpen && sentByPartner {
 		events := InitEventsForUnlockLock(initiatorState, channelState, stateChange.Secret, secretHash)
 
+		sendProcessed := &SendProcessed{
+			SendMessageEvent: SendMessageEvent{
+				Recipient:         common.Address(stateChange.Sender),
+				ChannelIdentifier: ChannelIdentifierGlobalQueue,
+				MessageIdentifier: stateChange.MessageIdentifier,
+			},
+		}
+		events = append(events, sendProcessed)
 		iteration = &TransitionResult{NewState: nil, Events: events}
 	} else {
 		iteration = &TransitionResult{NewState: initiatorState, Events: nil}

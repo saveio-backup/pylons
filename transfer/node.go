@@ -300,7 +300,7 @@ func maybeAddTokenNetwork(chainState *ChainState, paymentNetworkIdentifier commo
 func inPlaceDeleteMessageQueue(chainState *ChainState, stateChange StateChange, queueId QueueIdentifier) {
 	queue, ok := chainState.QueueIdsToQueues[queueId]
 	if !ok {
-		log.Debug("[inPlaceDeleteMessageQueue] queueId is not in QueueIdsToQueues.")
+		log.Infof("[inPlaceDeleteMessageQueue] queueId is not in QueueIdsToQueues.")
 		return
 	}
 
@@ -315,27 +315,28 @@ func inPlaceDeleteMessageQueue(chainState *ChainState, stateChange StateChange, 
 }
 
 func inPlaceDeleteMessage(messageQueue []Event, stateChange StateChange) []Event {
-
+	found := false
 	log.Debug("[inPlaceDeleteMessageQueue] called for:", reflect.TypeOf(stateChange).String())
 	if messageQueue == nil {
 		return messageQueue
 	}
-
+	sender, messageId := GetSenderAndMessageIdentifier(stateChange)
 	len := len(messageQueue)
 	for i := 0; i < len; {
 		message := GetSenderMessageEvent(messageQueue[i])
-		sender, messageId := GetSenderAndMessageIdentifier(stateChange)
 		log.Debugf("[inPlaceDeleteMessageQueue] message: %v, sender:%v, messageId:%v", message, sender, messageId)
 		if message.MessageIdentifier == messageId && common.AddressEqual(common.Address(message.Recipient), sender) {
-			log.Debugf("[inPlaceDeleteMessageQueue] match")
+			log.Infof("[inPlaceDeleteMessageQueue] messageId: %d match", messageId)
 			messageQueue = append(messageQueue[:i], messageQueue[i+1:]...)
 			len--
+			found = true
 		} else {
-			log.Debugf("[inPlaceDeleteMessageQueue] no match")
 			i++
 		}
 	}
-
+	if !found {
+		log.Errorf("[inPlaceDeleteMessageQueue], messageId: %d not found", messageId)
+	}
 	return messageQueue
 }
 
@@ -411,10 +412,11 @@ func handleContractReceiveChannelClosed(chainState *ChainState,
 }
 
 func handleDelivered(chainState *ChainState, stateChange *ReceiveDelivered) *TransitionResult {
-	log.Debugf("[handleDelivered] stateChange MessageIdentifier: %v\n", stateChange.MessageIdentifier)
+	//log.Debugf("[handleDelivered] stateChange MessageIdentifier: %v\n", stateChange.MessageIdentifier)
 	queueId := QueueIdentifier{stateChange.Sender, 0}
 	inPlaceDeleteMessageQueue(chainState, stateChange, queueId)
-
+	//
+	//return &TransitionResult{chainState, nil}
 	return &TransitionResult{chainState, nil}
 }
 
@@ -529,7 +531,6 @@ func handleProcessed(chainState *ChainState, stateChange *ReceiveProcessed) *Tra
 		for i := 0; i < len; i++ {
 			message := GetSenderMessageEvent(v[i])
 			sender, messageId := GetSenderAndMessageIdentifier(stateChange)
-			//fmt.Printf("handleProcessed = %+v\n", message)
 			if message.MessageIdentifier == messageId && common.AddressEqual(common.Address(message.Recipient), sender) {
 				if message, ok := v[i].(*SendDirectTransfer); ok {
 					channelState := GetChannelStateByTokenNetworkAndPartner(chainState,
@@ -548,6 +549,7 @@ func handleProcessed(chainState *ChainState, stateChange *ReceiveProcessed) *Tra
 		}
 	}
 
+	log.Infof("[handleProcessed] stateChangeId: %d", stateChange.MessageIdentifier)
 	for k := range chainState.QueueIdsToQueues {
 		inPlaceDeleteMessageQueue(chainState, stateChange, k)
 	}

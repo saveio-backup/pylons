@@ -85,23 +85,36 @@ func TgHandleOffChainSecretReveal(targetState *TargetTransferState, stateChange 
 	if validSecret && !hasTransferExpired {
 		RegisterOffChainSecret(channelState, stateChange.Secret, secretHash)
 		route := targetState.Route
-		messageIdentifier := GetMsgID()
+
 		targetState.State = "reveal_secret"
 		targetState.Secret = &stateChange.Secret
-		recipient := route.NodeAddress
 
 		//addr := common2.Address(recipient)
 		//fmt.Println("[TgHandleOffChainSecretReveal] recipient: ", addr.ToBase58())
 
+		messageIdentifier := GetMsgID()
 		reveal := &SendSecretReveal{
 			SendMessageEvent: SendMessageEvent{
-				Recipient:         common.Address(recipient),
-				ChannelIdentifier: ChannelIdentifierGlobalQueue,
+				Recipient:         common.Address(route.NodeAddress),
+				//check route channelId
+				ChannelIdentifier: route.ChannelIdentifier,
 				MessageIdentifier: messageIdentifier,
 			},
 			Secret: stateChange.Secret,
 		}
+		sendProcessed := &SendProcessed{
+			SendMessageEvent: SendMessageEvent{
+				Recipient:         common.Address(stateChange.Sender),
+				ChannelIdentifier: ChannelIdentifierGlobalQueue,
+				MessageIdentifier: stateChange.MessageIdentifier,
+			},
+		}
+		recipient := common.ToBase58(route.NodeAddress)
+		sender := common.ToBase58(stateChange.Sender)
+		log.Debugf("recipient: %s route.channelId :%d    sender:%s", recipient, route.ChannelIdentifier, sender)
+		events = append(events, sendProcessed)
 		events = append(events, reveal)
+
 		return &TransitionResult{NewState: targetState, Events: events}
 	} else {
 		return &TransitionResult{NewState: targetState, Events: nil}
@@ -125,7 +138,7 @@ func TgHandleOnChainSecretReveal(targetState *TargetTransferState,
 func TgHandleUnlock(targetState *TargetTransferState, stateChange *ReceiveUnlock,
 	channelState *NettingChannelState) *TransitionResult {
 
-	balanceProofSender := stateChange.BalanceProof.Sender
+	//balanceProofSender := stateChange.BalanceProof.Sender
 	isValid, events, _ := HandleUnlock(channelState, stateChange)
 
 	if isValid {
@@ -143,17 +156,8 @@ func TgHandleUnlock(targetState *TargetTransferState, stateChange *ReceiveUnlock
 			SecretHash: common.SecretHash(transfer.Lock.SecretHash),
 		}
 
-		sendProcessed := &SendProcessed{
-			SendMessageEvent: SendMessageEvent{
-				Recipient:         common.Address(balanceProofSender),
-				ChannelIdentifier: ChannelIdentifierGlobalQueue,
-				MessageIdentifier: stateChange.MessageIdentifier,
-			},
-		}
-
 		events = append(events, paymentReceivedSuccess)
 		events = append(events, unlockSuccess)
-		events = append(events, sendProcessed)
 		targetState = nil
 	}
 	return &TransitionResult{NewState: targetState, Events: events}

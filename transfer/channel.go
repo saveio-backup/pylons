@@ -1482,7 +1482,7 @@ func handleWithdrawRequestReceived(channelState *NettingChannelState, stateChang
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
 				Recipient:         stateChange.Participant,
-				ChannelIdentifier: stateChange.ChannelIdentifier,
+				ChannelIdentifier: ChannelIdentifierGlobalQueue,
 				MessageIdentifier: stateChange.MessageIdentifier,
 			},
 		}
@@ -1718,7 +1718,7 @@ func handleCooperativeSettleRequestReceived(channelState *NettingChannelState, s
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
 				Recipient:         stateChange.Participant1,
-				ChannelIdentifier: stateChange.ChannelIdentifier,
+				ChannelIdentifier: ChannelIdentifierGlobalQueue,
 				MessageIdentifier: stateChange.MessageIdentifier,
 			},
 		}
@@ -2002,7 +2002,7 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
 				Recipient:         common.Address(directTransfer.BalanceProof.Sender),
-				ChannelIdentifier: 0,
+				ChannelIdentifier: ChannelIdentifierGlobalQueue,
 				MessageIdentifier: directTransfer.MessageIdentifier,
 			},
 		}
