@@ -43,7 +43,7 @@ func TgHandleInitTarget(stateChange *ActionInitTarget, channelState *NettingChan
 		safeToWait, _ := MdIsSafeToWait(common.BlockExpiration(transfer.Lock.Expiration),
 			channelState.RevealTimeout, blockNumber)
 		if safeToWait == true {
-			messageIdentifier := GetMsgID()
+			messageIdentifier := common.GetMsgID()
 			recipient := transfer.Initiator
 			secretRequest := &SendSecretRequest{
 				SendMessageEvent: SendMessageEvent{
@@ -92,7 +92,7 @@ func TgHandleOffChainSecretReveal(targetState *TargetTransferState, stateChange 
 		//addr := common2.Address(recipient)
 		//fmt.Println("[TgHandleOffChainSecretReveal] recipient: ", addr.ToBase58())
 
-		messageIdentifier := GetMsgID()
+		messageIdentifier := common.GetMsgID()
 		reveal := &SendSecretReveal{
 			SendMessageEvent: SendMessageEvent{
 				Recipient:         common.Address(route.NodeAddress),

@@ -37,7 +37,7 @@ func TestActionInitTargetMarshal(t *testing.T) {
 	}
 
 	initTarget1.Transfer = &LockedTransferSignedState{
-		MessageIdentifier: GetMsgID(),
+		MessageIdentifier: common.GetMsgID(),
 		PaymentIdentifier: common.PaymentID(0),
 		Token:             common.EmptyAddress,
 		BalanceProof:      balanceProof,

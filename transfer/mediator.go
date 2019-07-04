@@ -413,7 +413,7 @@ func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRout
 			return nil, nil, fmt.Errorf("[forwardTransferPair] payeeChannel.TokenAddress != payerTransfer.Token")
 		}
 
-		messageIdentifier := GetMsgID()
+		messageIdentifier := common.GetMsgID()
 		lockedTransferEvent := sendLockedTransfer(
 			payeeChannel, payerTransfer.Initiator, payerTransfer.Target, common.PaymentAmount(payerTransfer.Lock.Amount),
 			messageIdentifier, payerTransfer.PaymentIdentifier, common.BlockExpiration(payerTransfer.Lock.Expiration),
@@ -471,7 +471,7 @@ func backwardTransferPair(backwardChannel *NettingChannelState, payerTransfer *L
 	//# Ensure the refund transfer's lock has a safe expiration, otherwise don't
 	//# do anything and wait for the received lock to expire.
 	if MdIsChannelUsable(backwardChannel, common.PaymentAmount(lock.Amount), lockTimeout) {
-		messageIdentifier := GetMsgID()
+		messageIdentifier := common.GetMsgID()
 		refundTransfer, _ := sendRefundTransfer(backwardChannel, payerTransfer.Initiator,
 			payerTransfer.Target, common.PaymentAmount(lock.Amount),
 			messageIdentifier, payerTransfer.PaymentIdentifier,
@@ -705,7 +705,7 @@ func eventsForSecretReveal(transfersPair []*MediationPairState, payerChannelId c
 
 		if shouldSendSecret {
 			log.Debug("[eventsForSecretReveal] shouldSendSecret")
-			messageIdentifier := GetMsgID()
+			messageIdentifier := common.GetMsgID()
 			pair.PayerState = "payer_secret_revealed"
 			payerTransfer := pair.PayerTransfer
 			revealSecret := &SendSecretReveal{
@@ -773,7 +773,7 @@ func eventsForBalanceProof(channelIdentifiersToChannels map[common.ChannelID]*Ne
 			//payeeChannel = payeeChannel.(*NettingChannelState)
 			pair.PayeeState = "payee_balance_proof"
 
-			messageIdentifier := GetMsgID()
+			messageIdentifier := common.GetMsgID()
 			unlockLock := SendUnlock(payeeChannel, messageIdentifier,
 				pair.PayeeTransfer.PaymentIdentifier, secret, secrethash)
 

@@ -549,7 +549,7 @@ func handleProcessed(chainState *ChainState, stateChange *ReceiveProcessed) *Tra
 		}
 	}
 
-	log.Infof("[handleProcessed] stateChangeId: %d", stateChange.MessageIdentifier)
+	log.Infof("[handleProcessed] MessageIdentifier: %d", stateChange.MessageIdentifier)
 	for k := range chainState.QueueIdsToQueues {
 		inPlaceDeleteMessageQueue(chainState, stateChange, k)
 	}

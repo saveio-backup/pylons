@@ -182,7 +182,8 @@ func (self *ChannelService) InitDB() error {
 	self.snapshotGroup = stateChangeQty / constants.SNAPSHOT_STATE_CHANGE_COUNT
 
 	var lastLogBlockHeight common.BlockHeight
-	self.Wal = storage.RestoreToStateChange(transfer.StateTransition, sqliteStorage, "latest")
+	self.Wal = storage.RestoreToStateChange(transfer.StateTransition, sqliteStorage, "latest",
+		self.address)
 	self.isRestoreFinish = true
 
 	if self.Wal.StateManager.CurrentState == nil {
@@ -298,7 +299,7 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 	self.dispatchEventsLock.Lock()
 	defer self.dispatchEventsLock.Unlock()
 
-	eventList := self.Wal.LogAndDispatch(stateChange)
+	eventList := self.Wal.LogAndDispatch(stateChange, self.address)
 	for _, e := range eventList {
 		self.channelEventHandler.OnChannelEvent(self, e.(transfer.Event))
 	}
@@ -326,7 +327,6 @@ func (self *ChannelService) StartNeighboursHealthCheck() {
 		log.Debugf("[StartNeighboursHealthCheck] Neighbour: %s", common.ToBase58(v))
 		self.Transport.StartHealthCheck(v)
 	}
-
 	return
 }
 

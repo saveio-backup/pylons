@@ -571,18 +571,17 @@ func (self *SQLiteStorage) GetLatestStateChangesByDataField(filters map[string]i
 	return result
 }
 
-func (self *SQLiteStorage) getStateChangesByIdentifier(fromIdentifier interface{},
-	toIdentifier interface{}) []transfer.StateChange {
+func (self *SQLiteStorage) getStateChangesById(fromId interface{}, toId interface{}) []transfer.StateChange {
 
 	var rows *sql.Rows
 	var realFromIdentifier, realToIdentifier int
 
 	fromLatest := false
-	switch fromIdentifier.(type) {
+	switch fromId.(type) {
 	case string:
 		fromLatest = true
 	case int:
-		realFromIdentifier = fromIdentifier.(int)
+		realFromIdentifier = fromId.(int)
 	}
 	self.writeStateLock.Lock()
 	defer self.writeStateLock.Unlock()
@@ -597,11 +596,11 @@ func (self *SQLiteStorage) getStateChangesByIdentifier(fromIdentifier interface{
 	}
 
 	toLatest := false
-	switch toIdentifier.(type) {
+	switch toId.(type) {
 	case string:
 		toLatest = true
 	case int:
-		realToIdentifier = toIdentifier.(int)
+		realToIdentifier = toId.(int)
 	}
 
 	if toLatest == true {
@@ -618,12 +617,12 @@ func (self *SQLiteStorage) getStateChangesByIdentifier(fromIdentifier interface{
 		err := rows.Scan(&stateChangeData)
 		if err == nil {
 			if stateChangeData == nil {
-				log.Errorf("[getStateChangesByIdentifier] jsonext.UnmarshalExt Error: stateChangeData is nil")
+				log.Errorf("[getStateChangesById] jsonext.UnmarshalExt Error: stateChangeData is nil")
 				continue
 			}
 			v, err := jsonext.UnmarshalExt(stateChangeData, nil, transfer.CreateObjectByClassId)
 			if err != nil {
-				log.Errorf("[getStateChangesByIdentifier] jsonext.UnmarshalExt Error: %s", err.Error())
+				log.Errorf("[getStateChangesById] jsonext.UnmarshalExt Error: %s", err.Error())
 				continue
 			}
 			if stateChange, ok := v.(transfer.StateChange); ok {

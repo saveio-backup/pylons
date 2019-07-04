@@ -7,10 +7,11 @@ import (
 
 	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/transfer"
+	"github.com/saveio/pylons/common"
 )
 
 func RestoreToStateChange(transitionFunction transfer.StateTransitionCallback,
-	storage *SQLiteStorage, stateChangeIdentifier interface{}) *WriteAheadLog {
+	storage *SQLiteStorage, stateChangeIdentifier interface{}, selfAddr common.Address) *WriteAheadLog {
 
 	fromStateChangeId, snapshot := storage.getSnapshotClosestToStateChange(stateChangeIdentifier)
 
@@ -18,8 +19,7 @@ func RestoreToStateChange(transitionFunction transfer.StateTransitionCallback,
 		log.Info("No snapshot found, replaying all state changes")
 	}
 
-	unAppliedStateChanges := storage.getStateChangesByIdentifier(
-		fromStateChangeId, stateChangeIdentifier)
+	unAppliedStateChanges := storage.getStateChangesById(fromStateChangeId, stateChangeIdentifier)
 
 	var ok bool
 	var chainState *transfer.ChainState
@@ -36,9 +36,30 @@ func RestoreToStateChange(transitionFunction transfer.StateTransitionCallback,
 	wal.StateManager = stateManager
 	wal.Storage = storage
 
-	for _, change := range unAppliedStateChanges {
-		wal.StateManager.Dispatch(change)
+	qLen := 0
+	if chainState != nil {
+		log.Info("[QueueIdsToQueues] qNum = ", len(chainState.QueueIdsToQueues))
+		for _, v :=  range chainState.QueueIdsToQueues {
+			qLen += len(v)
+		}
+		log.Info("[QueueIdsToQueues] qLen = ", qLen)
 	}
+
+	i := 0
+	for _, change := range unAppliedStateChanges {
+		log.Info("[RestoreToStateChange] stateChangeId: ", fromStateChangeId + i)
+		common.SetRandSeed(fromStateChangeId + i, selfAddr)
+		wal.StateManager.Dispatch(change)
+		i++
+	}
+	if wal.StateManager.CurrentState != nil {
+		log.Info("[QueueIdsToQueues] qNum = ", len(wal.StateManager.CurrentState.(*transfer.ChainState).QueueIdsToQueues))
+		for _, v :=  range wal.StateManager.CurrentState.(*transfer.ChainState).QueueIdsToQueues {
+			qLen += len(v)
+		}
+		log.Info("[QueueIdsToQueues] qLen = ", qLen)
+	}
+
 	return wal
 }
 
@@ -63,12 +84,14 @@ func (self *WriteAheadLog) DeepCopy() *transfer.ChainState {
 	return nil
 }
 
-func (self *WriteAheadLog) LogAndDispatch(stateChange transfer.StateChange) []transfer.Event {
+func (self *WriteAheadLog) LogAndDispatch(stateChange transfer.StateChange, selfAddr common.Address) []transfer.Event {
 
 	self.dbLock.Lock()
 	defer self.dbLock.Unlock()
 
 	self.Storage.writeStateChange(stateChange, &self.StateChangeId)
+	log.Info("[LogAndDispatch] stateChangeId: ", self.StateChangeId)
+	common.SetRandSeed(self.StateChangeId, selfAddr)
 	events := self.StateManager.Dispatch(stateChange)
 
 	t := time.Now()

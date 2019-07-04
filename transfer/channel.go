@@ -1259,7 +1259,7 @@ func createSendExpiredLock(senderEndState *NettingChannelEndState, lockedLock *H
 	sendLockExpired := &SendLockExpired{
 		SendMessageEvent: SendMessageEvent{
 			Recipient:         common.Address(recipient),
-			MessageIdentifier: GetMsgID(),
+			MessageIdentifier: common.GetMsgID(),
 		},
 		BalanceProof: balanceProofEx,
 		SecretHash:   common.SecretHash(lockedLock.SecretHash),
@@ -1329,7 +1329,7 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 		canPay = true
 	}
 	if isOpen && isValid && canPay {
-		messageIdentifier := GetMsgID()
+		messageIdentifier := common.GetMsgID()
 		directTransfer := sendDirectTransfer(channelState, common.PaymentAmount(amount), messageIdentifier, paymentIdentifier)
 		events = append(events, directTransfer)
 	} else {
@@ -1386,7 +1386,7 @@ func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *A
 	}
 
 	if isOpen && isValid {
-		messageIdentifier := GetMsgID()
+		messageIdentifier := common.GetMsgID()
 		sendWithdrawRequest := &SendWithdrawRequest{
 			SendMessageEvent: SendMessageEvent{
 				Recipient:         stateChange.Partner,
@@ -1464,7 +1464,7 @@ func handleWithdrawRequestReceived(channelState *NettingChannelState, stateChang
 
 	valid, msg := isValidWithdrawRequest(channelState, stateChange)
 	if valid {
-		messageIdentifier := GetMsgID()
+		messageIdentifier := common.GetMsgID()
 		sendWithdraw := &SendWithdraw{
 			SendMessageEvent: SendMessageEvent{
 				Recipient:         stateChange.Participant,
@@ -1627,7 +1627,7 @@ func handleSendCooperativeSettleRequest(channelState *NettingChannelState, state
 	if GetStatus(channelState) == ChannelStateOpened {
 		ourBalance, partnerBalance := GetCooprativeSettleBalances(channelState)
 
-		messageIdentifier := GetMsgID()
+		messageIdentifier := common.GetMsgID()
 		ourAddress := channelState.OurState.GetAddress()
 		partnerAddress := channelState.PartnerState.GetAddress()
 
@@ -1698,7 +1698,7 @@ func handleCooperativeSettleRequestReceived(channelState *NettingChannelState, s
 
 	valid, msg := isValidCooperativeSettleRequest(channelState, stateChange)
 	if valid {
-		messageIdentifier := GetMsgID()
+		messageIdentifier := common.GetMsgID()
 		sendCooperativeSettle := &SendCooperativeSettle{
 			SendMessageEvent: SendMessageEvent{
 				Recipient:         stateChange.Participant1,

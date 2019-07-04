@@ -14,9 +14,7 @@ func InitEventsForUnlockLock(initiatorState *InitiatorTransferState, channelStat
 	secret common.Secret, secretHash common.SecretHash) []Event {
 
 	transferDescription := initiatorState.TransferDescription
-	messageIdentifier := GetMsgID()
-
-	//[TODO] finish mediated/channel.go
+	messageIdentifier := common.GetMsgID()
 
 	unlockLock := SendUnlock(channelState, messageIdentifier,
 		transferDescription.PaymentIdentifier, secret, secretHash)
@@ -150,7 +148,7 @@ func InitTryNewRoute(oldInitiatorState *InitiatorTransferState,
 		events = append(events, transferFailed)
 		initiatorState = oldInitiatorState
 	} else {
-		messageIdentifier := GetMsgID()
+		messageIdentifier := common.GetMsgID()
 		lockedTransferEvent := InitSendLockedTransfer(transferDescription, channelState,
 			messageIdentifier, blockNumber)
 
@@ -243,7 +241,7 @@ func HandleSecretRequest(initiatorState *InitiatorTransferState, stateChange *Re
 		iteration = &TransitionResult{NewState: initiatorState, Events: nil}
 	} else if isValidSecretRequest == true && isMessageFromTarget == true {
 		log.Debug("[HandleSecretRequest] isValidSecretRequest == true && isMessageFromTarget == true")
-		messageIdentifier := GetMsgID()
+		messageIdentifier := common.GetMsgID()
 		transferDescription := initiatorState.TransferDescription
 		recipient := transferDescription.Target
 		revealSecret := &SendSecretReveal{

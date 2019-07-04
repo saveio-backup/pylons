@@ -9,12 +9,12 @@ import (
 
 func ChannelStateUntilStateChange(
 	storage *SQLiteStorage, paymentNetworkIdentifier common.PaymentNetworkID, tokenAddress common.TokenAddress,
-	channelIdentifier common.ChannelID, stateChangeIdentifier int) *transfer.NettingChannelState {
+	channelIdentifier common.ChannelID, stateChangeIdentifier int, address common.Address) *transfer.NettingChannelState {
 
 	var chainState *transfer.ChainState
 
 	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
-	wal := RestoreToStateChange(transfer.StateTransition, storage, stateChangeIdentifier)
+	wal := RestoreToStateChange(transfer.StateTransition, storage, stateChangeIdentifier, address)
 
 	state := wal.StateManager.CurrentState
 	if state != nil {

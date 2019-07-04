@@ -89,6 +89,7 @@ func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Me
 	}
 
 	log.Infof("[SendAsync] %v, msgId: %d, TO: %v.", reflect.TypeOf(msg).String(), msgID, rec.ToBase58())
+	//panic(-1)
 	ok := q.Push(&QueueItem{
 		message:   msg,
 		messageId: msgID,
@@ -173,7 +174,9 @@ func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier)
 					this.PeekAndSend(queue, &queueId)
 				}
 			} else {
-				log.Warn("[DeliverChan] msgId.MessageId != item.messageId.MessageId queue.Len: ", queue.Len())
+				log.Debug("[DeliverChan] msgId.MessageId != item.messageId.MessageId queue.Len: ", queue.Len())
+				log.Warnf("[DeliverChan] msgId.MessageId: %d != item.messageId.MessageId: %d", msgId.MessageId,
+					item.messageId.MessageId)
 			}
 		case <-this.kill:
 			log.Info("[QueueSend] msgId := <-this.kill")
@@ -328,7 +331,7 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 		return
 	}
 
-	log.Debugf("[ReceiveMessage] %v msgId: %v from: %v", reflect.TypeOf(message).String(), msgID, from)
+	log.Debugf("[ReceiveMessage] %v msgId: %v from: %v", reflect.TypeOf(message).String(), msgID.MessageId, from)
 	deliveredMessage := &messages.Delivered{
 		DeliveredMessageIdentifier: msgID,
 	}
@@ -344,15 +347,16 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 			}
 		}
 		log.Debugf("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v",
-			reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier, nodeAddress)
+			reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier.MessageId,
+			nodeAddress)
 		err = client.P2pSend(nodeAddress, deliveredMessage)
 		if err != nil {
 			log.Errorf("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v error: %s",
-				reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier,
+				reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier.MessageId,
 				nodeAddress, err.Error())
 		}
 	} else {
-		log.Debugf("SendDeliveredMessage (%v) deliveredMessage Sign error: ", err.Error(),
+		log.Errorf("SendDeliveredMessage (%v) deliveredMessage Sign error: ", err.Error(),
 			reflect.TypeOf(message).String(), nodeAddress)
 	}
 }

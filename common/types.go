@@ -47,7 +47,7 @@ type LockHash [constants.HASH_LEN]byte
 
 type MerkleTreeLeaves list.List
 
-type MessageID int64
+type MessageID uint64
 
 type Nonce uint64
 

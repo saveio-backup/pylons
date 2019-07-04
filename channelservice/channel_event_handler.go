@@ -691,7 +691,8 @@ func (self ChannelEventHandler) HandleContractSendChannelUnlock(channel *Channel
 		panic("Failed to find state/event that match current channel locksroots")
 	}
 
-	restoredChannelState := storage.ChannelStateUntilStateChange(channel.Wal.Storage, common.PaymentNetworkID{}, tokenAddress, channelIdentifier, stateChangeIdentifier)
+	restoredChannelState := storage.ChannelStateUntilStateChange(channel.Wal.Storage, common.PaymentNetworkID{},
+	tokenAddress, channelIdentifier, stateChangeIdentifier, channel.address)
 
 	ourState := restoredChannelState.OurState
 	partnerState := restoredChannelState.PartnerState

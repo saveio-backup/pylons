@@ -2,17 +2,35 @@ package common
 
 import (
 	"bytes"
-	"crypto/rand"
-	"errors"
-	"strconv"
-
 	"crypto/sha256"
+	"errors"
+	"sync"
+	"math/rand"
 	"os"
+	"strconv"
 
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/utils/jsonext"
 	chainCom "github.com/saveio/themis/common"
+
+	"math/big"
 )
+
+var randSrc rand.Source
+var randLock sync.RWMutex
+
+func SetRandSeed(id int, selfAddr Address) {
+	bigInt := big.NewInt(0).SetBytes(selfAddr[:])
+	seed := int64(id) + bigInt.Int64()
+	randSrc = rand.NewSource(seed)
+}
+
+func GetMsgID() MessageID {
+	randLock.Lock()
+	defer randLock.Unlock()
+	randMsgId := MessageID(randSrc.Int63())
+	return randMsgId
+}
 
 func AddressEqual(address1 Address, address2 Address) bool {
 	result := true

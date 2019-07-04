@@ -2,10 +2,7 @@ package transfer
 
 import (
 	"bytes"
-	"crypto/rand"
 	"errors"
-	"math"
-	"math/big"
 	"sort"
 	"sync"
 
@@ -31,16 +28,6 @@ const TxnExecFail string = "failure"
 const NetworkUnknown string = "unknown"
 const NetworkUnreachable string = "unreachable"
 const NetworkReachable string = "reachable"
-
-func GetMsgID() common.MessageID {
-	for {
-		b := new(big.Int).SetInt64(math.MaxInt64)
-		if id, err := rand.Int(rand.Reader, b); err == nil {
-			messageId := id.Int64()
-			return common.MessageID(messageId)
-		}
-	}
-}
 
 type TransactionOrderHeap []TransactionOrder
 
