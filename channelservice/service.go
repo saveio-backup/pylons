@@ -224,24 +224,6 @@ func (self *ChannelService) InitDB() error {
 	//set filter start block number
 	self.lastFilterBlock = lastLogBlockHeight
 	log.Info("db setup done")
-	go func() {
-		for ; ;  {
-			time.Sleep(1 * time.Second)
-			channelState := self.StateFromChannel()
-			stateLen := len(channelState.QueueIdsToQueues)
-			log.Infof("Len(channelState.QueueIdsToQueues) = %d", stateLen)
-			if stateLen < 5 {
-				for _, v := range channelState.QueueIdsToQueues  {
-					//for _, v1 := range v {
-					//	fmt.Printf("q type : %s ", reflect.TypeOf(v1).String())
-					//}
-					//fmt.Println()
-					log.Info("QueueIdsToQueues vLen: ", len(v))
-				}
-			}
-		}
-
-	}()
 	return nil
 }
 

@@ -88,8 +88,7 @@ func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Me
 		return fmt.Errorf("Unknown message type to send async ")
 	}
 
-	log.Infof("[SendAsync] %v, msgId: %d, TO: %v.", reflect.TypeOf(msg).String(), msgID, rec.ToBase58())
-	//panic(-1)
+	//log.Infof("[SendAsync] %v, msgId: %d, TO: %v.", reflect.TypeOf(msg).String(), msgID, rec.ToBase58())
 	ok := q.Push(&QueueItem{
 		message:   msg,
 		messageId: msgID,

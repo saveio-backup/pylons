@@ -36,29 +36,29 @@ func RestoreToStateChange(transitionFunction transfer.StateTransitionCallback,
 	wal.StateManager = stateManager
 	wal.Storage = storage
 
-	qLen := 0
-	if chainState != nil {
-		log.Info("[QueueIdsToQueues] qNum = ", len(chainState.QueueIdsToQueues))
-		for _, v :=  range chainState.QueueIdsToQueues {
-			qLen += len(v)
-		}
-		log.Info("[QueueIdsToQueues] qLen = ", qLen)
-	}
+	//qLen := 0
+	//if chainState != nil {
+	//	log.Info("[QueueIdsToQueues] qNum = ", len(chainState.QueueIdsToQueues))
+	//	for _, v :=  range chainState.QueueIdsToQueues {
+	//		qLen += len(v)
+	//	}
+	//	log.Info("[QueueIdsToQueues] qLen = ", qLen)
+	//}
 
 	i := 0
 	for _, change := range unAppliedStateChanges {
-		log.Info("[RestoreToStateChange] stateChangeId: ", fromStateChangeId + i)
+		//log.Info("[RestoreToStateChange] stateChangeId: ", fromStateChangeId + i)
 		common.SetRandSeed(fromStateChangeId + i, selfAddr)
 		wal.StateManager.Dispatch(change)
 		i++
 	}
-	if wal.StateManager.CurrentState != nil {
-		log.Info("[QueueIdsToQueues] qNum = ", len(wal.StateManager.CurrentState.(*transfer.ChainState).QueueIdsToQueues))
-		for _, v :=  range wal.StateManager.CurrentState.(*transfer.ChainState).QueueIdsToQueues {
-			qLen += len(v)
-		}
-		log.Info("[QueueIdsToQueues] qLen = ", qLen)
-	}
+	//if wal.StateManager.CurrentState != nil {
+	//	log.Info("[QueueIdsToQueues] qNum = ", len(wal.StateManager.CurrentState.(*transfer.ChainState).QueueIdsToQueues))
+	//	for _, v :=  range wal.StateManager.CurrentState.(*transfer.ChainState).QueueIdsToQueues {
+	//		qLen += len(v)
+	//	}
+	//	log.Info("[QueueIdsToQueues] qLen = ", qLen)
+	//}
 
 	return wal
 }
@@ -90,7 +90,7 @@ func (self *WriteAheadLog) LogAndDispatch(stateChange transfer.StateChange, self
 	defer self.dbLock.Unlock()
 
 	self.Storage.writeStateChange(stateChange, &self.StateChangeId)
-	log.Info("[LogAndDispatch] stateChangeId: ", self.StateChangeId)
+	//log.Info("[LogAndDispatch] stateChangeId: ", self.StateChangeId)
 	common.SetRandSeed(self.StateChangeId, selfAddr)
 	events := self.StateManager.Dispatch(stateChange)
 

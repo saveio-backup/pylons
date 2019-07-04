@@ -313,7 +313,7 @@ func clearIfFinalized(iteration *TransitionResult,
 	//offchain, either because the transfer was unlocked or expired, or because the
 	//channel was settled on chain and therefore the channel is removed."""
 	if IsStateNil(iteration.NewState) {
-		log.Error("[clearIfFinalized] iteration is nil")
+		log.Debug("[clearIfFinalized] iteration is nil")
 		return iteration
 	}
 	state := iteration.NewState.(*MediatorTransferState)
@@ -1092,7 +1092,7 @@ func handleInit(stateChange *ActionInitMediator, channelIdentifiersToChannels ma
 		//# If the balance proof is not valid, do *not* create a task. Otherwise it's
 		//# possible for an attacker to send multiple invalid transfers, and increase
 		//# the memory usage of this Node.
-		log.Error("[handleInit]     HandleReceiveLockedTransfer", err.Error())
+		log.Warn("[handleInit] HandleReceiveLockedTransfer :", err.Error())
 		return &TransitionResult{NewState: nil, Events: events}
 	}
 	for _, e := range events {
@@ -1248,7 +1248,6 @@ func handleOffChainSecretReveal(mediatorState *MediatorTransferState, mediatorSt
 		payerChannel, blockNumber)
 
 	if isSecretUnknown && isValidReveal && !hasPayerTransferExpired {
-		log.Infof("handleOffChainSecretReveal  handleOffChainSecretReveal")
 		secretHash := sha256.Sum256(mediatorStateChange.Secret)
 		iteration, err = secretLearned(mediatorState, channelIdentifiersToChannels,
 			blockNumber, mediatorStateChange.Secret, secretHash, payerChannelId, mediatorStateChange.Sender)

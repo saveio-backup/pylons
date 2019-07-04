@@ -300,7 +300,7 @@ func maybeAddTokenNetwork(chainState *ChainState, paymentNetworkIdentifier commo
 func inPlaceDeleteMessageQueue(chainState *ChainState, stateChange StateChange, queueId QueueIdentifier) {
 	queue, ok := chainState.QueueIdsToQueues[queueId]
 	if !ok {
-		log.Infof("[inPlaceDeleteMessageQueue] queueId is not in QueueIdsToQueues.")
+		//log.Infof("[inPlaceDeleteMessageQueue] queueId is not in QueueIdsToQueues.")
 		return
 	}
 
@@ -315,7 +315,7 @@ func inPlaceDeleteMessageQueue(chainState *ChainState, stateChange StateChange, 
 }
 
 func inPlaceDeleteMessage(messageQueue []Event, stateChange StateChange) []Event {
-	found := false
+	//found := false
 	log.Debug("[inPlaceDeleteMessageQueue] called for:", reflect.TypeOf(stateChange).String())
 	if messageQueue == nil {
 		return messageQueue
@@ -326,17 +326,17 @@ func inPlaceDeleteMessage(messageQueue []Event, stateChange StateChange) []Event
 		message := GetSenderMessageEvent(messageQueue[i])
 		log.Debugf("[inPlaceDeleteMessageQueue] message: %v, sender:%v, messageId:%v", message, sender, messageId)
 		if message.MessageIdentifier == messageId && common.AddressEqual(common.Address(message.Recipient), sender) {
-			log.Infof("[inPlaceDeleteMessageQueue] messageId: %d match", messageId)
+			//log.Infof("[inPlaceDeleteMessageQueue] messageId: %d match", messageId)
 			messageQueue = append(messageQueue[:i], messageQueue[i+1:]...)
 			len--
-			found = true
+			//found = true
 		} else {
 			i++
 		}
 	}
-	if !found {
-		log.Errorf("[inPlaceDeleteMessageQueue], messageId: %d not found", messageId)
-	}
+	//if !found {
+	//	log.Errorf("[inPlaceDeleteMessageQueue], messageId: %d not found", messageId)
+	//}
 	return messageQueue
 }
 
@@ -549,7 +549,7 @@ func handleProcessed(chainState *ChainState, stateChange *ReceiveProcessed) *Tra
 		}
 	}
 
-	log.Infof("[handleProcessed] MessageIdentifier: %d", stateChange.MessageIdentifier)
+	//log.Infof("[handleProcessed] MessageIdentifier: %d", stateChange.MessageIdentifier)
 	for k := range chainState.QueueIdsToQueues {
 		inPlaceDeleteMessageQueue(chainState, stateChange, k)
 	}
