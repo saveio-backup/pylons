@@ -112,12 +112,13 @@ func (this *Transport) InitQueue(queueId *transfer.QueueIdentifier) *Queue {
 
 	this.messageQueues.Store(*queueId, q)
 
-	go this.QueueSend(q, queueId)
+	// queueid cannot be pointer type otherwise it might be updated outside QueueSend
+	go this.QueueSend(q, *queueId)
 
 	return q
 }
 
-func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier) {
+func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier) {
 	var interval time.Duration = 3
 
 	t := time.NewTimer(interval * time.Second)
@@ -127,7 +128,7 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 		case <-queue.DataCh:
 			log.Debugf("[QueueSend] <-queue.DataCh Time: %s queue: %p\n", time.Now().String(), queue)
 			t.Reset(interval * time.Second)
-			this.PeekAndSend(queue, queueId)
+			this.PeekAndSend(queue, &queueId)
 		// handle timeout retry
 		case <-t.C:
 			log.Debugf("[QueueSend]  <-t.C Time: %s queue: %p\n", time.Now().String(), queue)
@@ -140,7 +141,7 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 			log.Warnf("Timeout retry for msg = %+v\n", msg)
 
 			t.Reset(interval * time.Second)
-			err := this.PeekAndSend(queue, queueId)
+			err := this.PeekAndSend(queue, &queueId)
 			if err != nil {
 				log.Error("send message failed:", err)
 				t.Stop()
@@ -166,7 +167,7 @@ func (this *Transport) QueueSend(queue *Queue, queueId *transfer.QueueIdentifier
 				if queue.Len() != 0 {
 					log.Debug("msgId.MessageId == item.messageId.MessageId queue.Len() != 0")
 					t.Reset(interval * time.Second)
-					this.PeekAndSend(queue, queueId)
+					this.PeekAndSend(queue, &queueId)
 				}
 			} else {
 				log.Warn("[DeliverChan] msgId.MessageId != item.messageId.MessageId queue.Len: ", queue.Len())
