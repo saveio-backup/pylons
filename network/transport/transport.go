@@ -249,18 +249,18 @@ func (this *Transport) SetHostAddr(address common.Address, hostAddr string) {
 }
 
 func (this *Transport) GetHostAddr(address common.Address) (string, error) {
-	if v, ok := this.NodeAddressToIpPort.Load(address); ok {
-		return v.(string), nil
-	} else {
-		hostAddr, err := this.getHostAddrCallback(address)
-		if err == nil {
-			this.NodeAddressToIpPort.Store(address, hostAddr)
-			this.NodeIpPortToAddress.Store(hostAddr, address)
-			return hostAddr, err
-		}
-		log.Errorf("[GetHostAddr] getHostAddrCallback error: %s", err.Error())
-		return "", fmt.Errorf("[GetHostAddr] host addr is not set")
+	// if v, ok := this.NodeAddressToIpPort.Load(address); ok {
+	// 	return v.(string), nil
+	// } else {
+	hostAddr, err := this.getHostAddrCallback(address)
+	if err == nil {
+		this.NodeAddressToIpPort.Store(address, hostAddr)
+		this.NodeIpPortToAddress.Store(hostAddr, address)
+		return hostAddr, err
 	}
+	log.Errorf("[GetHostAddr] getHostAddrCallback error: %s", err.Error())
+	return "", fmt.Errorf("[GetHostAddr] host addr is not set")
+	// }
 }
 
 func (this *Transport) StartHealthCheck(address common.Address) {
