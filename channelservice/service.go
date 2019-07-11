@@ -322,7 +322,7 @@ func (self *ChannelService) InitializeTransactionsQueues(chainState *transfer.Ch
 
 func (self *ChannelService) RegisterPaymentStatus(target common.Address, identifier common.PaymentID, paymentType common.PaymentType,
 	amount common.TokenAmount, tokenNetworkIdentifier common.TokenNetworkID) *PaymentStatus {
-	status := &PaymentStatus{
+	status := PaymentStatus{
 		paymentType:            paymentType,
 		paymentIdentifier:      identifier,
 		amount:                 amount,
@@ -341,7 +341,7 @@ func (self *ChannelService) RegisterPaymentStatus(target common.Address, identif
 		self.targetsToIdentifierToStatues[common.Address(target)] = payments
 	}
 
-	return status
+	return &status
 }
 
 func (self *ChannelService) GetPaymentStatus(target common.Address, identifier common.PaymentID) (status *PaymentStatus, exist bool) {
@@ -352,7 +352,8 @@ func (self *ChannelService) GetPaymentStatus(target common.Address, identifier c
 	if exist {
 		paymentStatus, ok := payments.Load(identifier)
 		if ok {
-			return paymentStatus.(*PaymentStatus), true
+			pmStatus := paymentStatus.(PaymentStatus)
+			return &pmStatus, true
 		}
 	}
 

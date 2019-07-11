@@ -198,6 +198,16 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 		log.Error("[PeekAndSend] GetHostAddr address is nil for %s", common.ToBase58(queueId.Recipient))
 		return errors.New("no valid address to send message")
 	}
+
+	if state, err := this.GetNodeNetworkState(address); err != nil {
+		if state != transfer.NetworkReachable {
+			if err = client.P2pConnect(address); err != nil {
+				log.Errorf("[PeekAndSend], state != transfer.NetworkReachable connect error: %s",
+					err.Error())
+			}
+		}
+	}
+
 	msgId := common.MessageID(item.(*QueueItem).messageId.MessageId)
 	log.Debugf("[PeekAndSend] address: %s msgId: %v, queue: %p\n", address, msgId, queue)
 	//this.addressQueueMap.LoadOrStore(address, queue)
@@ -242,20 +252,32 @@ func (this *Transport) SetNodeNetworkState(nodeNetAddress string, state string) 
 	nodeAddress := nodeAddressTmp.(common.Address)
 
 	chainState := this.ChannelService.StateFromChannel()
-	//if _, ok = chainState.NodeAddressesToNetworkStates.Load(nodeAddress); ok {
-	//	return
-	//}
 	if chainState != nil {
 		chainState.NodeAddressesToNetworkStates.Store(nodeAddress, state)
-		// chainState.NodeAddressesToNetworkStates.Range(func(key, value interface{}) bool {
-		// 	addr := common.ToBase58(key.(common.Address))
-		// 	log.Infof("Addr : %s  State: %s", addr, value.(string))
-		// 	return true
-		// })
 	} else {
 		log.Errorf("[SetNodeNetworkState] set %s state %s error: chainState == nil",
 			common.ToBase58(nodeAddress), state)
 	}
+}
+
+func (this *Transport) GetNodeNetworkState(nodeNetAddress string) (string, error) {
+	nodeAddressTmp, ok := this.NodeIpPortToAddress.Load(nodeNetAddress)
+	if !ok {
+		log.Error("[syncPeerState] NOK, continue")
+		return "", fmt.Errorf("[GetNodeNetworkState] cann't find nodeAddress ")
+	}
+	nodeAddress := nodeAddressTmp.(common.Address)
+
+	chainState := this.ChannelService.StateFromChannel()
+	if chainState != nil {
+		if state, ok := chainState.NodeAddressesToNetworkStates.Load(nodeAddress); ok {
+			return state.(string), nil
+		}
+	}
+	log.Errorf("[GetNodeNetworkState] get %s state error: chainState is nil",
+			common.ToBase58(nodeAddress))
+	return "", fmt.Errorf("[GetNodeNetworkState] get %s state error: chainState is nil",
+		common.ToBase58(nodeAddress))
 }
 
 func (this *Transport) Receive(message proto.Message, from string) {
@@ -348,6 +370,16 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 		log.Debugf("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v",
 			reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier.MessageId,
 			nodeAddress)
+
+		if state, err := this.GetNodeNetworkState(nodeAddress); err != nil {
+			if state != transfer.NetworkReachable {
+				if err = client.P2pConnect(nodeAddress); err != nil {
+					log.Errorf("[PeekAndSend], state != transfer.NetworkReachable connect error: %s",
+						err.Error())
+				}
+			}
+		}
+
 		err = client.P2pSend(nodeAddress, deliveredMessage)
 		if err != nil {
 			log.Errorf("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v error: %s",
