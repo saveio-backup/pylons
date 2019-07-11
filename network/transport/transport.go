@@ -32,7 +32,7 @@ type Transport struct {
 	messageQueues   *sync.Map
 	addressQueueMap *sync.Map
 	kill            chan struct{}
-
+	getHostAddrCallback func(address common.Address) (string, error)
 	ChannelService ChannelServiceInterface
 }
 
@@ -221,6 +221,11 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 	return nil
 }
 
+func (this *Transport) SetGetHostAddrCallback(getHostAddrCallback func(address common.Address) (string, error)) {
+	this.getHostAddrCallback = getHostAddrCallback
+}
+
+
 func (this *Transport) SetHostAddr(address common.Address, hostAddr string) {
 	this.NodeAddressToIpPort.Store(address, hostAddr)
 	this.NodeIpPortToAddress.Store(hostAddr, address)
@@ -230,7 +235,14 @@ func (this *Transport) GetHostAddr(address common.Address) (string, error) {
 	if v, ok := this.NodeAddressToIpPort.Load(address); ok {
 		return v.(string), nil
 	} else {
-		return "", fmt.Errorf("host addr is not set")
+		hostAddr, err := this.getHostAddrCallback(address)
+		if err == nil {
+			this.NodeAddressToIpPort.Store(address, hostAddr)
+			this.NodeIpPortToAddress.Store(hostAddr, address)
+			return hostAddr, err
+		}
+		log.Errorf("[GetHostAddr] getHostAddrCallback error: %s", err.Error())
+		return "", fmt.Errorf("[GetHostAddr] host addr is not set")
 	}
 }
 

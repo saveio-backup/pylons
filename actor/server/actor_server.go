@@ -71,6 +71,9 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 	case *SetHostAddrReq:
 		this.chSrv.Service.SetHostAddr(msg.addr, msg.netAddr)
 		ctx.Sender().Request(SetHostAddrResp{}, ctx.Self())
+	case *SetGetHostAddrCallbackReq:
+		this.chSrv.Service.SetHostAddrCallBack(msg.GetHostAddrCallback)
+		ctx.Sender().Request(SetGetHostAddrCallbackResp{}, ctx.Self())
 	case *GetHostAddrReq:
 		netAddr, err := this.chSrv.Service.GetHostAddr(msg.addr)
 		if err == nil && netAddr != "" {

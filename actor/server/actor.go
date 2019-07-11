@@ -49,6 +49,17 @@ type GetHostAddrResp struct {
 	addr    common.Address
 	netAddr string
 }
+
+type GetHostAddrCallbackType func(address common.Address) (string, error)
+
+type SetGetHostAddrCallbackReq struct {
+	GetHostAddrCallback    GetHostAddrCallbackType
+}
+
+type SetGetHostAddrCallbackResp struct {
+	Err       error
+}
+
 type OpenChannelRet struct {
 	ChannelID common.ChannelID
 	Done      chan bool
@@ -266,6 +277,17 @@ func GetHostAddr(addr common.Address) (string, error) {
 		hostAddr := ret.(GetHostAddrResp)
 		return hostAddr.netAddr, nil
 	}
+}
+
+func SetGetHostAddrCallback(getHostAddrCallback GetHostAddrCallbackType) error {
+	setGetHostAddrReq := &SetGetHostAddrCallbackReq{getHostAddrCallback}
+	future := ChannelServerPid.RequestFuture(setGetHostAddrReq, constants.REQ_TIMEOUT*time.Second)
+	if _, err := future.Result(); err != nil {
+		log.Error("[SetGetHostAddrCallback] error: ", err)
+		return err
+	}
+	return nil
+
 }
 
 func OpenChannel(tokenAddress common.TokenAddress, target common.Address) (common.ChannelID, error) {

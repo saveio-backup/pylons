@@ -1199,6 +1199,10 @@ func (self *ChannelService) GetHostAddr(nodeAddress common.Address) (string, err
 	return self.Transport.GetHostAddr(nodeAddress)
 }
 
+func (self *ChannelService) SetHostAddrCallBack(getHostAddrCallback func(address common.Address) (string, error)) {
+	self.Transport.SetGetHostAddrCallback(getHostAddrCallback)
+}
+
 func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAddress common.Address, totalWithdraw common.TokenAmount) (chan bool, error) {
 	chainState := self.StateFromChannel()
 	partAddr, _ := comm.AddressParseFromBytes(partnerAddress[:])
