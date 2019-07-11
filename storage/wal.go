@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/saveio/themis/common/log"
-	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/transfer"
+	"github.com/saveio/themis/common/log"
 )
 
 func RestoreToStateChange(transitionFunction transfer.StateTransitionCallback,
@@ -45,10 +45,10 @@ func RestoreToStateChange(transitionFunction transfer.StateTransitionCallback,
 	//	log.Info("[QueueIdsToQueues] qLen = ", qLen)
 	//}
 
-	i := 0
+	i := 1
 	for _, change := range unAppliedStateChanges {
 		//log.Info("[RestoreToStateChange] stateChangeId: ", fromStateChangeId + i)
-		common.SetRandSeed(fromStateChangeId + i, selfAddr)
+		common.SetRandSeed(fromStateChangeId+i, selfAddr)
 		wal.StateManager.Dispatch(change)
 		i++
 	}
