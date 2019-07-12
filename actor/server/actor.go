@@ -53,11 +53,11 @@ type GetHostAddrResp struct {
 type GetHostAddrCallbackType func(address common.Address) (string, error)
 
 type SetGetHostAddrCallbackReq struct {
-	GetHostAddrCallback    GetHostAddrCallbackType
+	GetHostAddrCallback GetHostAddrCallbackType
 }
 
 type SetGetHostAddrCallbackResp struct {
-	Err       error
+	Err error
 }
 
 type OpenChannelRet struct {
@@ -121,15 +121,17 @@ type CanTransferResp struct {
 	ret bool
 }
 
-type WithdrawReq struct {
-	tokenAddress   common.TokenAddress
-	partnerAddress common.Address
-	totalWithdraw  common.TokenAmount
+type WithdrawRet struct {
+	Success bool
+	Done    chan bool
+	Err     error
 }
 
-type WithdrawResp struct {
-	ret chan bool
-	err error
+type WithdrawReq struct {
+	TokenAddress   common.TokenAddress
+	PartnerAddress common.Address
+	TotalWithdraw  common.TokenAmount
+	Ret            *WithdrawRet
 }
 
 type ChannelReachableReq struct {
@@ -371,16 +373,20 @@ func CanTransfer(target common.Address, amount common.TokenAmount) (bool, error)
 
 func WithDraw(tokenAddress common.TokenAddress, partnerAddress common.Address,
 	totalWithdraw common.TokenAmount) (bool, error) {
-	withDrawReq := &WithdrawReq{tokenAddress, partnerAddress, totalWithdraw}
-	future := ChannelServerPid.RequestFuture(withDrawReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[WithDraw] error: ", err)
-		return false, err
-	} else {
-		withDrawResp := ret.(WithdrawResp)
-		d := <-withDrawResp.ret
-		return d, withDrawResp.err
+	ret := &WithdrawRet{
+		Success: false,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	withdrawReq := &WithdrawReq{
+		TokenAddress:   tokenAddress,
+		PartnerAddress: partnerAddress,
+		TotalWithdraw:  totalWithdraw,
+		Ret:            ret,
+	}
+	ChannelServerPid.Tell(withdrawReq)
+	<-withdrawReq.Ret.Done
+	return withdrawReq.Ret.Success, withdrawReq.Ret.Err
 }
 
 func ChannelReachable(target common.Address) (bool, error) {

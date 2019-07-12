@@ -127,9 +127,17 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		ret := this.chSrv.Service.CanTransfer(msg.target, msg.amount)
 		ctx.Sender().Request(CanTransferResp{ret}, ctx.Self())
 	case *WithdrawReq:
-		var ret chan bool
-		ret, err := this.chSrv.Service.Withdraw(msg.tokenAddress, msg.partnerAddress, msg.totalWithdraw)
-		ctx.Sender().Request(WithdrawResp{ret, err}, ctx.Self())
+		go func() {
+			ret, err := this.chSrv.Service.Withdraw(msg.TokenAddress, msg.PartnerAddress, msg.TotalWithdraw)
+			if err == nil {
+				msg.Ret.Success = <- ret
+				msg.Ret.Err = nil
+			} else {
+				msg.Ret.Success = false
+				msg.Ret.Err = err
+			}
+			msg.Ret.Done <- true
+		}()
 	case *ChannelReachableReq:
 		if transfer.NetworkReachable == this.chSrv.Service.GetNodeNetworkState(msg.target) {
 			ctx.Sender().Request(ChannelReachableResp{true, nil}, ctx.Self())
