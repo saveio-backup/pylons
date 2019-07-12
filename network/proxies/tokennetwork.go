@@ -51,7 +51,7 @@ type TokenNetwork struct {
 	ChannelClient           *chnsdk.Channel
 	nodeAddress             common.Address
 	openLock                sync.Mutex
-	openChannelTransactions map[common.Address]*sync.Mutex
+	openChannelTransactions map[common.Address]chan bool
 	opLock                  sync.Mutex
 	channelOperationsLock   map[common.Address]*sync.Mutex
 	depositLock             sync.Mutex
@@ -67,7 +67,7 @@ func NewTokenNetwork(
 	self.ChannelClient = chainClient.Native.Channel
 	self.nodeAddress = common.Address(self.ChannelClient.DefAcc.Address)
 
-	self.openChannelTransactions = make(map[common.Address]*sync.Mutex)
+	self.openChannelTransactions = make(map[common.Address]chan bool)
 	self.channelOperationsLock = make(map[common.Address]*sync.Mutex)
 
 	return self
@@ -110,9 +110,11 @@ func (self *TokenNetwork) NewNettingChannel(partner common.Address, settleTimeou
 	val, exist := self.openChannelTransactions[partner]
 
 	if exist == false {
-		newOpenChannelTransaction := new(sync.Mutex)
-		newOpenChannelTransaction.Lock()
-		defer newOpenChannelTransaction.Unlock()
+		newOpenChannelTransaction := make(chan bool)
+		defer func() {
+			close(newOpenChannelTransaction)
+			delete(self.openChannelTransactions, partner)
+		}()
 
 		self.openChannelTransactions[partner] = newOpenChannelTransaction
 		self.openLock.Unlock()
@@ -131,8 +133,7 @@ func (self *TokenNetwork) NewNettingChannel(partner common.Address, settleTimeou
 	} else {
 		self.openLock.Unlock()
 
-		val.Lock()
-		defer val.Unlock()
+		<-val
 	}
 
 	channelCreated := self.channelExistsAndNotSettled(self.nodeAddress, partner, 0)
