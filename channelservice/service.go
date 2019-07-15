@@ -1344,12 +1344,12 @@ func (self *ChannelService) GetCurrentBalance(partnerAddress common.Address) (co
 	return channelState.OurState.GetGasBalance(), nil
 }
 
-func (self *ChannelService) GetAvaliableBalance(partnerAddress common.Address) (common.TokenAmount, error) {
+func (self *ChannelService) GetAvailableBalance(partnerAddress common.Address) (common.TokenAmount, error) {
 	chainState := self.StateFromChannel()
 	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.microAddress),
 		common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), partnerAddress)
 	if channelState == nil {
-		return 0, errors.New("GetAvaliableBalance error, channel state is nil")
+		return 0, errors.New("GetAvailableBalance error, channel state is nil")
 	}
 	return transfer.GetDistributable(channelState.OurState, channelState.PartnerState), nil
 }

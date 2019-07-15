@@ -5,7 +5,7 @@ import (
 	"github.com/saveio/pylons/common"
 )
 
-const PROTOCOL = "quic"
+const PROTOCOL = "tcp"
 
 var Initiator1 = &ch.ChannelConfig{
 	ClientType:    "rpc",

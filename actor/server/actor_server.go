@@ -14,6 +14,7 @@ import (
 	com "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
 	"github.com/pkg/errors"
+	"fmt"
 )
 
 var ChannelServerPid *actor.PID
@@ -66,21 +67,36 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 	case *actor.Restart:
 		log.Warn("[ChannelActorServer] Actor restart")
 	case *VersionReq:
-		version := this.chSrv.GetVersion()
-		ctx.Sender().Request(VersionResp{version}, ctx.Self())
+		go func() {
+			msg.Ret.Version = this.chSrv.GetVersion()
+			msg.Ret.Err = nil
+			msg.Ret.Done <- true
+		}()
 	case *SetHostAddrReq:
-		this.chSrv.Service.SetHostAddr(msg.addr, msg.netAddr)
-		ctx.Sender().Request(SetHostAddrResp{}, ctx.Self())
-	case *SetGetHostAddrCallbackReq:
-		this.chSrv.Service.SetHostAddrCallBack(msg.GetHostAddrCallback)
-		ctx.Sender().Request(SetGetHostAddrCallbackResp{}, ctx.Self())
+		go func() {
+			this.chSrv.Service.SetHostAddr(msg.WalletAddr, msg.NetAddr)
+			msg.Ret.Err = nil
+			msg.Ret.Done <- true
+		}()
 	case *GetHostAddrReq:
-		netAddr, err := this.chSrv.Service.GetHostAddr(msg.addr)
-		if err == nil && netAddr != "" {
-			ctx.Sender().Request(GetHostAddrResp{msg.addr, netAddr}, ctx.Self())
-		} else {
-			ctx.Sender().Request(GetHostAddrResp{msg.addr, ""}, ctx.Self())
-		}
+		go func() {
+			netAddr, err := this.chSrv.Service.GetHostAddr(msg.WalletAddr)
+			if err != nil {
+				msg.Ret.Err = err
+			} else if netAddr == "" {
+				msg.Ret.Err = fmt.Errorf("NetAddr is nil")
+			} else {
+				msg.Ret.Err = nil
+			}
+			msg.Ret.Done <- true
+		}()
+	case *SetGetHostAddrCallbackReq:
+		go func() {
+			this.chSrv.Service.SetHostAddrCallBack(msg.GetHostAddrCallback)
+			msg.Ret.Err = nil
+			msg.Ret.Done <- true
+
+		}()
 	case *OpenChannelReq:
 		go func() {
 			channelId := this.chSrv.Service.OpenChannel(msg.TokenAddress, msg.Target)
@@ -95,7 +111,8 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		}()
 	case *SetTotalChannelDepositReq:
 		go func() {
-			msg.Ret.Err = this.chSrv.Service.SetTotalChannelDeposit(msg.TokenAddress, msg.PartnerAdder, msg.TotalDeposit)
+			msg.Ret.Err = this.chSrv.Service.SetTotalChannelDeposit(msg.TokenAddress, msg.PartnerAdder,
+				msg.TotalDeposit)
 			msg.Ret.Done <- true
 		}()
 	case *DirectTransferReq:
@@ -124,8 +141,11 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 			msg.Ret.Done <- true
 		}()
 	case *CanTransferReq:
-		ret := this.chSrv.Service.CanTransfer(msg.target, msg.amount)
-		ctx.Sender().Request(CanTransferResp{ret}, ctx.Self())
+		go func() {
+			msg.Ret.Result = this.chSrv.Service.CanTransfer(msg.Target, msg.Amount)
+			msg.Ret.Err = nil
+			msg.Ret.Done <- true
+		}()
 	case *WithdrawReq:
 		go func() {
 			ret, err := this.chSrv.Service.Withdraw(msg.TokenAddress, msg.PartnerAddress, msg.TotalWithdraw)
@@ -139,53 +159,111 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 			msg.Ret.Done <- true
 		}()
 	case *ChannelReachableReq:
-		if transfer.NetworkReachable == this.chSrv.Service.GetNodeNetworkState(msg.target) {
-			ctx.Sender().Request(ChannelReachableResp{true, nil}, ctx.Self())
-		} else {
-			ctx.Sender().Request(ChannelReachableResp{false, nil}, ctx.Self())
-		}
+		go func() {
+			result := this.chSrv.Service.GetNodeNetworkState(msg.Target)
+			if result ==  transfer.NetworkReachable {
+				msg.Ret.Result = true
+				msg.Ret.Err = nil
+			} else if result == transfer.NetworkUnreachable {
+				msg.Ret.Result = false
+				msg.Ret.Err = fmt.Errorf("Node is unreacheable.")
+			} else if result == transfer.NetworkUnknown {
+				msg.Ret.Result = false
+				msg.Ret.Err = fmt.Errorf("Node is unknown.")
+			}
+			msg.Ret.Done <- true
+		}()
 	case *CloseChannelReq:
-		tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
-		this.chSrv.Service.ChannelClose(tokenAddress, msg.target, 3)
-		ctx.Sender().Request(CloseChannelResp{true, nil}, ctx.Self())
+		go func() {
+			tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
+			this.chSrv.Service.ChannelClose(tokenAddress, msg.Target, 3)
+			msg.Ret.Result = true
+			msg.Ret.Err = nil
+			msg.Ret.Done <- true
+		}()
 	case *NodeStateChangeReq:
-		this.chSrv.Service.Transport.SetNodeNetworkState(msg.Address, msg.State)
-		ctx.Sender().Request(NodeStateChangeResp{}, ctx.Self())
+		go func() {
+			this.chSrv.Service.Transport.SetNodeNetworkState(msg.Address, msg.State)
+			msg.Ret.Err = nil
+			msg.Ret.Done <- true
+		}()
 	case *HealthyCheckNodeReq:
-		this.chSrv.Service.Transport.StartHealthCheck(msg.Address)
+		go func() {
+			this.chSrv.Service.Transport.StartHealthCheck(msg.Address)
+			msg.Ret.Err = nil
+			msg.Ret.Done <- true
+		}()
 	case *GetTotalDepositBalanceReq:
-		amount, err := this.chSrv.Service.GetTotalDepositBalance(msg.target)
-		ctx.Sender().Request(GetTotalDepositBalanceResp{uint64(amount), err}, ctx.Self())
+		go func() {
+			amount, err := this.chSrv.Service.GetTotalDepositBalance(msg.Target)
+			msg.Ret.Ret = uint64(amount)
+			msg.Ret.Err = err
+			msg.Ret.Done <- true
+		}()
 	case *GetTotalWithdrawReq:
-		amount, err := this.chSrv.Service.GetTotalWithdraw(msg.target)
-		ctx.Sender().Request(GetTotalWithdrawResp{uint64(amount), err}, ctx.Self())
-	case *GetAvaliableBalanceReq:
-		amount, err := this.chSrv.Service.GetAvaliableBalance(msg.partnerAddress)
-		ctx.Sender().Request(GetAvaliableBalanceResp{uint64(amount), err}, ctx.Self())
+		go func() {
+			amount, err := this.chSrv.Service.GetTotalWithdraw(msg.Target)
+			msg.Ret.Ret = uint64(amount)
+			msg.Ret.Err = err
+			msg.Ret.Done <- true
+		}()
+	case *GetAvailableBalanceReq:
+		go func() {
+			amount, err := this.chSrv.Service.GetAvailableBalance(msg.PartnerAddress)
+			msg.Ret.Ret = uint64(amount)
+			msg.Ret.Err = err
+			msg.Ret.Done <- true
+		}()
 	case *GetCurrentBalanceReq:
-		amount, err := this.chSrv.Service.GetCurrentBalance(msg.partnerAddress)
-		ctx.Sender().Request(GetCurrentBalanceResp{uint64(amount), err}, ctx.Self())
+		go func() {
+			amount, err := this.chSrv.Service.GetCurrentBalance(msg.PartnerAddress)
+			msg.Ret.Ret = uint64(amount)
+			msg.Ret.Err = err
+			msg.Ret.Done <- true
+		}()
 	case *CooperativeSettleReq:
-		tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
-		err := this.chSrv.Service.ChannelCooperativeSettle(tokenAddress, msg.partnerAddress)
-		ctx.Sender().Request(CooperativeSettleResp{err}, ctx.Self())
+		go func() {
+			tokenAddr := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
+			msg.Ret.Err = this.chSrv.Service.ChannelCooperativeSettle(tokenAddr, msg.PartnerAddress)
+			msg.Ret.Done <- true
+		}()
 	case *GetUnitPricesReq:
-		ctx.Sender().Request(GetUnitPricesResp{0, nil}, ctx.Self())
+		msg.Ret.Ret = 0
+		msg.Ret.Err = nil
+		msg.Ret.Done <- true
 	case *SetUnitPricesReq:
-		ctx.Sender().Request(SetUnitPricesResp{true}, ctx.Self())
+		msg.Ret.Ret = true
+		msg.Ret.Err = nil
+		msg.Ret.Done <- true
 	case *GetAllChannelsReq:
-		channelInfos := this.chSrv.Service.GetAllChannelInfo()
-		ctx.Sender().Request(GetAllChannelsResp{getChannelInfosRespFromChannelInfos(channelInfos)}, ctx.Self())
+		go func() {
+			channelsInfo := this.chSrv.Service.GetAllChannelInfo()
+			msg.Ret.Ret = getChannelsInfoRespFromChannelsInfo(channelsInfo)
+			msg.Ret.Err = nil
+			msg.Ret.Done <- true
+		}()
 	case *RegisterReceiveNotificationReq:
-		notificationChannel := make(chan *transfer.EventPaymentReceivedSuccess)
-		this.chSrv.RegisterReceiveNotification(notificationChannel)
-		ctx.Sender().Request(RegisterRecieveNotificationResp{notificationChannel}, ctx.Self())
+		go func() {
+			notificationChannel := make(chan *transfer.EventPaymentReceivedSuccess)
+			this.chSrv.RegisterReceiveNotification(notificationChannel)
+			msg.Ret.NotificationChannel = notificationChannel
+			msg.Ret.Err = nil
+			msg.Ret.Done <- true
+		}()
+
 	case *p2p_act.RecvMsg:
-		this.chSrv.Service.Transport.Receive(msg.Message, msg.From)
-		ctx.Sender().Request(p2p_act.P2pResp{nil}, ctx.Self())
+		go func() {
+			this.chSrv.Service.Transport.Receive(msg.Message, msg.From)
+			msg.Ret.Err = nil
+			msg.Ret.Done <- true
+		}()
 	case *LastFilterBlockHeightReq:
-		height := this.chSrv.Service.GetLastFilterBlock()
-		ctx.Sender().Request(LastFilterBlockHeightResp{Height: uint32(height)}, ctx.Self())
+		go func() {
+			height := this.chSrv.Service.GetLastFilterBlock()
+			msg.Ret.Height = uint32(height)
+			msg.Ret.Err = nil
+			msg.Ret.Done <- true
+		}()
 	default:
 		log.Errorf("[ChannelActorServer] receive unknown message type:%+v", msg)
 	}
@@ -202,8 +280,8 @@ func (this *ChannelActorServer) GetLocalPID() *actor.PID {
 func (this *ChannelActorServer) GetChannelService() *oc.Channel {
 	return this.chSrv
 }
-func getChannelInfosRespFromChannelInfos(channelInfos []*channelservice.ChannelInfo) *ChannelInfosResp {
-	resp := &ChannelInfosResp{}
+func getChannelsInfoRespFromChannelsInfo(channelInfos []*channelservice.ChannelInfo) *ChannelsInfoResp {
+	resp := &ChannelsInfoResp{}
 	totalBalance := uint64(0)
 	infos := make([]*ChannelInfo, 0)
 	for _, info := range channelInfos {

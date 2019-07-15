@@ -58,14 +58,20 @@ func (this *P2PActor) Receive(ctx actor.Context) {
 	case *actor.Restart:
 		log.Warn("[oniP2p]actor restart")
 	case *act.ConnectReq:
-		err := this.net.Connect(msg.Address)
-		ctx.Sender().Request(&act.P2pResp{err}, ctx.Self())
+		go func() {
+			msg.Ret.Err = this.net.Connect(msg.Address)
+			msg.Ret.Done <- true
+		}()
 	case *act.CloseReq:
-		err := this.net.Close(msg.Address)
-		ctx.Sender().Request(&act.P2pResp{err}, ctx.Self())
+		go func() {
+			msg.Ret.Err = this.net.Close(msg.Address)
+			msg.Ret.Done <- true
+		}()
 	case *act.SendReq:
-		err := this.net.Send(msg.Data, msg.Address)
-		ctx.Sender().Request(&act.P2pResp{err}, ctx.Self())
+		go func() {
+			msg.Ret.Err = this.net.Send(msg.Data, msg.Address)
+			msg.Ret.Done <- true
+		}()
 	default:
 		log.Error("[P2PActor] receive unknown message type!")
 	}

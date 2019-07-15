@@ -1,295 +1,58 @@
 package server
 
 import (
-	"errors"
-	"time"
-
 	"github.com/gogo/protobuf/proto"
 	p2p_act "github.com/saveio/pylons/actor/client"
 	"github.com/saveio/pylons/common"
-	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/transfer"
-	"github.com/saveio/themis/common/log"
 )
 
-type ChannelInfo struct {
-	ChannelId     uint32
-	Balance       uint64
-	BalanceFormat string
-	Address       string
-	HostAddr      string
-	TokenAddr     string
-}
-
-type ChannelInfosResp struct {
-	Balance       uint64
-	BalanceFormat string
-	Channels      []*ChannelInfo
-}
-
-type VersionReq struct{}
-
-type VersionResp struct {
-	version string
-}
-
-type SetHostAddrReq struct {
-	addr    common.Address
-	netAddr string
-}
-
-type SetHostAddrResp struct {
-}
-
-type GetHostAddrReq struct {
-	addr common.Address
-}
-
-type GetHostAddrResp struct {
-	addr    common.Address
-	netAddr string
-}
-
-type GetHostAddrCallbackType func(address common.Address) (string, error)
-
-type SetGetHostAddrCallbackReq struct {
-	GetHostAddrCallback GetHostAddrCallbackType
-}
-
-type SetGetHostAddrCallbackResp struct {
-	Err error
-}
-
-type OpenChannelRet struct {
-	ChannelID common.ChannelID
-	Done      chan bool
-	Err       error
-}
-
-type OpenChannelReq struct {
-	TokenAddress common.TokenAddress
-	Target       common.Address
-	Ret          *OpenChannelRet
-}
-
-type SetTotalChannelDepositRet struct {
-	Done chan bool
-	Err  error
-}
-
-type SetTotalChannelDepositReq struct {
-	TokenAddress common.TokenAddress
-	PartnerAdder common.Address
-	TotalDeposit common.TokenAmount
-	Ret          *SetTotalChannelDepositRet
-}
-
-type DirectTransferRet struct {
-	Success bool
-	Done    chan bool
-	Err     error
-}
-
-type DirectTransferReq struct {
-	Target     common.Address
-	Amount     common.TokenAmount
-	Identifier common.PaymentID
-	Ret        *DirectTransferRet
-}
-
-type MediaTransferRet struct {
-	Success bool
-	Done    chan bool
-	Err     error
-}
-
-type MediaTransferReq struct {
-	RegisterAddress common.PaymentNetworkID
-	TokenAddress    common.TokenAddress
-	Target          common.Address
-	Amount          common.TokenAmount
-	Identifier      common.PaymentID
-	Ret             *MediaTransferRet
-}
-
-type CanTransferReq struct {
-	target common.Address
-	amount common.TokenAmount
-}
-
-type CanTransferResp struct {
-	ret bool
-}
-
-type WithdrawRet struct {
-	Success bool
-	Done    chan bool
-	Err     error
-}
-
-type WithdrawReq struct {
-	TokenAddress   common.TokenAddress
-	PartnerAddress common.Address
-	TotalWithdraw  common.TokenAmount
-	Ret            *WithdrawRet
-}
-
-type ChannelReachableReq struct {
-	target common.Address
-}
-
-type ChannelReachableResp struct {
-	ret bool
-	err error
-}
-
-type CloseChannelReq struct {
-	target common.Address
-}
-
-type CloseChannelResp struct {
-	ret bool
-	err error
-}
-
-type GetTotalDepositBalanceReq struct {
-	target common.Address
-}
-
-type GetTotalDepositBalanceResp struct {
-	ret uint64
-	err error
-}
-
-type GetTotalWithdrawReq struct {
-	target common.Address
-}
-
-type GetTotalWithdrawResp struct {
-	ret uint64
-	err error
-}
-
-type GetAvaliableBalanceReq struct {
-	partnerAddress common.Address
-}
-
-type GetAvaliableBalanceResp struct {
-	ret uint64
-	err error
-}
-
-type GetCurrentBalanceReq struct {
-	partnerAddress common.Address
-}
-
-type GetCurrentBalanceResp struct {
-	ret uint64
-	err error
-}
-
-type CooperativeSettleReq struct {
-	partnerAddress common.Address
-}
-
-type CooperativeSettleResp struct {
-	err error
-}
-
-type GetUnitPricesReq struct {
-	asset int32
-}
-
-type GetUnitPricesResp struct {
-	ret uint64
-	err error
-}
-
-type SetUnitPricesReq struct {
-	asset int32
-	price uint64
-}
-
-type SetUnitPricesResp struct {
-	ret bool
-}
-
-type GetAllChannelsReq struct {
-}
-
-type GetAllChannelsResp struct {
-	ret *ChannelInfosResp
-}
-
-type NodeStateChangeReq struct {
-	Address string
-	State   string
-}
-
-type NodeStateChangeResp struct{}
-
-type HealthyCheckNodeReq struct {
-	Address common.Address
-}
-
-type HealthyCheckNodeResp struct{}
-
-type ProcessResp struct{}
-
-type RegisterReceiveNotificationReq struct{}
-
-type RegisterRecieveNotificationResp struct {
-	notificationChannel chan *transfer.EventPaymentReceivedSuccess
-}
-
-type LastFilterBlockHeightReq struct{}
-type LastFilterBlockHeightResp struct {
-	Height uint32
-}
-
 func GetVersion() (string, error) {
-	chReq := &VersionReq{}
-	future := ChannelServerPid.RequestFuture(chReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[GetVersion] error: ", err)
-		return "", err
-	} else {
-		version := ret.(string)
-		return version, nil
+	ret := &VersionRet{
+		Version: "",
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
+	versionReq := &VersionReq{Ret:ret}
+	ChannelServerPid.Tell(versionReq)
+	<-versionReq.Ret.Done
+	return versionReq.Ret.Version, versionReq.Ret.Err
 }
 
-func SetHostAddr(addr common.Address, netAddr string) error {
-	setHostAddrReq := &SetHostAddrReq{addr, netAddr}
-	future := ChannelServerPid.RequestFuture(setHostAddrReq, constants.REQ_TIMEOUT*time.Second)
-	if _, err := future.Result(); err != nil {
-		log.Error("[SetHostAddr] error: ", err)
-		return err
+func SetHostAddr(walletAddr common.Address, netAddr string) error {
+	ret := &SetHostAddrRet{
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	return nil
+	setHostAddrReq := &SetHostAddrReq{WalletAddr:walletAddr, NetAddr:netAddr, Ret:ret}
+	ChannelServerPid.Tell(setHostAddrReq)
+	<-setHostAddrReq.Ret.Done
+	return setHostAddrReq.Ret.Err
 }
 
-func GetHostAddr(addr common.Address) (string, error) {
-	getHostAddrReq := &GetHostAddrReq{addr}
-	future := ChannelServerPid.RequestFuture(getHostAddrReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[GetHostAddr] error: ", err)
-		return "", err
-	} else {
-		hostAddr := ret.(GetHostAddrResp)
-		return hostAddr.netAddr, nil
+func GetHostAddr(walletAddr common.Address) (string, error) {
+	ret := &GetHostAddrRet{
+		WalletAddr: common.EmptyAddress,
+		NetAddr: "",
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
+	getHostAddrReq := &GetHostAddrReq{WalletAddr:walletAddr, Ret:ret}
+	ChannelServerPid.Tell(getHostAddrReq)
+	<-getHostAddrReq.Ret.Done
+	return getHostAddrReq.Ret.NetAddr, getHostAddrReq.Ret.Err
 }
 
 func SetGetHostAddrCallback(getHostAddrCallback GetHostAddrCallbackType) error {
-	setGetHostAddrReq := &SetGetHostAddrCallbackReq{getHostAddrCallback}
-	future := ChannelServerPid.RequestFuture(setGetHostAddrReq, constants.REQ_TIMEOUT*time.Second)
-	if _, err := future.Result(); err != nil {
-		log.Error("[SetGetHostAddrCallback] error: ", err)
-		return err
+	ret := &SetGetHostAddrCallbackRet{
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	return nil
 
+	setGetHostAddrCallbackReq := &SetGetHostAddrCallbackReq{GetHostAddrCallback: getHostAddrCallback, Ret: ret}
+	ChannelServerPid.Tell(setGetHostAddrCallbackReq)
+	<-setGetHostAddrCallbackReq.Ret.Done
+	return setGetHostAddrCallbackReq.Ret.Err
 }
 
 func OpenChannel(tokenAddress common.TokenAddress, target common.Address) (common.ChannelID, error) {
@@ -360,15 +123,15 @@ func MediaTransfer(registryAddress common.PaymentNetworkID, tokenAddress common.
 }
 
 func CanTransfer(target common.Address, amount common.TokenAmount) (bool, error) {
-	canTransferReq := &CanTransferReq{target, amount}
-	future := ChannelServerPid.RequestFuture(canTransferReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[CanTransfer] error: ", err)
-		return false, err
-	} else {
-		canTransferResp := ret.(CanTransferResp)
-		return canTransferResp.ret, nil
+	ret := &CanTransferRet{
+		Result: false,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	canTransferReq := &CanTransferReq{Target:target, Amount:amount, Ret:ret}
+	ChannelServerPid.Tell(canTransferReq)
+	<-canTransferReq.Ret.Done
+	return canTransferReq.Ret.Result, canTransferReq.Ret.Err
 }
 
 func WithDraw(tokenAddress common.TokenAddress, partnerAddress common.Address,
@@ -390,171 +153,177 @@ func WithDraw(tokenAddress common.TokenAddress, partnerAddress common.Address,
 }
 
 func ChannelReachable(target common.Address) (bool, error) {
-	reachableReq := &ChannelReachableReq{target}
-	future := ChannelServerPid.RequestFuture(reachableReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[ChannelReachable] error: ", err)
-		return false, err
-	} else {
-		channelReachableResp := ret.(ChannelReachableResp)
-		return channelReachableResp.ret, channelReachableResp.err
+	ret := &ChannelReachableRet{
+		Result: false,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	reachableReq := &ChannelReachableReq{Target:target, Ret:ret}
+	ChannelServerPid.Tell(reachableReq)
+	<-reachableReq.Ret.Done
+	return reachableReq.Ret.Result, reachableReq.Ret.Err
 }
 
 func CloseChannel(target common.Address) (bool, error) {
-	closeChannelReq := &CloseChannelReq{target}
-	future := ChannelServerPid.RequestFuture(closeChannelReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[CloseChannel] error: ", err)
-		return false, err
-	} else {
-		closeChannelResp := ret.(CloseChannelResp)
-		return closeChannelResp.ret, closeChannelResp.err
+	ret := &CloseChannelRet{
+		Result: false,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	closeChannelReq := &CloseChannelReq{Target:target, Ret:ret}
+	ChannelServerPid.Tell(closeChannelReq)
+	<-closeChannelReq.Ret.Done
+	return closeChannelReq.Ret.Result, closeChannelReq.Ret.Err
 }
 
 func GetTotalDepositBalance(target common.Address) (uint64, error) {
-	getTotalDepositBalanceReq := &GetTotalDepositBalanceReq{target}
-	future := ChannelServerPid.RequestFuture(getTotalDepositBalanceReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[GetTotalDepositBalance] error: ", err)
-		return 0, err
-	} else {
-		getTotalDepositBalanceResp := ret.(GetTotalDepositBalanceResp)
-		return getTotalDepositBalanceResp.ret, getTotalDepositBalanceResp.err
+	ret := &GetTotalDepositBalanceRet{
+		Ret: 0,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	getTotalDepositBalanceReq := &GetTotalDepositBalanceReq{Target:target, Ret:ret}
+	ChannelServerPid.Tell(getTotalDepositBalanceReq)
+	<-getTotalDepositBalanceReq.Ret.Done
+	return getTotalDepositBalanceReq.Ret.Ret, getTotalDepositBalanceReq.Ret.Err
 }
 
 func GetTotalWithdraw(target common.Address) (uint64, error) {
-	getTotalWithdrawReq := &GetTotalWithdrawReq{target}
-	future := ChannelServerPid.RequestFuture(getTotalWithdrawReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[GetTotalDepositBalance] error: ", err)
-		return 0, err
-	} else {
-		getTotalWithdrawResp := ret.(GetTotalWithdrawResp)
-		return getTotalWithdrawResp.ret, getTotalWithdrawResp.err
+	ret := &GetTotalWithdrawRet{
+		Ret: 0,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	getTotalWithdrawReq := &GetTotalWithdrawReq{Target:target, Ret:ret}
+	ChannelServerPid.Tell(getTotalWithdrawReq)
+	<-getTotalWithdrawReq.Ret.Done
+	return getTotalWithdrawReq.Ret.Ret, getTotalWithdrawReq.Ret.Err
 }
 
-func GetAvaliableBalance(partnerAddress common.Address) (uint64, error) {
-	getAvaliableBalanceReq := &GetAvaliableBalanceReq{partnerAddress}
-	future := ChannelServerPid.RequestFuture(getAvaliableBalanceReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[GetAvaliableBalance] error: ", err)
-		return 0, err
-	} else {
-		getAvaliableBalanceResp := ret.(GetAvaliableBalanceResp)
-		return getAvaliableBalanceResp.ret, getAvaliableBalanceResp.err
+func GetAvailableBalance(partnerAddr common.Address) (uint64, error) {
+	ret := &GetAvailableBalanceRet{
+		Ret: 0,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	getAvailableBalanceReq := &GetAvailableBalanceReq{PartnerAddress:partnerAddr, Ret:ret}
+	ChannelServerPid.Tell(getAvailableBalanceReq)
+	<-getAvailableBalanceReq.Ret.Done
+	return getAvailableBalanceReq.Ret.Ret, getAvailableBalanceReq.Ret.Err
 }
 
 func GetCurrentBalance(partnerAddress common.Address) (uint64, error) {
-	getCurrentBalanceReq := &GetCurrentBalanceReq{partnerAddress}
-	future := ChannelServerPid.RequestFuture(getCurrentBalanceReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[GetCurrentBalance] error: ", err)
-		return 0, err
-	} else {
-		getCurrentBalanceResp := ret.(GetCurrentBalanceResp)
-		return getCurrentBalanceResp.ret, getCurrentBalanceResp.err
+	ret := &GetCurrentBalanceRet{
+		Ret: 0,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	getCurrentBalanceReq := &GetCurrentBalanceReq{PartnerAddress:partnerAddress, Ret:ret}
+	ChannelServerPid.Tell(getCurrentBalanceReq)
+	<-getCurrentBalanceReq.Ret.Done
+	return getCurrentBalanceReq.Ret.Ret, getCurrentBalanceReq.Ret.Err
 }
 
 func CooperativeSettle(partnerAddress common.Address) error {
-	cooperativeSettleReq := &CooperativeSettleReq{partnerAddress}
-	future := ChannelServerPid.RequestFuture(cooperativeSettleReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[CooperativeSettle] error: ", err)
-		return err
-	} else {
-		cooperativeSettleResp := ret.(CooperativeSettleResp)
-		return cooperativeSettleResp.err
+	ret := &CooperativeSettleRet{
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	cooperativeSettleReq := &CooperativeSettleReq{PartnerAddress:partnerAddress, Ret:ret}
+	ChannelServerPid.Tell(cooperativeSettleReq)
+	<-cooperativeSettleReq.Ret.Done
+	return cooperativeSettleReq.Ret.Err
 }
 
 func GetUnitPrices(asset int32) (uint64, error) {
-	getUnitPricesReq := &GetUnitPricesReq{asset}
-	future := ChannelServerPid.RequestFuture(getUnitPricesReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[GetUnitPrices] error: ", err)
-		return 0, err
-	} else {
-		getUnitPricesResp := ret.(GetUnitPricesResp)
-		return getUnitPricesResp.ret, getUnitPricesResp.err
+	ret := &GetUnitPricesRet{
+		Ret: 0,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	getUnitPricesReq := &GetUnitPricesReq{Asset:asset, Ret:ret}
+	ChannelServerPid.Tell(getUnitPricesReq)
+	<-getUnitPricesReq.Ret.Done
+	return getUnitPricesReq.Ret.Ret, getUnitPricesReq.Ret.Err
 }
 
 func SetUnitPrices(asset int32, price uint64) error {
-	setUnitPricesReq := &SetUnitPricesReq{asset, price}
-	future := ChannelServerPid.RequestFuture(setUnitPricesReq, constants.REQ_TIMEOUT*time.Second)
-	if _, err := future.Result(); err != nil {
-		log.Error("[SetUnitPrices] error: ", err)
-		return err
-	} else {
-		return nil
+	ret := &SetUnitPricesRet{
+		Ret: false,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	setUnitPricesReq := &SetUnitPricesReq{Asset:asset, Price: price, Ret:ret}
+	ChannelServerPid.Tell(setUnitPricesReq)
+	<-setUnitPricesReq.Ret.Done
+	return setUnitPricesReq.Ret.Err
 }
 
-func GetAllChannels() *ChannelInfosResp {
-	getAllChannelsReq := &GetAllChannelsReq{}
-	future := ChannelServerPid.RequestFuture(getAllChannelsReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[GetAllChannels] error: ", err)
-		return nil
-	} else {
-		getAllChannelsResp := ret.(GetAllChannelsResp)
-		return getAllChannelsResp.ret
+func GetAllChannels() *ChannelsInfoResp {
+	ret := &GetAllChannelsRet{
+		Ret:     nil,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	getAllChannelsReq := &GetAllChannelsReq{Ret:ret}
+	ChannelServerPid.Tell(getAllChannelsReq)
+	<-getAllChannelsReq.Ret.Done
+	return getAllChannelsReq.Ret.Ret
 }
 
 func OnBusinessMessage(message proto.Message, from string) error {
-	future := ChannelServerPid.RequestFuture(&p2p_act.RecvMsg{From: from, Message: message},
-		constants.REQ_TIMEOUT*time.Second)
-	if _, err := future.Result(); err != nil {
-		log.Error("[OnBusinessMessage] error: ", err)
-		return err
+	ret := &p2p_act.RecvMsgRet{
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
-	return nil
+	recvMsg := &p2p_act.RecvMsg{From: from, Message: message, Ret: ret}
+	ChannelServerPid.Tell(recvMsg)
+	<-recvMsg.Ret.Done
+	return recvMsg.Ret.Err
 }
 
 func SetNodeNetworkState(address string, state string) error {
-	future := ChannelServerPid.RequestFuture(&NodeStateChangeReq{Address: address, State: state},
-		constants.REQ_TIMEOUT*time.Second)
-	if _, err := future.Result(); err != nil {
-		log.Error("[SetNodeNetworkState] error: ", err)
-		return err
+	ret := &NodeStateChangeRet{
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
-	return nil
+	nodeStateChangeReq := &NodeStateChangeReq{Address: address, State: state, Ret:ret}
+	ChannelServerPid.Tell(nodeStateChangeReq)
+	<-nodeStateChangeReq.Ret.Done
+	return nodeStateChangeReq.Ret.Err
 }
 
 func HealthyCheckNodeState(address common.Address) error {
-	ChannelServerPid.Tell(&HealthyCheckNodeReq{Address: address})
-	return nil
+	ret := &HealthyCheckNodeRet{
+		Done:    make(chan bool, 1),
+		Err:     nil,
+	}
+	healthyCheckNodeReq := &HealthyCheckNodeReq{Address: address, Ret:ret}
+	ChannelServerPid.Tell(healthyCheckNodeReq)
+	<-healthyCheckNodeReq.Ret.Done
+	return healthyCheckNodeReq.Ret.Err
 }
 
 func RegisterReceiveNotification() (chan *transfer.EventPaymentReceivedSuccess, error) {
-	registerReceiveNotificationReq := &RegisterReceiveNotificationReq{}
-	future := ChannelServerPid.RequestFuture(registerReceiveNotificationReq, constants.REQ_TIMEOUT*time.Second)
-	if ret, err := future.Result(); err != nil {
-		log.Error("[RegisterReceiveNotification] error: ", err)
-		return nil, err
-	} else {
-		registerRecieveNotificationResp := ret.(RegisterRecieveNotificationResp)
-		return registerRecieveNotificationResp.notificationChannel, nil
+	ret := &RegisterReceiveNotificationRet{
+		NotificationChannel:nil,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
+	registerReceiveNotificationReq := &RegisterReceiveNotificationReq{Ret:ret}
+	ChannelServerPid.Tell(registerReceiveNotificationReq)
+	<-registerReceiveNotificationReq.Ret.Done
+	return registerReceiveNotificationReq.Ret.NotificationChannel, registerReceiveNotificationReq.Ret.Err
 }
 
 func GetLastFilterBlockHeight() (uint32, error) {
-	req := &LastFilterBlockHeightReq{}
-	future := ChannelServerPid.RequestFuture(req, constants.REQ_TIMEOUT*time.Second)
-	ret, err := future.Result()
-	if err != nil {
-		return 0, err
+	ret := &LastFilterBlockHeightRet{
+		Height:  0,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
-	result, ok := ret.(LastFilterBlockHeightResp)
-	if !ok {
-		return 0, errors.New("invalid resp")
-	}
-	return result.Height, nil
+	lastFilterBlockHeightReq := &LastFilterBlockHeightReq{Ret:ret}
+	ChannelServerPid.Tell(lastFilterBlockHeightReq)
+	<-lastFilterBlockHeightReq.Ret.Done
+	return lastFilterBlockHeightReq.Ret.Height, lastFilterBlockHeightReq.Ret.Err
 }

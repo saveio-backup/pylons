@@ -1,12 +1,8 @@
 package client
 
 import (
-	"time"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/ontio/ontology-eventbus/actor"
-	"github.com/saveio/pylons/common/constants"
-	"github.com/saveio/themis/common/log"
 )
 
 var P2pServerPid *actor.PID
@@ -17,61 +13,78 @@ func SetP2pPid(p2pPid *actor.PID) {
 
 //------------------------------------------------------------------------------------
 
+type ConnectRet struct {
+	Done chan bool
+	Err  error
+}
+
 type ConnectReq struct {
 	Address string
+	Ret *ConnectRet
+}
+
+type CloseRet struct {
+	Done chan bool
+	Err  error
 }
 
 type CloseReq struct {
 	Address string
+	Ret *CloseRet
+}
+
+type SendRet struct {
+	Done chan bool
+	Err  error
 }
 
 type SendReq struct {
 	Address string
 	Data    proto.Message
+	Ret *SendRet
 }
-type P2pResp struct {
-	Error error
+
+type RecvMsgRet struct {
+	Done chan bool
+	Err  error
 }
 
 type RecvMsg struct {
 	From    string
 	Message proto.Message
+	Ret *RecvMsgRet
 }
 
-type NodeActiveReq struct {
-	Address string
-}
-
-type NodeActiveResp struct {
-	Active bool
-}
 
 func P2pConnect(address string) error {
-	chReq := &ConnectReq{address}
-	future := P2pServerPid.RequestFuture(chReq, constants.REQ_TIMEOUT*time.Second)
-	if _, err := future.Result(); err != nil {
-		log.Error("[P2pConnect] error: ", err)
-		return err
+	ret := &ConnectRet{
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
-	return nil
+	conRet := &ConnectReq{Address:address, Ret:ret}
+	P2pServerPid.Tell(conRet)
+	<-conRet.Ret.Done
+	return conRet.Ret.Err
 }
 
 func P2pClose(address string) error {
-	chReq := &CloseReq{address}
-	future := P2pServerPid.RequestFuture(chReq, constants.REQ_TIMEOUT*time.Second)
-	if _, err := future.Result(); err != nil {
-		log.Error("[P2pClose] error: ", err)
-		return err
+	ret := &CloseRet{
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
-	return nil
+	chReq := &CloseReq{Address:address, Ret:ret}
+	P2pServerPid.Tell(chReq)
+	<-chReq.Ret.Done
+	return chReq.Ret.Err
 }
 
 func P2pSend(address string, data proto.Message) error {
-	chReq := &SendReq{address, data}
-	future := P2pServerPid.RequestFuture(chReq, constants.REQ_TIMEOUT*time.Second)
-	if _, err := future.Result(); err != nil {
-		log.Error("[P2pSend] error: ", err)
-		return err
+	ret := &SendRet{
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
-	return nil
+	chReq := &SendReq{Address:address, Data:data, Ret:ret}
+	P2pServerPid.Tell(chReq)
+	<-chReq.Ret.Done
+	return chReq.Ret.Err
 }
