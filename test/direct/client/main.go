@@ -129,7 +129,7 @@ func main() {
 	}
 	depositAmount := common.TokenAmount(1000 * 1000000000)
 	if channelID != 0 {
-		log.Infof("start to deposit %d token to channel", depositAmount)
+		log.Infof("start to deposit %d token to channel %d", depositAmount, channelId)
 		err = ch_actor.SetTotalChannelDeposit(tokenAddress, common.Address(target), depositAmount)
 		if err != nil {
 			log.Fatal(err)

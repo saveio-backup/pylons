@@ -104,7 +104,7 @@ func main() {
 	channelID := channel.Service.OpenChannel(tokenAddress, common.Address(target))
 	depositAmount := common.TokenAmount(1000 * FACOTR)
 	if channelID != 0 {
-		log.Infof("start to deposit %d token to channel", depositAmount)
+		log.Infof("start to deposit %d token to channel %d", depositAmount, channelId)
 		err = channel.Service.SetTotalChannelDeposit(tokenAddress, common.Address(target), depositAmount)
 		if err != nil {
 			log.Fatal(err)

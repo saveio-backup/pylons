@@ -85,14 +85,14 @@ func main() {
 	}
 	time.Sleep(time.Second)
 
-	_, err = ch_actor.OpenChannel(tokenAddress, tc.Target1Addr)
+	channelId, err := ch_actor.OpenChannel(tokenAddress, tc.Target1Addr)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
 	depositAmount := common.TokenAmount(1000 * 1000000000)
-	log.Infof("start to deposit %d token to channel", depositAmount)
+	log.Infof("start to deposit %d token to channel %d", depositAmount, channelId)
 	err = ch_actor.SetTotalChannelDeposit(tokenAddress, tc.Target1Addr, depositAmount)
 	if err != nil {
 		log.Fatal(err)

@@ -5,6 +5,13 @@ import (
 	p2p_act "github.com/saveio/pylons/actor/client"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/transfer"
+	"time"
+	"fmt"
+)
+
+const (
+	defaultMinTimeOut = 1500
+	defaultMaxTimeOut = 24000
 )
 
 func GetVersion() (string, error) {
@@ -15,8 +22,11 @@ func GetVersion() (string, error) {
 	}
 	versionReq := &VersionReq{Ret:ret}
 	ChannelServerPid.Tell(versionReq)
-	<-versionReq.Ret.Done
-	return versionReq.Ret.Version, versionReq.Ret.Err
+	if err := waitForCallDone(versionReq.Ret.Done, "SetHostAddr", defaultMinTimeOut); err != nil {
+		return "", err
+	} else {
+		return versionReq.Ret.Version, versionReq.Ret.Err
+	}
 }
 
 func SetHostAddr(walletAddr common.Address, netAddr string) error {
@@ -26,8 +36,12 @@ func SetHostAddr(walletAddr common.Address, netAddr string) error {
 	}
 	setHostAddrReq := &SetHostAddrReq{WalletAddr:walletAddr, NetAddr:netAddr, Ret:ret}
 	ChannelServerPid.Tell(setHostAddrReq)
-	<-setHostAddrReq.Ret.Done
-	return setHostAddrReq.Ret.Err
+
+	if err := waitForCallDone(setHostAddrReq.Ret.Done, "SetHostAddr", defaultMinTimeOut); err != nil {
+		return err
+	} else {
+		return setHostAddrReq.Ret.Err
+	}
 }
 
 func GetHostAddr(walletAddr common.Address) (string, error) {
@@ -39,8 +53,12 @@ func GetHostAddr(walletAddr common.Address) (string, error) {
 	}
 	getHostAddrReq := &GetHostAddrReq{WalletAddr:walletAddr, Ret:ret}
 	ChannelServerPid.Tell(getHostAddrReq)
-	<-getHostAddrReq.Ret.Done
-	return getHostAddrReq.Ret.NetAddr, getHostAddrReq.Ret.Err
+
+	if err := waitForCallDone(getHostAddrReq.Ret.Done, "GetHostAddr", defaultMinTimeOut); err != nil {
+		return "", err
+	} else {
+		return getHostAddrReq.Ret.NetAddr, getHostAddrReq.Ret.Err
+	}
 }
 
 func SetGetHostAddrCallback(getHostAddrCallback GetHostAddrCallbackType) error {
@@ -51,8 +69,13 @@ func SetGetHostAddrCallback(getHostAddrCallback GetHostAddrCallbackType) error {
 
 	setGetHostAddrCallbackReq := &SetGetHostAddrCallbackReq{GetHostAddrCallback: getHostAddrCallback, Ret: ret}
 	ChannelServerPid.Tell(setGetHostAddrCallbackReq)
-	<-setGetHostAddrCallbackReq.Ret.Done
-	return setGetHostAddrCallbackReq.Ret.Err
+
+	if err := waitForCallDone(setGetHostAddrCallbackReq.Ret.Done, "SetGetHostAddrCallback", defaultMinTimeOut); err != nil {
+		return err
+	} else {
+		return setGetHostAddrCallbackReq.Ret.Err
+	}
+
 }
 
 func OpenChannel(tokenAddress common.TokenAddress, target common.Address) (common.ChannelID, error) {
@@ -63,8 +86,12 @@ func OpenChannel(tokenAddress common.TokenAddress, target common.Address) (commo
 	}
 	openChannelReq := &OpenChannelReq{TokenAddress: tokenAddress, Target: target, Ret: ret}
 	ChannelServerPid.Tell(openChannelReq)
-	<-openChannelReq.Ret.Done
-	return openChannelReq.Ret.ChannelID, openChannelReq.Ret.Err
+
+	if err := waitForCallDone(openChannelReq.Ret.Done, "OpenChannel", defaultMaxTimeOut); err != nil {
+		return 0, err
+	} else {
+		return openChannelReq.Ret.ChannelID, openChannelReq.Ret.Err
+	}
 }
 
 func SetTotalChannelDeposit(tokenAddress common.TokenAddress, partnerAddress common.Address,
@@ -80,8 +107,12 @@ func SetTotalChannelDeposit(tokenAddress common.TokenAddress, partnerAddress com
 		Ret:          ret,
 	}
 	ChannelServerPid.Tell(setTotalChannelDepositReq)
-	<-setTotalChannelDepositReq.Ret.Done
-	return setTotalChannelDepositReq.Ret.Err
+
+	if err := waitForCallDone(setTotalChannelDepositReq.Ret.Done, "SetTotalChannelDeposit", defaultMaxTimeOut); err != nil {
+		return err
+	} else {
+		return setTotalChannelDepositReq.Ret.Err
+	}
 }
 
 func DirectTransferAsync(amount common.TokenAmount, target common.Address,
@@ -98,8 +129,12 @@ func DirectTransferAsync(amount common.TokenAmount, target common.Address,
 		Ret:        ret,
 	}
 	ChannelServerPid.Tell(directTransferReq)
-	<-directTransferReq.Ret.Done
-	return directTransferReq.Ret.Success, directTransferReq.Ret.Err
+
+	if err := waitForCallDone(directTransferReq.Ret.Done, "DirectTransferAsync", defaultMaxTimeOut); err != nil {
+		return false, err
+	} else {
+		return directTransferReq.Ret.Success, directTransferReq.Ret.Err
+	}
 }
 
 func MediaTransfer(registryAddress common.PaymentNetworkID, tokenAddress common.TokenAddress,
@@ -118,8 +153,12 @@ func MediaTransfer(registryAddress common.PaymentNetworkID, tokenAddress common.
 		Ret:             ret,
 	}
 	ChannelServerPid.Tell(mediaTransferReq)
-	<-mediaTransferReq.Ret.Done
-	return mediaTransferReq.Ret.Success, mediaTransferReq.Ret.Err
+
+	if err := waitForCallDone(mediaTransferReq.Ret.Done, "MediaTransfer", defaultMaxTimeOut); err != nil {
+		return false, err
+	} else {
+		return mediaTransferReq.Ret.Success, mediaTransferReq.Ret.Err
+	}
 }
 
 func CanTransfer(target common.Address, amount common.TokenAmount) (bool, error) {
@@ -130,8 +169,12 @@ func CanTransfer(target common.Address, amount common.TokenAmount) (bool, error)
 	}
 	canTransferReq := &CanTransferReq{Target:target, Amount:amount, Ret:ret}
 	ChannelServerPid.Tell(canTransferReq)
-	<-canTransferReq.Ret.Done
-	return canTransferReq.Ret.Result, canTransferReq.Ret.Err
+
+	if err := waitForCallDone(canTransferReq.Ret.Done, "CanTransfer", defaultMinTimeOut); err != nil {
+		return false, err
+	} else {
+		return canTransferReq.Ret.Result, canTransferReq.Ret.Err
+	}
 }
 
 func WithDraw(tokenAddress common.TokenAddress, partnerAddress common.Address,
@@ -148,8 +191,12 @@ func WithDraw(tokenAddress common.TokenAddress, partnerAddress common.Address,
 		Ret:            ret,
 	}
 	ChannelServerPid.Tell(withdrawReq)
-	<-withdrawReq.Ret.Done
-	return withdrawReq.Ret.Success, withdrawReq.Ret.Err
+
+	if err := waitForCallDone(withdrawReq.Ret.Done, "WithDraw", defaultMaxTimeOut); err != nil {
+		return false, err
+	} else {
+		return withdrawReq.Ret.Success, withdrawReq.Ret.Err
+	}
 }
 
 func ChannelReachable(target common.Address) (bool, error) {
@@ -160,8 +207,12 @@ func ChannelReachable(target common.Address) (bool, error) {
 	}
 	reachableReq := &ChannelReachableReq{Target:target, Ret:ret}
 	ChannelServerPid.Tell(reachableReq)
-	<-reachableReq.Ret.Done
-	return reachableReq.Ret.Result, reachableReq.Ret.Err
+
+	if err := waitForCallDone(reachableReq.Ret.Done, "ChannelReachable", defaultMinTimeOut); err != nil {
+		return false, err
+	} else {
+		return reachableReq.Ret.Result, reachableReq.Ret.Err
+	}
 }
 
 func CloseChannel(target common.Address) (bool, error) {
@@ -172,8 +223,12 @@ func CloseChannel(target common.Address) (bool, error) {
 	}
 	closeChannelReq := &CloseChannelReq{Target:target, Ret:ret}
 	ChannelServerPid.Tell(closeChannelReq)
-	<-closeChannelReq.Ret.Done
-	return closeChannelReq.Ret.Result, closeChannelReq.Ret.Err
+
+	if err := waitForCallDone(closeChannelReq.Ret.Done, "CloseChannel", defaultMaxTimeOut); err != nil {
+		return false, err
+	} else {
+		return closeChannelReq.Ret.Result, closeChannelReq.Ret.Err
+	}
 }
 
 func GetTotalDepositBalance(target common.Address) (uint64, error) {
@@ -184,8 +239,12 @@ func GetTotalDepositBalance(target common.Address) (uint64, error) {
 	}
 	getTotalDepositBalanceReq := &GetTotalDepositBalanceReq{Target:target, Ret:ret}
 	ChannelServerPid.Tell(getTotalDepositBalanceReq)
-	<-getTotalDepositBalanceReq.Ret.Done
-	return getTotalDepositBalanceReq.Ret.Ret, getTotalDepositBalanceReq.Ret.Err
+
+	if err := waitForCallDone(getTotalDepositBalanceReq.Ret.Done, "GetTotalDepositBalance", defaultMinTimeOut); err != nil {
+		return 0, err
+	} else {
+		return getTotalDepositBalanceReq.Ret.Ret, getTotalDepositBalanceReq.Ret.Err
+	}
 }
 
 func GetTotalWithdraw(target common.Address) (uint64, error) {
@@ -196,8 +255,12 @@ func GetTotalWithdraw(target common.Address) (uint64, error) {
 	}
 	getTotalWithdrawReq := &GetTotalWithdrawReq{Target:target, Ret:ret}
 	ChannelServerPid.Tell(getTotalWithdrawReq)
-	<-getTotalWithdrawReq.Ret.Done
-	return getTotalWithdrawReq.Ret.Ret, getTotalWithdrawReq.Ret.Err
+
+	if err := waitForCallDone(getTotalWithdrawReq.Ret.Done, "GetTotalWithdraw", defaultMinTimeOut); err != nil {
+		return 0, err
+	} else {
+		return getTotalWithdrawReq.Ret.Ret, getTotalWithdrawReq.Ret.Err
+	}
 }
 
 func GetAvailableBalance(partnerAddr common.Address) (uint64, error) {
@@ -208,8 +271,12 @@ func GetAvailableBalance(partnerAddr common.Address) (uint64, error) {
 	}
 	getAvailableBalanceReq := &GetAvailableBalanceReq{PartnerAddress:partnerAddr, Ret:ret}
 	ChannelServerPid.Tell(getAvailableBalanceReq)
-	<-getAvailableBalanceReq.Ret.Done
-	return getAvailableBalanceReq.Ret.Ret, getAvailableBalanceReq.Ret.Err
+
+	if err := waitForCallDone(getAvailableBalanceReq.Ret.Done, "GetAvailableBalance", defaultMinTimeOut); err != nil {
+		return 0, err
+	} else {
+		return getAvailableBalanceReq.Ret.Ret, getAvailableBalanceReq.Ret.Err
+	}
 }
 
 func GetCurrentBalance(partnerAddress common.Address) (uint64, error) {
@@ -220,8 +287,12 @@ func GetCurrentBalance(partnerAddress common.Address) (uint64, error) {
 	}
 	getCurrentBalanceReq := &GetCurrentBalanceReq{PartnerAddress:partnerAddress, Ret:ret}
 	ChannelServerPid.Tell(getCurrentBalanceReq)
-	<-getCurrentBalanceReq.Ret.Done
-	return getCurrentBalanceReq.Ret.Ret, getCurrentBalanceReq.Ret.Err
+
+	if err := waitForCallDone(getCurrentBalanceReq.Ret.Done, "GetCurrentBalance", defaultMinTimeOut); err != nil {
+		return 0, err
+	} else {
+		return getCurrentBalanceReq.Ret.Ret, getCurrentBalanceReq.Ret.Err
+	}
 }
 
 func CooperativeSettle(partnerAddress common.Address) error {
@@ -231,8 +302,12 @@ func CooperativeSettle(partnerAddress common.Address) error {
 	}
 	cooperativeSettleReq := &CooperativeSettleReq{PartnerAddress:partnerAddress, Ret:ret}
 	ChannelServerPid.Tell(cooperativeSettleReq)
-	<-cooperativeSettleReq.Ret.Done
-	return cooperativeSettleReq.Ret.Err
+
+	if err := waitForCallDone(cooperativeSettleReq.Ret.Done, "CooperativeSettle", defaultMaxTimeOut); err != nil {
+		return err
+	} else {
+		return cooperativeSettleReq.Ret.Err
+	}
 }
 
 func GetUnitPrices(asset int32) (uint64, error) {
@@ -243,8 +318,12 @@ func GetUnitPrices(asset int32) (uint64, error) {
 	}
 	getUnitPricesReq := &GetUnitPricesReq{Asset:asset, Ret:ret}
 	ChannelServerPid.Tell(getUnitPricesReq)
-	<-getUnitPricesReq.Ret.Done
-	return getUnitPricesReq.Ret.Ret, getUnitPricesReq.Ret.Err
+
+	if err := waitForCallDone(getUnitPricesReq.Ret.Done, "GetUnitPrices", defaultMinTimeOut); err != nil {
+		return 0, err
+	} else {
+		return getUnitPricesReq.Ret.Ret, getUnitPricesReq.Ret.Err
+	}
 }
 
 func SetUnitPrices(asset int32, price uint64) error {
@@ -255,11 +334,15 @@ func SetUnitPrices(asset int32, price uint64) error {
 	}
 	setUnitPricesReq := &SetUnitPricesReq{Asset:asset, Price: price, Ret:ret}
 	ChannelServerPid.Tell(setUnitPricesReq)
-	<-setUnitPricesReq.Ret.Done
-	return setUnitPricesReq.Ret.Err
+
+	if err := waitForCallDone(setUnitPricesReq.Ret.Done, "SetUnitPrices", defaultMinTimeOut); err != nil {
+		return err
+	} else {
+		return setUnitPricesReq.Ret.Err
+	}
 }
 
-func GetAllChannels() *ChannelsInfoResp {
+func GetAllChannels() (*ChannelsInfoResp, error) {
 	ret := &GetAllChannelsRet{
 		Ret:     nil,
 		Done:    make(chan bool, 1),
@@ -267,8 +350,12 @@ func GetAllChannels() *ChannelsInfoResp {
 	}
 	getAllChannelsReq := &GetAllChannelsReq{Ret:ret}
 	ChannelServerPid.Tell(getAllChannelsReq)
-	<-getAllChannelsReq.Ret.Done
-	return getAllChannelsReq.Ret.Ret
+
+	if err := waitForCallDone(getAllChannelsReq.Ret.Done, "GetAllChannels", defaultMinTimeOut); err != nil {
+		return nil, err
+	} else {
+		return getAllChannelsReq.Ret.Ret, nil
+	}
 }
 
 func OnBusinessMessage(message proto.Message, from string) error {
@@ -278,8 +365,12 @@ func OnBusinessMessage(message proto.Message, from string) error {
 	}
 	recvMsg := &p2p_act.RecvMsg{From: from, Message: message, Ret: ret}
 	ChannelServerPid.Tell(recvMsg)
-	<-recvMsg.Ret.Done
-	return recvMsg.Ret.Err
+
+	if err := waitForCallDone(recvMsg.Ret.Done, "OnBusinessMessage", defaultMinTimeOut); err != nil {
+		return err
+	} else {
+		return recvMsg.Ret.Err
+	}
 }
 
 func SetNodeNetworkState(address string, state string) error {
@@ -289,8 +380,12 @@ func SetNodeNetworkState(address string, state string) error {
 	}
 	nodeStateChangeReq := &NodeStateChangeReq{Address: address, State: state, Ret:ret}
 	ChannelServerPid.Tell(nodeStateChangeReq)
-	<-nodeStateChangeReq.Ret.Done
-	return nodeStateChangeReq.Ret.Err
+
+	if err := waitForCallDone(nodeStateChangeReq.Ret.Done, "SetNodeNetworkState", defaultMinTimeOut); err != nil {
+		return err
+	} else {
+		return nodeStateChangeReq.Ret.Err
+	}
 }
 
 func HealthyCheckNodeState(address common.Address) error {
@@ -300,8 +395,12 @@ func HealthyCheckNodeState(address common.Address) error {
 	}
 	healthyCheckNodeReq := &HealthyCheckNodeReq{Address: address, Ret:ret}
 	ChannelServerPid.Tell(healthyCheckNodeReq)
-	<-healthyCheckNodeReq.Ret.Done
-	return healthyCheckNodeReq.Ret.Err
+
+	if err := waitForCallDone(healthyCheckNodeReq.Ret.Done, "HealthyCheckNodeState", defaultMinTimeOut); err != nil {
+		return err
+	} else {
+		return healthyCheckNodeReq.Ret.Err
+	}
 }
 
 func RegisterReceiveNotification() (chan *transfer.EventPaymentReceivedSuccess, error) {
@@ -312,8 +411,12 @@ func RegisterReceiveNotification() (chan *transfer.EventPaymentReceivedSuccess, 
 	}
 	registerReceiveNotificationReq := &RegisterReceiveNotificationReq{Ret:ret}
 	ChannelServerPid.Tell(registerReceiveNotificationReq)
-	<-registerReceiveNotificationReq.Ret.Done
-	return registerReceiveNotificationReq.Ret.NotificationChannel, registerReceiveNotificationReq.Ret.Err
+
+	if err := waitForCallDone(registerReceiveNotificationReq.Ret.Done, "RegisterReceiveNotification", defaultMinTimeOut); err != nil {
+		return nil, err
+	} else {
+		return registerReceiveNotificationReq.Ret.NotificationChannel, registerReceiveNotificationReq.Ret.Err
+	}
 }
 
 func GetLastFilterBlockHeight() (uint32, error) {
@@ -324,6 +427,22 @@ func GetLastFilterBlockHeight() (uint32, error) {
 	}
 	lastFilterBlockHeightReq := &LastFilterBlockHeightReq{Ret:ret}
 	ChannelServerPid.Tell(lastFilterBlockHeightReq)
-	<-lastFilterBlockHeightReq.Ret.Done
-	return lastFilterBlockHeightReq.Ret.Height, lastFilterBlockHeightReq.Ret.Err
+
+	if err := waitForCallDone(lastFilterBlockHeightReq.Ret.Done, "GetLastFilterBlockHeight", defaultMinTimeOut); err != nil {
+		return 0, err
+	} else {
+		return lastFilterBlockHeightReq.Ret.Height, lastFilterBlockHeightReq.Ret.Err
+	}
+}
+
+func waitForCallDone(c chan bool, funcName string, maxTimeOut int64) error {
+	if maxTimeOut < defaultMinTimeOut {
+		maxTimeOut = defaultMinTimeOut
+	}
+	select {
+	case <- c:
+		return nil
+	case <- time.After(time.Duration(maxTimeOut) * time.Millisecond):
+		return fmt.Errorf("function:[%s] timeout", funcName)
+	}
 }

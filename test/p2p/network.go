@@ -17,6 +17,7 @@ import (
 	"github.com/saveio/pylons/network/transport/messages"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis/common/log"
+	"reflect"
 )
 
 var once sync.Once
@@ -245,37 +246,41 @@ func (this *Network) syncPeerState(state *keepalive.PeerStateEvent) {
 //P2P network msg receive. transfer to actor_channel
 func (this *Network) Receive(message proto.Message, from string) error {
 	log.Debug("[P2pNetwork] Receive msgBus is accepting for syncNet messages ")
-
+	var err error
 	switch msg := message.(type) {
 	case *messages.Processed:
-		act.OnBusinessMessage(message, from)
+		err = act.OnBusinessMessage(message, from)
 	case *messages.Delivered:
-		act.OnBusinessMessage(message, from)
+		err = act.OnBusinessMessage(message, from)
 	case *messages.SecretRequest:
-		act.OnBusinessMessage(message, from)
+		err = act.OnBusinessMessage(message, from)
 	case *messages.RevealSecret:
-		act.OnBusinessMessage(message, from)
+		err = act.OnBusinessMessage(message, from)
 	case *messages.Secret:
-		act.OnBusinessMessage(message, from)
+		err = act.OnBusinessMessage(message, from)
 	case *messages.DirectTransfer:
-		act.OnBusinessMessage(message, from)
+		err = act.OnBusinessMessage(message, from)
 	case *messages.LockedTransfer:
-		act.OnBusinessMessage(message, from)
+		err = act.OnBusinessMessage(message, from)
 	case *messages.RefundTransfer:
-		act.OnBusinessMessage(message, from)
+		err = act.OnBusinessMessage(message, from)
 	case *messages.LockExpired:
-		act.OnBusinessMessage(message, from)
+		err = act.OnBusinessMessage(message, from)
 	case *messages.WithdrawRequest:
-		act.OnBusinessMessage(message, from)
+		err = act.OnBusinessMessage(message, from)
 	case *messages.Withdraw:
-		act.OnBusinessMessage(message, from)
+		err = act.OnBusinessMessage(message, from)
 	case *messages.CooperativeSettleRequest:
-		act.OnBusinessMessage(message, from)
+		err = act.OnBusinessMessage(message, from)
 	case *messages.CooperativeSettle:
-		act.OnBusinessMessage(message, from)
+		err = act.OnBusinessMessage(message, from)
 
 	default:
 		log.Errorf("[P2pNetwork Receive] unknown message type:%s", msg.String())
+	}
+	if err != nil {
+		log.Errorf("[P2pNetwork Receive] Type %s OnBusinessMessage error: ", reflect.TypeOf(message).String(),
+			err.Error())
 	}
 
 	return nil

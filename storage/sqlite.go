@@ -160,7 +160,7 @@ func (self *SQLiteStorage) getVersion() int {
 }
 
 func (self *SQLiteStorage) writeStateChange(stateChange transfer.StateChange, stateChangeId *int) {
-	log.Debug("[writeStateChange]: %v ", stateChange)
+	log.Debugf("[writeStateChange]: %v ", stateChange)
 	serializedData, err := jsonext.Marshal(stateChange)
 	if err != nil {
 		log.Errorf("[writeStateChange] stateChange type: %s jsonext.Marshal error: %s",

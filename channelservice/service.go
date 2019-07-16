@@ -716,7 +716,7 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 	regAddr := common.ToBase58(self.address)
 	patAddr := common.ToBase58(partnerAddress)
 	if id != 0 {
-		log.Infof("channel between %s and %s already setup", regAddr, patAddr)
+		log.Infof("channel between %s and %s already setup, id: %d", regAddr, patAddr, id)
 		return common.ChannelID(id)
 	}
 	if id == 0 {
