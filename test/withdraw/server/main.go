@@ -9,16 +9,23 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/saveio/carrier/crypto"
+	ch "github.com/saveio/pylons"
+	"github.com/saveio/pylons/actor/client"
+	ch_actor "github.com/saveio/pylons/actor/server"
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/test/p2p"
+	"github.com/saveio/pylons/test/p2p/actor/req"
+	p2p_actor "github.com/saveio/pylons/test/p2p/actor/server"
+	"github.com/saveio/pylons/transfer"
 	chainsdk "github.com/saveio/themis-go-sdk"
 	"github.com/saveio/themis-go-sdk/usdt"
 	"github.com/saveio/themis-go-sdk/wallet"
 	chaincomm "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/config"
 	"github.com/saveio/themis/common/log"
+	"github.com/saveio/themis/crypto/keypair"
 	"github.com/saveio/themis/smartcontract/service/native/utils"
-	ch "github.com/saveio/pylons"
-	"github.com/saveio/pylons/common"
-	"github.com/saveio/pylons/transfer"
 )
 
 var (
@@ -31,8 +38,7 @@ var testConfig = &ch.ChannelConfig{
 	ChainNodeURL:  "http://127.0.0.1:20336",
 	ListenAddress: "127.0.0.1:3001",
 	//MappingAddress: "10.0.1.105:3001",
-	Protocol:      "tcp",
-	RevealTimeout: "1000",
+	Protocol: "tcp",
 }
 var chainClient *chainsdk.Chain
 var our chaincomm.Address
@@ -69,6 +75,8 @@ func main() {
 		log.Fatal("GetDefaultAccount error:%s", err)
 		return
 	}
+	target, _ := chaincomm.AddressFromBase58("AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
+	our, _ = chaincomm.AddressFromBase58("Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
 
 	chainClient = chainsdk.NewChain()
 	chainClient.NewRpcClient().SetAddress(testConfig.ChainNodeURL)
@@ -76,46 +84,80 @@ func main() {
 
 	log.Infof("asset balance before open channel : %d", getAssetBalance(account.Address))
 
-	channel, err := ch.NewChannelService(testConfig, account)
+	//start channel and actor
+	ChannelActor, err := ch_actor.NewChannelActor(testConfig, account)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	err = ch_actor.SetHostAddr(common.Address(target), "127.0.0.1:3000")
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	chnPid := ChannelActor.GetLocalPID()
+
+	//start p2p and actor
+	p2pserver := p2p.NewP2P()
+	bPrivate := keypair.SerializePrivateKey(account.PrivKey())
+	bPub := keypair.SerializePublicKey(account.PubKey())
+	p2pserver.Keys = &crypto.KeyPair{
+		PrivateKey: bPrivate,
+		PublicKey:  bPub,
+	}
+
+	err = p2pserver.Start(testConfig.Protocol + "://" + testConfig.ListenAddress)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	P2pPid, err := p2p_actor.NewP2PActor(p2pserver)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	//binding channel and p2p pid
+	req.SetChannelPid(chnPid)
+	client.SetP2pPid(P2pPid)
+	//start channel service
+	err = ChannelActor.Start()
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	target, _ = chaincomm.AddressFromBase58("AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg")
-	our, _ = chaincomm.AddressFromBase58("Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC")
-	channel.Service.SetHostAddr(common.Address(target), "tcp://127.0.0.1:3000")
-
-	err = channel.StartService()
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
 	time.Sleep(time.Second)
 
-	go logCurrentBalance(channel, common.Address(target))
+	go logCurrentBalance(ChannelActor.GetChannelService(), common.Address(target))
 	for {
-		state := transfer.GetNodeNetworkStatus(channel.Service.StateFromChannel(), common.Address(target))
-		if state == transfer.NetworkReachable {
+		ret, _ := ch_actor.ChannelReachable(common.Address(target))
+		var state string
+		if ret == true {
+			state = transfer.NetworkReachable
 			log.Info("connect peer AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg successful")
 			break
+		} else {
+			state = transfer.NetworkUnreachable
+			log.Warn("connect peer failed")
+			ch_actor.HealthyCheckNodeState(common.Address(target))
 		}
+
 		log.Infof("peer state = %s wait for connect ...", state)
 		<-time.After(time.Duration(3000) * time.Millisecond)
 	}
 	if *disable == false {
 		log.Info("begin direct single route transfer test...")
-		go singleRouteTest(channel, 1*FACOTR, common.Address(target), *transferAmount, 0, *routeNum)
+		go singleRouteTest(1*FACOTR, common.Address(target), *transferAmount, 0, *routeNum)
 	}
 
 	amount := *withdrawAmount * FACOTR
 	if amount != 0 {
-		withdrawTest(channel, amount, common.Address(target))
+		withdrawTest(amount, common.Address(target))
 	}
 
 	waitToExit()
 }
-func withdrawTest(channel *ch.Channel, withdrawAmount int, target common.Address) {
+func withdrawTest(withdrawAmount int, target common.Address) {
 	if *disable == false {
 		<-chInt
 	}
@@ -129,30 +171,28 @@ func withdrawTest(channel *ch.Channel, withdrawAmount int, target common.Address
 
 	log.Infof("call withdraw with amount :%d", withdrawAmount)
 	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
-	resultChan, err := channel.Service.Withdraw(tokenAddress, target, common.TokenAmount(withdrawAmount))
+	result, err := ch_actor.WithDraw(tokenAddress, target, common.TokenAmount(withdrawAmount))
 	if err != nil {
 		log.Error("withdraw failed:", err)
 		return
 	}
 
-	result := <-resultChan
 	log.Infof("withdraw result : %v", result)
 }
 
 var chInt chan int
 
-func loopTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routeId int) {
+func loopTest(amount int, target common.Address, times int, interval int, routeId int) {
 	r := rand.NewSource(time.Now().UnixNano())
 	log.Info("wait for loopTest canTransfer...")
 
 	for index := int(0); index < times; index++ {
-		status, err := channel.Service.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(r.Int63()))
+		ret, err := ch_actor.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(r.Int63()))
 		if err != nil {
 			log.Error("[loopTest] direct transfer failed:", err)
 			break
 		}
 
-		ret := <-status
 		if !ret {
 			log.Error("[loopTest] direct transfer failed:")
 			break
@@ -164,22 +204,26 @@ func loopTest(channel *ch.Channel, amount int, target common.Address, times int,
 	chInt <- routeId
 }
 
-func singleRouteTest(channel *ch.Channel, amount int, target common.Address, times int, interval int, routingNum int) {
+func singleRouteTest(amount int, target common.Address, times int, interval int, routingNum int) {
 	chInt = make(chan int, 1)
 	for {
-		if channel.Service.CanTransfer(target, common.TokenAmount(amount)) {
+		ret, err := ch_actor.CanTransfer(target, common.TokenAmount(amount))
+		if ret {
 			log.Info("loopTest can transfer!")
 			//wait extra second to make sure client updated the netting channel state for the new balance event
 			time.Sleep(2 * time.Second)
 			break
 		} else {
+			if err != nil {
+				log.Error("loopTest cannot transfer!")
+			}
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
 
 	//time1 := time.Now().Unix()
 
-	loopTest(channel, amount, target, times, interval, routingNum)
+	loopTest(amount, target, times, interval, routingNum)
 
 	//time2 := time.Now().Unix()
 	//timeDuration := time2 - time1
