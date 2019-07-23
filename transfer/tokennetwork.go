@@ -3,8 +3,8 @@ package transfer
 import (
 	"reflect"
 
-	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/common"
+	"github.com/saveio/themis/common/log"
 )
 
 func GetChannelIdentifier(stateChange StateChange) common.ChannelID {
@@ -137,10 +137,12 @@ func GetSenderMessageEvent(event Event) *SendMessageEvent {
 		v, _ := event.(*SendWithdrawRequest)
 		result.Recipient = v.Recipient
 		result.ChannelIdentifier = v.ChannelIdentifier
+		result.MessageIdentifier = v.MessageIdentifier
 	case *SendCooperativeSettleRequest:
 		v, _ := event.(*SendCooperativeSettleRequest)
 		result.Recipient = v.Recipient
 		result.ChannelIdentifier = v.ChannelIdentifier
+		result.MessageIdentifier = v.MessageIdentifier
 	default:
 		//log.Warn("[GetSenderMessageEvent] eventType: ", reflect.TypeOf(event).String())
 		result = nil
