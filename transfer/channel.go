@@ -1372,7 +1372,7 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 	return TransitionResult{channelState, events}
 }
 
-func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *ActionWithdraw) TransitionResult {
+func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *ActionWithdraw, blockNumber common.BlockHeight) TransitionResult {
 	var events []Event
 	var msg string
 
@@ -1400,7 +1400,7 @@ func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *A
 		}
 
 		events = append(events, sendWithdrawRequest)
-		RecordWithdrawTransaction(channelState)
+		RecordWithdrawTransaction(channelState, blockNumber)
 	} else {
 		failure := &EventWithdrawRequestSentFailed{
 			ChannelIdentifier:      stateChange.ChannelIdentifier,
@@ -1445,9 +1445,9 @@ func isValidWithdrawAmount(participant *NettingChannelEndState, partner *Netting
 	return true, ""
 }
 
-func RecordWithdrawTransaction(channelState *NettingChannelState) {
-	log.Debugf("[RecordWithdrawTransaction] for channel %d", uint32(channelState.Identifier))
-	channelState.WithdrawTransaction = &TransactionExecutionStatus{0, 0, ""}
+func RecordWithdrawTransaction(channelState *NettingChannelState, height common.BlockHeight) {
+	log.Debugf("[RecordWithdrawTransaction] for channel %d at height %d", uint32(channelState.Identifier), height)
+	channelState.WithdrawTransaction = &TransactionExecutionStatus{height, 0, ""}
 }
 
 func DeleteWithdrawTransaction(channelState *NettingChannelState) {
@@ -2081,6 +2081,18 @@ func handleBlock(channelState *NettingChannelState, stateChange *Block,
 		applyChannelNewBalance(channelState, &orderDepositTransaction.Transaction)
 	}
 
+	if GetStatus(channelState) == ChannelStateOpened {
+		if withdraw := GetWithdrawTransaction(channelState); withdraw != nil {
+			if withdraw.StartedBlockHeight+common.BlockHeight(constants.DEFAULT_WITHDRAW_TIMEOUT) < blockNumber {
+				event := &EventWithdrawRequestTimeout{
+					ChannelIdentifier:      channelState.Identifier,
+					TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,
+				}
+				events = append(events, event)
+			}
+		}
+	}
+
 	return TransitionResult{channelState, events}
 }
 
@@ -2252,7 +2264,7 @@ func StateTransitionForChannel(channelState *NettingChannelState, stateChange St
 		iteration = handleReceiveDirectTransfer(channelState, receiveTransferDirect)
 	case *ActionWithdraw:
 		actionWithdraw, _ := stateChange.(*ActionWithdraw)
-		iteration = handleSendWithdrawRequest(channelState, actionWithdraw)
+		iteration = handleSendWithdrawRequest(channelState, actionWithdraw, blockNumber)
 	case *ReceiveWithdrawRequest:
 		receiveWithdrawRequest, _ := stateChange.(*ReceiveWithdrawRequest)
 		iteration = handleWithdrawRequestReceived(channelState, receiveWithdrawRequest)

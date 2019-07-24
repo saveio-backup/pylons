@@ -91,6 +91,9 @@ func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event tr
 	case *transfer.EventInvalidReceivedWithdraw:
 		eventInvalidReceivedWithdraw := event.(*transfer.EventInvalidReceivedWithdraw)
 		self.HandleInvalidReceivedWithdraw(channel, eventInvalidReceivedWithdraw)
+	case *transfer.EventWithdrawRequestTimeout:
+		eventWithdrawRequestTimeout := event.(*transfer.EventWithdrawRequestTimeout)
+		self.HandleWithdrawRequestTimeout(channel, eventWithdrawRequestTimeout)
 	case *transfer.SendCooperativeSettleRequest:
 		sendCooperativeSettleRequest := event.(*transfer.SendCooperativeSettleRequest)
 		self.HandleSendCooperativeSettleRequest(channel, sendCooperativeSettleRequest)
@@ -356,7 +359,7 @@ func (self ChannelEventHandler) HandleSendLockedTransfer(channel *ChannelService
 	return
 }
 
-func (self ChannelEventHandler) HandleSendLockedExpire (channel *ChannelService, sendLockExpired *transfer.SendLockExpired) {
+func (self ChannelEventHandler) HandleSendLockedExpire(channel *ChannelService, sendLockExpired *transfer.SendLockExpired) {
 	sendLockExpiredEventMessage := messages.MessageFromSendEvent(sendLockExpired)
 	if sendLockExpiredEventMessage != nil {
 		err := channel.Sign(sendLockExpiredEventMessage)
@@ -544,7 +547,7 @@ func (self ChannelEventHandler) HandleContractSendChannelWithdraw(channel *Chann
 func (self ChannelEventHandler) HandleWithdrawRequestSentFailed(channel *ChannelService, withdrawRequestSentFailedEvent *transfer.EventWithdrawRequestSentFailed) {
 	ok := channel.WithdrawResultNotify(withdrawRequestSentFailedEvent.ChannelIdentifier, false)
 	if !ok {
-		panic("error in HandleWithdrawRequestSentFailed, no withdraw status found in the map")
+		log.Warnf("HandleWithdrawRequestSentFailed, no withdraw status found in the map")
 	}
 
 	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(channel.StateFromChannel(),
@@ -559,7 +562,7 @@ func (self ChannelEventHandler) HandleWithdrawRequestSentFailed(channel *Channel
 func (self ChannelEventHandler) HandleInvalidReceivedWithdraw(channel *ChannelService, invalidWithdrawReceivedEvent *transfer.EventInvalidReceivedWithdraw) {
 	ok := channel.WithdrawResultNotify(invalidWithdrawReceivedEvent.ChannelIdentifier, false)
 	if !ok {
-		panic("error in HandleInvalidReceivedWithdraw, no withdraw status found in the map")
+		log.Warnf("HandleInvalidReceivedWithdraw, no withdraw status found in the map")
 	}
 
 	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(channel.StateFromChannel(),
@@ -569,7 +572,21 @@ func (self ChannelEventHandler) HandleInvalidReceivedWithdraw(channel *ChannelSe
 	}
 
 	transfer.DeleteWithdrawTransaction(channelState)
+}
 
+func (self ChannelEventHandler) HandleWithdrawRequestTimeout(channel *ChannelService, withdrawRequestTimeoutEvent *transfer.EventWithdrawRequestTimeout) {
+	ok := channel.WithdrawResultNotify(withdrawRequestTimeoutEvent.ChannelIdentifier, false)
+	if !ok {
+		log.Warnf("HandleWithdrawRequestTimeout no withdraw status found in the map")
+	}
+
+	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(channel.StateFromChannel(),
+		withdrawRequestTimeoutEvent.TokenNetworkIdentifier, withdrawRequestTimeoutEvent.ChannelIdentifier)
+	if channelState == nil {
+		panic("error in HandleWithdrawRequestTimeout, channelState is nil")
+	}
+
+	transfer.DeleteWithdrawTransaction(channelState)
 }
 
 func (self ChannelEventHandler) HandleSendCooperativeSettleRequest(channel *ChannelService, cooperativeSettleRequestEvent *transfer.SendCooperativeSettleRequest) {
@@ -691,7 +708,7 @@ func (self ChannelEventHandler) HandleContractSendChannelUnlock(channel *Channel
 	}
 
 	restoredChannelState := storage.ChannelStateUntilStateChange(channel.Wal.Storage, common.PaymentNetworkID{},
-	tokenAddress, channelIdentifier, stateChangeIdentifier, channel.address)
+		tokenAddress, channelIdentifier, stateChangeIdentifier, channel.address)
 
 	ourState := restoredChannelState.OurState
 	partnerState := restoredChannelState.PartnerState

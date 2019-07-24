@@ -133,11 +133,12 @@ func GetSenderMessageEvent(event Event) *SendMessageEvent {
 		result.Recipient = v.Recipient
 		result.ChannelIdentifier = v.ChannelIdentifier
 		result.MessageIdentifier = v.MessageIdentifier
-	case *SendWithdrawRequest:
-		v, _ := event.(*SendWithdrawRequest)
-		result.Recipient = v.Recipient
-		result.ChannelIdentifier = v.ChannelIdentifier
-		result.MessageIdentifier = v.MessageIdentifier
+	// NOTE : dont put withdraw request in the queue so timeouted request will not be resend on startup
+	//case *SendWithdrawRequest:
+	//	v, _ := event.(*SendWithdrawRequest)
+	//	result.Recipient = v.Recipient
+	//	result.ChannelIdentifier = v.ChannelIdentifier
+	//	result.MessageIdentifier = v.MessageIdentifier
 	case *SendCooperativeSettleRequest:
 		v, _ := event.(*SendCooperativeSettleRequest)
 		result.Recipient = v.Recipient

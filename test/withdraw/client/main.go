@@ -39,6 +39,7 @@ var testConfig = &ch.ChannelConfig{
 	ListenAddress: "127.0.0.1:3000",
 	//MappingAddress: "10.0.1.105:3000",
 	Protocol: "tcp",
+	DBPath:   "C:\\fuwei\\Go\\src\\github.com\\saveio\\pylons\\test\\withdraw\\client",
 }
 
 var chainClient *chainsdk.Chain

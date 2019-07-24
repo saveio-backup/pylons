@@ -106,6 +106,7 @@ const (
 	EventWithdrawRequestSentFailedClassId
 	EventInvalidReceivedWithdrawRequestClassId
 	EventInvalidReceivedWithdrawClassId
+	EventWithdrawRequestTimeoutClassId
 	SendCooperativeSettleRequestClassId
 	SendCooperativeSettleClassId
 	ContractSendChannelCooperativeSettleClassId
@@ -489,6 +490,10 @@ func (self EventInvalidReceivedWithdraw) ClassId() int {
 	return EventInvalidReceivedWithdrawClassId
 }
 
+func (self EventWithdrawRequestTimeout) ClassId() int {
+	return EventWithdrawRequestTimeoutClassId
+}
+
 func (self SendCooperativeSettleRequest) ClassId() int {
 	return SendCooperativeSettleRequestClassId
 }
@@ -743,6 +748,8 @@ func CreateEventByClassId(classId int) interface{} {
 		return new(EventInvalidReceivedWithdrawRequest)
 	case EventInvalidReceivedWithdrawClassId:
 		return new(EventInvalidReceivedWithdraw)
+	case EventWithdrawRequestTimeoutClassId:
+		return new(EventWithdrawRequestTimeout)
 	case SendCooperativeSettleRequestClassId:
 		return new(SendCooperativeSettleRequest)
 	case SendCooperativeSettleClassId:

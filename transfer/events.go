@@ -138,6 +138,11 @@ type EventInvalidReceivedWithdraw struct {
 	Reason                 string
 }
 
+type EventWithdrawRequestTimeout struct {
+	TokenNetworkIdentifier common.TokenNetworkID
+	ChannelIdentifier      common.ChannelID
+	Reason                 string
+}
 type SendCooperativeSettleRequest struct {
 	SendMessageEvent
 	TokenNetworkIdentifier common.TokenNetworkID

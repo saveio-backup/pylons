@@ -14,6 +14,8 @@ import (
 	"sync"
 	"time"
 
+	"reflect"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
@@ -28,7 +30,6 @@ import (
 	"github.com/saveio/themis/common/log"
 	mpay "github.com/saveio/themis/smartcontract/service/native/micropayment"
 	scUtils "github.com/saveio/themis/smartcontract/service/native/utils"
-	"reflect"
 )
 
 type ChannelService struct {
@@ -1270,6 +1271,7 @@ func (self *ChannelService) WithdrawResultNotify(channelId common.ChannelID, res
 
 	self.RemoveWithdrawStatus(channelId)
 
+	log.Infof("WithdrawResultNotify for channel %d, result %v", channelId, result)
 	withdrawResult <- result
 	return true
 }

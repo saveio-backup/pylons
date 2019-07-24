@@ -3,11 +3,11 @@ package channelservice
 import (
 	"reflect"
 
-	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network/transport/messages"
 	"github.com/saveio/pylons/transfer"
+	"github.com/saveio/themis/common/log"
 )
 
 type MessageHandler struct {

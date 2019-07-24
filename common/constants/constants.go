@@ -17,4 +17,5 @@ const (
 	DEFAULT_REVEAL_TIMEOUT      int     = 50
 	MAX_MSG_QUEUE               uint32  = 10000
 	REQ_TIMEOUT                         = 15
+	DEFAULT_WITHDRAW_TIMEOUT    int     = 5
 )

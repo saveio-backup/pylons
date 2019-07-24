@@ -1,12 +1,13 @@
 package server
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/gogo/protobuf/proto"
 	p2p_act "github.com/saveio/pylons/actor/client"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/transfer"
-	"time"
-	"fmt"
 )
 
 const (
@@ -17,10 +18,10 @@ const (
 func GetVersion() (string, error) {
 	ret := &VersionRet{
 		Version: "",
-		Done: make(chan bool, 1),
-		Err:  nil,
+		Done:    make(chan bool, 1),
+		Err:     nil,
 	}
-	versionReq := &VersionReq{Ret:ret}
+	versionReq := &VersionReq{Ret: ret}
 	ChannelServerPid.Tell(versionReq)
 	if err := waitForCallDone(versionReq.Ret.Done, "SetHostAddr", defaultMinTimeOut); err != nil {
 		return "", err
@@ -34,7 +35,7 @@ func SetHostAddr(walletAddr common.Address, netAddr string) error {
 		Done: make(chan bool, 1),
 		Err:  nil,
 	}
-	setHostAddrReq := &SetHostAddrReq{WalletAddr:walletAddr, NetAddr:netAddr, Ret:ret}
+	setHostAddrReq := &SetHostAddrReq{WalletAddr: walletAddr, NetAddr: netAddr, Ret: ret}
 	ChannelServerPid.Tell(setHostAddrReq)
 
 	if err := waitForCallDone(setHostAddrReq.Ret.Done, "SetHostAddr", defaultMinTimeOut); err != nil {
@@ -47,11 +48,11 @@ func SetHostAddr(walletAddr common.Address, netAddr string) error {
 func GetHostAddr(walletAddr common.Address) (string, error) {
 	ret := &GetHostAddrRet{
 		WalletAddr: common.EmptyAddress,
-		NetAddr: "",
-		Done: make(chan bool, 1),
-		Err:  nil,
+		NetAddr:    "",
+		Done:       make(chan bool, 1),
+		Err:        nil,
 	}
-	getHostAddrReq := &GetHostAddrReq{WalletAddr:walletAddr, Ret:ret}
+	getHostAddrReq := &GetHostAddrReq{WalletAddr: walletAddr, Ret: ret}
 	ChannelServerPid.Tell(getHostAddrReq)
 
 	if err := waitForCallDone(getHostAddrReq.Ret.Done, "GetHostAddr", defaultMinTimeOut); err != nil {
@@ -164,10 +165,10 @@ func MediaTransfer(registryAddress common.PaymentNetworkID, tokenAddress common.
 func CanTransfer(target common.Address, amount common.TokenAmount) (bool, error) {
 	ret := &CanTransferRet{
 		Result: false,
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Done:   make(chan bool, 1),
+		Err:    nil,
 	}
-	canTransferReq := &CanTransferReq{Target:target, Amount:amount, Ret:ret}
+	canTransferReq := &CanTransferReq{Target: target, Amount: amount, Ret: ret}
 	ChannelServerPid.Tell(canTransferReq)
 
 	if err := waitForCallDone(canTransferReq.Ret.Done, "CanTransfer", defaultMinTimeOut); err != nil {
@@ -192,20 +193,18 @@ func WithDraw(tokenAddress common.TokenAddress, partnerAddress common.Address,
 	}
 	ChannelServerPid.Tell(withdrawReq)
 
-	if err := waitForCallDone(withdrawReq.Ret.Done, "WithDraw", defaultMaxTimeOut); err != nil {
-		return false, err
-	} else {
-		return withdrawReq.Ret.Success, withdrawReq.Ret.Err
-	}
+	// withdraw time is handled as a event, no need actor timeout
+	<-withdrawReq.Ret.Done
+	return withdrawReq.Ret.Success, withdrawReq.Ret.Err
 }
 
 func ChannelReachable(target common.Address) (bool, error) {
 	ret := &ChannelReachableRet{
 		Result: false,
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Done:   make(chan bool, 1),
+		Err:    nil,
 	}
-	reachableReq := &ChannelReachableReq{Target:target, Ret:ret}
+	reachableReq := &ChannelReachableReq{Target: target, Ret: ret}
 	ChannelServerPid.Tell(reachableReq)
 
 	if err := waitForCallDone(reachableReq.Ret.Done, "ChannelReachable", defaultMinTimeOut); err != nil {
@@ -218,10 +217,10 @@ func ChannelReachable(target common.Address) (bool, error) {
 func CloseChannel(target common.Address) (bool, error) {
 	ret := &CloseChannelRet{
 		Result: false,
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Done:   make(chan bool, 1),
+		Err:    nil,
 	}
-	closeChannelReq := &CloseChannelReq{Target:target, Ret:ret}
+	closeChannelReq := &CloseChannelReq{Target: target, Ret: ret}
 	ChannelServerPid.Tell(closeChannelReq)
 
 	if err := waitForCallDone(closeChannelReq.Ret.Done, "CloseChannel", defaultMaxTimeOut); err != nil {
@@ -233,11 +232,11 @@ func CloseChannel(target common.Address) (bool, error) {
 
 func GetTotalDepositBalance(target common.Address) (uint64, error) {
 	ret := &GetTotalDepositBalanceRet{
-		Ret: 0,
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Ret:  0,
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	getTotalDepositBalanceReq := &GetTotalDepositBalanceReq{Target:target, Ret:ret}
+	getTotalDepositBalanceReq := &GetTotalDepositBalanceReq{Target: target, Ret: ret}
 	ChannelServerPid.Tell(getTotalDepositBalanceReq)
 
 	if err := waitForCallDone(getTotalDepositBalanceReq.Ret.Done, "GetTotalDepositBalance", defaultMinTimeOut); err != nil {
@@ -249,11 +248,11 @@ func GetTotalDepositBalance(target common.Address) (uint64, error) {
 
 func GetTotalWithdraw(target common.Address) (uint64, error) {
 	ret := &GetTotalWithdrawRet{
-		Ret: 0,
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Ret:  0,
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	getTotalWithdrawReq := &GetTotalWithdrawReq{Target:target, Ret:ret}
+	getTotalWithdrawReq := &GetTotalWithdrawReq{Target: target, Ret: ret}
 	ChannelServerPid.Tell(getTotalWithdrawReq)
 
 	if err := waitForCallDone(getTotalWithdrawReq.Ret.Done, "GetTotalWithdraw", defaultMinTimeOut); err != nil {
@@ -265,11 +264,11 @@ func GetTotalWithdraw(target common.Address) (uint64, error) {
 
 func GetAvailableBalance(partnerAddr common.Address) (uint64, error) {
 	ret := &GetAvailableBalanceRet{
-		Ret: 0,
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Ret:  0,
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	getAvailableBalanceReq := &GetAvailableBalanceReq{PartnerAddress:partnerAddr, Ret:ret}
+	getAvailableBalanceReq := &GetAvailableBalanceReq{PartnerAddress: partnerAddr, Ret: ret}
 	ChannelServerPid.Tell(getAvailableBalanceReq)
 
 	if err := waitForCallDone(getAvailableBalanceReq.Ret.Done, "GetAvailableBalance", defaultMinTimeOut); err != nil {
@@ -281,11 +280,11 @@ func GetAvailableBalance(partnerAddr common.Address) (uint64, error) {
 
 func GetCurrentBalance(partnerAddress common.Address) (uint64, error) {
 	ret := &GetCurrentBalanceRet{
-		Ret: 0,
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Ret:  0,
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	getCurrentBalanceReq := &GetCurrentBalanceReq{PartnerAddress:partnerAddress, Ret:ret}
+	getCurrentBalanceReq := &GetCurrentBalanceReq{PartnerAddress: partnerAddress, Ret: ret}
 	ChannelServerPid.Tell(getCurrentBalanceReq)
 
 	if err := waitForCallDone(getCurrentBalanceReq.Ret.Done, "GetCurrentBalance", defaultMinTimeOut); err != nil {
@@ -297,10 +296,10 @@ func GetCurrentBalance(partnerAddress common.Address) (uint64, error) {
 
 func CooperativeSettle(partnerAddress common.Address) error {
 	ret := &CooperativeSettleRet{
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	cooperativeSettleReq := &CooperativeSettleReq{PartnerAddress:partnerAddress, Ret:ret}
+	cooperativeSettleReq := &CooperativeSettleReq{PartnerAddress: partnerAddress, Ret: ret}
 	ChannelServerPid.Tell(cooperativeSettleReq)
 
 	if err := waitForCallDone(cooperativeSettleReq.Ret.Done, "CooperativeSettle", defaultMaxTimeOut); err != nil {
@@ -312,11 +311,11 @@ func CooperativeSettle(partnerAddress common.Address) error {
 
 func GetUnitPrices(asset int32) (uint64, error) {
 	ret := &GetUnitPricesRet{
-		Ret: 0,
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Ret:  0,
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	getUnitPricesReq := &GetUnitPricesReq{Asset:asset, Ret:ret}
+	getUnitPricesReq := &GetUnitPricesReq{Asset: asset, Ret: ret}
 	ChannelServerPid.Tell(getUnitPricesReq)
 
 	if err := waitForCallDone(getUnitPricesReq.Ret.Done, "GetUnitPrices", defaultMinTimeOut); err != nil {
@@ -328,11 +327,11 @@ func GetUnitPrices(asset int32) (uint64, error) {
 
 func SetUnitPrices(asset int32, price uint64) error {
 	ret := &SetUnitPricesRet{
-		Ret: false,
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Ret:  false,
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	setUnitPricesReq := &SetUnitPricesReq{Asset:asset, Price: price, Ret:ret}
+	setUnitPricesReq := &SetUnitPricesReq{Asset: asset, Price: price, Ret: ret}
 	ChannelServerPid.Tell(setUnitPricesReq)
 
 	if err := waitForCallDone(setUnitPricesReq.Ret.Done, "SetUnitPrices", defaultMinTimeOut); err != nil {
@@ -344,11 +343,11 @@ func SetUnitPrices(asset int32, price uint64) error {
 
 func GetAllChannels() (*ChannelsInfoResp, error) {
 	ret := &GetAllChannelsRet{
-		Ret:     nil,
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Ret:  nil,
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	getAllChannelsReq := &GetAllChannelsReq{Ret:ret}
+	getAllChannelsReq := &GetAllChannelsReq{Ret: ret}
 	ChannelServerPid.Tell(getAllChannelsReq)
 
 	if err := waitForCallDone(getAllChannelsReq.Ret.Done, "GetAllChannels", defaultMinTimeOut); err != nil {
@@ -360,8 +359,8 @@ func GetAllChannels() (*ChannelsInfoResp, error) {
 
 func OnBusinessMessage(message proto.Message, from string) error {
 	ret := &p2p_act.RecvMsgRet{
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
 	recvMsg := &p2p_act.RecvMsg{From: from, Message: message, Ret: ret}
 	ChannelServerPid.Tell(recvMsg)
@@ -375,10 +374,10 @@ func OnBusinessMessage(message proto.Message, from string) error {
 
 func SetNodeNetworkState(address string, state string) error {
 	ret := &NodeStateChangeRet{
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	nodeStateChangeReq := &NodeStateChangeReq{Address: address, State: state, Ret:ret}
+	nodeStateChangeReq := &NodeStateChangeReq{Address: address, State: state, Ret: ret}
 	ChannelServerPid.Tell(nodeStateChangeReq)
 
 	if err := waitForCallDone(nodeStateChangeReq.Ret.Done, "SetNodeNetworkState", defaultMinTimeOut); err != nil {
@@ -390,10 +389,10 @@ func SetNodeNetworkState(address string, state string) error {
 
 func HealthyCheckNodeState(address common.Address) error {
 	ret := &HealthyCheckNodeRet{
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	healthyCheckNodeReq := &HealthyCheckNodeReq{Address: address, Ret:ret}
+	healthyCheckNodeReq := &HealthyCheckNodeReq{Address: address, Ret: ret}
 	ChannelServerPid.Tell(healthyCheckNodeReq)
 
 	if err := waitForCallDone(healthyCheckNodeReq.Ret.Done, "HealthyCheckNodeState", defaultMinTimeOut); err != nil {
@@ -405,11 +404,11 @@ func HealthyCheckNodeState(address common.Address) error {
 
 func RegisterReceiveNotification() (chan *transfer.EventPaymentReceivedSuccess, error) {
 	ret := &RegisterReceiveNotificationRet{
-		NotificationChannel:nil,
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		NotificationChannel: nil,
+		Done:                make(chan bool, 1),
+		Err:                 nil,
 	}
-	registerReceiveNotificationReq := &RegisterReceiveNotificationReq{Ret:ret}
+	registerReceiveNotificationReq := &RegisterReceiveNotificationReq{Ret: ret}
 	ChannelServerPid.Tell(registerReceiveNotificationReq)
 
 	if err := waitForCallDone(registerReceiveNotificationReq.Ret.Done, "RegisterReceiveNotification", defaultMinTimeOut); err != nil {
@@ -421,11 +420,11 @@ func RegisterReceiveNotification() (chan *transfer.EventPaymentReceivedSuccess, 
 
 func GetLastFilterBlockHeight() (uint32, error) {
 	ret := &LastFilterBlockHeightRet{
-		Height:  0,
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Height: 0,
+		Done:   make(chan bool, 1),
+		Err:    nil,
 	}
-	lastFilterBlockHeightReq := &LastFilterBlockHeightReq{Ret:ret}
+	lastFilterBlockHeightReq := &LastFilterBlockHeightReq{Ret: ret}
 	ChannelServerPid.Tell(lastFilterBlockHeightReq)
 
 	if err := waitForCallDone(lastFilterBlockHeightReq.Ret.Done, "GetLastFilterBlockHeight", defaultMinTimeOut); err != nil {
@@ -440,9 +439,9 @@ func waitForCallDone(c chan bool, funcName string, maxTimeOut int64) error {
 		maxTimeOut = defaultMinTimeOut
 	}
 	select {
-	case <- c:
+	case <-c:
 		return nil
-	case <- time.After(time.Duration(maxTimeOut) * time.Millisecond):
+	case <-time.After(time.Duration(maxTimeOut) * time.Millisecond):
 		return fmt.Errorf("function:[%s] timeout", funcName)
 	}
 }
