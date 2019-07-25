@@ -491,11 +491,20 @@ func (self ChannelEventHandler) HandleSendWithdrawRequest(channel *ChannelServic
 			log.Error("[HandleSendWithdrawRequest] ", err.Error())
 			return
 		}
-		queueId := &transfer.QueueIdentifier{
-			Recipient:         common.Address(withdrawRequestEvent.Recipient),
-			ChannelIdentifier: withdrawRequestEvent.ChannelIdentifier,
+		/*
+			queueId := &transfer.QueueIdentifier{
+				Recipient:         common.Address(withdrawRequestEvent.Recipient),
+				ChannelIdentifier: withdrawRequestEvent.ChannelIdentifier,
+			}
+			channel.Transport.SendAsync(queueId, withdrawRequestMessage)
+		*/
+
+		// send directly instead of push to queue
+		err = channel.Transport.Send(withdrawRequestEvent.Recipient, withdrawRequestMessage)
+		if err != nil {
+			log.Debugf("SendWithdrawRequest failed : %s", err)
+			self.handleWithdrawFailure(channel, withdrawRequestEvent.TokenNetworkIdentifier, withdrawRequestEvent.ChannelIdentifier)
 		}
-		channel.Transport.SendAsync(queueId, withdrawRequestMessage)
 	} else {
 		log.Warn("[HandleSendWithdrawRequest] Message is nil")
 	}
@@ -510,11 +519,17 @@ func (self ChannelEventHandler) HandleSendWithdraw(channel *ChannelService, with
 			log.Error("[HandleSendWithdrawRequest] ", err.Error())
 			return
 		}
-		queueId := &transfer.QueueIdentifier{
-			Recipient:         common.Address(withdrawEvent.Recipient),
-			ChannelIdentifier: withdrawEvent.ChannelIdentifier,
+		/*
+			queueId := &transfer.QueueIdentifier{
+				Recipient:         common.Address(withdrawEvent.Recipient),
+				ChannelIdentifier: withdrawEvent.ChannelIdentifier,
+			}
+			channel.Transport.SendAsync(queueId, withdrawMessage)
+		*/
+		err = channel.Transport.Send(withdrawEvent.Recipient, withdrawMessage)
+		if err != nil {
+			log.Debugf("SendWithdrawfailed : %s", err)
 		}
-		channel.Transport.SendAsync(queueId, withdrawMessage)
 	} else {
 		log.Warn("[HandleSendWithdrawRequest] Message is nil")
 	}
@@ -545,45 +560,29 @@ func (self ChannelEventHandler) HandleContractSendChannelWithdraw(channel *Chann
 }
 
 func (self ChannelEventHandler) HandleWithdrawRequestSentFailed(channel *ChannelService, withdrawRequestSentFailedEvent *transfer.EventWithdrawRequestSentFailed) {
-	ok := channel.WithdrawResultNotify(withdrawRequestSentFailedEvent.ChannelIdentifier, false)
-	if !ok {
-		log.Warnf("HandleWithdrawRequestSentFailed, no withdraw status found in the map")
-	}
-
-	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(channel.StateFromChannel(),
-		withdrawRequestSentFailedEvent.TokenNetworkIdentifier, withdrawRequestSentFailedEvent.ChannelIdentifier)
-	if channelState == nil {
-		panic("error in HandleWithdrawRequestSentFailed, channelState is nil")
-	}
-
-	transfer.DeleteWithdrawTransaction(channelState)
+	log.Debugf("HandleWithdrawRequestSentFailed")
+	self.handleWithdrawFailure(channel, withdrawRequestSentFailedEvent.TokenNetworkIdentifier, withdrawRequestSentFailedEvent.ChannelIdentifier)
 }
 
 func (self ChannelEventHandler) HandleInvalidReceivedWithdraw(channel *ChannelService, invalidWithdrawReceivedEvent *transfer.EventInvalidReceivedWithdraw) {
-	ok := channel.WithdrawResultNotify(invalidWithdrawReceivedEvent.ChannelIdentifier, false)
-	if !ok {
-		log.Warnf("HandleInvalidReceivedWithdraw, no withdraw status found in the map")
-	}
-
-	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(channel.StateFromChannel(),
-		invalidWithdrawReceivedEvent.TokenNetworkIdentifier, invalidWithdrawReceivedEvent.ChannelIdentifier)
-	if channelState == nil {
-		panic("error in HandleInvalidReceivedWithdraw, channelState is nil")
-	}
-
-	transfer.DeleteWithdrawTransaction(channelState)
+	log.Debugf("HandleInvalidReceivedWithdraw")
+	self.handleWithdrawFailure(channel, invalidWithdrawReceivedEvent.TokenNetworkIdentifier, invalidWithdrawReceivedEvent.ChannelIdentifier)
 }
 
 func (self ChannelEventHandler) HandleWithdrawRequestTimeout(channel *ChannelService, withdrawRequestTimeoutEvent *transfer.EventWithdrawRequestTimeout) {
-	ok := channel.WithdrawResultNotify(withdrawRequestTimeoutEvent.ChannelIdentifier, false)
+	log.Debugf("HandleWithdrawRequestTimeout")
+	self.handleWithdrawFailure(channel, withdrawRequestTimeoutEvent.TokenNetworkIdentifier, withdrawRequestTimeoutEvent.ChannelIdentifier)
+}
+
+func (self ChannelEventHandler) handleWithdrawFailure(channel *ChannelService, tokenNetworkIdentifier common.TokenNetworkID, channelIdentifier common.ChannelID) {
+	ok := channel.WithdrawResultNotify(channelIdentifier, false)
 	if !ok {
-		log.Warnf("HandleWithdrawRequestTimeout no withdraw status found in the map")
+		log.Warnf("handleWithdrawFailure no withdraw status found in the map")
 	}
 
-	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(channel.StateFromChannel(),
-		withdrawRequestTimeoutEvent.TokenNetworkIdentifier, withdrawRequestTimeoutEvent.ChannelIdentifier)
+	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(channel.StateFromChannel(), tokenNetworkIdentifier, channelIdentifier)
 	if channelState == nil {
-		panic("error in HandleWithdrawRequestTimeout, channelState is nil")
+		panic("error in handleWithdrawFailure, channelState is nil")
 	}
 
 	transfer.DeleteWithdrawTransaction(channelState)

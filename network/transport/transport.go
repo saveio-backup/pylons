@@ -225,6 +225,20 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 	return nil
 }
 
+func (this *Transport) Send(address common.Address, msg proto.Message) error {
+	nodeAddress, err := this.GetHostAddr(address)
+	if nodeAddress == "" || err != nil {
+		log.Error("[Send] GetHostAddr address is nil for %s", common.ToBase58(address))
+		return errors.New("no valid address to send message")
+	}
+
+	if err = client.P2pSend(nodeAddress, msg); err != nil {
+		log.Error("[PeekAndSend] send error: ", err.Error())
+		return err
+	}
+	return nil
+}
+
 func (this *Transport) SetGetHostAddrCallback(getHostAddrCallback func(address common.Address) (string, error)) {
 	this.getHostAddrCallback = getHostAddrCallback
 }
