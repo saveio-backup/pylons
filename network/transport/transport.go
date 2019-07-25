@@ -123,6 +123,7 @@ func (this *Transport) InitQueue(queueId *transfer.QueueIdentifier) *Queue {
 
 func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier) {
 	var interval time.Duration = 3
+	var retryTimes = 0
 
 	t := time.NewTimer(interval * time.Second)
 
@@ -143,14 +144,15 @@ func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier)
 			msg := item.(*QueueItem).message
 			log.Warnf("Timeout retry for msg = %+v\n", msg)
 
-			t.Reset(interval * time.Second)
+			t.Reset((time.Duration)(retryTimes+1) * interval * time.Second)
 			err := this.PeekAndSend(queue, &queueId)
 			if err != nil {
-				log.Error("send message failed:", err)
+				log.Errorf("send message to %s failed: %s", common.ToBase58(queueId.Recipient), err)
 				// dont stop the timer, otherwise it will block trying to resend message
 				//t.Stop()
 				//break
 			}
+			retryTimes++
 		case msgId := <-queue.DeliverChan:
 			log.Debugf("[DeliverChan] Time: %s msgId := <-queue.DeliverChan queue: %p msgId = %+v queue.length: %d\n",
 				time.Now().String(), queue, msgId.MessageId, queue.Len())
@@ -171,6 +173,7 @@ func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier)
 				if queue.Len() != 0 {
 					log.Debug("msgId.MessageId == item.messageId.MessageId queue.Len() != 0")
 					t.Reset(interval * time.Second)
+					retryTimes = 0
 					this.PeekAndSend(queue, &queueId)
 				}
 			} else {
