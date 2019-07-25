@@ -14,8 +14,8 @@ import (
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network/transport/messages"
 	"github.com/saveio/pylons/transfer"
-	"github.com/saveio/themis/common/log"
 	chainComm "github.com/saveio/themis/common"
+	"github.com/saveio/themis/common/log"
 )
 
 type ChannelServiceInterface interface {
@@ -29,11 +29,11 @@ type Transport struct {
 	NodeIpPortToAddress *sync.Map
 	NodeAddressToIpPort *sync.Map
 
-	messageQueues   *sync.Map
-	addressQueueMap *sync.Map
-	kill            chan struct{}
+	messageQueues       *sync.Map
+	addressQueueMap     *sync.Map
+	kill                chan struct{}
 	getHostAddrCallback func(address common.Address) (string, error)
-	ChannelService ChannelServiceInterface
+	ChannelService      ChannelServiceInterface
 }
 
 type QueueItem struct {
@@ -147,8 +147,9 @@ func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier)
 			err := this.PeekAndSend(queue, &queueId)
 			if err != nil {
 				log.Error("send message failed:", err)
-				t.Stop()
-				break
+				// dont stop the timer, otherwise it will block trying to resend message
+				//t.Stop()
+				//break
 			}
 		case msgId := <-queue.DeliverChan:
 			log.Debugf("[DeliverChan] Time: %s msgId := <-queue.DeliverChan queue: %p msgId = %+v queue.length: %d\n",
@@ -225,7 +226,6 @@ func (this *Transport) SetGetHostAddrCallback(getHostAddrCallback func(address c
 	this.getHostAddrCallback = getHostAddrCallback
 }
 
-
 func (this *Transport) SetHostAddr(address common.Address, hostAddr string) {
 	this.NodeAddressToIpPort.Store(address, hostAddr)
 	this.NodeIpPortToAddress.Store(hostAddr, address)
@@ -287,7 +287,7 @@ func (this *Transport) GetNodeNetworkState(nodeNetAddress string) (string, error
 		}
 	}
 	log.Errorf("[GetNodeNetworkState] get %s state error: chainState is nil",
-			common.ToBase58(nodeAddress))
+		common.ToBase58(nodeAddress))
 	return "", fmt.Errorf("[GetNodeNetworkState] get %s state error: chainState is nil",
 		common.ToBase58(nodeAddress))
 }
