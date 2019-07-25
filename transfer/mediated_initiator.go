@@ -4,8 +4,8 @@ import (
 	"crypto/sha256"
 	"reflect"
 
-	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/common"
+	"github.com/saveio/themis/common/log"
 )
 
 const MaximumPendingTransfers int = 160
@@ -66,7 +66,7 @@ func InitHandleBlock(initiatorState *InitiatorTransferState, stateChange *Block,
 		//       has failed, and a transfer failing does not mean the entire payment
 		//       would have to fail.
 		//       Related issue: https://github.com/raiden-network/raiden/issues/2329
-		transferFailed := EventPaymentSentFailed{
+		transferFailed := &EventPaymentSentFailed{
 			PaymentNetworkIdentifier: transferDescription.PaymentNetworkIdentifier,
 			TokenNetworkIdentifier:   transferDescription.TokenNetworkIdentifier,
 			Identifier:               transferDescription.PaymentIdentifier,

@@ -1925,6 +1925,7 @@ func handleReceiveLockExpired(channelState *NettingChannelState, stateChange *Re
 		}
 		events = append(events, sendProcessed)
 	} else {
+		log.Debugf("handle invalid LockExpired : %s", err)
 		invalidLockExpired := &EventInvalidReceivedLockExpired{
 			SecretHash: stateChange.SecretHash,
 			Reason:     err.Error(),
