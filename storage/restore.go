@@ -1,10 +1,10 @@
 package storage
 
 import (
-	"github.com/saveio/themis-go-sdk/usdt"
-	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/transfer"
+	"github.com/saveio/themis-go-sdk/usdt"
+	"github.com/saveio/themis/common/log"
 )
 
 func ChannelStateUntilStateChange(

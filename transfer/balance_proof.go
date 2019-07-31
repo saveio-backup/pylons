@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"crypto/sha256"
 
+	"github.com/saveio/pylons/common"
 	"github.com/saveio/themis/common/log"
 	mpay "github.com/saveio/themis/smartcontract/service/native/micropayment"
-	"github.com/saveio/pylons/common"
 )
 
 //[TODO] import from channel_contracts.constants import MessageTypeId

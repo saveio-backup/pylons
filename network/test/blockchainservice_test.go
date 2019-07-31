@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/saveio/themis-go-sdk/wallet"
 	"github.com/saveio/pylons/network"
+	"github.com/saveio/themis-go-sdk/wallet"
 )
 
 var (

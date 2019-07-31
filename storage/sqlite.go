@@ -12,9 +12,9 @@ import (
 	"reflect"
 
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/pylons/utils/jsonext"
+	"github.com/saveio/themis/common/log"
 )
 
 const ChannelDbVersion int = 6

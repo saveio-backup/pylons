@@ -9,14 +9,14 @@ import (
 	"reflect"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/common/constants"
+	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis/account"
 	"github.com/saveio/themis/common/log"
 	sig "github.com/saveio/themis/core/signature"
 	"github.com/saveio/themis/core/types"
 	"github.com/saveio/themis/crypto/keypair"
-	"github.com/saveio/pylons/common"
-	"github.com/saveio/pylons/common/constants"
-	"github.com/saveio/pylons/transfer"
 )
 
 type SignedMessageInterface interface {

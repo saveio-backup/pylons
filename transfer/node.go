@@ -5,9 +5,9 @@ import (
 
 	"encoding/hex"
 
+	"github.com/saveio/pylons/common"
 	"github.com/saveio/themis/common/log"
 	scUtils "github.com/saveio/themis/smartcontract/service/native/utils"
-	"github.com/saveio/pylons/common"
 )
 
 func getNetworks(chainState *ChainState, paymentNetworkIdentifier common.PaymentNetworkID,

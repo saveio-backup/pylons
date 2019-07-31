@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"fmt"
-	chainComm "github.com/saveio/themis/common"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
+	chainComm "github.com/saveio/themis/common"
 )
 
 func TestSPT(t *testing.T) {

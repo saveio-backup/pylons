@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"errors"
-	"sync"
 	"math/rand"
 	"os"
 	"strconv"
+	"sync"
 
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/utils/jsonext"

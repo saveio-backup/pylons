@@ -86,8 +86,7 @@ func (self *ConnectionManager) Leave(registryAddress common.PaymentNetworkID) *l
 	return nil
 }
 
-func (self *ConnectionManager) JoinChannel(partnerAddress common.Address,
-	partnerDeposit common.TokenAmount) {
+func (self *ConnectionManager) JoinChannel(partnerAddress common.Address, partnerDeposit common.TokenAmount) {
 	self.lock.Lock()
 	defer self.lock.Unlock()
 

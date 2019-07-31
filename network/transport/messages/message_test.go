@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	proto "github.com/gogo/protobuf/proto"
-	"github.com/saveio/themis/account"
 	"github.com/saveio/pylons/common"
+	"github.com/saveio/themis/account"
 )
 
 func BuildDirectTransfer(chainID common.ChainID, nonce common.Nonce, amount common.TokenAmount,

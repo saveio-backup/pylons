@@ -823,7 +823,7 @@ func (self *ChannelService) ChannelBatchClose(tokenAddress common.TokenAddress, 
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(
 		chainState, registryAddress, tokenAddress)
 
-	//[TODO] use BlockchainService.PaymentChannel to get PaymentChannels and
+	//[TODO] use BlockChainService.PaymentChannel to get PaymentChannels and
 	// get the lock!!
 
 	channelIds := list.New()

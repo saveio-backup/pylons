@@ -4,10 +4,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network"
+	"github.com/saveio/themis/common/log"
 )
 
 type AlarmTask struct {
@@ -69,7 +69,7 @@ func (self *AlarmTask) LoopUntilStop() {
 				continue
 			}
 
-			if latestBlockHeight > lastBlockHeight{
+			if latestBlockHeight > lastBlockHeight {
 				if latestBlockHeight > lastBlockHeight+1 {
 					log.Infof("missing block(s), latest Block number %d, last Block number %d", latestBlockHeight, lastBlockHeight)
 				}

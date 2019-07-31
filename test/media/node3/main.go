@@ -14,6 +14,7 @@ import (
 	"github.com/saveio/pylons/actor/client"
 	ch_actor "github.com/saveio/pylons/actor/server"
 	"github.com/saveio/pylons/common"
+	tc "github.com/saveio/pylons/test/media/test_config"
 	"github.com/saveio/pylons/test/p2p"
 	"github.com/saveio/pylons/test/p2p/actor/req"
 	p2p_actor "github.com/saveio/pylons/test/p2p/actor/server"
@@ -24,7 +25,6 @@ import (
 	"github.com/saveio/themis/common/log"
 	"github.com/saveio/themis/crypto/keypair"
 	"github.com/saveio/themis/smartcontract/service/native/utils"
-	tc "github.com/saveio/pylons/test/media/test_config"
 )
 
 var isNode1OnLine = false

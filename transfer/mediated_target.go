@@ -4,8 +4,8 @@ import (
 	"crypto/sha256"
 	"reflect"
 
-	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/common"
+	"github.com/saveio/themis/common/log"
 )
 
 func TgEventsForOnChainSecretReveal(targetState *TargetTransferState, channelState *NettingChannelState,
@@ -95,7 +95,7 @@ func TgHandleOffChainSecretReveal(targetState *TargetTransferState, stateChange 
 		messageIdentifier := common.GetMsgID()
 		reveal := &SendSecretReveal{
 			SendMessageEvent: SendMessageEvent{
-				Recipient:         common.Address(route.NodeAddress),
+				Recipient: common.Address(route.NodeAddress),
 				//check route channelId
 				ChannelIdentifier: route.ChannelIdentifier,
 				MessageIdentifier: messageIdentifier,

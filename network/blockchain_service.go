@@ -3,13 +3,13 @@ package network
 import (
 	"sync"
 
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/network/proxies"
 	chainsdk "github.com/saveio/themis-go-sdk"
 	chnsdk "github.com/saveio/themis-go-sdk/channel"
 	"github.com/saveio/themis/account"
 	"github.com/saveio/themis/common/log"
 	"github.com/saveio/themis/core/types"
-	"github.com/saveio/pylons/common"
-	"github.com/saveio/pylons/network/proxies"
 )
 
 type BlockchainService struct {

@@ -6,9 +6,9 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
+	"github.com/saveio/themis/common/log"
 )
 
 type SecretHashToLock map[common.SecretHash]*HashTimeLockState

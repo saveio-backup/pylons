@@ -20,7 +20,7 @@ type ConnectRet struct {
 
 type ConnectReq struct {
 	Address string
-	Ret *ConnectRet
+	Ret     *ConnectRet
 }
 
 type CloseRet struct {
@@ -30,7 +30,7 @@ type CloseRet struct {
 
 type CloseReq struct {
 	Address string
-	Ret *CloseRet
+	Ret     *CloseRet
 }
 
 type SendRet struct {
@@ -41,7 +41,7 @@ type SendRet struct {
 type SendReq struct {
 	Address string
 	Data    proto.Message
-	Ret *SendRet
+	Ret     *SendRet
 }
 
 type RecvMsgRet struct {
@@ -52,16 +52,15 @@ type RecvMsgRet struct {
 type RecvMsg struct {
 	From    string
 	Message proto.Message
-	Ret *RecvMsgRet
+	Ret     *RecvMsgRet
 }
-
 
 func P2pConnect(address string) error {
 	ret := &ConnectRet{
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	conRet := &ConnectReq{Address:address, Ret:ret}
+	conRet := &ConnectReq{Address: address, Ret: ret}
 	P2pServerPid.Tell(conRet)
 	<-conRet.Ret.Done
 	return conRet.Ret.Err
@@ -69,10 +68,10 @@ func P2pConnect(address string) error {
 
 func P2pClose(address string) error {
 	ret := &CloseRet{
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	chReq := &CloseReq{Address:address, Ret:ret}
+	chReq := &CloseReq{Address: address, Ret: ret}
 	P2pServerPid.Tell(chReq)
 	<-chReq.Ret.Done
 	return chReq.Ret.Err
@@ -80,10 +79,10 @@ func P2pClose(address string) error {
 
 func P2pSend(address string, data proto.Message) error {
 	ret := &SendRet{
-		Done:    make(chan bool, 1),
-		Err:     nil,
+		Done: make(chan bool, 1),
+		Err:  nil,
 	}
-	chReq := &SendReq{Address:address, Data:data, Ret:ret}
+	chReq := &SendReq{Address: address, Data: data, Ret: ret}
 	P2pServerPid.Tell(chReq)
 	<-chReq.Ret.Done
 	return chReq.Ret.Err

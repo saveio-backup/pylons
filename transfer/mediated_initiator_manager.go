@@ -4,8 +4,8 @@ import (
 	"crypto/sha256"
 	"reflect"
 
-	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/common"
+	"github.com/saveio/themis/common/log"
 )
 
 func RefundTransferMatchesReceived(refundTransfer *LockedTransferSignedState,

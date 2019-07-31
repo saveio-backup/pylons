@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"crypto/sha256"
 
-	mpay "github.com/saveio/themis/smartcontract/service/native/micropayment"
 	"github.com/saveio/pylons/common"
+	mpay "github.com/saveio/themis/smartcontract/service/native/micropayment"
 )
 
 func PackWithdraw(channelId common.ChannelID, participant common.Address, withdrawAmount common.TokenAmount) []byte {

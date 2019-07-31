@@ -3,8 +3,8 @@ package transport
 import (
 	"sync"
 
-	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/network/transport/messages"
+	"github.com/saveio/themis/common/log"
 )
 
 type Node struct {

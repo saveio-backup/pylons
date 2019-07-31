@@ -440,6 +440,7 @@ func waitForCallDone(c chan bool, funcName string, maxTimeOut int64) error {
 	}
 	select {
 	case <-c:
+		close(c)
 		return nil
 	case <-time.After(time.Duration(maxTimeOut) * time.Millisecond):
 		return fmt.Errorf("function:[%s] timeout", funcName)

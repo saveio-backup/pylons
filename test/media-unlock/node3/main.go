@@ -9,14 +9,14 @@ import (
 	"syscall"
 	"time"
 
+	ch "github.com/saveio/pylons"
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis-go-sdk/usdt"
 	"github.com/saveio/themis-go-sdk/wallet"
 	chaincomm "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
 	"github.com/saveio/themis/smartcontract/service/native/utils"
-	ch "github.com/saveio/pylons"
-	"github.com/saveio/pylons/common"
-	"github.com/saveio/pylons/transfer"
 )
 
 var testConfig = &ch.ChannelConfig{

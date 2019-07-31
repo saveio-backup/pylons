@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/common"
+	"github.com/saveio/themis/common/log"
 )
 
 const MAXIMUM_PENDING_TRANSFERS = 160

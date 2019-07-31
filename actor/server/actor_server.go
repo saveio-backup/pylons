@@ -1,7 +1,9 @@
 package server
 
 import (
+	"fmt"
 	"github.com/ontio/ontology-eventbus/actor"
+	"github.com/pkg/errors"
 	oc "github.com/saveio/pylons"
 	p2p_act "github.com/saveio/pylons/actor/client"
 	"github.com/saveio/pylons/channelservice"
@@ -13,8 +15,6 @@ import (
 	cmdutils "github.com/saveio/themis/cmd/utils"
 	com "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
-	"github.com/pkg/errors"
-	"fmt"
 )
 
 var ChannelServerPid *actor.PID
@@ -95,12 +95,11 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 			this.chSrv.Service.SetHostAddrCallBack(msg.GetHostAddrCallback)
 			msg.Ret.Err = nil
 			msg.Ret.Done <- true
-
 		}()
 	case *OpenChannelReq:
 		go func() {
 			channelId := this.chSrv.Service.OpenChannel(msg.TokenAddress, msg.Target)
-			if channelId >100 {
+			if channelId > 100 {
 				msg.Ret.ChannelID = channelId
 				msg.Ret.Err = nil
 			} else {
@@ -119,7 +118,7 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		go func() {
 			ret, err := this.chSrv.Service.DirectTransferAsync(msg.Amount, msg.Target, msg.Identifier)
 			if err == nil {
-				msg.Ret.Success = <- ret
+				msg.Ret.Success = <-ret
 				msg.Ret.Err = nil
 			} else {
 				msg.Ret.Success = false
@@ -132,7 +131,7 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 			ret, err := this.chSrv.Service.MediaTransfer(msg.RegisterAddress, msg.TokenAddress,
 				msg.Amount, msg.Target, msg.Identifier)
 			if err == nil {
-				msg.Ret.Success = <- ret
+				msg.Ret.Success = <-ret
 				msg.Ret.Err = nil
 			} else {
 				msg.Ret.Success = false
@@ -149,19 +148,14 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 	case *WithdrawReq:
 		go func() {
 			ret, err := this.chSrv.Service.Withdraw(msg.TokenAddress, msg.PartnerAddress, msg.TotalWithdraw)
-			if err == nil {
-				msg.Ret.Success = <- ret
-				msg.Ret.Err = nil
-			} else {
-				msg.Ret.Success = false
-				msg.Ret.Err = err
-			}
+			msg.Ret.Success = <-ret
+			msg.Ret.Err = err
 			msg.Ret.Done <- true
 		}()
 	case *ChannelReachableReq:
 		go func() {
 			result := this.chSrv.Service.GetNodeNetworkState(msg.Target)
-			if result ==  transfer.NetworkReachable {
+			if result == transfer.NetworkReachable {
 				msg.Ret.Result = true
 				msg.Ret.Err = nil
 			} else if result == transfer.NetworkUnreachable {

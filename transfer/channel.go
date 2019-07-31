@@ -655,7 +655,8 @@ func getBalance(sender *NettingChannelEndState, receiver *NettingChannelEndState
 		receiverTransferredAmount = receiver.BalanceProof.TransferredAmount
 	}
 
-	//result := sender.ContractBalance - senderTransferredAmount + receiverTransferredAmount
+	log.Debugf("sender.ContractBalance: %v sender.TotalWithdraw: %v senderTransferredAmount: %v receiverTransferredAmount: %v",
+		sender.ContractBalance, sender.TotalWithdraw, senderTransferredAmount, receiverTransferredAmount)
 	result := sender.ContractBalance - sender.TotalWithdraw - senderTransferredAmount + receiverTransferredAmount
 	return (common.Balance)(result)
 
@@ -688,11 +689,14 @@ func GetDistributable(sender *NettingChannelEndState, receiver *NettingChannelEn
 	}
 	transferredAmount := balanceProofData.transferredAmount
 	lockedAmount := balanceProofData.lockedAmount
-	distributable := getBalance(sender, receiver) - getAmountLocked(sender)
+	balance := getBalance(sender, receiver)
+	amountLocked := getAmountLocked(sender)
+
+	distributable := balance - amountLocked
 	overflowLimit := Max(math.MaxUint64-(uint64)(transferredAmount)-(uint64)(lockedAmount), 0)
 
-	log.Debugf("[GetDistributable] lockedAmount: %v, transferredAmount: %v distributable: %v overflowLimit: %v",
-		lockedAmount, transferredAmount, distributable, overflowLimit)
+	log.Debugf("[GetDistributable] lockedAmount: %v, transferredAmount: %v, balance: %v  amountLocked:%v  distributable: %v overflowLimit: %v",
+		lockedAmount, transferredAmount, balance, amountLocked, distributable, overflowLimit)
 
 	result := Min(overflowLimit, (uint64)(distributable))
 	return (common.TokenAmount)(result)

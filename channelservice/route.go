@@ -4,9 +4,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/saveio/themis/common/log"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/transfer"
+	"github.com/saveio/themis/common/log"
 )
 
 func GetBestRoutes(chainState *transfer.ChainState, tokenNetworkId common.TokenNetworkID,
