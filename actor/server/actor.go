@@ -195,6 +195,7 @@ func WithDraw(tokenAddress common.TokenAddress, partnerAddress common.Address,
 
 	// withdraw time is handled as a event, no need actor timeout
 	<-withdrawReq.Ret.Done
+	close(withdrawReq.Ret.Done)
 	return withdrawReq.Ret.Success, withdrawReq.Ret.Err
 }
 

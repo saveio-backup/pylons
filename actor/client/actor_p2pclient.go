@@ -63,6 +63,7 @@ func P2pConnect(address string) error {
 	conRet := &ConnectReq{Address: address, Ret: ret}
 	P2pServerPid.Tell(conRet)
 	<-conRet.Ret.Done
+	close(conRet.Ret.Done)
 	return conRet.Ret.Err
 }
 
@@ -74,6 +75,7 @@ func P2pClose(address string) error {
 	chReq := &CloseReq{Address: address, Ret: ret}
 	P2pServerPid.Tell(chReq)
 	<-chReq.Ret.Done
+	close(chReq.Ret.Done)
 	return chReq.Ret.Err
 }
 
@@ -85,5 +87,6 @@ func P2pSend(address string, data proto.Message) error {
 	chReq := &SendReq{Address: address, Data: data, Ret: ret}
 	P2pServerPid.Tell(chReq)
 	<-chReq.Ret.Done
+	close(chReq.Ret.Done)
 	return chReq.Ret.Err
 }
