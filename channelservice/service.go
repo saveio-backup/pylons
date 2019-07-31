@@ -451,7 +451,8 @@ func (self *ChannelService) CallbackNewBlock(latestBlock common.BlockHeight, blo
 	toBlock := latestBlock
 
 	if self.firstRun {
-		events, posMap, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannelByEventId(comm.Address(self.microAddress), self.Account.Address, 0, uint32(fromBlock), uint32(toBlock))
+		events, posMap, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannelByEventId(
+			comm.Address(self.microAddress), self.Account.Address, 0, uint32(fromBlock), uint32(toBlock))
 		if err != nil {
 			log.Errorf("CallbackNewBlock error on first run : %s", err)
 			return
@@ -546,7 +547,7 @@ func (self *ChannelService) CloseAndSettle() {
 	self.LeaveAllTokenNetwork()
 
 	if len(self.tokenNetworkIdsToConnectionManagers) > 0 {
-		WaitForSettleAllChannels(self, self.alarm.Getinterval())
+		WaitForSettleAllChannels(self, self.alarm.GetInterval())
 	}
 
 	return

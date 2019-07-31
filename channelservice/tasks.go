@@ -81,22 +81,24 @@ func (self *AlarmTask) LoopUntilStop() {
 
 func (self *AlarmTask) GetLatestBlock() (common.BlockHeight, common.BlockHash, error) {
 	blockNumber, err := self.chain.BlockHeight()
-	latestBlockHeight := common.BlockHeight(blockNumber)
 	if err != nil {
 		return 0, nil, errors.New("get chain block height error")
 	}
 
-	header, _ := self.chain.GetBlock(blockNumber)
-	blockHash := header.Hash()
+	header, err := self.chain.GetBlock(blockNumber)
+	if err != nil {
+		return 0, nil, errors.New("get chain block error")
+	}
 
-	return latestBlockHeight, blockHash[:], nil
+	blockHash := header.Hash()
+	return common.BlockHeight(blockNumber), blockHash[:], nil
 }
 
 func (self *AlarmTask) FirstRun() error {
 	var latestBlock common.BlockHeight
 	var blockHash common.BlockHash
 
-	//[TODO] use BlockchainService.GetBlock to get latestBlockHeight
+	//[TODO] use BlockChainService.GetBlock to get latestBlockHeight
 	//and blockHash
 	latestBlock, blockHash, err := self.GetLatestBlock()
 	if err != nil {
@@ -122,6 +124,6 @@ func (self *AlarmTask) Stop() {
 	self.stopEvent <- 0
 }
 
-func (self *AlarmTask) Getinterval() float32 {
+func (self *AlarmTask) GetInterval() float32 {
 	return float32(self.interval)
 }
