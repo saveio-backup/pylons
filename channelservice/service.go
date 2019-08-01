@@ -194,14 +194,10 @@ func (self *ChannelService) InitDB() error {
 			log.Error("get network id failed:", err)
 			return err
 		}
-		currentHeight, err := self.chain.ChainClient.GetCurrentBlockHeight()
-		if err != nil {
-			log.Error("get current block height failed:", err)
-			return err
-		}
+
 		chainNetworkId := common.ChainID(networkId)
 		stateChange = &transfer.ActionInitChain{
-			BlockHeight: common.BlockHeight(currentHeight),
+			BlockHeight: common.BlockHeight(0),
 			OurAddress:  self.address,
 			ChainId:     chainNetworkId,
 		}
@@ -449,6 +445,8 @@ func (self *ChannelService) UpdateRouteMap() {
 func (self *ChannelService) CallbackNewBlock(latestBlock common.BlockHeight, blockHash common.BlockHash) {
 	fromBlock := self.lastFilterBlock + 1
 	toBlock := latestBlock
+
+	log.Debugf("[CallbackNewBlock] from %d to %d", fromBlock, toBlock)
 
 	if self.firstRun {
 		events, posMap, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannelByEventId(
