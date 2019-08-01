@@ -18,8 +18,8 @@ import (
 var Version = "0.1"
 
 type ChannelConfig struct {
-	ClientType   string
-	ChainNodeURL string
+	ClientType    string
+	ChainNodeURLs []string
 
 	// Transport config
 	ListenAddress  string // ip + port
@@ -39,7 +39,7 @@ type Channel struct {
 func DefaultChannelConfig() *ChannelConfig {
 	config := &ChannelConfig{
 		ClientType:    "rpc",
-		ChainNodeURL:  "http://localhost:20336",
+		ChainNodeURLs: []string{"http://localhost:20336"},
 		ListenAddress: "127.0.0.1:3001",
 		Protocol:      "tcp",
 		DBPath:        ".",
@@ -54,7 +54,7 @@ func NewChannelService(config *ChannelConfig, account *account.Account) (*Channe
 		return nil, err
 	}
 
-	blockChainService := network.NewBlockchainService(config.ClientType, config.ChainNodeURL, account)
+	blockChainService := network.NewBlockChainService(config.ClientType, config.ChainNodeURLs, account)
 	if blockChainService == nil {
 		log.Fatal("creating blockChain service failed")
 		return nil, errors.New("creating blockChain service failed")

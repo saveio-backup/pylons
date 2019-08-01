@@ -30,8 +30,8 @@ type BlockchainService struct {
 	secretRegistryCreateLock sync.Mutex
 }
 
-func NewBlockchainService(clientType string, url string, account *account.Account) *BlockchainService {
-	if clientType == "" || url == "" {
+func NewBlockChainService(clientType string, url []string, account *account.Account) *BlockchainService {
+	if clientType == "" || len(url) == 0 {
 		log.Error("chain node url is invalid")
 		return nil
 	}
@@ -44,9 +44,9 @@ func NewBlockchainService(clientType string, url string, account *account.Accoun
 	case "rpc":
 		this.ChainClient.NewRpcClient().SetAddress(url)
 	case "ws":
-		err := this.ChainClient.NewWebSocketClient().Connect(url)
+		err := this.ChainClient.NewWebSocketClient().Connect(url[0])
 		if err != nil {
-			log.Error("connect websocket error:", err)
+			log.Error("connect webSocket error:", err)
 			return nil
 		}
 	case "rest":

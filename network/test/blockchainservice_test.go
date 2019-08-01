@@ -25,8 +25,8 @@ func init() {
 		fmt.Println("GetDefaultAccount error:", err)
 		return
 	}
-	url := "http://localhost:20336"
-	blockchainService = network.NewBlockchainService("rpc", url, account)
+	url := []string{"http://localhost:20336"}
+	blockchainService = network.NewBlockChainService("rpc", url, account)
 }
 
 func TestBlockHeight(t *testing.T) {
