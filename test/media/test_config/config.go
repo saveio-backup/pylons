@@ -9,35 +9,35 @@ const PROTOCOL = "tcp"
 
 var Initiator1 = &ch.ChannelConfig{
 	ClientType:    "rpc",
-	ChainNodeURL:  "http://127.0.0.1:20336",
+	ChainNodeURLs: []string{"http://127.0.0.1:20336"},
 	ListenAddress: "127.0.0.1:3001",
 	Protocol:      PROTOCOL,
 }
 
 var Initiator2 = &ch.ChannelConfig{
 	ClientType:    "rpc",
-	ChainNodeURL:  "http://127.0.0.1:20336",
+	ChainNodeURLs: []string{"http://127.0.0.1:20336"},
 	ListenAddress: "127.0.0.1:3002",
 	Protocol:      PROTOCOL,
 }
 
 var Media = &ch.ChannelConfig{
 	ClientType:    "rpc",
-	ChainNodeURL:  "http://127.0.0.1:20336",
+	ChainNodeURLs: []string{"http://127.0.0.1:20336"},
 	ListenAddress: "127.0.0.1:3003",
 	Protocol:      PROTOCOL,
 }
 
 var Target1 = &ch.ChannelConfig{
 	ClientType:    "rpc",
-	ChainNodeURL:  "http://127.0.0.1:20336",
+	ChainNodeURLs: []string{"http://127.0.0.1:20336"},
 	ListenAddress: "127.0.0.1:3004",
 	Protocol:      PROTOCOL,
 }
 
 var Target2 = &ch.ChannelConfig{
 	ClientType:    "rpc",
-	ChainNodeURL:  "http://127.0.0.1:20336",
+	ChainNodeURLs: []string{"http://127.0.0.1:20336"},
 	ListenAddress: "127.0.0.1:3005",
 	Protocol:      PROTOCOL,
 }
