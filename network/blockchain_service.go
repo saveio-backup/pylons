@@ -102,6 +102,14 @@ func (this *BlockchainService) GetBlock(param interface{}) (*types.Block, error)
 	}
 }
 
+func (this *BlockchainService) GetBlockHash(height uint32) (common.BlockHash, error) {
+	blockHash, err := this.ChainClient.GetBlockHash(height)
+	if err != nil {
+		return common.BlockHash{}, err
+	}
+	return blockHash[:], nil
+}
+
 func (this *BlockchainService) SecretRegistry(address common.SecretRegistryAddress) *proxies.SecretRegistry {
 	this.secretRegistryCreateLock.Lock()
 	defer this.secretRegistryCreateLock.Unlock()

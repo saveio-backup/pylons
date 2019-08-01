@@ -85,13 +85,11 @@ func (self *AlarmTask) GetLatestBlock() (common.BlockHeight, common.BlockHash, e
 		return 0, nil, errors.New("get chain block height error")
 	}
 
-	header, err := self.chain.GetBlock(blockNumber)
+	blockHash, err := self.chain.GetBlockHash(blockNumber)
 	if err != nil {
-		return 0, nil, errors.New("get chain block error")
+		return 0, nil, errors.New("get block hash error")
 	}
-
-	blockHash := header.Hash()
-	return common.BlockHeight(blockNumber), blockHash[:], nil
+	return common.BlockHeight(blockNumber), blockHash, nil
 }
 
 func (self *AlarmTask) FirstRun() error {
