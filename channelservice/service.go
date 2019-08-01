@@ -249,7 +249,7 @@ func (self *ChannelService) StartService() error {
 	self.InitializeMessagesQueues(chainState)
 
 	self.StartNeighboursHealthCheck()
-	self.UpdateRouteMap()
+	//self.UpdateRouteMap()
 	log.Info("channel service started")
 	return nil
 }
@@ -446,13 +446,18 @@ func (self *ChannelService) CallbackNewBlock(latestBlock common.BlockHeight, blo
 	fromBlock := self.lastFilterBlock + 1
 	toBlock := latestBlock
 
-	log.Debugf("[CallbackNewBlock] from %d to %d", fromBlock, toBlock)
+	log.Infof("[CallbackNewBlock] from %d to %d", fromBlock, toBlock)
+	fastMode := false
+	if (toBlock - fromBlock) > 100 {
+		fastMode = true
+		log.Infof("[CallbackNewBlock] fast sync mode")
+	}
 
-	if self.firstRun {
+	if self.firstRun || fastMode {
 		events, posMap, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannelByEventId(
 			comm.Address(self.microAddress), self.Account.Address, 0, uint32(fromBlock), uint32(toBlock))
 		if err != nil {
-			log.Errorf("CallbackNewBlock error on first run : %s", err)
+			log.Errorf("CallbackNewBlock error on first run or fast mode: %s", err)
 			return
 		}
 
@@ -476,6 +481,8 @@ func (self *ChannelService) CallbackNewBlock(latestBlock common.BlockHeight, blo
 			block.BlockHash = common.BlockHash{}
 			self.HandleStateChange(block)
 		}
+
+		self.UpdateRouteMap()
 		self.firstRun = false
 	} else {
 		for i := fromBlock; i <= toBlock; i++ {
@@ -488,18 +495,23 @@ func (self *ChannelService) CallbackNewBlock(latestBlock common.BlockHeight, blo
 			for _, event := range events {
 				OnBlockchainEvent(self, event)
 			}
-			hash, err := self.chain.ChannelClient.Client.GetBlockHash(uint32(i))
-			if err != nil {
-				self.lastFilterBlock = i - 1
-				return
-			}
+			// blockHash not used
+			/*
+				hash, err := self.chain.ChannelClient.Client.GetBlockHash(uint32(i))
+				if err != nil {
+					self.lastFilterBlock = i - 1
+					return
+				}
+			*/
 			block := new(transfer.Block)
 			block.BlockHeight = i
-			block.BlockHash = common.BlockHash(hash[:])
+			//block.BlockHash = common.BlockHash(hash[:])
+			block.BlockHash = common.BlockHash{}
 			self.HandleStateChange(block)
 		}
 	}
 	self.lastFilterBlock = toBlock
+	log.Infof("[CallbackNewBlock] finish")
 }
 
 func (self *ChannelService) OnMessage(message proto.Message, from string) {
