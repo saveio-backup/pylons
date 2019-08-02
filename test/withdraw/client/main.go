@@ -35,7 +35,7 @@ var (
 )
 var testConfig = &ch.ChannelConfig{
 	ClientType:    "rpc",
-	ChainNodeURL:  "http://127.0.0.1:20336",
+	ChainNodeURLs: []string{"http://127.0.0.1:20336"},
 	ListenAddress: "127.0.0.1:3000",
 	//MappingAddress: "10.0.1.105:3000",
 	Protocol: "tcp",
@@ -84,7 +84,7 @@ func main() {
 	}
 
 	chainClient = chainsdk.NewChain()
-	chainClient.NewRpcClient().SetAddress(testConfig.ChainNodeURL)
+	chainClient.NewRpcClient().SetAddress(testConfig.ChainNodeURLs)
 	chainClient.SetDefaultAccount(account)
 
 	log.Infof("asset balance before open channel : %d", getAssetBalance(account.Address))

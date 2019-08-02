@@ -21,7 +21,7 @@ import (
 
 var testConfig = &ch.ChannelConfig{
 	ClientType:    "rpc",
-	ChainNodeURL:  "http://127.0.0.1:20336",
+	ChainNodeURLs: []string{"http://127.0.0.1:20336"},
 	ListenAddress: "127.0.0.1:3000",
 	Protocol:      "udp",
 	// set the small timeout for test purpose

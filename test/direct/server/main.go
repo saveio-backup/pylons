@@ -34,7 +34,7 @@ var (
 
 var testConfig = &ch.ChannelConfig{
 	ClientType:    "rpc",
-	ChainNodeURL:  "http://127.0.0.1:20336",
+	ChainNodeURLs: []string{"http://127.0.0.1:20336"},
 	ListenAddress: "127.0.0.1:3001",
 	//MappingAddress: "10.0.1.105:3001",
 	Protocol: "tcp",
