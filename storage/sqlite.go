@@ -206,7 +206,10 @@ func (self *SQLiteStorage) writeStateSnapshot(stateChangeId int, snapshot transf
 	self.writeStateLock.Lock()
 	defer self.writeStateLock.Unlock()
 
-	stmt, _ := self.connState.Prepare("INSERT INTO state_snapshot(statechange_id, data) VALUES(?, ?)")
+	stmt, err := self.connState.Prepare("INSERT INTO state_snapshot(statechange_id, data) VALUES(?, ?)")
+	if err != nil {
+		panic(fmt.Sprintf("prepare error : %s", err))
+	}
 	defer stmt.Close()
 	sqlRes, err := stmt.Exec(stateChangeId, serializedData)
 	if err != nil {
@@ -351,7 +354,10 @@ func (self *SQLiteStorage) GetLatestEventByDataField(filters map[string]interfac
 	finalQuerySql := fmt.Sprintf("%v%v%v", "SELECT identifier, source_statechange_id, data FROM state_events WHERE ",
 		finalWhereClause, "ORDER BY identifier DESC LIMIT 1")
 
-	stmt, _ := self.connEvent.Prepare(finalQuerySql)
+	stmt, err := self.connEvent.Prepare(finalQuerySql)
+	if err != nil {
+		panic(fmt.Sprintf("prepare error : %s", err))
+	}
 	defer stmt.Close()
 
 	switch len {
@@ -413,7 +419,10 @@ func (self *SQLiteStorage) GetLatestEventsByDataField(filters map[string]interfa
 		finalWhereClause, "ORDER BY identifier DESC")
 	self.writeEventLock.Lock()
 	defer self.writeEventLock.Unlock()
-	stmt, _ := self.connEvent.Prepare(finalQuerySql)
+	stmt, err := self.connEvent.Prepare(finalQuerySql)
+	if err != nil {
+		panic(fmt.Sprintf("prepare error : %s", err))
+	}
 	defer stmt.Close()
 
 	switch len {
@@ -476,7 +485,10 @@ func (self *SQLiteStorage) GetLatestStateChangeByDataField(filters map[string]in
 		finalWhereClause, "ORDER BY identifier DESC LIMIT 1")
 	self.writeStateLock.Lock()
 	defer self.writeStateLock.Unlock()
-	stmt, _ := self.connState.Prepare(finalQuerySql)
+	stmt, err := self.connState.Prepare(finalQuerySql)
+	if err != nil {
+		panic(fmt.Sprintf("prepare error : %s", err))
+	}
 	defer stmt.Close()
 
 	switch len {
@@ -536,7 +548,10 @@ func (self *SQLiteStorage) GetLatestStateChangesByDataField(filters map[string]i
 		finalWhereClause, "ORDER BY identifier DESC")
 	self.writeStateLock.Lock()
 	defer self.writeStateLock.Unlock()
-	stmt, _ := self.connState.Prepare(finalQuerySql)
+	stmt, err := self.connState.Prepare(finalQuerySql)
+	if err != nil {
+		panic(fmt.Sprintf("prepare error : %s", err))
+	}
 	defer stmt.Close()
 
 	switch len {
