@@ -286,7 +286,7 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 
 	newSnapShotGroup := self.Wal.StateChangeId / constants.SNAPSHOT_STATE_CHANGE_COUNT
 	if newSnapShotGroup > self.snapshotGroup {
-		log.Info("storing snapshot, snapshot id = ", newSnapShotGroup)
+		log.Infof("storing snapshot, Snapshot Id = %d, LastFilterBlockHeight = %d", newSnapShotGroup, self.GetLastFilterBlock())
 		self.Wal.Snapshot()
 		self.snapshotGroup = newSnapShotGroup
 	}
