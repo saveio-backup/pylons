@@ -29,7 +29,7 @@ import (
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var disable = flag.Bool("disable", false, "disable transfer test")
-var transferAmount = flag.Int("amount", 500, "test transfer amount")
+var transferAmount = flag.Int("amount", 5000, "test transfer amount")
 var multiEnable = flag.Bool("multi", false, "enable multi routes test")
 var routeNum = flag.Int("route", 5, "route number")
 
