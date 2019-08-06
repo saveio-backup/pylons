@@ -280,3 +280,19 @@ type LastFilterBlockHeightRet struct {
 type LastFilterBlockHeightReq struct {
 	Ret *LastFilterBlockHeightRet
 }
+
+type PaymentResultResp struct {
+	Result bool
+	Reason string
+}
+
+type GetPaymentResultRet struct {
+	Ret  *PaymentResultResp
+	Done chan bool
+	Err  error
+}
+type GetPaymentResultReq struct {
+	Target     common.Address
+	Identifier common.PaymentID
+	Ret        *GetPaymentResultRet
+}

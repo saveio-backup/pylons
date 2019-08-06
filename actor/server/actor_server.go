@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+
 	"github.com/ontio/ontology-eventbus/actor"
 	"github.com/pkg/errors"
 	oc "github.com/saveio/pylons"
@@ -249,6 +250,20 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		go func() {
 			height := this.chSrv.Service.GetLastFilterBlock()
 			msg.Ret.Height = uint32(height)
+			msg.Ret.Err = nil
+			msg.Ret.Done <- true
+		}()
+	case *GetPaymentResultReq:
+		go func() {
+			paymentResult := this.chSrv.Service.GetPaymentResult(msg.Target, msg.Identifier)
+			if paymentResult != nil {
+				msg.Ret.Ret = &PaymentResultResp{
+					Result: paymentResult.Result,
+					Reason: paymentResult.Reason,
+				}
+			} else {
+				msg.Ret.Ret = nil
+			}
 			msg.Ret.Err = nil
 			msg.Ret.Done <- true
 		}()

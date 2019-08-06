@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/pprof"
+	"sync"
 	"syscall"
 	"time"
 
@@ -46,7 +47,10 @@ var transferAmount = flag.Int("amount", 1000, "test transfer amount")
 var multiEnable = flag.Bool("multi", false, "enable multi routes test")
 var routeNum = flag.Int("route", 5, "route number")
 
+var payments *sync.Map
+
 func main() {
+	payments = new(sync.Map)
 	log.Init(log.PATH, log.Stdout)
 	//log.InitLog(2, log.Stdout)
 	flag.Parse()
@@ -177,7 +181,9 @@ func loopTest(amount int, target common.Address, times int, interval int, routeI
 	log.Info("wait for loopTest canTransfer...")
 
 	for index := int(0); index < times; index++ {
-		ret, err := ch_actor.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(r.Int63()))
+		paymentId := common.PaymentID(r.Int63())
+		payments.Store(paymentId, struct{}{})
+		ret, err := ch_actor.DirectTransferAsync(common.TokenAmount(amount), target, paymentId)
 		if err != nil {
 			log.Error("[loopTest] direct transfer failed:", err)
 			break
@@ -273,7 +279,34 @@ func logCurrentBalance(channel *ch.Channel, target common.Address) {
 			log.Infof("current balance = %d, transfered = %d", state.GetContractBalance(), state.GetContractBalance()-state.GetGasBalance())
 			state = channelState.GetChannelEndState(1)
 			log.Infof("partner balance = %d, transfered = %d", state.GetContractBalance(), state.GetContractBalance()-state.GetGasBalance())
+
+			go CheckPaymentResult(target)
 		}
+	}
+}
+
+func CheckPaymentResult(target common.Address) {
+	var finishedPayment []common.PaymentID
+	payments.Range(func(key, value interface{}) bool {
+		identifier := key.(common.PaymentID)
+		result, err := ch_actor.GetPaymentResult(target, identifier)
+		if err != nil {
+			log.Errorf("GetPaymentResult error : %s", err)
+			return true
+		}
+		if result == nil {
+			log.Errorf("no payment found for paymentIdentifier : %d", identifier)
+			return true
+		}
+		log.Infof("payment result : %+v for paymentIdentifier : %d", result.Result, identifier)
+		if result.Result {
+			finishedPayment = append(finishedPayment, identifier)
+		}
+		return true
+	})
+
+	for _, identifier := range finishedPayment {
+		payments.Delete(identifier)
 	}
 }
 

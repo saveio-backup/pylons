@@ -1398,3 +1398,41 @@ func (self *ChannelService) GetAllChannelInfo() []*ChannelInfo {
 
 	return infos
 }
+
+type PaymentResult struct {
+	Identifier common.PaymentID
+	Target     common.Address
+	Result     bool
+	Reason     string
+}
+
+func (self *ChannelService) GetPaymentResult(target common.Address, identifier common.PaymentID) *PaymentResult {
+	eventRecord := storage.GetEventWithTargetAndPaymentId(self.Wal.Storage, target, identifier)
+	if eventRecord != nil && eventRecord.Data != nil {
+		switch eventRecord.Data.(type) {
+		case *transfer.EventPaymentSentSuccess:
+			event := eventRecord.Data.(*transfer.EventPaymentSentSuccess)
+			result := &PaymentResult{
+				Identifier: event.Identifier,
+				Target:     event.Target,
+				Result:     true,
+			}
+			return result
+		case *transfer.EventPaymentSentFailed:
+			event := eventRecord.Data.(*transfer.EventPaymentSentFailed)
+			result := &PaymentResult{
+				Identifier: event.Identifier,
+				Target:     event.Target,
+				Result:     false,
+				Reason:     event.Reason,
+			}
+			return result
+		default:
+			log.Errorf("invalid type for payment result : %s", reflect.TypeOf(eventRecord.Data).String())
+			return nil
+		}
+	}
+
+	log.Debugf("Payment result not found for paymentId %d, target %s", identifier, common.ToBase58(target))
+	return nil
+}

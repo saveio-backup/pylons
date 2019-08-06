@@ -125,7 +125,7 @@ func GetLatestKnownBalanceProofFromStateChanges(
 		if stateChangeRecord.Data != nil {
 			var balanceProof transfer.BalanceProofSignedState
 
-			log.Debugf("[GetLatestKnownBalanceProofFromStateChanges] type: %s", reflect.ValueOf(stateChangeRecord.Data).String())
+			log.Debugf("[GetLatestKnownBalanceProofFromStateChanges] type: %s", reflect.TypeOf(stateChangeRecord.Data).String())
 			balanceProof.TransferredAmount, balanceProof.LockedAmount, balanceProof.LocksRoot = getValuesFromBalanceProof(stateChangeRecord.Data, prefix)
 
 			log.Debugf("[GetLatestKnownBalanceProofFromStateChanges] ta : %d, la : %d, lr: %v",
@@ -162,7 +162,7 @@ func GetLatestKnownBalanceProofFromEvents(
 		if eventRecord.Data != nil {
 			var balanceProof transfer.BalanceProofUnsignedState
 
-			log.Debugf("[GetLatestKnownBalanceProofFromEvents] eventRecord.Data type: %s", reflect.ValueOf(eventRecord.Data).String())
+			log.Debugf("[GetLatestKnownBalanceProofFromEvents] eventRecord.Data type: %s", reflect.TypeOf(eventRecord.Data).String())
 
 			balanceProof.TransferredAmount, balanceProof.LockedAmount, balanceProof.LocksRoot = getValuesFromBalanceProof(eventRecord.Data, prefix)
 
@@ -201,7 +201,7 @@ func GetStateChangeWithBalanceProofByLocksroot(
 		if stateChangeRecord.Data != nil {
 			var balanceProof transfer.BalanceProofSignedState
 
-			log.Debugf("[GetStateChangeWithBalanceProofByLocksroot] type: %s", reflect.ValueOf(stateChangeRecord.Data).String())
+			log.Debugf("[GetStateChangeWithBalanceProofByLocksroot] type: %s", reflect.TypeOf(stateChangeRecord.Data).String())
 			balanceProof.TransferredAmount, balanceProof.LockedAmount, balanceProof.LocksRoot = getValuesFromBalanceProof(stateChangeRecord.Data, prefix)
 
 			log.Debugf("[GetStateChangeWithBalanceProofByLocksroot] ta : %d, la : %d, lr: %v",
@@ -239,7 +239,7 @@ func GetEventWithBalanceProofByLocksroot(
 		if eventRecord.Data != nil {
 			var balanceProof transfer.BalanceProofUnsignedState
 
-			log.Debugf("[GetEventWithBalanceProofByLocksroot] eventRecord.Data type: %s", reflect.ValueOf(eventRecord.Data).String())
+			log.Debugf("[GetEventWithBalanceProofByLocksroot] eventRecord.Data type: %s", reflect.TypeOf(eventRecord.Data).String())
 
 			balanceProof.TransferredAmount, balanceProof.LockedAmount, balanceProof.LocksRoot = getValuesFromBalanceProof(eventRecord.Data, prefix)
 
@@ -253,4 +253,19 @@ func GetEventWithBalanceProofByLocksroot(
 	}
 	return nil
 
+}
+
+func GetEventWithTargetAndPaymentId(storage *SQLiteStorage, target common.Address, identifier common.PaymentID) *EventRecord {
+	filters := map[string]interface{}{
+		"Identifier": identifier,
+		"Target":     formatAddressForQuery(target),
+	}
+
+	log.Debugf("[GetPaymentResultFromEventWithPaymentIdAndTarget] with parameter: %v", filters)
+	eventRecord := storage.GetLatestEventByDataField(filters)
+	if eventRecord.Data != nil {
+		log.Debugf("[GetPaymentResultFromEventWithPaymentIdAndTarget] eventRecord.Data type: %s", reflect.TypeOf(eventRecord.Data).String())
+		return eventRecord
+	}
+	return nil
 }

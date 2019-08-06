@@ -420,6 +420,22 @@ func GetLastFilterBlockHeight() (uint32, error) {
 	}
 }
 
+func GetPaymentResult(target common.Address, identifier common.PaymentID) (*PaymentResultResp, error) {
+	ret := &GetPaymentResultRet{
+		Ret:  nil,
+		Done: make(chan bool, 1),
+		Err:  nil,
+	}
+	getPaymentResultReq := &GetPaymentResultReq{target, identifier, ret}
+	ChannelServerPid.Tell(getPaymentResultReq)
+
+	if err := waitForCallDone(getPaymentResultReq.Ret.Done, "GetAllChannels", defaultMinTimeOut); err != nil {
+		return nil, err
+	} else {
+		return getPaymentResultReq.Ret.Ret, nil
+	}
+}
+
 func waitForCallDone(c chan bool, funcName string, maxTimeOut int64) error {
 	if maxTimeOut < defaultMinTimeOut {
 		maxTimeOut = defaultMinTimeOut

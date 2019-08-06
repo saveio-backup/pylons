@@ -178,7 +178,8 @@ func (self ChannelEventHandler) HandlePaymentSentFailed(channel *ChannelService,
 
 	paymentStatus, exist := channel.GetPaymentStatus(target, identifier)
 	if !exist {
-		panic("error in HandlePaymentSentFailed, no payment status found in the map")
+		log.Error("error in HandlePaymentSentFailed, no payment status found in the map")
+		return
 	}
 
 	log.Warn("set paymentDone to false")
