@@ -429,16 +429,6 @@ func handleNewTokenNetwork(chainState *ChainState, stateChange *ActionNewTokenNe
 	return &TransitionResult{chainState, nil}
 }
 
-func handleNodeChangeNetworkState(chainState *ChainState,
-	stateChange *ActionChangeNodeNetworkState) *TransitionResult {
-
-	nodeAddress := stateChange.NodeAddress
-	networkState := stateChange.NetworkState
-	chainState.NodeAddressesToNetworkStates.Store(nodeAddress, networkState)
-
-	return &TransitionResult{chainState, nil}
-}
-
 func handleLeaveAllNetworks(chainState *ChainState) *TransitionResult {
 	var events []Event
 
@@ -638,9 +628,6 @@ func handleStateChangeForNode(chainStateArg State, stateChange StateChange) *Tra
 	case *ContractReceiveChannelBatchUnlock:
 		contractReceiveChannelBatchUnlock, _ := stateChange.(*ContractReceiveChannelBatchUnlock)
 		iteration = handleTokenNetworkAction(chainState, stateChange, contractReceiveChannelBatchUnlock.TokenNetworkIdentifier)
-	case *ActionChangeNodeNetworkState:
-		actionChangeNodeNetworkState, _ := stateChange.(*ActionChangeNodeNetworkState)
-		iteration = handleNodeChangeNetworkState(chainState, actionChangeNodeNetworkState)
 	case *ActionLeaveAllNetworks:
 		iteration = handleLeaveAllNetworks(chainState)
 	case *ContractReceiveNewPaymentNetwork:

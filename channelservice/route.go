@@ -9,7 +9,7 @@ import (
 	"github.com/saveio/themis/common/log"
 )
 
-func GetBestRoutes(chainState *transfer.ChainState, tokenNetworkId common.TokenNetworkID,
+func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID,
 	fromAddress common.Address, toAddress common.Address, amount common.TokenAmount,
 	previousAddress common.Address) ([]transfer.RouteState, error) {
 
@@ -22,9 +22,7 @@ func GetBestRoutes(chainState *transfer.ChainState, tokenNetworkId common.TokenN
 	//# Rate each route to optimize the fee price/quality of each route and add a
 	//# rate from in the range [0.0,1.0].
 
-	tokenNetwork := transfer.GetTokenNetworkByIdentifier(chainState, tokenNetworkId)
-	networkStatuses := transfer.GetNetworkStatuses(chainState)
-
+	tokenNetwork := transfer.GetTokenNetworkByIdentifier(channelSrv.StateFromChannel(), tokenNetworkId)
 	nodes := tokenNetwork.NetworkGraph.Nodes
 	edges := tokenNetwork.NetworkGraph.Edges
 	log.Debug("[GetBestRoutes] edges", edges)
@@ -52,7 +50,7 @@ func GetBestRoutes(chainState *transfer.ChainState, tokenNetworkId common.TokenN
 	}
 
 	partAddr := spt[i][0]
-	channelState := transfer.GetChannelStateByTokenNetworkAndPartner(chainState, tokenNetworkId, partAddr)
+	channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(), tokenNetworkId, partAddr)
 	if channelState == nil {
 		return nil, fmt.Errorf("GetChannelStateByTokenNetworkAndPartner error")
 	}
@@ -66,8 +64,9 @@ func GetBestRoutes(chainState *transfer.ChainState, tokenNetworkId common.TokenN
 		return nil, fmt.Errorf("channel doesnt have enough funds, ignoring %s, %s, %d, %d ", hex.EncodeToString(fromAddress[:]),
 			hex.EncodeToString(partAddr[:]), amount, distributable)
 	}
-	networkState := (*networkStatuses)[partAddr] //, NODE_NETWORK_UNKNOWN)
+	networkState := channelSrv.GetNodeNetworkState(partAddr)
 	log.Debug("networkState:   ", networkState)
+
 	//if networkState != common.NodeNetworkReachable {
 	//	return nil, fmt.Errorf("partner for channel state isn't reachable, ignoring  %s, %s, %s ",
 	//		hex.EncodeToString(fromAddress[:]), hex.EncodeToString(partnerAddress[:]), networkState)

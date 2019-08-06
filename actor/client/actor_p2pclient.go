@@ -55,6 +55,17 @@ type RecvMsg struct {
 	Ret     *RecvMsgRet
 }
 
+type GetNodeNetworkStateRet struct {
+	State int
+	Done  chan bool
+	Err   error
+}
+
+type GetNodeNetworkStateReq struct {
+	Address string
+	Ret     *GetNodeNetworkStateRet
+}
+
 func P2pConnect(address string) error {
 	ret := &ConnectRet{
 		Done: make(chan bool, 1),
@@ -89,4 +100,17 @@ func P2pSend(address string, data proto.Message) error {
 	<-chReq.Ret.Done
 	close(chReq.Ret.Done)
 	return chReq.Ret.Err
+}
+
+func GetNodeNetworkState(address string) int {
+	ret := &GetNodeNetworkStateRet{
+		State: 0,
+		Done:  make(chan bool, 1),
+		Err:   nil,
+	}
+	chReq := &GetNodeNetworkStateReq{Address: address, Ret: ret}
+	P2pServerPid.Tell(chReq)
+	<-chReq.Ret.Done
+	close(chReq.Ret.Done)
+	return chReq.Ret.State
 }

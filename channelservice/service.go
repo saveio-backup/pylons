@@ -239,10 +239,6 @@ func (self *ChannelService) StartService() error {
 		return err
 	}
 
-	//reset neighbor networkStates
-	channelState := self.StateFromChannel()
-	channelState.NodeAddressesToNetworkStates = new(sync.Map)
-
 	chainState := self.StateFromChannel()
 	self.InitializeTransactionsQueues(chainState)
 	self.alarm.Start()
@@ -291,12 +287,6 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 		self.snapshotGroup = newSnapShotGroup
 	}
 	return eventList
-}
-
-func (self *ChannelService) SetNodeNetworkState(nodeAddress common.Address,
-	networkState string) {
-
-	return
 }
 
 func (self *ChannelService) StartNeighboursHealthCheck() {
@@ -917,7 +907,12 @@ func (self *ChannelService) GetChannelList(registryAddress common.PaymentNetwork
 }
 
 func (self *ChannelService) GetNodeNetworkState(nodeAddress common.Address) string {
-	return transfer.GetNodeNetworkStatus(self.StateFromChannel(), nodeAddress)
+	if v, ok := self.Transport.NodeAddressToIpPort.Load(nodeAddress); ok {
+		if nodeNetAddr, ok := v.(string); ok {
+			return self.Transport.GetNodeNetworkState(nodeNetAddr)
+		}
+	}
+	return transfer.NetworkUnreachable
 }
 
 func (self *ChannelService) GetTokensList(registryAddress common.PaymentNetworkID) *list.List {
@@ -1114,8 +1109,7 @@ func (self *ChannelService) InitiatorInit(transferIdentifier common.PaymentID,
 	}
 
 	var previousAddress common.Address
-	chainState := self.StateFromChannel()
-	routes, err := GetBestRoutes(chainState, tokenNetworkIdentifier, self.address,
+	routes, err := GetBestRoutes(self, tokenNetworkIdentifier, self.address,
 		targetAddress, transferAmount, previousAddress)
 	if err != nil {
 		return nil, err
@@ -1132,9 +1126,7 @@ func (self *ChannelService) MediatorInit(lockedTransfer *messages.LockedTransfer
 	copy(initiatorAddr[:], lockedTransfer.Initiator.Address)
 
 	fromTransfer := LockedTransferSignedFromMessage(lockedTransfer)
-
-	chainState := self.StateFromChannel()
-	routes, err := GetBestRoutes(chainState, fromTransfer.BalanceProof.TokenNetworkIdentifier,
+	routes, err := GetBestRoutes(self, fromTransfer.BalanceProof.TokenNetworkIdentifier,
 		self.address, common.Address(fromTransfer.Target), fromTransfer.Lock.Amount, initiatorAddr)
 	if err != nil {
 		log.Infof("[GetBestRoutes] error : %v", err)

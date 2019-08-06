@@ -7,32 +7,40 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/ontio/ontology-eventbus/actor"
 	p2pNet "github.com/saveio/carrier/network"
-	act "github.com/saveio/pylons/actor/client"
-	"github.com/saveio/pylons/test/p2p"
+	dspact "github.com/saveio/dsp-go-sdk/actor/client"
+	chact "github.com/saveio/pylons/actor/client"
+	"github.com/saveio/pylons/test/p2p/network"
 	"github.com/saveio/themis/common/log"
 )
 
 type MessageHandler func(msgData interface{}, pid *actor.PID)
 
 type P2PActor struct {
-	net         *p2p.Network
+	channelNet  *network.Network
+	dspNet      *network.Network
 	props       *actor.Props
 	msgHandlers map[string]MessageHandler
 	localPID    *actor.PID
 }
 
-func NewP2PActor(n *p2p.Network) (*actor.PID, error) {
+func NewP2PActor() (*P2PActor, error) {
 	var err error
 	p2pActor := &P2PActor{
-		net:         n,
 		msgHandlers: make(map[string]MessageHandler),
 	}
 	p2pActor.localPID, err = p2pActor.Start()
 	if err != nil {
 		return nil, err
 	}
-	return p2pActor.localPID, nil
+	return p2pActor, nil
+}
 
+func (this *P2PActor) SetChannelNetwork(net *network.Network) {
+	this.channelNet = net
+}
+
+func (this *P2PActor) SetDspNetwork(net *network.Network) {
+	this.dspNet = net
 }
 
 func (this *P2PActor) Start() (*actor.PID, error) {
@@ -45,32 +53,86 @@ func (this *P2PActor) Start() (*actor.PID, error) {
 	return localPid, err
 }
 
+func (this *P2PActor) Stop() error {
+	this.localPID.Stop()
+	this.dspNet.Stop()
+	this.channelNet.Stop()
+	return nil
+}
+
 func (this *P2PActor) Receive(ctx actor.Context) {
 	switch msg := ctx.Message().(type) {
 	case *actor.Restarting:
-		log.Warn("[oniP2p]actor restarting")
+		log.Warn("[P2PActor] actor restarting")
 	case *actor.Stopping:
-		log.Warn("[oniP2p]actor stopping")
+		log.Warn("[P2PActor] actor stopping")
 	case *actor.Stopped:
-		log.Warn("[oniP2p]actor stopped")
+		log.Warn("[P2PActor] actor stopped")
 	case *actor.Started:
-		log.Debug("[oniP2p]actor started")
+		log.Debug("[P2PActor] actor started")
 	case *actor.Restart:
-		log.Warn("[oniP2p]actor restart")
-	case *act.ConnectReq:
+		log.Warn("[P2PActor] actor restart")
+	case *chact.ConnectReq:
 		go func() {
-			msg.Ret.Err = this.net.Connect(msg.Address)
+			msg.Ret.Err = this.channelNet.Connect(msg.Address)
 			msg.Ret.Done <- true
 		}()
-	case *act.CloseReq:
+	case *dspact.ChannelWaitForConnectedReq:
 		go func() {
-			msg.Ret.Err = this.net.Close(msg.Address)
+			err := this.channelNet.WaitForConnected(msg.Address, msg.Timeout)
+			msg.Response <- &dspact.P2pResp{Error: err}
+		}()
+	case *chact.GetNodeNetworkStateReq:
+		go func() {
+			state, err := this.channelNet.GetPeerStateByAddress(msg.Address)
+			msg.Ret.State = int(state)
+			msg.Ret.Err = err
 			msg.Ret.Done <- true
 		}()
-	case *act.SendReq:
+	case *chact.CloseReq:
 		go func() {
-			msg.Ret.Err = this.net.Send(msg.Data, msg.Address)
+			msg.Ret.Err = this.channelNet.Close(msg.Address)
 			msg.Ret.Done <- true
+		}()
+	case *chact.SendReq:
+		go func() {
+			msg.Ret.Err = this.channelNet.Send(msg.Data, msg.Address)
+			msg.Ret.Done <- true
+		}()
+	case *dspact.ConnectReq:
+		go func() {
+			err := this.dspNet.ConnectAndWait(msg.Address)
+			msg.Response <- &dspact.P2pResp{Error: err}
+		}()
+	case *dspact.WaitForConnectedReq:
+		go func() {
+			err := this.dspNet.WaitForConnected(msg.Address, msg.Timeout)
+			msg.Response <- &dspact.P2pResp{Error: err}
+		}()
+	case *dspact.CloseReq:
+		go func() {
+			err := this.dspNet.Disconnect(msg.Address)
+			msg.Response <- &dspact.P2pResp{Error: err}
+		}()
+	case *dspact.SendReq:
+		go func() {
+			err := this.dspNet.Send(msg.Data, msg.Address)
+			msg.Response <- &dspact.P2pResp{Error: err}
+		}()
+	case *dspact.BroadcastReq:
+		go func() {
+			m, err := this.dspNet.Broadcast(msg.Addresses, msg.Data, msg.NeedReply, msg.Stop, msg.Action)
+			msg.Response <- &dspact.BroadcastResp{Result: m, Error: err}
+		}()
+	case *dspact.PublicAddrReq:
+		go func() {
+			addr := this.dspNet.PublicAddr()
+			msg.Response <- &dspact.PublicAddrResp{Addr: addr}
+		}()
+	case *dspact.RequestWithRetryReq:
+		go func() {
+			ret, err := this.dspNet.RequestWithRetry(msg.Data, msg.Address, msg.Retry)
+			msg.Response <- &dspact.RequestWithRetryResp{Data: ret, Error: err}
 		}()
 	default:
 		log.Error("[P2PActor] receive unknown message type!")
@@ -78,8 +140,8 @@ func (this *P2PActor) Receive(ctx actor.Context) {
 }
 
 func (this *P2PActor) Broadcast(message proto.Message) {
-	ctx := p2pNet.WithSignMessage(context.Background(), false)
-	this.net.P2p.Broadcast(ctx, message)
+	ctx := p2pNet.WithSignMessage(context.Background(), true)
+	this.channelNet.P2p.Broadcast(ctx, message)
 }
 
 func (this *P2PActor) RegMsgHandler(msgName string, handler MessageHandler) {

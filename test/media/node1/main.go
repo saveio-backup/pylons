@@ -15,9 +15,9 @@ import (
 	ch_actor "github.com/saveio/pylons/actor/server"
 	"github.com/saveio/pylons/common"
 	tc "github.com/saveio/pylons/test/media/test_config"
-	"github.com/saveio/pylons/test/p2p"
 	"github.com/saveio/pylons/test/p2p/actor/req"
 	p2p_actor "github.com/saveio/pylons/test/p2p/actor/server"
+	p2p "github.com/saveio/pylons/test/p2p/network"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis-go-sdk/usdt"
 	"github.com/saveio/themis-go-sdk/wallet"
@@ -84,27 +84,29 @@ func main() {
 	}
 	chnPid := ChannelActor.GetLocalPID()
 	//start p2p and actor
-	p2pserver := p2p.NewP2P()
+	channelP2p := p2p.NewP2P()
 	bPrivate := keypair.SerializePrivateKey(account.PrivKey())
 	bPub := keypair.SerializePublicKey(account.PubKey())
-	p2pserver.Keys = &crypto.KeyPair{
+	channelP2p.Keys = &crypto.KeyPair{
 		PrivateKey: bPrivate,
 		PublicKey:  bPub,
 	}
 
-	err = p2pserver.Start(tc.Initiator1.Protocol + "://" + tc.Initiator1.ListenAddress)
+	err = channelP2p.Start(tc.Initiator1.Protocol + "://" + tc.Initiator1.ListenAddress)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	P2pPid, err := p2p_actor.NewP2PActor(p2pserver)
+	p2pActor, err := p2p_actor.NewP2PActor()
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
+	p2pActor.SetChannelNetwork(channelP2p)
+
 	//binding channel and p2p pid
 	req.SetChannelPid(chnPid)
-	client.SetP2pPid(P2pPid)
+	client.SetP2pPid(p2pActor.GetLocalPID())
 	//start channel service
 	err = ChannelActor.Start()
 	if err != nil {
@@ -145,6 +147,7 @@ func main() {
 			log.Infof("peer state = %s wait for connect ...", state)
 			<-time.After(time.Duration(3000) * time.Millisecond)
 		}
+
 		if *disable == false {
 			if *multiEnable {
 				log.Info("begin media multi route transfer test...")

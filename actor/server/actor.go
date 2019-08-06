@@ -373,21 +373,6 @@ func OnBusinessMessage(message proto.Message, from string) error {
 	}
 }
 
-func SetNodeNetworkState(address string, state string) error {
-	ret := &NodeStateChangeRet{
-		Done: make(chan bool, 1),
-		Err:  nil,
-	}
-	nodeStateChangeReq := &NodeStateChangeReq{Address: address, State: state, Ret: ret}
-	ChannelServerPid.Tell(nodeStateChangeReq)
-
-	if err := waitForCallDone(nodeStateChangeReq.Ret.Done, "SetNodeNetworkState", defaultMinTimeOut); err != nil {
-		return err
-	} else {
-		return nodeStateChangeReq.Ret.Err
-	}
-}
-
 func HealthyCheckNodeState(address common.Address) error {
 	ret := &HealthyCheckNodeRet{
 		Done: make(chan bool, 1),

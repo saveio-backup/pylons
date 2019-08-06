@@ -241,17 +241,6 @@ type SetUnitPricesReq struct {
 	Ret   *SetUnitPricesRet
 }
 
-type NodeStateChangeRet struct {
-	Done chan bool
-	Err  error
-}
-
-type NodeStateChangeReq struct {
-	Address string
-	State   string
-	Ret     *NodeStateChangeRet
-}
-
 type HealthyCheckNodeRet struct {
 	Done chan bool
 	Err  error

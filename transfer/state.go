@@ -3,12 +3,10 @@ package transfer
 import (
 	"bytes"
 	"errors"
-	"sort"
-	"sync"
-
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/themis/common/log"
+	"sort"
 )
 
 type SecretHashToLock map[common.SecretHash]*HashTimeLockState
@@ -75,7 +73,6 @@ type ChainState struct {
 	BlockHeight                  common.BlockHeight
 	ChainId                      common.ChainID
 	IdentifiersToPaymentNetworks map[common.PaymentNetworkID]*PaymentNetworkState
-	NodeAddressesToNetworkStates *sync.Map
 	Address                      common.Address
 	PaymentMapping               PaymentMappingState
 	PendingTransactions          []Event
@@ -86,7 +83,6 @@ func NewChainState() *ChainState {
 	result := new(ChainState)
 
 	result.IdentifiersToPaymentNetworks = make(map[common.PaymentNetworkID]*PaymentNetworkState)
-	result.NodeAddressesToNetworkStates = new(sync.Map)
 	result.PaymentMapping.SecretHashesToTask = make(map[common.SecretHash]State)
 	result.PendingTransactions = []Event{}
 	result.QueueIdsToQueues = make(QueueIdsToQueuesType)
@@ -160,11 +156,6 @@ func DeepCopy(src State) *ChainState {
 				value.IdentifiersToPaymentNetworks[id].TokenIdentifiersToTokenNetworks[tokenNetworkId] = &tokenNwState
 			}
 		}
-		value.NodeAddressesToNetworkStates = new(sync.Map)
-		chainState.NodeAddressesToNetworkStates.Range(func(addr, state interface{}) bool {
-			value.NodeAddressesToNetworkStates.Store(addr, state)
-			return true
-		})
 
 		value.PaymentMapping.SecretHashesToTask = make(map[common.SecretHash]State)
 		for hash, itf := range chainState.PaymentMapping.SecretHashesToTask {

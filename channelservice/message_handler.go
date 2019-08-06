@@ -156,7 +156,7 @@ func (self *MessageHandler) HandleMessageRefundTransfer(channel *ChannelService,
 
 	fromTransfer := LockedTransferSignedFromMessage(message.Refund)
 	chainState := channel.StateFromChannel()
-	routes, _ := GetBestRoutes(chainState, common.TokenNetworkID(tokenNetworkAddress),
+	routes, _ := GetBestRoutes(channel, common.TokenNetworkID(tokenNetworkAddress),
 		common.Address(channel.address), common.Address(fromTransfer.Target),
 		fromTransfer.Lock.Amount, previousAddress)
 

@@ -175,12 +175,6 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 			msg.Ret.Err = nil
 			msg.Ret.Done <- true
 		}()
-	case *NodeStateChangeReq:
-		go func() {
-			this.chSrv.Service.Transport.SetNodeNetworkState(msg.Address, msg.State)
-			msg.Ret.Err = nil
-			msg.Ret.Done <- true
-		}()
 	case *HealthyCheckNodeReq:
 		go func() {
 			this.chSrv.Service.Transport.StartHealthCheck(msg.Address)
