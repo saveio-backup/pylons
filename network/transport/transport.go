@@ -203,18 +203,19 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 		return errors.New("no valid address to send message")
 	}
 
-	if state, err := this.GetNodeNetworkState(address); err != nil {
+	state, err := this.GetNodeNetworkState(address)
+	if err == nil {
 		if state != transfer.NetworkReachable {
-			if err = client.P2pConnect(address); err != nil {
-				log.Errorf("[PeekAndSend], state != transfer.NetworkReachable connect error: %s",
-					err.Error())
-			}
+			log.Errorf("[PeekAndSend] (%s) NodeNetworkState is not NetworkReachable", address)
+			return fmt.Errorf("[PeekAndSend] (%s) NodeNetworkState is not NetworkReachable", address)
 		}
+	} else {
+		log.Errorf("[PeekAndSend] GetNodeNetworkState (%s) error: %s", address, err.Error())
+		return fmt.Errorf("[PeekAndSend] (%s) NodeNetworkState is not NetworkReachable", address)
 	}
 
 	msgId := common.MessageID(item.(*QueueItem).messageId.MessageId)
 	log.Debugf("[PeekAndSend] address: %s msgId: %v, queue: %p\n", address, msgId, queue)
-	//this.addressQueueMap.LoadOrStore(address, queue)
 
 	this.addressQueueMap.LoadOrStore(msgId, queue)
 	if err = client.P2pSend(address, msg); err != nil {
@@ -402,17 +403,23 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 			reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier.MessageId,
 			nodeAddress)
 
-		if state, err := this.GetNodeNetworkState(nodeAddress); err != nil {
+		state, err := this.GetNodeNetworkState(nodeAddress)
+		if err == nil {
 			if state != transfer.NetworkReachable {
+				log.Errorf("[PeekAndSend] (%s) NodeNetworkState is not NetworkReachable", address)
 				if err = client.P2pConnect(nodeAddress); err != nil {
-					log.Errorf("[PeekAndSend], state != transfer.NetworkReachable connect error: %s",
-						err.Error())
+					log.Errorf("[PeekAndSend], P2pConnect error: %s", err.Error())
 				}
+			}
+		} else {
+			log.Errorf("[PeekAndSend] GetNodeNetworkState (%s) error: %s", address, err.Error())
+			if err = client.P2pConnect(nodeAddress); err != nil {
+				log.Errorf("[PeekAndSend], P2pConnect error: %s", err.Error())
 			}
 		}
 
-		err = client.P2pSend(nodeAddress, deliveredMessage)
-		if err != nil {
+
+		if err = client.P2pSend(nodeAddress, deliveredMessage); err != nil {
 			log.Errorf("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v error: %s",
 				reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier.MessageId,
 				nodeAddress, err.Error())
