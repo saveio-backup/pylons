@@ -85,7 +85,6 @@ type Network struct {
 	keepaliveTimeout      time.Duration
 	peerStateChan         chan *keepalive.PeerStateEvent
 	kill                  chan struct{}
-	ActivePeers           *sync.Map
 	addressForHealthCheck *sync.Map
 	handler               func(*network.ComponentContext)
 	backOff               *backoff.Component
@@ -96,7 +95,6 @@ func NewP2P() *Network {
 	n := &Network{
 		P2p: new(network.Network),
 	}
-	n.ActivePeers = new(sync.Map)
 	n.addressForHealthCheck = new(sync.Map)
 	n.kill = make(chan struct{})
 	n.peerStateChan = make(chan *keepalive.PeerStateEvent, 100)
@@ -306,23 +304,11 @@ func (this *Network) Connect(tAddr string) error {
 	if this == nil {
 		return fmt.Errorf("[Connect] this is nil")
 	}
-	if this.ActivePeers == nil {
-		return fmt.Errorf("[Connect] ActivePeers is nil")
-	}
 	peerState, _ := this.GetPeerStateByAddress(tAddr)
 	if peerState == keepalive.PEER_REACHABLE {
 		return nil
 	}
 
-	if _, ok := this.ActivePeers.Load(tAddr); ok {
-		// node is active, no need to connect
-		pse := &keepalive.PeerStateEvent{
-			Address: tAddr,
-			State:   keepalive.PEER_REACHABLE,
-		}
-		this.peerStateChan <- pse
-		return nil
-	}
 	if _, ok := this.addressForHealthCheck.Load(tAddr); ok {
 		// already try to connect, don't retry before we get a result
 		log.Info("already try to connect")
