@@ -457,7 +457,7 @@ func (self *ChannelService) CallbackNewBlock(latestBlock common.BlockHeight, blo
 		events, posMap, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannelByEventId(
 			comm.Address(self.microAddress), self.Account.Address, 0, uint32(fromBlock), uint32(toBlock))
 		if err != nil {
-			log.Errorf("CallbackNewBlock error on first run or fast mode: %s", err)
+			log.Errorf("CallbackNewBlock GetFilterArgsForAllEventsFromChannelByEventId error: %s", err)
 			return
 		}
 
@@ -489,6 +489,7 @@ func (self *ChannelService) CallbackNewBlock(latestBlock common.BlockHeight, blo
 			events, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannel(0, uint32(i), uint32(i))
 			if err != nil {
 				self.lastFilterBlock = i - 1
+				log.Errorf("CallbackNewBlock GetFilterArgsForAllEventsFromChannel error: %s", err)
 				return
 			}
 			self.lastFilterBlock = i
