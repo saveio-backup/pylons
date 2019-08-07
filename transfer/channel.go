@@ -1263,6 +1263,7 @@ func createSendExpiredLock(senderEndState *NettingChannelEndState, lockedLock *H
 	sendLockExpired := &SendLockExpired{
 		SendMessageEvent: SendMessageEvent{
 			Recipient:         common.Address(recipient),
+			ChannelIdentifier: channelIdentifier,
 			MessageIdentifier: common.GetMsgID(),
 		},
 		BalanceProof: balanceProofEx,
