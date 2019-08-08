@@ -115,7 +115,7 @@ func main() {
 	}
 	time.Sleep(time.Second)
 
-	channelId, err := ch_actor.OpenChannel(tokenAddress, tc.Initiator2Addr)
+	channelId, err := ch_actor.OpenChannel(tokenAddress, tc.Dns1Addr)
 	if err != nil {
 		log.Fatal(err)
 		return
