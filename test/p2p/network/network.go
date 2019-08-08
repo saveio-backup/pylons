@@ -22,9 +22,9 @@ import (
 	dspmsg "github.com/saveio/dsp-go-sdk/network/message/pb"
 	act "github.com/saveio/pylons/actor/server"
 	"github.com/saveio/pylons/network/transport/messages"
+	"github.com/saveio/pylons/test/testnet/test_config"
 	pm "github.com/saveio/scan/messages/protoMessages"
 	"github.com/saveio/themis/common/log"
-	"github.com/saveio/pylons/test/testnet/test_config"
 )
 
 var once sync.Once

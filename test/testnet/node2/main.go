@@ -64,7 +64,7 @@ func main() {
 	}
 
 	//start channel and actor
-	ChannelActor, err := ch_actor.NewChannelActor(tc.Initiator1, account)
+	ChannelActor, err := ch_actor.NewChannelActor(tc.Initiator2, account)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -92,7 +92,7 @@ func main() {
 		PublicKey:  bPub,
 	}
 
-	err = channelP2p.Start(tc.Initiator1.Protocol + "://" + tc.Initiator1.ListenAddress)
+	err = channelP2p.Start(tc.Initiator2.Protocol + "://" + tc.Initiator2.ListenAddress)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -151,10 +151,10 @@ func main() {
 		if *disable == false {
 			if *multiEnable {
 				log.Info("begin media multi route transfer test...")
-				go multiRouteTest(1, tc.Initiator2Addr, *transferAmount, 0, *routeNum)
+				go multiRouteTest(1, tc.Initiator1Addr, *transferAmount, 0, *routeNum)
 			} else {
 				log.Info("begin media single route transfer test...")
-				go singleRouteTest(1, tc.Initiator2Addr, *transferAmount, 0, *routeNum)
+				go singleRouteTest(1, tc.Initiator1Addr, *transferAmount, 0, *routeNum)
 			}
 		}
 

@@ -1,9 +1,9 @@
 package test_config
 
 import (
+	"github.com/saveio/edge/common/config"
 	ch "github.com/saveio/pylons"
 	"github.com/saveio/pylons/common"
-	"github.com/saveio/edge/common/config"
 )
 
 const PROTOCOL = "tcp"
@@ -34,7 +34,6 @@ var Initiator1Addr common.Address
 var Initiator2Addr common.Address
 var Parameters *config.DspConfig
 
-
 func init() {
 	Dns1AddrTmp, _ := common.FromBase58("AXUhmdzcAJwaFW91q6UYuPGGJY3fimoTAj")
 	Initiator1AddrTmp, _ := common.FromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
@@ -45,7 +44,6 @@ func init() {
 	Initiator2Addr = common.Address(Initiator2AddrTmp)
 	Parameters = TestConfig()
 }
-
 
 func TestConfig() *config.DspConfig {
 	return &config.DspConfig{
