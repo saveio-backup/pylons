@@ -14,10 +14,10 @@ import (
 	"github.com/saveio/pylons/actor/client"
 	ch_actor "github.com/saveio/pylons/actor/server"
 	"github.com/saveio/pylons/common"
-	tc "github.com/saveio/pylons/test/testnet/test_config"
 	"github.com/saveio/pylons/test/p2p/actor/req"
 	p2p_actor "github.com/saveio/pylons/test/p2p/actor/server"
 	p2p "github.com/saveio/pylons/test/p2p/network"
+	tc "github.com/saveio/pylons/test/testnet/test_config"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis-go-sdk/usdt"
 	"github.com/saveio/themis-go-sdk/wallet"
@@ -81,7 +81,6 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-
 
 	chnPid := ChannelActor.GetLocalPID()
 	//start p2p and actor

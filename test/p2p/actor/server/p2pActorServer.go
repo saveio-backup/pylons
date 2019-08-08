@@ -77,11 +77,6 @@ func (this *P2PActor) Receive(ctx actor.Context) {
 			msg.Ret.Err = this.channelNet.Connect(msg.Address)
 			msg.Ret.Done <- true
 		}()
-	case *dspact.ChannelWaitForConnectedReq:
-		go func() {
-			err := this.channelNet.WaitForConnected(msg.Address, msg.Timeout)
-			msg.Response <- &dspact.P2pResp{Error: err}
-		}()
 	case *chact.GetNodeNetworkStateReq:
 		go func() {
 			state, err := this.channelNet.GetPeerStateByAddress(msg.Address)
