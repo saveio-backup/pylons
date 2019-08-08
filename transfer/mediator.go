@@ -57,25 +57,25 @@ func MdIsLockValid(expiration common.BlockExpiration, blockNumber common.BlockHe
 }
 
 func MdIsSafeToWait(lockExpiration common.BlockExpiration, revealTimeout common.BlockTimeout,
-	blockNumber common.BlockHeight) (bool, string) {
-
+	blockNumber common.BlockHeight) (bool, error) {
+	var err error
 	//NOTE, need ensure lock_expiration > reveal_timeout
 	if common.BlockHeight(lockExpiration) < blockNumber {
-		msg := fmt.Sprintf("lock has expired, lockExpiration %d, blockNumber %d", lockExpiration, blockNumber)
-		log.Warnf(msg)
-		return false, msg
+		err = fmt.Errorf("lock has expired, lockExpiration %d, blockNumber %d", lockExpiration, blockNumber)
+		log.Warnf(err.Error())
+		return false, err
 	}
 
 	lockTimeout := common.BlockHeight(lockExpiration) - blockNumber
 	if common.BlockTimeout(lockTimeout) > revealTimeout {
 		log.Debugf("lock timeout is safe. LockExpiration %d, blockNumber %d, revealTimeout %d", lockExpiration, blockNumber, revealTimeout)
-		return true, ""
+		return true, nil
 	}
-
-	msg := fmt.Sprintf(`lock timeout is unsafe. timeout must be larger than %d,
+	err = fmt.Errorf(`lock timeout is unsafe. timeout must be larger than %d,
 		but it is %d. expiration:%d block number: %d`, revealTimeout, lockTimeout, lockExpiration, blockNumber)
-	log.Debugf(msg)
-	return false, msg
+	log.Debugf(err.Error())
+	return false, err
+
 }
 
 func MdIsChannelUsable(candidateChannelState *NettingChannelState, transferAmount common.PaymentAmount,
@@ -410,7 +410,7 @@ func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRout
 	var mediatedEvents []Event
 	var lockTimeout common.BlockTimeout
 
-	log.Debugf("[forwardTransferPair] lock expiration %d, blockNumber %d", payerTransferrT.Lock.Expiration, blockNumber)
+	log.Debugf("[forwardTransferPair] lock expiration %d, blockNumber %d", payerTransfer.Lock.Expiration, blockNumber)
 	// check overflow
 	if payerTransfer.Lock.Expiration > blockNumber {
 		lockTimeout = common.BlockTimeout(payerTransfer.Lock.Expiration - blockNumber)

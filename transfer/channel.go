@@ -11,6 +11,7 @@ import (
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/themis/common/log"
+	"github.com/saveio/themis/errors"
 )
 
 func Min(x, y uint64) uint64 {
@@ -54,18 +55,18 @@ func IsLockLocked(endState *NettingChannelEndState, secretHash common.SecretHash
 }
 
 func IsLockExpired(endState *NettingChannelEndState, lock *HashTimeLockState,
-	blockNumber common.BlockHeight, lockExpirationThreshold common.BlockHeight) (bool, string) {
+	blockNumber common.BlockHeight, lockExpirationThreshold common.BlockHeight) (bool, error) {
 
 	secretHash := common.SecretHash(lock.SecretHash)
 	if _, exist := endState.SecretHashesToOnChainUnLockedLocks[secretHash]; exist {
-		return false, "lock has been unlocked on-chain"
+		return false, errors.NewErr("lock has been unlocked on-chain")
 	}
 
 	if blockNumber < lockExpirationThreshold {
-		return false, "current block number is not larger than lock expiration + confirmation blocks"
+		return false, errors.NewErr("current block number is not larger than lock expiration + confirmation blocks")
 	}
 
-	return true, ""
+	return true, nil
 }
 
 func TransferExpired(transfer *LockedTransferSignedState, affectedChannel *NettingChannelState,
@@ -281,7 +282,7 @@ func IsValidRefund(refund *ReceiveTransferRefund, channelState *NettingChannelSt
 }
 
 func IsValidUnlock(unlock *ReceiveUnlock, channelState *NettingChannelState,
-	senderState *NettingChannelEndState) (bool, string, *MerkleTreeState) {
+	senderState *NettingChannelEndState) (bool, *MerkleTreeState, error) {
 	receivedBalanceProof := unlock.BalanceProof
 	currentBalanceProof, err := getCurrentBalanceProof(senderState)
 	if err != nil {
@@ -293,15 +294,13 @@ func IsValidUnlock(unlock *ReceiveUnlock, channelState *NettingChannelState,
 	lock := GetLock(senderState, secretHash)
 
 	if lock == nil {
-		msg := fmt.Sprintf("Invalid Unlock message. There is no corresponding lock for %s",
+		return false, nil, fmt.Errorf("invalid Unlock message. There is no corresponding lock for %s",
 			hex.EncodeToString(secretHash[:]))
-
-		return false, msg, nil
 	}
 
 	lock.LockHash = lock.CalcLockHash()
 	merkleTree := computeMerkleTreeWithout(senderState.MerkleTree, lock.LockHash)
-	locksrootWithoutLock := MerkleRoot(merkleTree.Layers)
+	locksRootWithoutLock := MerkleRoot(merkleTree.Layers)
 
 	currentTransferredAmount := currentBalanceProof.transferredAmount
 	currentLockedAmount := currentBalanceProof.lockedAmount
@@ -312,31 +311,25 @@ func IsValidUnlock(unlock *ReceiveUnlock, channelState *NettingChannelState,
 		receivedBalanceProof, channelState, senderState)
 
 	if !isBalanceProofUsable {
-		msg := fmt.Sprintf("Invalid Unlock message. %s", invalidBalanceProofMsg)
-		return false, msg, nil
-	} else if receivedBalanceProof.LocksRoot != common.Locksroot(locksrootWithoutLock) {
+		return false, nil, fmt.Errorf("invalid Unlock message. %s", invalidBalanceProofMsg)
+	} else if receivedBalanceProof.LocksRoot != common.Locksroot(locksRootWithoutLock) {
 		//# Secret messages remove a known lock, the new locksroot must have only
 		//# that lock removed, otherwise the sender may be trying to remove
 		//# additional locks.
-		msg := fmt.Sprintf("Invalid Unlock message. Balance proof's locksroot didn't match, expected: %s got: %s.",
-			hex.EncodeToString(locksrootWithoutLock[:]), hex.EncodeToString(receivedBalanceProof.LocksRoot[:]))
-		return false, msg, nil
+		return false, nil, fmt.Errorf("invalid Unlock message. Balance proof's locksroot didn't match, expected: %s got: %s.",
+			hex.EncodeToString(locksRootWithoutLock[:]), hex.EncodeToString(receivedBalanceProof.LocksRoot[:]))
 	} else if receivedBalanceProof.TransferredAmount != expectedTransferredAmount {
 		//# Secret messages must increase the transferred_amount by lock amount,
 		//# otherwise the sender is trying to play the protocol and steal token.
-		msg := fmt.Sprintf("Invalid Unlock message. Balance proof's wrong transferred_amount, expected: %v got: %v.",
+		return false, nil, fmt.Errorf("invalid Unlock message. Balance proof's wrong transferred_amount, expected: %v got: %v.",
 			expectedTransferredAmount, receivedBalanceProof.TransferredAmount)
-
-		return false, msg, nil
 	} else if receivedBalanceProof.LockedAmount != expectedLockedAmount {
 		//# Secret messages must increase the transferred_amount by lock amount,
 		//# otherwise the sender is trying to play the protocol and steal token.
-		msg := fmt.Sprintf("Invalid Unlock message. Balance proof's wrong locked_amount, expected: %v got: %v.",
-			expectedLockedAmount, receivedBalanceProof.LockedAmount,
-		)
-		return false, msg, nil
+		return false, nil, fmt.Errorf("invalid Unlock message. Balance proof's wrong locked_amount, expected: %v got: %v.",
+			expectedLockedAmount, receivedBalanceProof.LockedAmount)
 	} else {
-		return true, "", merkleTree
+		return true, merkleTree, nil
 	}
 }
 
@@ -353,7 +346,7 @@ func IsValidAmount(endState *NettingChannelEndState, amount common.TokenAmount) 
 	return transferredAmountAfterUnlock <= math.MaxUint64
 }
 
-func IsValidSignature(balanceProof *BalanceProofSignedState, senderAddress common.Address) (bool, string) {
+func IsValidSignature(balanceProof *BalanceProofSignedState, senderAddress common.Address) (bool, error) {
 
 	//[TODO] find similar ONT function for
 	// to_canonical_address(eth_recover(data=data_that_was_signed, signature=balance_proof.signature))
@@ -364,59 +357,47 @@ func IsValidSignature(balanceProof *BalanceProofSignedState, senderAddress commo
 		balanceProof.ChannelIdentifier, common.TokenNetworkAddress(balanceProof.TokenNetworkIdentifier), balanceProof.ChainId, 1)
 
 	if dataThatWasSigned == nil {
-		return false, string("Signature invalid, could not be recovered dataThatWasSigned is nil")
+		return false, errors.NewErr("Signature invalid, could not be recovered dataThatWasSigned is nil")
 	}
 
 	return isValidSignature(dataThatWasSigned, balanceProof.PublicKey, balanceProof.Signature, senderAddress)
 }
 
 func IsBalanceProofUsableOnChain(receivedBalanceProof *BalanceProofSignedState,
-	channelState *NettingChannelState, senderState *NettingChannelEndState) (bool, string) {
+	channelState *NettingChannelState, senderState *NettingChannelEndState) (bool, error) {
 
 	expectedNonce := getNextNonce(senderState)
 
-	isValidSignature, signatureMsg := IsValidSignature(receivedBalanceProof,
-		senderState.Address)
+	isValidSignature, error := IsValidSignature(receivedBalanceProof, senderState.Address)
 	if !isValidSignature {
-		return isValidSignature, signatureMsg
+		return isValidSignature, error
 	}
 	if GetStatus(channelState) != ChannelStateOpened {
-		msg := fmt.Sprintf("The channel is already closed.")
-		return false, msg
-
+		return false, errors.NewErr("The channel is already closed.")
 	} else if receivedBalanceProof.ChannelIdentifier != channelState.Identifier {
-		msg := fmt.Sprintf("channel_identifier does not match. expected:%d got:%d",
+		return false, fmt.Errorf("channel_identifier does not match. expected:%d got:%d",
 			channelState.Identifier, receivedBalanceProof.ChannelIdentifier)
-		return false, msg
-	} else if common.AddressEqual(common.Address(receivedBalanceProof.TokenNetworkIdentifier), common.Address(channelState.TokenNetworkIdentifier)) == false {
-		msg := fmt.Sprintf("token_network_identifier does not match. expected:%d got:%d",
+	} else if common.AddressEqual(common.Address(receivedBalanceProof.TokenNetworkIdentifier),
+		common.Address(channelState.TokenNetworkIdentifier)) == false {
+		return false, fmt.Errorf("token_network_identifier does not match. expected:%d got:%d",
 			channelState.TokenNetworkIdentifier, receivedBalanceProof.TokenNetworkIdentifier)
-		return false, msg
 	} else if receivedBalanceProof.ChainId != channelState.ChainId {
-		msg := fmt.Sprintf("chain id does not match channel's chain id. expected:%d got:%d",
+		return false, fmt.Errorf("chain id does not match channel's chain id. expected:%d got:%d",
 			channelState.ChainId, receivedBalanceProof.ChainId)
-		return false, msg
 	} else if IsBalanceProofSafeForOnchainOperations(receivedBalanceProof) == false {
-
-		msg := fmt.Sprintf("Balance proof total transferred amount would overflow onchain.")
-		return false, msg
+		return false, errors.NewErr("Balance proof total transferred amount would overflow onchain.")
 	} else if receivedBalanceProof.Nonce != expectedNonce {
-		msg := fmt.Sprintf("Nonce did not change sequentially, expected:%d got:%d",
+		return false, fmt.Errorf("nonce did not change sequentially, expected:%d got:%d",
 			expectedNonce, receivedBalanceProof.Nonce)
-
-		return false, msg
-	} else if isValidSignature == false {
-		return false, signatureMsg
 	} else {
-		return true, "success"
+		return true, nil
 	}
 }
 
 func IsValidDirectTransfer(directTransfer *ReceiveTransferDirect, channelState *NettingChannelState,
-	senderState *NettingChannelEndState, receiverState *NettingChannelEndState) (bool, string) {
+	senderState *NettingChannelEndState, receiverState *NettingChannelEndState) (bool, error) {
 
 	receivedBalanceProof := directTransfer.BalanceProof
-
 	currentBalanceProof, err := getCurrentBalanceProof(senderState)
 	if err != nil {
 		log.Error("[IsValidDirectTransfer] error: ", err.Error())
@@ -432,33 +413,25 @@ func IsValidDirectTransfer(directTransfer *ReceiveTransferDirect, channelState *
 		receivedBalanceProof, channelState, senderState)
 
 	if isBalanceProofUsable == false {
-		msg := fmt.Sprintf("Invalid DirectTransfer message. {%s}", invalidBalanceProofMsg)
-		return false, msg
+		return false, fmt.Errorf("invalid DirectTransfer message. {%s}", invalidBalanceProofMsg)
 	} else if compareLocksroot(receivedBalanceProof.LocksRoot, currentLocksRoot) == false {
 		var buf1, buf2 bytes.Buffer
 
 		buf1.Write(currentBalanceProof.locksRoot[:])
 		buf2.Write(receivedBalanceProof.LocksRoot[:])
-		msg := fmt.Sprintf("Invalid DirectTransfer message. Balance proof's locksRoot changed, expected:%s got: %s",
+		return false, fmt.Errorf("invalid DirectTransfer message. Balance proof's locksRoot changed, expected:%s got: %s",
 			buf1.String(), buf2.String())
-
-		return false, msg
 	} else if receivedBalanceProof.TransferredAmount <= currentTransferredAmount {
-		msg := fmt.Sprintf("Invalid DirectTransfer message. Balance proof's transferred_amount decreased, expected larger than: %d got: %d",
+		return false, fmt.Errorf("invalid DirectTransfer message. Balance proof's transferred_amount decreased, expected larger than: %d got: %d",
 			currentTransferredAmount, receivedBalanceProof.TransferredAmount)
-
-		return false, msg
 	} else if receivedBalanceProof.LockedAmount != currentLockedAmount {
-		msg := fmt.Sprintf("Invalid DirectTransfer message. Balance proof's locked_amount is invalid, expected: %d got: %d",
+		return false, fmt.Errorf("invalid DirectTransfer message. Balance proof's locked_amount is invalid, expected: %d got: %d",
 			currentLockedAmount, receivedBalanceProof.LockedAmount)
-
-		return false, msg
 	} else if amount > distributable {
-		msg := fmt.Sprintf("Invalid DirectTransfer message. Transfer amount larger than the available distributable, transfer amount: %d maximum distributable: %d",
+		return false, fmt.Errorf("invalid DirectTransfer message. Transfer amount larger than the available distributable, transfer amount: %d maximum distributable: %d",
 			amount, distributable)
-		return false, msg
 	} else {
-		return true, "success"
+		return true, nil
 	}
 }
 
@@ -525,10 +498,10 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 		return nil, fmt.Errorf("Invalid LockExpired message. Same lockhash handled twice. ")
 	} else {
 		locksRootWithoutLock := MerkleRoot(merkleTree.Layers)
-		hasExpired, lockExpiredMessage := IsLockExpired(receiverState, lock, blockNumber,
+		hasExpired, err := IsLockExpired(receiverState, lock, blockNumber,
 			lock.Expiration+common.BlockHeight(DefaultNumberOfConfirmationsBlock))
 		if !hasExpired {
-			return nil, fmt.Errorf("Invalid LockExpired message. %s ", lockExpiredMessage)
+			return nil, fmt.Errorf("Invalid LockExpired message. %s ", err.Error())
 		} else if receivedBalanceProof.LocksRoot != common.Locksroot(locksRootWithoutLock) {
 			//The locksRoot must be updated, and the expired lock must be *removed*
 			return nil, fmt.Errorf("Invalid LockExpired message. "+
@@ -1379,15 +1352,16 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 
 func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *ActionWithdraw, blockNumber common.BlockHeight) TransitionResult {
 	var events []Event
-	var msg string
+	var err error
 
 	isOpen := false
 	isValid := false
+
 	if GetStatus(channelState) == ChannelStateOpened {
 		isOpen = true
-		isValid, msg = isValidWithdrawAmount(channelState.GetChannelEndState(0), channelState.GetChannelEndState(1), stateChange.TotalWithdraw)
+		isValid, err = isValidWithdrawAmount(channelState.GetChannelEndState(0), channelState.GetChannelEndState(1), stateChange.TotalWithdraw)
 	} else {
-		msg = fmt.Sprintf("Channel is not opened")
+		err = errors.NewErr("channel is not opened")
 	}
 
 	if isOpen && isValid {
@@ -1411,43 +1385,39 @@ func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *A
 			ChannelIdentifier:      stateChange.ChannelIdentifier,
 			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
 			WithdrawAmount:         stateChange.TotalWithdraw,
-			Reason:                 msg,
+			Reason:                 err.Error(),
 		}
-		log.Warn("[handleSendWithdrawRequest] failure: ", msg)
+		log.Warn("[handleSendWithdrawRequest] failure: ", err.Error())
 		events = append(events, failure)
 	}
 	return TransitionResult{channelState, events}
 }
 
-func isValidWithdrawAmount(participant *NettingChannelEndState, partner *NettingChannelEndState, totalWithdraw common.TokenAmount) (bool, string) {
+func isValidWithdrawAmount(participant *NettingChannelEndState, partner *NettingChannelEndState, totalWithdraw common.TokenAmount) (bool, error) {
 	currentWithdraw := participant.GetTotalWithdraw()
 	amountToWithdraw := totalWithdraw - currentWithdraw
 
 	if totalWithdraw < currentWithdraw {
-		msg := fmt.Sprintf("total withdraw smaller than current")
-		return false, msg
+		return false, errors.NewErr("total withdraw smaller than current")
 	}
 
 	if amountToWithdraw <= 0 {
-		msg := fmt.Sprintf("amount to withdraw no larger than 0")
-		return false, msg
+		return false, errors.NewErr("amount to withdraw no larger than 0")
 	}
 
 	totalDeposit := participant.GetContractBalance() + partner.GetContractBalance()
 	if totalWithdraw+partner.GetTotalWithdraw() > totalDeposit {
-		msg := fmt.Sprintf("withdraw from both side : totalWithdraw %d, partner totalWithdraw %d is larger than total deposit %d",
+		return false, fmt.Errorf("withdraw from both side : totalWithdraw %d, partner totalWithdraw %d is larger than total deposit %d",
 			totalWithdraw, partner.GetTotalWithdraw(), totalDeposit)
-		return false, msg
 	}
 
 	// NOTE: GetDistributable already take current withdraw into account
 	distributable := GetDistributable(participant, partner)
 	if amountToWithdraw > distributable {
-		msg := fmt.Sprintf("total withdraw %d is larger than  distributable %d", totalWithdraw, distributable)
-		return false, msg
+		return false, fmt.Errorf("total withdraw %d is larger than  distributable %d", totalWithdraw, distributable)
 	}
 
-	return true, ""
+	return true, nil
 }
 
 func RecordWithdrawTransaction(channelState *NettingChannelState, height common.BlockHeight) {
@@ -1467,7 +1437,7 @@ func GetWithdrawTransaction(channelState *NettingChannelState) *TransactionExecu
 func handleWithdrawRequestReceived(channelState *NettingChannelState, stateChange *ReceiveWithdrawRequest) TransitionResult {
 	var events []Event
 
-	valid, msg := isValidWithdrawRequest(channelState, stateChange)
+	valid, err := isValidWithdrawRequest(channelState, stateChange)
 	if valid {
 		messageIdentifier := common.GetMsgID()
 		sendWithdraw := &SendWithdraw{
@@ -1499,34 +1469,31 @@ func handleWithdrawRequestReceived(channelState *NettingChannelState, stateChang
 			ChannelIdentifier: stateChange.ChannelIdentifier,
 			Participant:       stateChange.Participant,
 			TotalWithdraw:     stateChange.TotalWithdraw,
-			Reason:            msg,
+			Reason:            err.Error(),
 		}
-		log.Warn("[handleWithdrawRequestReceived] failure: ", msg)
+		log.Warn("[handleWithdrawRequestReceived] failure: ", err.Error())
 		events = append(events, failure)
 	}
 	return TransitionResult{channelState, events}
 }
 
-func isValidWithdrawRequest(channelState *NettingChannelState, stateChange *ReceiveWithdrawRequest) (bool, string) {
+func isValidWithdrawRequest(channelState *NettingChannelState, stateChange *ReceiveWithdrawRequest) (bool, error) {
 	if GetStatus(channelState) != ChannelStateOpened {
-		msg := fmt.Sprintf("channel is not opened")
-		return false, msg
+		return false, errors.NewErr("channel is not opened")
 	}
 	// check if participant is valid,
 	partnerState := channelState.PartnerState
 	if !common.AddressEqual(partnerState.Address, stateChange.Participant) {
-		msg := fmt.Sprintf("participant address invalid")
-		return false, msg
+		return false, errors.NewErr("participant address invalid")
 	}
 
 	if !common.AddressEqual(stateChange.Participant, stateChange.ParticipantAddress) {
-		msg := fmt.Sprintf("participant address is same as the signer")
-		return false, msg
+		return false, errors.NewErr("participant address is same as the signer")
 	}
 
-	isValid, msg := isValidWithdrawAmount(channelState.GetChannelEndState(1), channelState.GetChannelEndState(0), stateChange.TotalWithdraw)
+	isValid, err := isValidWithdrawAmount(channelState.GetChannelEndState(1), channelState.GetChannelEndState(0), stateChange.TotalWithdraw)
 	if !isValid {
-		return false, msg
+		return false, err
 	}
 
 	// verify if signature is valid
@@ -1534,34 +1501,34 @@ func isValidWithdrawRequest(channelState *NettingChannelState, stateChange *Rece
 	return isValidSignature(dataToSign, stateChange.ParticipantPublicKey, stateChange.ParticipantSignature, stateChange.ParticipantAddress)
 }
 
-func isValidSignature(dataToSign []byte, publicKey common.PubKey, signature common.Signature, senderAddress common.Address) (bool, string) {
+func isValidSignature(dataToSign []byte, publicKey common.PubKey, signature common.Signature, senderAddress common.Address) (bool, error) {
 	if len(dataToSign) == 0 {
-		return false, string("Signature invalid, dataToSign is nil")
+		return false, errors.NewErr("Signature invalid, dataToSign is nil")
 	}
 
 	pubKey, err := common.GetPublicKey(publicKey)
 	if err != nil {
-		return false, string("Failed to get public key")
+		return false, errors.NewErr("Failed to get public key")
 	}
 
 	err = common.VerifySignature(pubKey, dataToSign, signature)
 	if err != nil {
-		return false, string("Signature invalid, could not be recovered")
+		return false, errors.NewErr("Signature invalid, could not be recovered")
 	}
 
 	signerAddress := common.GetAddressFromPubKey(pubKey)
 	if common.AddressEqual(senderAddress, signerAddress) == true {
-		return true, "success"
+		return true, nil
 	} else {
-		log.Debugf("pubkey:%v, senderAddr: %s", pubKey, common.ToBase58(senderAddress))
-		return false, string("Signature was valid but the expected address does not match.")
+		log.Debugf("PubKey:%v, senderAddr: %s", pubKey, common.ToBase58(senderAddress))
+		return false, errors.NewErr("Signature was valid but the expected address does not match.")
 	}
 }
 
 func handleWithdrawReceived(channelState *NettingChannelState, stateChange *ReceiveWithdraw) TransitionResult {
 	var events []Event
 
-	valid, msg := isValidWithdraw(channelState, stateChange)
+	valid, err := isValidWithdraw(channelState, stateChange)
 	if valid {
 		contractSendChannelWithdraw := &ContractSendChannelWithdraw{
 			ChannelIdentifier:      stateChange.ChannelIdentifier,
@@ -1583,23 +1550,21 @@ func handleWithdrawReceived(channelState *NettingChannelState, stateChange *Rece
 			ChannelIdentifier:      stateChange.ChannelIdentifier,
 			Participant:            stateChange.Participant,
 			TotalWithdraw:          stateChange.TotalWithdraw,
-			Reason:                 msg,
+			Reason:                 err.Error(),
 		}
-		log.Warn("[handleWithdrawReceived] failure: ", msg)
+		log.Warn("[handleWithdrawReceived] failure: ", err.Error())
 		events = append(events, failure)
 	}
 	return TransitionResult{channelState, events}
 }
-func isValidWithdraw(channelState *NettingChannelState, stateChange *ReceiveWithdraw) (bool, string) {
+func isValidWithdraw(channelState *NettingChannelState, stateChange *ReceiveWithdraw) (bool, error) {
 	if GetStatus(channelState) != ChannelStateOpened {
-		msg := fmt.Sprintf("channel is not opened")
-		return false, msg
+		return false, errors.NewErr("channel is not opened")
 	}
 	// check if participant is valid,
 	ourState := channelState.OurState
 	if !common.AddressEqual(ourState.Address, stateChange.Participant) {
-		msg := fmt.Sprintf("[isValidWithdraw] participant address invalid")
-		return false, msg
+		return false, errors.NewErr("[isValidWithdraw] participant address invalid")
 	}
 
 	// verify if signature is valid
@@ -1701,7 +1666,7 @@ func calculateCooperativeSettleBalance(participant1 *NettingChannelEndState, par
 func handleCooperativeSettleRequestReceived(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettleRequest) TransitionResult {
 	var events []Event
 
-	valid, msg := isValidCooperativeSettleRequest(channelState, stateChange)
+	valid, err := isValidCooperativeSettleRequest(channelState, stateChange)
 	if valid {
 		messageIdentifier := common.GetMsgID()
 		sendCooperativeSettle := &SendCooperativeSettle{
@@ -1737,32 +1702,28 @@ func handleCooperativeSettleRequestReceived(channelState *NettingChannelState, s
 		failure := &EventInvalidReceivedCooperativeSettleRequest{
 			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
 			ChannelIdentifier:      stateChange.ChannelIdentifier,
-			Reason:                 msg,
+			Reason:                 err.Error(),
 		}
-		log.Warn("[handleCooperativeSettleRequestReceived] failure: ", msg)
+		log.Warn("[handleCooperativeSettleRequestReceived] failure: ", err.Error())
 		events = append(events, failure)
 	}
 	return TransitionResult{channelState, events}
 }
 
-func isValidCooperativeSettleRequest(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettleRequest) (bool, string) {
+func isValidCooperativeSettleRequest(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettleRequest) (bool, error) {
 	if GetStatus(channelState) != ChannelStateOpened {
-		msg := fmt.Sprintf("channel is not opened")
-		return false, msg
+		return false, errors.NewErr("channel is not opened")
 	}
 
 	ourState := channelState.GetChannelEndState(0)
 	partnerState := channelState.GetChannelEndState(1)
 
 	if !common.AddressEqual(partnerState.Address, stateChange.Participant1) {
-		msg := fmt.Sprintf("participant1 address invalid")
-		return false, msg
+		return false, errors.NewErr("participant1 address invalid")
 	} else if !common.AddressEqual(ourState.Address, stateChange.Participant2) {
-		msg := fmt.Sprintf("participant2 address invalid")
-		return false, msg
+		return false, errors.NewErr("participant2 address invalid")
 	} else if !common.AddressEqual(stateChange.Participant1, stateChange.Participant1Address) {
-		msg := fmt.Sprintf("participant address is same as the signer")
-		return false, msg
+		return false, errors.NewErr("participant address is same as the signer")
 	}
 
 	// calculate the final balance and compare with incoming balance values
@@ -1770,9 +1731,8 @@ func isValidCooperativeSettleRequest(channelState *NettingChannelState, stateCha
 	partnerBalance := calculateCooperativeSettleBalance(partnerState, ourState)
 
 	if ourBalance != stateChange.Participant2Balance || partnerBalance != stateChange.Participant1Balance {
-		msg := fmt.Sprintf("invliad balance : ourBalance %d, partnerBalance %d, participant1 balance %d, participant2 balance %d",
+		return false, fmt.Errorf("invliad balance : ourBalance %d, partnerBalance %d, participant1 balance %d, participant2 balance %d",
 			ourBalance, partnerBalance, stateChange.Participant1Balance, stateChange.Participant2Balance)
-		return false, msg
 	}
 	// verify if signature is valid
 	dataToSign := PackCooperativeSettle(stateChange.ChannelIdentifier, stateChange.Participant1, stateChange.Participant1Balance,
@@ -1783,7 +1743,7 @@ func isValidCooperativeSettleRequest(channelState *NettingChannelState, stateCha
 func handleCooperativeSettleReceived(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettle) TransitionResult {
 	var events []Event
 
-	valid, msg := isValidCooperativeSettle(channelState, stateChange)
+	valid, err := isValidCooperativeSettle(channelState, stateChange)
 	if valid {
 		contractSendChannelCooperativeSettle := &ContractSendChannelCooperativeSettle{
 			ChannelIdentifier:      stateChange.ChannelIdentifier,
@@ -1806,34 +1766,30 @@ func handleCooperativeSettleReceived(channelState *NettingChannelState, stateCha
 		failure := &EventInvalidReceivedCooperativeSettle{
 			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
 			ChannelIdentifier:      stateChange.ChannelIdentifier,
-			Reason:                 msg,
+			Reason:                 err.Error(),
 		}
-		log.Warn("[handleCooperativeSettleReceived] failure: ", msg)
+		log.Warn("[handleCooperativeSettleReceived] failure: ", err.Error())
 		events = append(events, failure)
 	}
 	return TransitionResult{channelState, events}
 }
-func isValidCooperativeSettle(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettle) (bool, string) {
+func isValidCooperativeSettle(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettle) (bool, error) {
 	if GetStatus(channelState) != ChannelStateSettling {
-		msg := fmt.Sprintf("channel is not opened")
-		return false, msg
+
+		return false, errors.NewErr("channel is not opened")
 	}
 
 	ourState := channelState.GetChannelEndState(0)
 	partnerState := channelState.GetChannelEndState(1)
 
 	if !common.AddressEqual(ourState.Address, stateChange.Participant1) {
-		msg := fmt.Sprintf("participant1 address invalid")
-		return false, msg
+		return false, errors.NewErr("participant1 address invalid")
 	} else if !common.AddressEqual(partnerState.Address, stateChange.Participant2) {
-		msg := fmt.Sprintf("participant2 address invalid")
-		return false, msg
+		return false, errors.NewErr("participant2 address invalid")
 	} else if !common.AddressEqual(stateChange.Participant1, stateChange.Participant1Address) {
-		msg := fmt.Sprintf("participant1 address is same as the signer")
-		return false, msg
+		return false, errors.NewErr("participant1 address is same as the signer")
 	} else if !common.AddressEqual(stateChange.Participant2, stateChange.Participant2Address) {
-		msg := fmt.Sprintf("participant1 address is same as the signer")
-		return false, msg
+		return false, errors.NewErr("participant1 address is same as the signer")
 	}
 
 	// calculate again the final balance and compare with incoming balance values
@@ -1841,17 +1797,15 @@ func isValidCooperativeSettle(channelState *NettingChannelState, stateChange *Re
 	partnerBalance := calculateCooperativeSettleBalance(partnerState, ourState)
 
 	if ourBalance != stateChange.Participant1Balance || partnerBalance != stateChange.Participant2Balance {
-		msg := fmt.Sprintf("invliad balance : ourBalance %d, partnerBalance %d, participant1 balance %d, participant2 balance %d",
+		return false, fmt.Errorf("invliad balance : ourBalance %d, partnerBalance %d, participant1 balance %d, participant2 balance %d",
 			ourBalance, partnerBalance, stateChange.Participant1Balance, stateChange.Participant2Balance)
-		return false, msg
 	}
 
 	dataToSign := PackCooperativeSettle(stateChange.ChannelIdentifier, stateChange.Participant1, stateChange.Participant1Balance,
 		stateChange.Participant2, stateChange.Participant2Balance)
-	ok, errStr := isValidSignature(dataToSign, stateChange.Participant1PublicKey, stateChange.Participant1Signature, stateChange.Participant1Address)
+	ok, err := isValidSignature(dataToSign, stateChange.Participant1PublicKey, stateChange.Participant1Signature, stateChange.Participant1Address)
 	if !ok {
-		msg := fmt.Sprintf("participant1 siganature invalid : %s", errStr)
-		return false, msg
+		return false, fmt.Errorf("participant1 siganature invalid : %s", err.Error())
 	}
 	return isValidSignature(dataToSign, stateChange.Participant2PublicKey, stateChange.Participant2Signature, stateChange.Participant2Address)
 }
@@ -1982,7 +1936,7 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 
 	var events []Event
 	log.Debug("[handleReceiveDirectTransfer] %v \n", channelState.PartnerState)
-	isValid, msg := IsValidDirectTransfer(directTransfer, channelState,
+	isValid, err := IsValidDirectTransfer(directTransfer, channelState,
 		channelState.PartnerState, channelState.OurState)
 
 	if isValid {
@@ -2017,18 +1971,18 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 	} else {
 		transferInvalidEvent := &EventTransferReceivedInvalidDirectTransfer{
 			Identifier: directTransfer.PaymentIdentifier,
-			Reason:     msg,
+			Reason:     err.Error(),
 		}
 
 		events = append(events, transferInvalidEvent)
-		log.Error("[handleReceiveDirectTransfer] EventTransferReceivedInvalidDirectTransfer:", msg)
+		log.Error("[handleReceiveDirectTransfer] EventTransferReceivedInvalidDirectTransfer:", err.Error())
 	}
 
 	return TransitionResult{channelState, events}
 }
 
-func HandleUnlock(channelState *NettingChannelState, unlock *ReceiveUnlock) (bool, []Event, string) {
-	isValid, msg, unlockedMerkleTree := IsValidUnlock(unlock, channelState, channelState.PartnerState)
+func HandleUnlock(channelState *NettingChannelState, unlock *ReceiveUnlock) (bool, []Event, error) {
+	isValid, unlockedMerkleTree, err := IsValidUnlock(unlock, channelState, channelState.PartnerState)
 	var events []Event
 	if isValid {
 		channelState.PartnerState.BalanceProof = unlock.BalanceProof
@@ -2046,15 +2000,15 @@ func HandleUnlock(channelState *NettingChannelState, unlock *ReceiveUnlock) (boo
 		}
 		events = append(events, sendProcessed)
 	} else {
-		log.Error("[HandleUnlock] ErrorMsg: ", msg)
+		log.Error("[HandleUnlock] ErrorMsg: ", err.Error())
 		secretHash := common.GetHash(unlock.Secret)
 		invalidUnlock := &EventInvalidReceivedUnlock{
 			SecretHash: secretHash,
-			Reason:     msg,
+			Reason:     err.Error(),
 		}
 		events = append(events, invalidUnlock)
 	}
-	return isValid, events, msg
+	return isValid, events, err
 }
 
 func handleBlock(channelState *NettingChannelState, stateChange *Block,
