@@ -60,13 +60,21 @@ func MdIsSafeToWait(lockExpiration common.BlockExpiration, revealTimeout common.
 	blockNumber common.BlockHeight) (bool, string) {
 
 	//NOTE, need ensure lock_expiration > reveal_timeout
+	if common.BlockHeight(lockExpiration) < blockNumber {
+		msg := fmt.Sprintf("lock has expired, lockExpiration %d, blockNumber %d", lockExpiration, blockNumber)
+		log.Warnf(msg)
+		return false, msg
+	}
+
 	lockTimeout := common.BlockHeight(lockExpiration) - blockNumber
 	if common.BlockTimeout(lockTimeout) > revealTimeout {
+		log.Debugf("lock timeout is safe. LockExpiration %d, blockNumber %d, revealTimeout %d", lockExpiration, blockNumber, revealTimeout)
 		return true, ""
 	}
 
 	msg := fmt.Sprintf(`lock timeout is unsafe. timeout must be larger than %d,
-	    but it is %d. expiration:%d block number: %d`, revealTimeout, lockTimeout, lockExpiration, blockNumber)
+		but it is %d. expiration:%d block number: %d`, revealTimeout, lockTimeout, lockExpiration, blockNumber)
+	log.Debugf(msg)
 	return false, msg
 }
 
@@ -400,7 +408,15 @@ func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRout
 	*/
 	var transferPair *MediationPairState
 	var mediatedEvents []Event
-	lockTimeout := common.BlockTimeout(payerTransfer.Lock.Expiration - blockNumber)
+	var lockTimeout common.BlockTimeout
+
+	log.Debugf("[forwardTransferPair] lock expiration %d, blockNumber %d", payerTransferrT.Lock.Expiration, blockNumber)
+	// check overflow
+	if payerTransfer.Lock.Expiration > blockNumber {
+		lockTimeout = common.BlockTimeout(payerTransfer.Lock.Expiration - blockNumber)
+	} else {
+		lockTimeout = 0
+	}
 
 	payeeChannel := nextChannelFromRoutes(availableRoutes, channelIdentifiersToChannels,
 		common.PaymentAmount(payerTransfer.Lock.Amount), lockTimeout)
@@ -462,11 +478,16 @@ func backwardTransferPair(backwardChannel *NettingChannelState, payerTransfer *L
 	//	"""
 	var transferPair *MediationPairState
 	var events []Event
+	var lockTimeout common.BlockTimeout
 
 	lock := payerTransfer.Lock
 	log.Debug("lock.Expiration : ", lock.Expiration)
 	log.Debug("blockNumber : ", blockNumber)
-	lockTimeout := common.BlockTimeout(lock.Expiration - blockNumber)
+	if lock.Expiration > blockNumber {
+		lockTimeout = common.BlockTimeout(lock.Expiration - blockNumber)
+	} else {
+		lockTimeout = 0
+	}
 
 	//# Ensure the refund transfer's lock has a safe expiration, otherwise don't
 	//# do anything and wait for the received lock to expire.
