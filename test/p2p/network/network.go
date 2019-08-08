@@ -20,11 +20,11 @@ import (
 	"github.com/saveio/dsp-go-sdk/network/common"
 	"github.com/saveio/dsp-go-sdk/network/message/pb"
 	dspmsg "github.com/saveio/dsp-go-sdk/network/message/pb"
-	"github.com/saveio/edge/common/config"
 	act "github.com/saveio/pylons/actor/server"
 	"github.com/saveio/pylons/network/transport/messages"
 	pm "github.com/saveio/scan/messages/protoMessages"
 	"github.com/saveio/themis/common/log"
+	"github.com/saveio/pylons/test/testnet/test_config"
 )
 
 var once sync.Once
@@ -209,13 +209,13 @@ func (this *Network) Start(address string) error {
 		opcode.RegisterMessageType(opcode.Opcode(common.MSG_OP_CODE), &pb.Message{})
 	})
 
-	if len(config.Parameters.BaseConfig.NATProxyServerAddrs) > 0 {
+	if len(test_config.Parameters.BaseConfig.NATProxyServerAddrs) > 0 {
 		this.P2p.EnableProxyMode(true)
-		this.P2p.SetProxyServer(config.Parameters.BaseConfig.NATProxyServerAddrs)
+		this.P2p.SetProxyServer(test_config.Parameters.BaseConfig.NATProxyServerAddrs)
 	}
 
-	log.Infof("network Id : %d", config.Parameters.BaseConfig.NetworkId)
-	this.P2p.SetNetworkID(config.Parameters.BaseConfig.NetworkId)
+	log.Infof("network Id : %d", test_config.Parameters.BaseConfig.NetworkId)
+	this.P2p.SetNetworkID(test_config.Parameters.BaseConfig.NetworkId)
 	go this.P2p.Listen()
 	// go this.PeerStateChange(this.syncPeerState)
 	this.P2p.BlockUntilListening()
@@ -230,7 +230,7 @@ func (this *Network) Start(address string) error {
 }
 
 func (this *Network) AddProxyComponents(builder *network.Builder) {
-	servers := strings.Split(config.Parameters.BaseConfig.NATProxyServerAddrs, ",")
+	servers := strings.Split(test_config.Parameters.BaseConfig.NATProxyServerAddrs, ",")
 	hasAdd := make(map[string]struct{})
 	for _, proxyAddr := range servers {
 		if len(proxyAddr) == 0 {
@@ -257,8 +257,8 @@ func (this *Network) AddProxyComponents(builder *network.Builder) {
 
 func (this *Network) StartProxy(builder *network.Builder) error {
 	var err error
-	log.Debugf("NATProxyServerAddrs :%v", config.Parameters.BaseConfig.NATProxyServerAddrs)
-	servers := strings.Split(config.Parameters.BaseConfig.NATProxyServerAddrs, ",")
+	log.Debugf("NATProxyServerAddrs :%v", test_config.Parameters.BaseConfig.NATProxyServerAddrs)
+	servers := strings.Split(test_config.Parameters.BaseConfig.NATProxyServerAddrs, ",")
 	for _, proxyAddr := range servers {
 		if len(proxyAddr) == 0 {
 			continue
@@ -266,7 +266,7 @@ func (this *Network) StartProxy(builder *network.Builder) error {
 		this.P2p.EnableProxyMode(true)
 		this.P2p.SetProxyServer(proxyAddr)
 		protocol := getProtocolFromAddr(proxyAddr)
-		log.Debugf("start proxy will blocking...%s %s, networkId: %d", protocol, proxyAddr, config.Parameters.BaseConfig.NetworkId)
+		log.Debugf("start proxy will blocking...%s %s, networkId: %d", protocol, proxyAddr, test_config.Parameters.BaseConfig.NetworkId)
 		done := make(chan struct{}, 1)
 		go func() {
 			switch protocol {
