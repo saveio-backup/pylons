@@ -68,11 +68,6 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 			hex.EncodeToString(partAddr[:]), amount, distributable)
 	}
 
-
-	//if networkState != common.NodeNetworkReachable {
-	//	return nil, fmt.Errorf("partner for channel state isn't reachable, ignoring  %s, %s, %s ",
-	//		hex.EncodeToString(fromAddress[:]), hex.EncodeToString(partnerAddress[:]), networkState)
-	//}
 	routeState := transfer.RouteState{
 		NodeAddress:       partAddr,
 		ChannelIdentifier: channelState.Identifier,
