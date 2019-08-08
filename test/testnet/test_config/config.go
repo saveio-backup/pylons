@@ -10,21 +10,21 @@ const PROTOCOL = "tcp"
 
 var Initiator1 = &ch.ChannelConfig{
 	ClientType:    "rpc",
-	ChainNodeURLs: []string{"http://221.179.156.57:10336"},
-	ListenAddress: "40.73.96.40:3901",
+	ChainNodeURLs: []string{"http://221.179.156.57:10336", "http://221.179.156.57:11336", "http://221.179.156.57:12336"},
+	ListenAddress: "0.0.0.0:3901",
 	Protocol:      PROTOCOL,
 }
 
 var Initiator2 = &ch.ChannelConfig{
 	ClientType:    "rpc",
-	ChainNodeURLs: []string{"http://221.179.156.57:10336"},
-	ListenAddress: "40.73.96.40:3902",
+	ChainNodeURLs: []string{"http://221.179.156.57:10336", "http://221.179.156.57:11336", "http://221.179.156.57:12336"},
+	ListenAddress: "0.0.0.0:3902",
 	Protocol:      PROTOCOL,
 }
 
 var DNS1 = &ch.ChannelConfig{
 	ClientType:    "rpc",
-	ChainNodeURLs: []string{"http://221.179.156.57:10336"},
+	ChainNodeURLs: []string{"http://221.179.156.57:10336", "http://221.179.156.57:11336", "http://221.179.156.57:12336"},
 	ListenAddress: "40.73.102.177:10338",
 	Protocol:      PROTOCOL,
 }
