@@ -25,7 +25,7 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	tokenNetwork := transfer.GetTokenNetworkByIdentifier(channelSrv.StateFromChannel(), tokenNetworkId)
 	nodes := tokenNetwork.NetworkGraph.Nodes
 	edges := tokenNetwork.NetworkGraph.Edges
-	log.Debug("[GetBestRoutes] edges", edges)
+	//log.Debug("[GetBestRoutes] edges", edges)
 
 	top := transfer.NewTopology(nodes, edges)
 	spt := top.GetShortPath(fromAddress)
@@ -34,22 +34,25 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 		log.Errorf("[GetBestRoutes] spt is nil")
 		return nil, fmt.Errorf("[GetBestRoutes] spt is nil")
 	}
-	log.Debug("SPT:", spt)
+	//log.Debugf("SPT:", spt)
 
+	var partAddr common.Address
 	var i int
 	for i = 0; i < sptLen; i++ {
 		sp := spt[i]
 		spLen := len(sp)
 		if sp[spLen-1] == toAddress {
-			break
+			partAddr = sp[0]
+			networkState := channelSrv.GetNodeNetworkState(partAddr)
+			if networkState == transfer.NetworkReachable {
+				break
+			}
 		}
 	}
 	if i == sptLen {
 		log.Errorf("[GetBestRoutes] no route to target")
 		return nil, fmt.Errorf("[GetBestRoutes] no route to target")
 	}
-
-	partAddr := spt[i][0]
 	channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(), tokenNetworkId, partAddr)
 	if channelState == nil {
 		return nil, fmt.Errorf("GetChannelStateByTokenNetworkAndPartner error")
@@ -64,8 +67,7 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 		return nil, fmt.Errorf("channel doesnt have enough funds, ignoring %s, %s, %d, %d ", hex.EncodeToString(fromAddress[:]),
 			hex.EncodeToString(partAddr[:]), amount, distributable)
 	}
-	networkState := channelSrv.GetNodeNetworkState(partAddr)
-	log.Debug("networkState:   ", networkState)
+
 
 	//if networkState != common.NodeNetworkReachable {
 	//	return nil, fmt.Errorf("partner for channel state isn't reachable, ignoring  %s, %s, %s ",

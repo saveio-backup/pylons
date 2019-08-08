@@ -1109,8 +1109,8 @@ func (self *ChannelService) InitiatorInit(transferIdentifier common.PaymentID,
 	}
 
 	var previousAddress common.Address
-	routes, err := GetBestRoutes(self, tokenNetworkIdentifier, self.address,
-		targetAddress, transferAmount, previousAddress)
+	routes, err := GetBestRoutes(self, tokenNetworkIdentifier, self.address, targetAddress, transferAmount,
+		previousAddress)
 	if err != nil {
 		return nil, err
 	}
