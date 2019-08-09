@@ -297,7 +297,6 @@ func getChannelsInfoRespFromChannelsInfo(channelInfos []*channelservice.ChannelI
 			Address:       (&addr).ToBase58(),
 			Balance:       uint64(info.Balance),
 			BalanceFormat: utils.FormatUsdt(uint64(info.Balance)),
-			HostAddr:      info.HostAddr,
 			TokenAddr:     (&tokenAddr).ToBase58(),
 		}
 		totalBalance += balance

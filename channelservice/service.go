@@ -1364,7 +1364,6 @@ type ChannelInfo struct {
 	ChannelId common.ChannelID
 	Balance   common.TokenAmount
 	Address   common.Address
-	HostAddr  string
 	TokenAddr common.TokenAddress
 }
 
@@ -1378,19 +1377,12 @@ func (self *ChannelService) GetAllChannelInfo() []*ChannelInfo {
 		channelState := e.Value.(*transfer.NettingChannelState)
 
 		partnerAddress := channelState.PartnerState.Address
-
-		hostAddr, err := self.GetHostAddr(partnerAddress)
-		if err != nil {
-			continue
-		}
-
 		balance := transfer.GetDistributable(channelState.OurState, channelState.PartnerState)
 
 		info := &ChannelInfo{
 			ChannelId: channelState.Identifier,
 			Address:   partnerAddress,
 			Balance:   balance,
-			HostAddr:  hostAddr,
 			TokenAddr: common.TokenAddress(channelState.TokenAddress),
 		}
 		infos = append(infos, info)
