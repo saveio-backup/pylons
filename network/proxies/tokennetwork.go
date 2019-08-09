@@ -421,7 +421,7 @@ func (self *TokenNetwork) SetTotalDeposit(channelIdentifier common.ChannelID,
 		log.Errorf("SetTotalDeposit err:%s", err)
 		return err
 	}
-	log.Infof("SetTotalDeposit tx hash:%v\n", txHash)
+	log.Infof("SetTotalDeposit tx hash:%v\n", getTxHashString(txHash))
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("SetTotalDeposit  WaitForGenerateBlock err:%s", err)
@@ -433,13 +433,6 @@ func (self *TokenNetwork) SetTotalDeposit(channelIdentifier common.ChannelID,
 	}
 
 	return nil
-}
-
-func getBalanceHashForParam(balanceHash common.BalanceHash) []byte {
-	if common.IsEmptyBalanceHash(balanceHash) {
-		return nil
-	}
-	return balanceHash[:]
 }
 
 func (self *TokenNetwork) Close(channelIdentifier common.ChannelID, partner common.Address,
@@ -460,12 +453,13 @@ func (self *TokenNetwork) Close(channelIdentifier common.ChannelID, partner comm
 	opLock.Lock()
 	defer opLock.Unlock()
 
-	txHash, err := self.ChannelClient.CloseChannel(uint64(channelIdentifier), comm.Address(self.nodeAddress), comm.Address(partner), getBalanceHashForParam(balanceHash), uint64(nonce), []byte(additionalHash), []byte(signature), []byte(partnerPubKey))
+	txHash, err := self.ChannelClient.CloseChannel(uint64(channelIdentifier), comm.Address(self.nodeAddress), comm.Address(partner), balanceHash[:], uint64(nonce), []byte(additionalHash), []byte(signature), []byte(partnerPubKey))
 	if err != nil {
 		log.Errorf("CloseChannel err:%s", err)
 		return
 	}
-	log.Infof("CloseChannel tx hash:%s\n", txHash)
+	log.Infof("CloseChannel tx hash:%s\n", getTxHashString(txHash))
+
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("CloseChannel  WaitForGenerateBlock err:%s", err)
@@ -486,12 +480,12 @@ func (self *TokenNetwork) updateTransfer(channelIdentifier common.ChannelID, par
 	}
 
 	// need pubkey
-	txHash, err := self.ChannelClient.UpdateNonClosingBalanceProof(uint64(channelIdentifier), comm.Address(partner), comm.Address(self.nodeAddress), getBalanceHashForParam(balanceHash), uint64(nonce), []byte(additionalHash), []byte(closingSignature), []byte(nonClosingSignature), closePubKey, nonClosePubKey)
+	txHash, err := self.ChannelClient.UpdateNonClosingBalanceProof(uint64(channelIdentifier), comm.Address(partner), comm.Address(self.nodeAddress), balanceHash[:], uint64(nonce), []byte(additionalHash), []byte(closingSignature), []byte(nonClosingSignature), closePubKey, nonClosePubKey)
 	if err != nil {
 		log.Errorf("UpdateNonClosingBalanceProof err:%s", err)
 		return
 	}
-	log.Infof("UpdateNonClosingBalanceProof tx hash:%s\n", txHash)
+	log.Infof("UpdateNonClosingBalanceProof tx hash:%s\n", getTxHashString(txHash))
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("UpdateNonClosingBalanceProof  WaitForGenerateBlock err:%s", err)
@@ -523,7 +517,7 @@ func (self *TokenNetwork) withDraw(channelIdentifier common.ChannelID, partner c
 		log.Errorf("SetTotoalWithdraw err:%s", err)
 		return err
 	}
-	log.Infof("SetTotalWithdraw tx hash:%s\n", txHash)
+	log.Infof("SetTotalWithdraw tx hash:%s\n", getTxHashString(txHash))
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("SetTotoalWithdraw WaitForGenerateBlock err:%s", err)
@@ -555,7 +549,7 @@ func (self *TokenNetwork) cooperativeSettle(channelIdentifier common.ChannelID, 
 		log.Errorf("CooperativeSettle err:%s", err)
 		return err
 	}
-	log.Infof("CooperativeSettle tx hash:%s\n", txHash)
+	log.Infof("CooperativeSettle tx hash:%s\n", getTxHashString(txHash))
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("CooperativeSettle WaitForGenerateBlock err:%s", err)
@@ -582,7 +576,7 @@ func (self *TokenNetwork) unlock(channelIdentifier common.ChannelID, partner com
 		log.Errorf("Unlock err:%s", err)
 		return
 	}
-	log.Infof("Unlock tx hash:%s\n", txHash)
+	log.Infof("Unlock tx hash:%s\n", getTxHashString(txHash))
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("CooperativeSettle WaitForGenerateBlock err:%s", err)
@@ -669,7 +663,7 @@ func (self *TokenNetwork) settle(channelIdentifier common.ChannelID, transferred
 		log.Errorf("SettleChannel err:%s", err)
 		return
 	}
-	log.Infof("SettleChannel tx hash:%s\n", txHash)
+	log.Infof("SettleChannel tx hash:%s\n", getTxHashString(txHash))
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("SettleChannel  WaitForGenerateBlock err:%s", err)
@@ -807,4 +801,13 @@ func (self *TokenNetwork) checkChannelStateForSettle(participant1 common.Address
 	}
 
 	return true
+}
+
+func getTxHashString(txHash []byte) string {
+	hash, err := comm.Uint256ParseFromBytes(txHash)
+	if err != nil {
+		log.Errorf("parse tx hash error")
+		return "error parsing tx hash"
+	}
+	return hash.ToHexString()
 }
