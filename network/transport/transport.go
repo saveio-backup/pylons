@@ -185,9 +185,14 @@ func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier)
 		case <-this.kill:
 			log.Info("[QueueSend] msgId := <-this.kill")
 			t.Stop()
-			break
+			return
 		}
 	}
+}
+
+func (this *Transport) Stop() {
+	close(this.kill)
+	log.Debug("transport stopped")
 }
 
 func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifier) error {

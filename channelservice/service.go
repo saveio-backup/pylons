@@ -263,6 +263,7 @@ func (self *ChannelService) checkAddressIntegrity() error {
 func (self *ChannelService) Stop() {
 	self.alarm.Stop()
 	self.Wal.Storage.Close()
+	self.Transport.Stop()
 	log.Info("channel service stopped")
 }
 
