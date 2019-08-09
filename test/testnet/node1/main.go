@@ -122,7 +122,7 @@ func main() {
 	}
 
 	if channelId != 0 {
-		depositAmount := common.TokenAmount(1000 * 1000000000)
+		depositAmount := common.TokenAmount(7000 * 1000000000)
 		log.Infof("start to deposit %d token to channel %d", depositAmount, channelId)
 		err = ch_actor.SetTotalChannelDeposit(tokenAddress, tc.Dns1Addr, depositAmount)
 		if err != nil {
@@ -132,7 +132,7 @@ func main() {
 		log.Info("deposit successful")
 
 		for {
-			ret, _ := ch_actor.ChannelReachable(tc.Dns1Addr)
+			ret, err := ch_actor.ChannelReachable(tc.Initiator2Addr)
 			var state string
 			if ret == true {
 				state = transfer.NetworkReachable
@@ -140,7 +140,7 @@ func main() {
 				break
 			} else {
 				state = transfer.NetworkUnreachable
-				log.Warn("connect peer failed")
+				log.Warnf("connect peer (%s) failed: %s", tc.Initiator2.ListenAddress, err.Error())
 				ch_actor.HealthyCheckNodeState(tc.Dns1Addr)
 			}
 

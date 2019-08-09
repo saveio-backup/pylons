@@ -131,32 +131,32 @@ func main() {
 		}
 		log.Info("deposit successful")
 
-		for {
-			ret, _ := ch_actor.ChannelReachable(tc.Dns1Addr)
-			var state string
-			if ret == true {
-				state = transfer.NetworkReachable
-				log.Info("connect peer successful")
-				break
-			} else {
-				state = transfer.NetworkUnreachable
-				log.Warn("connect peer failed")
-				ch_actor.HealthyCheckNodeState(tc.Dns1Addr)
-			}
-
-			log.Infof("peer state = %s wait for connect ...", state)
-			<-time.After(time.Duration(3000) * time.Millisecond)
-		}
-
-		if *disable == false {
-			if *multiEnable {
-				log.Info("begin media multi route transfer test...")
-				go multiRouteTest(1, tc.Initiator1Addr, *transferAmount, 0, *routeNum)
-			} else {
-				log.Info("begin media single route transfer test...")
-				go singleRouteTest(1, tc.Initiator1Addr, *transferAmount, 0, *routeNum)
-			}
-		}
+		//for {
+		//	ret, _ := ch_actor.ChannelReachable(tc.Dns1Addr)
+		//	var state string
+		//	if ret == true {
+		//		state = transfer.NetworkReachable
+		//		log.Info("connect peer successful")
+		//		break
+		//	} else {
+		//		state = transfer.NetworkUnreachable
+		//		log.Warn("connect peer failed")
+		//		ch_actor.HealthyCheckNodeState(tc.Dns1Addr)
+		//	}
+		//
+		//	log.Infof("peer state = %s wait for connect ...", state)
+		//	<-time.After(time.Duration(3000) * time.Millisecond)
+		//}
+		//
+		//if *disable == false {
+		//	if *multiEnable {
+		//		log.Info("begin media multi route transfer test...")
+		//		go multiRouteTest(1, tc.Initiator1Addr, *transferAmount, 0, *routeNum)
+		//	} else {
+		//		log.Info("begin media single route transfer test...")
+		//		go singleRouteTest(1, tc.Initiator1Addr, *transferAmount, 0, *routeNum)
+		//	}
+		//}
 
 		go receivePayment(ChannelActor.GetChannelService())
 		go currentBalance(ChannelActor.GetChannelService())

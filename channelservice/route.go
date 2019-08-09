@@ -62,6 +62,7 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 		return nil, fmt.Errorf("channel is not opened, ignoring %s, %s ", hex.EncodeToString(fromAddress[:]),
 			hex.EncodeToString(partAddr[:]))
 	}
+
 	distributable := transfer.GetDistributable(channelState.OurState, channelState.PartnerState)
 	if amount > distributable {
 		return nil, fmt.Errorf("channel doesnt have enough funds, ignoring %s, %s, %d, %d ", hex.EncodeToString(fromAddress[:]),
