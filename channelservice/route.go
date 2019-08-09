@@ -45,7 +45,10 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 			partAddr = sp[0]
 			networkState := channelSrv.GetNodeNetworkState(partAddr)
 			if networkState == transfer.NetworkReachable {
+				log.Infof("[GetBestRoutes]: %s", common.ToBase58(partAddr))
 				break
+			} else {
+				log.Warnf("[GetBestRoutes]: %s is NetworkUnReachable", common.ToBase58(partAddr))
 			}
 		}
 	}

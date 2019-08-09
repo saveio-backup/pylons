@@ -64,20 +64,27 @@ func main() {
 	}
 
 	//start channel and actor
-	ChannelActor, err := ch_actor.NewChannelActor(tc.Initiator2, account)
+	var Initiator2 = &ch.ChannelConfig{
+		ClientType:    tc.Parameters.BaseConfig.Init2ClientType,
+		ChainNodeURLs: tc.Parameters.BaseConfig.ChainNodeURLs,
+		ListenAddress: tc.Parameters.BaseConfig.Init2ListenAddr,
+		Protocol:      tc.Parameters.BaseConfig.Protocol,
+	}
+
+	ChannelActor, err := ch_actor.NewChannelActor(Initiator2, account)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(tc.Initiator1Addr, tc.Initiator1.ListenAddress); err != nil {
+	if err = ch_actor.SetHostAddr(tc.Initiator1Addr, tc.Parameters.BaseConfig.Init1ListenAddr); err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(tc.Dns1Addr, tc.DNS1.ListenAddress); err != nil {
+	if err = ch_actor.SetHostAddr(tc.Dns1Addr, tc.Parameters.BaseConfig.DnsListenAddr); err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(tc.Initiator2Addr, tc.Initiator2.ListenAddress); err != nil {
+	if err = ch_actor.SetHostAddr(tc.Initiator2Addr, tc.Parameters.BaseConfig.Init2ListenAddr); err != nil {
 		log.Fatal(err)
 		return
 	}
@@ -92,7 +99,7 @@ func main() {
 		PublicKey:  bPub,
 	}
 
-	err = channelP2p.Start(tc.Initiator2.Protocol + "://" + tc.Initiator2.ListenAddress)
+	err = channelP2p.Start(tc.Parameters.BaseConfig.Protocol + "://" + tc.Parameters.BaseConfig.Init2ListenAddr)
 	if err != nil {
 		log.Fatal(err)
 		return

@@ -1,0 +1,18 @@
+{
+        "BaseConfig": {
+                "NetworkId": 1565267318,
+                "Protocol": "tcp",
+                "NATProxyServerAddrs": "",
+                "ChainNodeURLs": [
+                        "http://192.168.1.196:20336"
+                ],
+                "DnsAddr": "AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf",
+                "DnsListenAddr": "192.168.1.196:10338",
+                "Init1ClientType": "rpc",
+                "Init1Addr": "AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ",
+                "Init1ListenAddr": "192.168.1.196:3901",
+                "Init2ClientType": "rpc",
+                "Init2Addr": "AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng",
+                "Init2ListenAddr": "192.168.1.196:3902"
+        }
+}

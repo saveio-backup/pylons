@@ -28,7 +28,7 @@ import (
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
 var disable = flag.Bool("disable", false, "disable transfer test")
-var transferAmount = flag.Int("amount", 5000, "test transfer amount")
+var transferAmount = flag.Int("amount", 10, "test transfer amount")
 var multiEnable = flag.Bool("multi", false, "enable multi routes test")
 var routeNum = flag.Int("route", 5, "route number")
 
@@ -63,21 +63,27 @@ func main() {
 		log.Error("GetDefaultAccount error:%s\n", err)
 	}
 
+	var Initiator1 = &ch.ChannelConfig{
+		ClientType:    tc.Parameters.BaseConfig.Init1ClientType,
+		ChainNodeURLs: tc.Parameters.BaseConfig.ChainNodeURLs,
+		ListenAddress: tc.Parameters.BaseConfig.Init1ListenAddr,
+		Protocol:      tc.Parameters.BaseConfig.Protocol,
+	}
 	//start channel and actor
-	ChannelActor, err := ch_actor.NewChannelActor(tc.Initiator1, account)
+	ChannelActor, err := ch_actor.NewChannelActor(Initiator1, account)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(tc.Initiator1Addr, tc.Initiator1.ListenAddress); err != nil {
+	if err = ch_actor.SetHostAddr(tc.Initiator1Addr, tc.Parameters.BaseConfig.Init1ListenAddr); err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(tc.Dns1Addr, tc.DNS1.ListenAddress); err != nil {
+	if err = ch_actor.SetHostAddr(tc.Dns1Addr, tc.Parameters.BaseConfig.DnsListenAddr); err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(tc.Initiator2Addr, tc.Initiator2.ListenAddress); err != nil {
+	if err = ch_actor.SetHostAddr(tc.Initiator2Addr, tc.Parameters.BaseConfig.Init2ListenAddr); err != nil {
 		log.Fatal(err)
 		return
 	}
@@ -92,7 +98,7 @@ func main() {
 		PublicKey:  bPub,
 	}
 
-	err = channelP2p.Start(tc.Initiator1.Protocol + "://" + tc.Initiator1.ListenAddress)
+	err = channelP2p.Start(tc.Parameters.BaseConfig.Protocol + "://" + tc.Parameters.BaseConfig.Init1ListenAddr)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -131,22 +137,22 @@ func main() {
 		}
 		log.Info("deposit successful")
 
-		for {
-			ret, err := ch_actor.ChannelReachable(tc.Initiator2Addr)
-			var state string
-			if ret == true {
-				state = transfer.NetworkReachable
-				log.Info("connect peer successful")
-				break
-			} else {
-				state = transfer.NetworkUnreachable
-				log.Warnf("connect peer (%s) failed: %s", tc.Initiator2.ListenAddress, err.Error())
-				ch_actor.HealthyCheckNodeState(tc.Dns1Addr)
-			}
-
-			log.Infof("peer state = %s wait for connect ...", state)
-			<-time.After(time.Duration(3000) * time.Millisecond)
-		}
+		//for {
+		//	ret, err := ch_actor.ChannelReachable(tc.Dns1Addr)
+		//	var state string
+		//	if ret == true {
+		//		state = transfer.NetworkReachable
+		//		log.Info("connect peer successful")
+		//		break
+		//	} else {
+		//		state = transfer.NetworkUnreachable
+		//		log.Warnf("peer (%s) is NetworkUnreachable :%s", tc.Parameters.BaseConfig.DnsListenAddr, err.Error())
+		//		ch_actor.HealthyCheckNodeState(tc.Dns1Addr)
+		//	}
+		//
+		//	log.Infof("peer state = %s wait for connect ...", state)
+		//	<-time.After(time.Duration(3000) * time.Millisecond)
+		//}
 
 		if *disable == false {
 			if *multiEnable {

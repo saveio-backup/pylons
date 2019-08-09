@@ -710,7 +710,6 @@ func (self *ChannelService) GetChannelIdentifier(
 
 func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 	partnerAddress common.Address) common.ChannelID {
-
 	id, err := self.chain.ChannelClient.GetChannelIdentifier(comm.Address(self.address),
 		comm.Address(partnerAddress))
 	if err != nil {
@@ -732,6 +731,9 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 		log.Error("faile to parse settle timeout", err)
 		return 0
 	}
+
+	//log.Infof("[OpenChannel] try to connect :%s", common.ToBase58(partnerAddress))
+	self.Transport.StartHealthCheck(partnerAddress)
 
 	tokenNetwork := self.chain.NewTokenNetwork(common.Address(usdt.USDT_CONTRACT_ADDRESS))
 	channelId := tokenNetwork.NewNettingChannel(partnerAddress, settleTimeout)
@@ -1029,6 +1031,9 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 		return nil, fmt.Errorf("amount negative ")
 	}
 
+	//log.Infof("[MediaTransfer] try to connect :%s", common.ToBase58(target))
+	self.Transport.StartHealthCheck(target)
+
 	chainState := self.StateFromChannel()
 
 	//TODO: check validTokens
@@ -1046,7 +1051,6 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 		return nil, fmt.Errorf("SecretHash %v has been registerd onchain", secretHash)
 	}
 
-	self.Transport.StartHealthCheck(target)
 	if identifier == common.PaymentID(0) {
 		identifier = CreateDefaultIdentifier()
 	}

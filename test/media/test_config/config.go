@@ -42,6 +42,33 @@ var Target2 = &ch.ChannelConfig{
 	Protocol:      PROTOCOL,
 }
 
+type BaseConf struct {
+	NetworkId           uint32   `json:"NetworkId"`
+	Protocol            string   `json:"Protocol"`
+	NATProxyServerAddrs string   `json:"NATProxyServerAddrs"`
+	ChainNodeURLs       []string `json:"ChainNodeURLs"`
+	DnsAddr             string   `json:"DnsAddr"`
+	DnsListenAddr       string   `json:"DnsListenAddr"`
+	Init1ClientType     string   `json:"Init1ClientType"`
+	Init1Addr           string   `json:"Init1Addr"`
+	Init1ListenAddr     string   `json:"Init1ListenAddr"`
+	Init2ClientType     string   `json:"Init2ClientType"`
+	Init2Addr           string   `json:"Init2Addr"`
+	Init2ListenAddr     string   `json:"Init2ListenAddr"`
+}
+
+type TestNetConf struct {
+	BaseConfig *BaseConf `json:"BaseConfig"`
+}
+
+var Parameters = &TestNetConf{
+	BaseConfig: &BaseConf{
+		NetworkId:           1565267317,
+		Protocol:            "tcp",
+		NATProxyServerAddrs: "",
+	},
+}
+
 var Initiator1Addr common.Address
 var Initiator2Addr common.Address
 var MediaAddr common.Address

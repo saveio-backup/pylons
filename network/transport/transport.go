@@ -209,18 +209,13 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 		return errors.New("no valid address to send message")
 	}
 
-	//state := this.GetNodeNetworkState(address)
-	//if state != transfer.NetworkReachable {
-	//	log.Errorf("[PeekAndSend] (%s) NodeNetworkState is not NetworkReachable", address)
-	//	return fmt.Errorf("[PeekAndSend] (%s) NodeNetworkState is not NetworkReachable", address)
-	//}
-
 	state := this.GetNodeNetworkState(address)
 	if state != transfer.NetworkReachable {
-		log.Warn("[PeekAndSend] state != NetworkReachable reconnect %s", address)
-		if err = client.P2pConnect(address); err != nil {
-			log.Errorf("[PeekAndSend] state != NetworkReachable connect error: %s", err.Error())
-		}
+		log.Errorf("[PeekAndSend] state != NetworkReachable %s", address)
+		//log.Warnf("[PeekAndSend] state != NetworkReachable reconnect %s", address)
+		//if err = client.P2pConnect(address); err != nil {
+		//	log.Errorf("[PeekAndSend] state != NetworkReachable connect error: %s", err.Error())
+		//}
 	}
 
 	msgId := common.MessageID(item.(*QueueItem).messageId.MessageId)
@@ -276,6 +271,7 @@ func (this *Transport) GetHostAddr(address common.Address) (string, error) {
 }
 
 func (this *Transport) StartHealthCheck(address common.Address) {
+	log.Infof("[StartHealthCheck] address: %s", common.ToBase58(address))
 	nodeAddress, err := this.GetHostAddr(address)
 	if nodeAddress == "" || err != nil {
 		log.Error("node address invalid, can`t check health")
@@ -385,20 +381,13 @@ func (this *Transport) ReceiveMessage(message proto.Message, from string) {
 			reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier.MessageId,
 			nodeNetAddress)
 
-		//state := this.GetNodeNetworkState(nodeNetAddress)
-		//if state != transfer.NetworkReachable {
-		//	log.Errorf("[PeekAndSend] (%s) NodeNetworkState is not NetworkReachable", nodeNetAddress)
-		//	if err = client.P2pConnect(nodeAddress); err != nil {
-		//		log.Errorf("[PeekAndSend], P2pConnect error: %s", err.Error())
-		//	}
-		//}
-
 		state := this.GetNodeNetworkState(nodeNetAddress)
 		if state != transfer.NetworkReachable {
-			log.Warn("[PeekAndSend] state != NetworkReachable reconnect %s", nodeNetAddress)
-			if err = client.P2pConnect(nodeNetAddress); err != nil {
-				log.Errorf("[PeekAndSend] state != NetworkReachable connect error: %s", err.Error())
-			}
+			log.Errorf("[PeekAndSend] state != NetworkReachable %s", nodeNetAddress)
+			//log.Warn("[PeekAndSend] state != NetworkReachable reconnect %s", nodeNetAddress)
+			//if err = client.P2pConnect(nodeNetAddress); err != nil {
+			//	log.Errorf("[PeekAndSend] state != NetworkReachable connect error: %s", err.Error())
+			//}
 		}
 
 		if err = client.P2pSend(nodeNetAddress, deliveredMessage); err != nil {

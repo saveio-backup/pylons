@@ -35,7 +35,6 @@ func (self *ChannelService) HandleChannelNew(event map[string]interface{}) {
 
 	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 	if isParticipant {
-
 		channelProxy := self.chain.PaymentChannel(common.Address(tokenNetworkIdentifier), channelIdentifier, event)
 		var revealTimeout common.BlockHeight
 		if _, exist := self.config["reveal_timeout"]; exist == false {
@@ -70,7 +69,6 @@ func (self *ChannelService) HandleChannelNew(event map[string]interface{}) {
 		//register partner address in UDPTransport!
 		partnerAddress := channelState.PartnerState.Address
 		go self.NotifyNewChannel(channelIdentifier, partnerAddress)
-		self.Transport.StartHealthCheck(partnerAddress)
 
 	} else {
 		newRoute := &transfer.ContractReceiveRouteNew{
