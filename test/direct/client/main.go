@@ -15,9 +15,9 @@ import (
 	"github.com/saveio/pylons/actor/client"
 	ch_actor "github.com/saveio/pylons/actor/server"
 	"github.com/saveio/pylons/common"
-	"github.com/saveio/pylons/test/p2p"
 	"github.com/saveio/pylons/test/p2p/actor/req"
 	p2p_actor "github.com/saveio/pylons/test/p2p/actor/server"
+	p2p "github.com/saveio/pylons/test/p2p/network"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis-go-sdk/usdt"
 	"github.com/saveio/themis-go-sdk/wallet"
@@ -94,27 +94,29 @@ func main() {
 	chnPid := ChannelActor.GetLocalPID()
 
 	//start p2p and actor
-	p2pserver := p2p.NewP2P()
+	channelP2p := p2p.NewP2P()
 	bPrivate := keypair.SerializePrivateKey(account.PrivKey())
 	bPub := keypair.SerializePublicKey(account.PubKey())
-	p2pserver.Keys = &crypto.KeyPair{
+	channelP2p.Keys = &crypto.KeyPair{
 		PrivateKey: bPrivate,
 		PublicKey:  bPub,
 	}
-	err = p2pserver.Start(testConfig.Protocol + "://" + testConfig.ListenAddress)
+	err = channelP2p.Start(testConfig.Protocol + "://" + testConfig.ListenAddress)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	P2pPid, err := p2p_actor.NewP2PActor(p2pserver)
+	p2pActor, err := p2p_actor.NewP2PActor()
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
+	p2pActor.SetChannelNetwork(channelP2p)
 
+	//binding channel and p2p pid
 	req.SetChannelPid(chnPid)
-	client.SetP2pPid(P2pPid)
-	//start connnect target
+	client.SetP2pPid(p2pActor.GetLocalPID())
+	//start channel service
 	err = ChannelActor.Start()
 	if err != nil {
 		log.Fatal(err)
