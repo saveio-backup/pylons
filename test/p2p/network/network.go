@@ -150,7 +150,7 @@ func (this *Network) GetPID() *actor.PID {
 
 func (this *Network) Start(address string) error {
 	this.protocol = getProtocolFromAddr(address)
-	log.Debugf("Network protocol %s", this.protocol)
+	log.Infof("Network protocol %s addr: %s", this.protocol, address)
 	builder := network.NewBuilderWithOptions(network.WriteFlushLatency(1 * time.Millisecond))
 
 	// set keys

@@ -291,7 +291,8 @@ func (this *Transport) GetNodeNetworkState(nodeNetAddress string) string {
 }
 
 func (this *Transport) Receive(message proto.Message, from string) {
-	log.Debug("[NetComponent] Receive: ", reflect.TypeOf(message).String(), " From: ", from)
+	log.Info("[NetComponent] Receive: ", reflect.TypeOf(message).String(), " From: ", from)
+
 	switch message.(type) {
 	case *messages.Delivered:
 		go this.ReceiveDelivered(message, from)
@@ -300,104 +301,101 @@ func (this *Transport) Receive(message proto.Message, from string) {
 	}
 }
 
-func (this *Transport) ReceiveMessage(message proto.Message, from string) {
-	log.Debugf("[ReceiveMessage] %v from: %v", reflect.TypeOf(message).String(), from)
+func (this *Transport) ReceiveMessage(message proto.Message, fromNetAddr string) {
+	log.Debugf("[ReceiveMessage] %v from: %v", reflect.TypeOf(message).String(), fromNetAddr)
 	if this.ChannelService != nil {
-		this.ChannelService.OnMessage(message, from)
+		this.ChannelService.OnMessage(message, fromNetAddr)
 	}
-	var address common.Address
+	var senderWallerAddr common.Address
 	var msgID *messages.MessageID
 
 	switch message.(type) {
 	case *messages.DirectTransfer:
 		msg := message.(*messages.DirectTransfer)
-		address = messages.ConvertAddress(msg.EnvelopeMessage.Signature.Sender)
+		senderWallerAddr = messages.ConvertAddress(msg.EnvelopeMessage.Signature.Sender)
 		msgID = msg.MessageIdentifier
 	case *messages.Processed:
 		msg := message.(*messages.Processed)
-		address = messages.ConvertAddress(msg.Signature.Sender)
+		senderWallerAddr = messages.ConvertAddress(msg.Signature.Sender)
 		msgID = msg.MessageIdentifier
 	case *messages.LockedTransfer:
 		msg := message.(*messages.LockedTransfer)
-		address = messages.ConvertAddress(msg.BaseMessage.EnvelopeMessage.Signature.Sender)
+		senderWallerAddr = messages.ConvertAddress(msg.BaseMessage.EnvelopeMessage.Signature.Sender)
 		msgID = msg.BaseMessage.MessageIdentifier
 	case *messages.LockExpired:
 		msg := message.(*messages.LockExpired)
-		address = messages.ConvertAddress(msg.EnvelopeMessage.Signature.Sender)
+		senderWallerAddr = messages.ConvertAddress(msg.EnvelopeMessage.Signature.Sender)
 		msgID = msg.MessageIdentifier
 	case *messages.RefundTransfer:
 		msg := message.(*messages.RefundTransfer)
-		address = messages.ConvertAddress(msg.Refund.BaseMessage.EnvelopeMessage.Signature.Sender)
+		senderWallerAddr = messages.ConvertAddress(msg.Refund.BaseMessage.EnvelopeMessage.Signature.Sender)
 		msgID = msg.Refund.BaseMessage.MessageIdentifier
 	case *messages.SecretRequest:
 		msg := message.(*messages.SecretRequest)
-		address = messages.ConvertAddress(msg.Signature.Sender)
+		senderWallerAddr = messages.ConvertAddress(msg.Signature.Sender)
 		msgID = msg.MessageIdentifier
 	case *messages.RevealSecret:
 		msg := message.(*messages.RevealSecret)
-		address = messages.ConvertAddress(msg.Signature.Sender)
+		senderWallerAddr = messages.ConvertAddress(msg.Signature.Sender)
 		msgID = msg.MessageIdentifier
 	case *messages.Secret:
 		msg := message.(*messages.Secret)
-		address = messages.ConvertAddress(msg.EnvelopeMessage.Signature.Sender)
+		senderWallerAddr = messages.ConvertAddress(msg.EnvelopeMessage.Signature.Sender)
 		msgID = msg.MessageIdentifier
 	case *messages.WithdrawRequest:
 		msg := message.(*messages.WithdrawRequest)
-		address = messages.ConvertAddress(msg.Participant)
+		senderWallerAddr = messages.ConvertAddress(msg.Participant)
 		msgID = msg.MessageIdentifier
 	case *messages.Withdraw:
 		msg := message.(*messages.Withdraw)
-		address = messages.ConvertAddress(msg.PartnerSignature.Sender)
+		senderWallerAddr = messages.ConvertAddress(msg.PartnerSignature.Sender)
 		msgID = msg.MessageIdentifier
 	case *messages.CooperativeSettleRequest:
 		msg := message.(*messages.CooperativeSettleRequest)
-		address = messages.ConvertAddress(msg.Participant1Signature.Sender)
+		senderWallerAddr = messages.ConvertAddress(msg.Participant1Signature.Sender)
 		msgID = msg.MessageIdentifier
 	case *messages.CooperativeSettle:
 		msg := message.(*messages.CooperativeSettle)
-		address = messages.ConvertAddress(msg.Participant2Signature.Sender)
+		senderWallerAddr = messages.ConvertAddress(msg.Participant2Signature.Sender)
 		msgID = msg.MessageIdentifier
 	default:
 		log.Warn("[ReceiveMessage] unknown Msg type: ", reflect.TypeOf(message).String())
 		return
 	}
 
-	log.Debugf("[ReceiveMessage] %v msgId: %v from: %v", reflect.TypeOf(message).String(), msgID.MessageId, from)
+	log.Debugf("[ReceiveMessage] %s msgId: %d fromNetAddr: %s fromWalletAddr: %s", reflect.TypeOf(message).String(),
+		msgID.MessageId, fromNetAddr, common.ToBase58(senderWallerAddr))
 	deliveredMessage := &messages.Delivered{
 		DeliveredMessageIdentifier: msgID,
 	}
 
-	var nodeNetAddress string
+	//var nodeNetAddress string
 	err := this.ChannelService.Sign(deliveredMessage)
 	if err == nil {
-		if address != common.EmptyAddress {
-			nodeNetAddress, err = this.GetHostAddr(address)
-			if err != nil {
-				log.Error("[ReceiveMessage] GetHostAddr error")
-				return
-			}
+		if senderWallerAddr != common.EmptyAddress {
+			this.SetHostAddr(senderWallerAddr, fromNetAddr)
 		}
 		log.Debugf("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v",
 			reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier.MessageId,
-			nodeNetAddress)
+			fromNetAddr)
 
-		state := this.GetNodeNetworkState(nodeNetAddress)
+		state := this.GetNodeNetworkState(fromNetAddr)
 		if state != transfer.NetworkReachable {
-			log.Errorf("[PeekAndSend] state != NetworkReachable %s", nodeNetAddress)
+			log.Errorf("[PeekAndSend] state != NetworkReachable %s", fromNetAddr)
 			//log.Warn("[PeekAndSend] state != NetworkReachable reconnect %s", nodeNetAddress)
 			//if err = client.P2pConnect(nodeNetAddress); err != nil {
 			//	log.Errorf("[PeekAndSend] state != NetworkReachable connect error: %s", err.Error())
 			//}
 		}
 
-		if err = client.P2pSend(nodeNetAddress, deliveredMessage); err != nil {
+		if err = client.P2pSend(fromNetAddr, deliveredMessage); err != nil {
 			log.Errorf("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v error: %s",
 				reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier.MessageId,
-				nodeNetAddress, err.Error())
+				fromNetAddr, err.Error())
 		}
 	} else {
 		log.Errorf("SendDeliveredMessage (%v) deliveredMessage Sign error: ", err.Error(),
-			reflect.TypeOf(message).String(), nodeNetAddress)
+			reflect.TypeOf(message).String(), fromNetAddr)
 	}
 }
 
