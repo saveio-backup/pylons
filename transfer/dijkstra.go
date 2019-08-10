@@ -2,6 +2,7 @@ package transfer
 
 import (
 	"container/list"
+
 	"github.com/saveio/pylons/common"
 )
 
@@ -74,7 +75,7 @@ func (self *Topology) GetShortPath(node common.Address) ShortPathTree {
 			//fmt.Println("Path: ", path)
 			lst.Remove(e)
 		} else {
-			exist3 := false
+			existPath := false
 			pathCount := len(sp)
 			for i := 0; i < pathCount; i++ {
 				tmpPathLen := len(sp[i])
@@ -84,7 +85,8 @@ func (self *Topology) GetShortPath(node common.Address) ShortPathTree {
 					//fmt.Println("exist2")
 					mp := self.edges[pathLastNode]
 					//fmt.Println("mp: ", mp)
-					if _, exist3 = mp[n]; exist3 {
+					if _, exist3 := mp[n]; exist3 {
+						existPath = true
 						//fmt.Println("exist3")
 						path := make([]common.Address, len(sp[i]))
 						copy(path, sp[i])
@@ -94,7 +96,7 @@ func (self *Topology) GetShortPath(node common.Address) ShortPathTree {
 					}
 				}
 			}
-			if exist3 {
+			if existPath {
 				//fmt.Println("Remove: ", e.Value.(common.Address))
 				lst.Remove(e)
 			}
