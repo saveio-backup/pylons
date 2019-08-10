@@ -205,7 +205,7 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 	log.Debugf("send msg msg = %+v\n", msg)
 	address, err := this.GetHostAddr(queueId.Recipient)
 	if address == "" || err != nil {
-		log.Error("[PeekAndSend] GetHostAddr address is nil for %s", common.ToBase58(queueId.Recipient))
+		log.Errorf("[PeekAndSend] GetHostAddr address is nil for %s", common.ToBase58(queueId.Recipient))
 		return errors.New("no valid address to send message")
 	}
 

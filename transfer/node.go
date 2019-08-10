@@ -324,9 +324,9 @@ func inPlaceDeleteMessage(messageQueue []Event, stateChange StateChange) []Event
 	len := len(messageQueue)
 	for i := 0; i < len; {
 		message := GetSenderMessageEvent(messageQueue[i])
-		log.Debugf("[inPlaceDeleteMessageQueue] message: %v, sender:%v, messageId:%v", message, sender, messageId)
+		//log.Debugf("[inPlaceDeleteMessageQueue] message: %v, sender:%v, messageId:%v", message, sender, messageId)
 		if message.MessageIdentifier == messageId && common.AddressEqual(common.Address(message.Recipient), sender) {
-			//log.Infof("[inPlaceDeleteMessageQueue] messageId: %d match", messageId)
+			//log.Debugf("[inPlaceDeleteMessageQueue] sender: %s, messageId: %d match", common.ToBase58(sender), messageId)
 			messageQueue = append(messageQueue[:i], messageQueue[i+1:]...)
 			len--
 			//found = true
@@ -335,7 +335,7 @@ func inPlaceDeleteMessage(messageQueue []Event, stateChange StateChange) []Event
 		}
 	}
 	//if !found {
-	//	log.Errorf("[inPlaceDeleteMessageQueue], messageId: %d not found", messageId)
+	//	log.Errorf("[inPlaceDeleteMessageQueue], sender: %s, messageId: %d not found", common.ToBase58(sender), messageId)
 	//}
 	return messageQueue
 }
