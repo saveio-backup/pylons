@@ -532,6 +532,7 @@ func ValidLockedTransferCheck(channelState *NettingChannelState, senderState *Ne
 	currentBalanceProof, err := getCurrentBalanceProof(senderState)
 	if err != nil {
 		log.Error("[ValidLockedTransferCheck] error: ", err.Error())
+		return nil, fmt.Errorf("[ValidLockedTransferCheck] error: %s", err.Error())
 	}
 	lock.LockHash = lock.CalcLockHash()
 	merkleTree := computeMerkleTreeWith(senderState.MerkleTree, lock.LockHash)
@@ -1922,6 +1923,7 @@ func HandleReceiveLockedTransfer(channelState *NettingChannelState,
 		}}
 		events = append(events, sendProcessed)
 	} else {
+		log.Error("[HandleReceiveLockedTransfer] IsValidLockedTransfer, error: %s", err.Error())
 		invalidLocked := &EventInvalidReceivedLockedTransfer{
 			PaymentIdentifier: mediatedTransfer.PaymentIdentifier,
 			Reason:            err.Error(),
