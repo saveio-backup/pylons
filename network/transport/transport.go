@@ -253,21 +253,43 @@ func (this *Transport) SetHostAddr(address common.Address, hostAddr string) {
 	this.NodeIpPortToAddress.Store(hostAddr, address)
 }
 
-func (this *Transport) GetHostAddr(address common.Address) (string, error) {
-	if this.getHostAddrCallback == nil {
-		if v, ok := this.NodeAddressToIpPort.Load(address); ok {
-			return v.(string), nil
+func (this *Transport) GetHostAddrByCallBack(walletAddr common.Address) (string, error) {
+	var err error
+	var nodeNetAddr string
+
+	if this.getHostAddrCallback != nil {
+		nodeNetAddr, err = this.getHostAddrCallback(walletAddr)
+		if err == nil {
+			if this.GetNodeNetworkState(nodeNetAddr) == transfer.NetworkReachable {
+				this.NodeAddressToIpPort.Store(walletAddr, nodeNetAddr)
+				this.NodeIpPortToAddress.Store(nodeNetAddr, walletAddr)
+				return nodeNetAddr, nil
+			} else {
+				err = fmt.Errorf("[GetHostAddrByCallBack] %s is not reachable", nodeNetAddr)
+			}
 		}
 	} else {
-		hostAddr, err := this.getHostAddrCallback(address)
-		if err == nil {
-			this.NodeAddressToIpPort.Store(address, hostAddr)
-			this.NodeIpPortToAddress.Store(hostAddr, address)
-			return hostAddr, err
-		}
-		log.Errorf("[GetHostAddr] getHostAddrCallback error: %s", err.Error())
+		err = fmt.Errorf("[GetHostAddrByCallBack] error: getHostAddrCallback is not set")
 	}
-	return "", fmt.Errorf("[GetHostAddr] host addr is not set")
+	log.Errorf("[GetHostAddrByCallBack] error: %s", err.Error())
+	return "", err
+}
+
+func (this *Transport) GetHostAddr(walletAddr common.Address) (string, error) {
+	var err error
+	var nodeNetAddr string
+
+	if v, ok := this.NodeAddressToIpPort.Load(walletAddr); ok {
+		nodeNetAddr = v.(string)
+		if this.GetNodeNetworkState(nodeNetAddr) == transfer.NetworkReachable {
+			return nodeNetAddr, nil
+		} else {
+			err = fmt.Errorf("[GetHostAddr] %s is not reachable", nodeNetAddr)
+		}
+	}
+	log.Warnf("[GetHostAddrFromLocal] error: %s. Try GetHostAddrByCallBack", err.Error())
+	nodeNetAddr, err = this.GetHostAddrByCallBack(walletAddr)
+	return nodeNetAddr, err
 }
 
 func (this *Transport) StartHealthCheck(address common.Address) {

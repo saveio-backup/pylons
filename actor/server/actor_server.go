@@ -89,6 +89,7 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 			} else {
 				msg.Ret.Err = nil
 			}
+			msg.Ret.NetAddr = netAddr
 			msg.Ret.Done <- true
 		}()
 	case *SetGetHostAddrCallbackReq:
