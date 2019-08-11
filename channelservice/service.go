@@ -920,12 +920,7 @@ func (self *ChannelService) GetChannelList(registryAddress common.PaymentNetwork
 }
 
 func (self *ChannelService) GetNodeNetworkState(nodeAddress common.Address) string {
-	if v, ok := self.Transport.NodeAddressToIpPort.Load(nodeAddress); ok {
-		if nodeNetAddr, ok := v.(string); ok {
-			return self.Transport.GetNodeNetworkState(nodeNetAddr)
-		}
-	}
-	return transfer.NetworkUnreachable
+	return self.Transport.GetNodeNetworkState(nodeAddress)
 }
 
 func (self *ChannelService) GetTokensList(registryAddress common.PaymentNetworkID) *list.List {
@@ -967,6 +962,7 @@ func (self *ChannelService) CanTransfer(target common.Address, amount common.Tok
 	chainState := self.StateFromChannel()
 	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 	paymentNetworkIdentifier := common.PaymentNetworkID(self.microAddress)
+
 	channelState := transfer.GetChannelStateFor(chainState, paymentNetworkIdentifier, tokenAddress, target)
 	if chainState == nil {
 		return false
@@ -1002,10 +998,6 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 		return nil, err
 	}
 
-	if !self.CanTransfer(target, amount) {
-		return nil, fmt.Errorf("contract balance small than transfer amount")
-	}
-
 	if identifier == common.PaymentID(0) {
 		identifier = CreateDefaultIdentifier()
 	}
@@ -1027,15 +1019,31 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 	}
 
 	paymentStatus = self.RegisterPaymentStatus(target, identifier, common.PAYMENT_DIRECT, amount, tokenNetworkIdentifier)
-	//paymentStatus, _ = self.GetPaymentStatus(common.Address(target), identifier)
 
 	self.HandleStateChange(directTransfer)
 	return paymentStatus.paymentDone, nil
 }
 
+func (self *ChannelService) CheckPayRoute(mediaAddr common.Address, targetAddr common.Address) (bool, error) {
+	if state := self.Transport.GetNodeNetworkState(mediaAddr); state != transfer.NetworkReachable {
+		return false, fmt.Errorf("[CheckPayRoute] MediaNetworkState(%s) status is not reachable", common.ToBase58(mediaAddr))
+	}
+	if self.Transport.GetTargetQueueState(mediaAddr) == transport.QueueBusy {
+		return false, fmt.Errorf("[CheckPayRoute] MediaQueue(%s) status is busy", common.ToBase58(mediaAddr))
+	}
+
+	if state := self.Transport.GetNodeNetworkState(targetAddr); state != transfer.NetworkReachable {
+		return false, fmt.Errorf("[CheckPayRoute] TargetNetworkState(%s) status is not reachable", common.ToBase58(targetAddr))
+	}
+	if self.Transport.GetTargetQueueState(targetAddr) == transport.QueueBusy {
+		return false, fmt.Errorf("[CheckPayRoute] TargetQueue(%s) status is busy", common.ToBase58(targetAddr))
+	}
+	return true, nil
+}
+
 func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkID,
 	tokenAddress common.TokenAddress, amount common.TokenAmount, target common.Address,
-	identifier common.PaymentID) (chan bool, error) {
+	paymentId common.PaymentID) (chan bool, error) {
 
 	var err error
 	if target == common.EmptyAddress {
@@ -1056,9 +1064,8 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	chainState := self.StateFromChannel()
 
 	//TODO: check validTokens
-	paymentNetworkIdentifier := common.PaymentNetworkID(self.microAddress)
-	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(
-		chainState, paymentNetworkIdentifier, tokenAddress)
+	paymentNetworkId := common.PaymentNetworkID(self.microAddress)
+	tokenNetworkId := transfer.GetTokenNetworkIdentifierByTokenAddress(chainState, paymentNetworkId, tokenAddress)
 
 	secret := common.SecretRandom(constants.SECRET_LEN)
 	log.Debug("[MediaTransfer] Secret: ", secret)
@@ -1070,14 +1077,14 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 		return nil, fmt.Errorf("SecretHash %v has been registerd onchain", secretHash)
 	}
 
-	if identifier == common.PaymentID(0) {
-		identifier = CreateDefaultIdentifier()
+	if paymentId == common.PaymentID(0) {
+		paymentId = CreateDefaultIdentifier()
 	}
 
 	//with self.payment_identifier_lock:
-	paymentStatus, exist := self.GetPaymentStatus(target, identifier)
+	paymentStatus, exist := self.GetPaymentStatus(target, paymentId)
 	if exist {
-		paymentStatusMatches := paymentStatus.Match(common.PAYMENT_MEDIATED, tokenNetworkIdentifier, amount)
+		paymentStatusMatches := paymentStatus.Match(common.PAYMENT_MEDIATED, tokenNetworkId, amount)
 		if !paymentStatusMatches {
 			return nil, fmt.Errorf("Another payment with the same id is in flight. ")
 		}
@@ -1087,27 +1094,29 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	asyncDone := make(chan bool)
 	paymentStatus = &PaymentStatus{
 		paymentType:            common.PAYMENT_MEDIATED,
-		paymentIdentifier:      identifier,
+		paymentIdentifier:      paymentId,
 		amount:                 amount,
-		tokenNetworkIdentifier: tokenNetworkIdentifier,
+		tokenNetworkIdentifier: tokenNetworkId,
 		paymentDone:            asyncDone,
 	}
 
-	paymentStatus = self.RegisterPaymentStatus(target, identifier, common.PAYMENT_MEDIATED,
-		amount, tokenNetworkIdentifier)
+	paymentStatus = self.RegisterPaymentStatus(target, paymentId, common.PAYMENT_MEDIATED,
+		amount, tokenNetworkId)
 
-	actionInitInitiator, err := self.InitiatorInit(identifier, amount,
-		secret, tokenNetworkIdentifier, target)
+	actionInitiator, err := self.InitiatorInit(paymentId, amount, secret, tokenNetworkId, target)
 	if err != nil {
 		log.Error("[MediaTransfer]:", err.Error())
 		return nil, err
 	}
-	if actionInitInitiator.TransferDescription == nil {
-		log.Warn("MediaTransfer transferDescription == nil ")
+
+	if ok, err := self.CheckPayRoute(actionInitiator.Routes[0].NodeAddress, target); !ok {
+		log.Errorf("[MediaTransfer] CheckPayRoute error: %s", err.Error())
+		return nil, err
 	}
+
 	//# Dispatch the state change even if there are no routes to create the
 	//# wal entry.
-	self.HandleStateChange(actionInitInitiator)
+	self.HandleStateChange(actionInitiator)
 	return paymentStatus.paymentDone, nil
 }
 

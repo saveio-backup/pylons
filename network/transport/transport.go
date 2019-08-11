@@ -15,8 +15,13 @@ import (
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network/transport/messages"
 	"github.com/saveio/pylons/transfer"
-	chainComm "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
+)
+
+const (
+	QueueBusy = iota
+	QueueFree
+	QueueNotExist
 )
 
 type ChannelServiceInterface interface {
@@ -32,6 +37,7 @@ type Transport struct {
 
 	messageQueues       *sync.Map
 	addressQueueMap     *sync.Map
+	targetQueueState    *sync.Map
 	kill                chan struct{}
 	getHostAddrCallback func(address common.Address) (string, error)
 	ChannelService      ChannelServiceInterface
@@ -49,16 +55,16 @@ func NewTransport(channelService ChannelServiceInterface) *Transport {
 		addressQueueMap:     new(sync.Map),
 		NodeIpPortToAddress: new(sync.Map),
 		NodeAddressToIpPort: new(sync.Map),
+		targetQueueState:    new(sync.Map),
 		ChannelService:      channelService,
 	}
 }
 
 // messages first be queued, only can be send when Delivered for previous msssage is received
 func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Message) error {
+	var err error
 	var msgID *messages.MessageID
-	rec := chainComm.Address(queueId.Recipient)
-	log.Debugf("[SendAsync] %v, TO: %v.", reflect.TypeOf(msg).String(), rec.ToBase58())
-	q := this.GetQueue(queueId)
+
 	switch msg.(type) {
 	case *messages.DirectTransfer:
 		msgID = (msg.(*messages.DirectTransfer)).MessageIdentifier
@@ -85,40 +91,37 @@ func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Me
 	case *messages.CooperativeSettle:
 		msgID = (msg.(*messages.CooperativeSettle)).MessageIdentifier
 	default:
-		log.Error("[SendAsync] Unknown message type to send async: ", reflect.TypeOf(msg).String())
-		return fmt.Errorf("Unknown message type to send async ")
+		err = fmt.Errorf("[SendAsync] Unknown message type to send async: %s", reflect.TypeOf(msg).String())
+		log.Error("[SendAsync] error: ", err.Error())
+		return err
 	}
 
-	//log.Infof("[SendAsync] %v, msgId: %d, TO: %v.", reflect.TypeOf(msg).String(), msgID, rec.ToBase58())
-	ok := q.Push(&QueueItem{
-		message:   msg,
-		messageId: msgID,
-	})
-	if !ok {
-		return fmt.Errorf("failed to push to queue")
-	}
+	log.Debugf("[SendAsync] %v, msgId: %d, TO: %v.", reflect.TypeOf(msg).String(), msgID,
+		common.ToBase58(queueId.Recipient))
 
-	return nil
+	q := this.GetQueue(queueId)
+	if ok := q.Push(&QueueItem{message: msg, messageId: msgID}); !ok {
+		err = fmt.Errorf("[SendAsync] failed to push to queue")
+		log.Error("[SendAsync] error: ", err.Error())
+	}
+	return err
 }
 
 func (this *Transport) GetQueue(queueId *transfer.QueueIdentifier) *Queue {
 	q, ok := this.messageQueues.Load(*queueId)
-
 	if !ok {
 		q = this.InitQueue(queueId)
 	}
-
 	return q.(*Queue)
 }
 
 func (this *Transport) InitQueue(queueId *transfer.QueueIdentifier) *Queue {
 	q := NewQueue(constants.MAX_MSG_QUEUE)
-
+	this.SetTargetQueueState(queueId.Recipient, QueueFree)
 	this.messageQueues.Store(*queueId, q)
 
-	// queueid cannot be pointer type otherwise it might be updated outside QueueSend
+	// queueId cannot be pointer type otherwise it might be updated outside QueueSend
 	go this.QueueSend(q, *queueId)
-
 	return q
 }
 
@@ -136,8 +139,10 @@ func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier)
 			this.PeekAndSend(queue, &queueId)
 		// handle timeout retry
 		case <-t.C:
+			this.SetTargetQueueState(queueId.Recipient, QueueBusy)
 			log.Debugf("[QueueSend]  <-t.C Time: %s queue: %p\n", time.Now().String(), queue)
 			if queue.Len() == 0 {
+				this.SetTargetQueueState(queueId.Recipient, QueueFree)
 				continue
 			}
 
@@ -152,19 +157,21 @@ func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier)
 				// dont stop the timer, otherwise it will block trying to resend message
 				//t.Stop()
 				//break
+				retryTimes++
 			}
-			retryTimes++
+
 		case msgId := <-queue.DeliverChan:
-			log.Debugf("[DeliverChan] Time: %s msgId := <-queue.DeliverChan queue: %p msgId = %+v queue.length: %d\n",
-				time.Now().String(), queue, msgId.MessageId, queue.Len())
+			log.Debugf("[DeliverChan] msgId := <-queue.DeliverChan queue: %p msgId = %d queue.length: %d\n",
+				queue, msgId.MessageId, queue.Len())
 			data, _ := queue.Peek()
 			if data == nil {
-				log.Debug("[DeliverChan] msgId := <-queue.DeliverChan data == nil")
-				log.Error("msgId := <-queue.DeliverChan data == nil")
+				log.Warn("[DeliverChan] msgId := <-queue.DeliverChan data == nil")
+				this.SetTargetQueueState(queueId.Recipient, QueueFree)
 				continue
 			}
 			item := data.(*QueueItem)
-			log.Debugf("[DeliverChan] msgId := <-queue.DeliverChan: %s item = %+v\n",
+
+			log.Debugf("[DeliverChan] msgId := <-queue.DeliverChan: %s item = %d\n",
 				reflect.TypeOf(item.message).String(), item.messageId)
 			if msgId.MessageId == item.messageId.MessageId {
 				this.addressQueueMap.Delete(msgId.MessageId)
@@ -176,13 +183,16 @@ func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier)
 					t.Reset(interval * time.Second)
 					retryTimes = 0
 					this.PeekAndSend(queue, &queueId)
+				} else {
+					this.SetTargetQueueState(queueId.Recipient, QueueFree)
 				}
 			} else {
 				log.Debug("[DeliverChan] msgId.MessageId != item.messageId.MessageId queue.Len: ", queue.Len())
-				log.Warnf("[DeliverChan] msgId.MessageId: %d != item.messageId.MessageId: %d", msgId.MessageId,
-					item.messageId.MessageId)
+				log.Warnf("[DeliverChan] MessageId not match (%d  %d)", msgId.MessageId, item.messageId.MessageId)
+				this.SetTargetQueueState(queueId.Recipient, QueueBusy)
 			}
 		case <-this.kill:
+			this.targetQueueState.Delete(queueId.Recipient)
 			log.Info("[QueueSend] msgId := <-this.kill")
 			t.Stop()
 			return
@@ -270,14 +280,12 @@ func (this *Transport) GetHostAddr(walletAddr common.Address) (string, error) {
 	var err error
 	var nodeNetAddr string
 
-	if v, ok := this.NodeAddressToIpPort.Load(walletAddr); ok {
-		nodeNetAddr = v.(string)
-		if this.GetNodeNetworkState(nodeNetAddr) == transfer.NetworkReachable {
-			return nodeNetAddr, nil
-		} else {
-			err = fmt.Errorf("[GetHostAddr] %s is not reachable", nodeNetAddr)
-		}
+	if this.GetNodeNetworkState(nodeNetAddr) == transfer.NetworkReachable {
+		return nodeNetAddr, nil
+	} else {
+		err = fmt.Errorf("[GetHostAddr] %s is not reachable", nodeNetAddr)
 	}
+
 	log.Warnf("[GetHostAddrFromLocal] error: %s. Try GetHostAddrByCallBack", err.Error())
 	nodeNetAddr, err = this.GetHostAddrByCallBack(walletAddr)
 	return nodeNetAddr, err
@@ -314,14 +322,43 @@ func (this *Transport) StartHealthCheck(walletAddr common.Address) error {
 	}
 }
 
-func (this *Transport) GetNodeNetworkState(nodeNetAddress string) string {
-	nodeState := client.GetNodeNetworkState(nodeNetAddress)
-	if nodeState != int(keepalive.PEER_REACHABLE) {
-		return transfer.NetworkUnreachable
+func (this *Transport) SetTargetQueueState(walletAddr common.Address, state int) {
+	this.targetQueueState.Store(walletAddr, state)
+}
+
+func (this *Transport) GetTargetQueueState(walletAddr common.Address) int {
+	queueState, exist := this.targetQueueState.Load(walletAddr)
+	if exist {
+		return queueState.(int)
 	} else {
-		return transfer.NetworkReachable
+		return QueueNotExist
+	}
+}
+
+func (this *Transport) GetNodeNetworkState(nodeAddr interface{}) string {
+	var nodeNetAddress string
+	switch nodeAddr.(type) {
+	case string:
+		nodeNetAddress = nodeAddr.(string)
+	case common.Address:
+		if v, ok := this.NodeAddressToIpPort.Load(nodeAddr); ok {
+			nodeNetAddress = v.(string)
+		} else {
+			return transfer.NetworkUnknown
+		}
 	}
 
+	state := client.GetNodeNetworkState(nodeNetAddress)
+	nodeNetState := keepalive.PeerState(state)
+	switch nodeNetState {
+	case keepalive.PEER_UNKNOWN:
+		return transfer.NetworkUnknown
+	case keepalive.PEER_UNREACHABLE:
+		return transfer.NetworkUnreachable
+	case keepalive.PEER_REACHABLE:
+		return transfer.NetworkReachable
+	}
+	return ""
 }
 
 func (this *Transport) Receive(message proto.Message, from string) {

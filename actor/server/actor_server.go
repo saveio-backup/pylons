@@ -80,15 +80,7 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		}()
 	case *GetHostAddrReq:
 		go func() {
-			netAddr, err := this.chSrv.Service.GetHostAddr(msg.WalletAddr)
-			if err != nil {
-				msg.Ret.Err = err
-			} else if netAddr == "" {
-				msg.Ret.Err = fmt.Errorf("NetAddr is nil")
-			} else {
-				msg.Ret.Err = nil
-			}
-			msg.Ret.NetAddr = netAddr
+			msg.Ret.NetAddr, msg.Ret.Err = this.chSrv.Service.GetHostAddr(msg.WalletAddr)
 			msg.Ret.Done <- true
 		}()
 	case *SetGetHostAddrCallbackReq:
@@ -104,8 +96,7 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		}()
 	case *SetTotalChannelDepositReq:
 		go func() {
-			msg.Ret.Err = this.chSrv.Service.SetTotalChannelDeposit(msg.TokenAddress, msg.PartnerAdder,
-				msg.TotalDeposit)
+			msg.Ret.Err = this.chSrv.Service.SetTotalChannelDeposit(msg.TokenAddress, msg.PartnerAdder, msg.TotalDeposit)
 			msg.Ret.Done <- true
 		}()
 	case *DirectTransferReq:

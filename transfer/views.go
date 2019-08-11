@@ -179,8 +179,7 @@ func GetTokenNetworkByTokenAddress(chainState *ChainState, paymentNetworkId comm
 	return nil
 }
 
-func GetTokenNetworkByIdentifier(chainState *ChainState,
-	tokenNetworkId common.TokenNetworkID) *TokenNetworkState {
+func GetTokenNetworkByIdentifier(chainState *ChainState, tokenNetworkId common.TokenNetworkID) *TokenNetworkState {
 	//log.Debug("chainState.IdentifiersToPaymentNetworks = %+v\n", chainState.IdentifiersToPaymentNetworks)
 	paymentNetworkState := chainState.IdentifiersToPaymentNetworks[common.PaymentNetworkID(scUtils.MicroPayContractAddress)]
 	//log.Debug("paymentNetworkState = %+v\n", paymentNetworkState)
