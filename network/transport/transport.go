@@ -249,46 +249,59 @@ func (this *Transport) SetGetHostAddrCallback(getHostAddrCallback func(address c
 	this.getHostAddrCallback = getHostAddrCallback
 }
 
-func (this *Transport) SetHostAddr(address common.Address, hostAddr string) {
-	this.NodeAddressToIpPort.Store(address, hostAddr)
-	this.NodeIpPortToAddress.Store(hostAddr, address)
+func (this *Transport) GetHostAddrByLocal(walletAddr common.Address) (string, error) {
+	if v, ok := this.NodeAddressToIpPort.Load(walletAddr); ok {
+		nodeNetAddr := v.(string)
+		state := client.GetNodeNetworkState(nodeNetAddr)
+		if state == int(keepalive.PEER_REACHABLE) {
+			return nodeNetAddr, nil
+		} else {
+			return nodeNetAddr, fmt.Errorf("[GetHostAddrByLocal] %s is not reachable", common.ToBase58(walletAddr))
+		}
+	} else {
+		return "", fmt.Errorf("[GetHostAddrByLocal] %s not found", common.ToBase58(walletAddr))
+	}
 }
 
 func (this *Transport) GetHostAddrByCallBack(walletAddr common.Address) (string, error) {
-	var err error
-	var nodeNetAddr string
-
 	if this.getHostAddrCallback != nil {
-		nodeNetAddr, err = this.getHostAddrCallback(walletAddr)
+		nodeNetAddr, err := this.getHostAddrCallback(walletAddr)
 		if err == nil {
-			if this.GetNodeNetworkState(nodeNetAddr) == transfer.NetworkReachable {
-				this.NodeAddressToIpPort.Store(walletAddr, nodeNetAddr)
-				this.NodeIpPortToAddress.Store(nodeNetAddr, walletAddr)
+			if client.GetNodeNetworkState(nodeNetAddr) == int(keepalive.PEER_REACHABLE) {
+				this.SetHostAddr(walletAddr, nodeNetAddr)
 				return nodeNetAddr, nil
 			} else {
-				err = fmt.Errorf("[GetHostAddrByCallBack] %s is not reachable", nodeNetAddr)
+				return nodeNetAddr, fmt.Errorf("[GetHostAddrByCallBack] %s is not reachable", common.ToBase58(walletAddr))
 			}
+		} else {
+			return "", fmt.Errorf("[GetHostAddrByCallBack] %s error: %s", common.ToBase58(walletAddr), err.Error())
 		}
 	} else {
-		err = fmt.Errorf("[GetHostAddrByCallBack] error: getHostAddrCallback is not set")
+		return "", fmt.Errorf("[GetHostAddrByCallBack] error: getHostAddrCallback is not set")
 	}
-	log.Errorf("[GetHostAddrByCallBack] error: %s", err.Error())
-	return "", err
 }
 
 func (this *Transport) GetHostAddr(walletAddr common.Address) (string, error) {
 	var err error
 	var nodeNetAddr string
 
-	if this.GetNodeNetworkState(nodeNetAddr) == transfer.NetworkReachable {
+	nodeNetAddr, err = this.GetHostAddrByLocal(walletAddr)
+	if err == nil {
 		return nodeNetAddr, nil
 	} else {
-		err = fmt.Errorf("[GetHostAddr] %s is not reachable", nodeNetAddr)
+		log.Warnf("[GetHostAddr] GetHostAddrByLocal: %s error: %s , Try GetHostAddrByCallBack",
+			common.ToBase58(walletAddr), err.Error())
 	}
-
-	log.Warnf("[GetHostAddrFromLocal] error: %s. Try GetHostAddrByCallBack", err.Error())
 	nodeNetAddr, err = this.GetHostAddrByCallBack(walletAddr)
+	if err != nil {
+		log.Errorf("[GetHostAddr] GetHostAddrByCallBack: %s error: %s", common.ToBase58(walletAddr), err.Error())
+	}
 	return nodeNetAddr, err
+}
+
+func (this *Transport) SetHostAddr(address common.Address, hostAddr string) {
+	this.NodeAddressToIpPort.Store(address, hostAddr)
+	this.NodeIpPortToAddress.Store(hostAddr, address)
 }
 
 func (this *Transport) StartHealthCheck(walletAddr common.Address) error {
