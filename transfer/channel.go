@@ -861,18 +861,22 @@ func computeMerkleTreeWithout(merkleTree *MerkleTreeState, lockHash common.LockH
 func createSendLockedTransfer(channelState *NettingChannelState, initiator common.Address,
 	target common.Address, amount common.PaymentAmount, messageIdentifier common.MessageID,
 	paymentIdentifier common.PaymentID, expiration common.BlockExpiration,
-	secretHash common.SecretHash) (*SendLockedTransfer, *MerkleTreeState) {
-
+	secretHash common.SecretHash) (*SendLockedTransfer, *MerkleTreeState, error) {
+	var err error
 	ourState := channelState.OurState
 	partnerState := channelState.PartnerState
 	ourBalanceProof := channelState.OurState.BalanceProof
 
 	if common.TokenAmount(amount) > GetDistributable(ourState, partnerState) {
-		return nil, nil
+		err = fmt.Errorf("[createSendLockedTransfer] error: transfer amount is less then distributable")
+		log.Error("[createSendLockedTransfer] error: ", err.Error())
+		return nil, nil, err
 	}
 
 	if GetStatus(channelState) != ChannelStateOpened {
-		return nil, nil
+		err = fmt.Errorf("[createSendLockedTransfer] error: channelState is not Opened")
+		log.Error("[createSendLockedTransfer] error: ", err.Error())
+		return nil, nil, err
 	}
 
 	lock := &HashTimeLockState{
@@ -938,7 +942,7 @@ func createSendLockedTransfer(channelState *NettingChannelState, initiator commo
 		Transfer: transfer,
 	}
 
-	return lockedTransfer, merkleTree
+	return lockedTransfer, merkleTree, nil
 }
 
 func createSendDirectTransfer(channelState *NettingChannelState, amount common.PaymentAmount,
@@ -1097,9 +1101,12 @@ func sendLockedTransfer(channelState *NettingChannelState,
 	paymentIdentifier common.PaymentID, expiration common.BlockExpiration,
 	secretHash common.SecretHash) *SendLockedTransfer {
 
-	sendLockedTransferEvent, merkleTree := createSendLockedTransfer(
+	sendLockedTransferEvent, merkleTree, err := createSendLockedTransfer(
 		channelState, initiator, target, amount, messageIdentifier,
 		paymentIdentifier, expiration, secretHash)
+	if err != nil {
+		log.Error("[sendLockedTransfer] createSendLockedTransfer error: %s", err.Error())
+	}
 
 	transfer := sendLockedTransferEvent.Transfer
 	lock := transfer.Lock
@@ -1131,10 +1138,13 @@ func sendRefundTransfer(channelState *NettingChannelState, initiator common.Addr
 		return nil, fmt.Errorf("Refunds are only valid for *known and pending* transfers ")
 	}
 
-	sendMediatedTransfer, merkleTree := createSendLockedTransfer(
+	sendMediatedTransfer, merkleTree, err := createSendLockedTransfer(
 		channelState, initiator, target, amount, messageIdentifier, paymentIdentifier,
 		expiration, secretHash)
-
+	if err != nil {
+		log.Error("[sendRefundTransfer] createSendLockedTransfer error: %s", err.Error())
+		return nil, err
+	}
 	mediatedTransfer := sendMediatedTransfer.Transfer
 	lock := mediatedTransfer.Lock
 
