@@ -209,15 +209,6 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 		return errors.New("no valid address to send message")
 	}
 
-	state := this.GetNodeNetworkState(address)
-	if state != transfer.NetworkReachable {
-		log.Errorf("[PeekAndSend] state != NetworkReachable %s", address)
-		//log.Warnf("[PeekAndSend] state != NetworkReachable reconnect %s", address)
-		//if err = client.P2pConnect(address); err != nil {
-		//	log.Errorf("[PeekAndSend] state != NetworkReachable connect error: %s", err.Error())
-		//}
-	}
-
 	msgId := common.MessageID(item.(*QueueItem).messageId.MessageId)
 	log.Debugf("[PeekAndSend] address: %s msgId: %v, queue: %p\n", address, msgId, queue)
 
@@ -292,14 +283,35 @@ func (this *Transport) GetHostAddr(walletAddr common.Address) (string, error) {
 	return nodeNetAddr, err
 }
 
-func (this *Transport) StartHealthCheck(address common.Address) {
-	log.Infof("[StartHealthCheck] address: %s", common.ToBase58(address))
-	nodeAddress, err := this.GetHostAddr(address)
-	if nodeAddress == "" || err != nil {
-		log.Error("node address invalid, can`t check health")
-		return
+func (this *Transport) StartHealthCheck(walletAddr common.Address) error {
+	log.Infof("[StartHealthCheck] walletAddr: %s", common.ToBase58(walletAddr))
+
+	var err error
+	var nodeNetAddr string
+	if v, ok := this.NodeAddressToIpPort.Load(walletAddr); ok {
+		nodeNetAddr = v.(string)
+	} else {
+		if this.getHostAddrCallback == nil {
+			err = fmt.Errorf("[StartHealthCheck] error: getHostAddrCallback is not set")
+			log.Errorf("[StartHealthCheck] error:", err.Error())
+			return err
+		} else {
+			nodeNetAddr, err = this.getHostAddrCallback(walletAddr)
+			if err != nil {
+				err = fmt.Errorf("[StartHealthCheck] getHostAddrCallback error: %s", err.Error())
+				log.Errorf("[StartHealthCheck] error:", err.Error())
+				return err
+			}
+		}
 	}
-	client.P2pConnect(nodeAddress)
+	if nodeNetAddr == "" {
+		err = fmt.Errorf("[StartHealthCheck] error: nodeNetAddr is nil string")
+		log.Error("[StartHealthCheck] error:", err.Error())
+		return err
+	} else {
+		client.P2pConnect(nodeNetAddr)
+		return nil
+	}
 }
 
 func (this *Transport) GetNodeNetworkState(nodeNetAddress string) string {

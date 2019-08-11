@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/ontio/ontology-eventbus/actor"
-	"github.com/pkg/errors"
 	oc "github.com/saveio/pylons"
 	p2p_act "github.com/saveio/pylons/actor/client"
 	"github.com/saveio/pylons/channelservice"
@@ -100,14 +99,7 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		}()
 	case *OpenChannelReq:
 		go func() {
-			channelId := this.chSrv.Service.OpenChannel(msg.TokenAddress, msg.Target)
-			if channelId > 100 {
-				msg.Ret.ChannelID = channelId
-				msg.Ret.Err = nil
-			} else {
-				msg.Ret.ChannelID = 0
-				msg.Ret.Err = errors.New("OpenChannel failed.")
-			}
+			msg.Ret.ChannelID, msg.Ret.Err = this.chSrv.Service.OpenChannel(msg.TokenAddress, msg.Target)
 			msg.Ret.Done <- true
 		}()
 	case *SetTotalChannelDepositReq:
@@ -179,8 +171,7 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		}()
 	case *HealthyCheckNodeReq:
 		go func() {
-			this.chSrv.Service.Transport.StartHealthCheck(msg.Address)
-			msg.Ret.Err = nil
+			msg.Ret.Err = this.chSrv.Service.Transport.StartHealthCheck(msg.Address)
 			msg.Ret.Done <- true
 		}()
 	case *GetTotalDepositBalanceReq:

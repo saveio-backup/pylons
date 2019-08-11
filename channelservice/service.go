@@ -709,56 +709,65 @@ func (self *ChannelService) GetChannelIdentifier(
 }
 
 func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
-	partnerAddress common.Address) common.ChannelID {
+	partnerAddress common.Address) (common.ChannelID, error) {
 	id, err := self.chain.ChannelClient.GetChannelIdentifier(comm.Address(self.address),
 		comm.Address(partnerAddress))
 	if err != nil {
-		log.Error("get channel identifier failed ", err)
-		return 0
+		err = fmt.Errorf("[OpenChannel] get channel identifier failed %s", err)
+		log.Errorf("[OpenChannel] error: %s", err.Error())
+		return 0, err
 	}
 	regAddr := common.ToBase58(self.address)
 	patAddr := common.ToBase58(partnerAddress)
 	if id != 0 {
-		self.Transport.StartHealthCheck(partnerAddress)
+		if err = self.Transport.StartHealthCheck(partnerAddress); err != nil {
+			err = fmt.Errorf("[OpenChannel] StartHealthCheck error:%s", err.Error())
+			log.Errorf("[OpenChannel] error: %s", err.Error())
+			return 0, err
+		}
 		log.Infof("channel between %s and %s already setup, id: %d", regAddr, patAddr, id)
-		return common.ChannelID(id)
-	}
-	if id == 0 {
-		log.Infof("channel between %s and %s haven`t setup. start to create new one", regAddr, patAddr)
+		return common.ChannelID(id), nil
 	}
 
+	log.Infof("channel between %s and %s haven`t setup. start to create new one", regAddr, patAddr)
 	settleTimeout, err := strconv.Atoi(self.config["settle_timeout"])
 	if err != nil {
-		log.Error("faile to parse settle timeout", err)
-		return 0
+		err = fmt.Errorf("[OpenChannel] faile to parse settle timeout %s", err)
+		log.Errorf("[OpenChannel] error: %s", err.Error())
+		return 0, err
 	}
 
-	//log.Infof("[OpenChannel] try to connect :%s", common.ToBase58(partnerAddress))
-	self.Transport.StartHealthCheck(partnerAddress)
+	log.Infof("[OpenChannel] try to connect :%s", common.ToBase58(partnerAddress))
+	if err = self.Transport.StartHealthCheck(partnerAddress); err != nil {
+		err = fmt.Errorf("[OpenChannel] StartHealthCheck error:%s", err.Error())
+		log.Errorf("[OpenChannel] error: %s", err.Error())
+		return 0, err
+	}
 
 	tokenNetwork := self.chain.NewTokenNetwork(common.Address(usdt.USDT_CONTRACT_ADDRESS))
 	channelId := tokenNetwork.NewNettingChannel(partnerAddress, settleTimeout)
 	if channelId == 0 {
-		log.Error("open channel failed")
-		return 0
+		err = fmt.Errorf("NewNettingChannel open channel failed")
+		log.Errorf("[OpenChannel] error: %s", err.Error())
+		return 0, err
 	}
 	log.Info("wait for new channel ... ")
 	channelState := WaitForNewChannel(self, common.PaymentNetworkID(self.microAddress),
 		common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), partnerAddress,
 		float32(constants.OPEN_CHANNEL_RETRY_TIMEOUT), constants.OPEN_CHANNEL_RETRY_TIMES)
 	if channelState == nil {
-		log.Error("setup channel timeout")
-		return 0
+		err = fmt.Errorf("WaitForNewChannel setup channel timeout")
+		log.Errorf("[OpenChannel] error: %s", err.Error())
+		return 0, err
 	}
-	log.Infof("new channel between %s and %s has setup, channel ID = %d", regAddr, patAddr,
+	log.Infof("[OpenChannel] new channel between %s and %s has setup, channel ID = %d", regAddr, patAddr,
 		channelState.Identifier)
 
 	chainState := self.StateFromChannel()
 
 	tokenNetworkState := transfer.GetTokenNetworkByIdentifier(chainState, channelState.TokenNetworkIdentifier)
 	tokenNetworkState.AddRoute(self.Address(), partnerAddress, channelState.Identifier)
-	return channelState.Identifier
-
+	return channelState.Identifier, nil
 }
 
 func (self *ChannelService) SetTotalChannelDeposit(tokenAddress common.TokenAddress, partnerAddress common.Address,
@@ -977,6 +986,7 @@ func (self *ChannelService) CanTransfer(target common.Address, amount common.Tok
 
 func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, target common.Address,
 	identifier common.PaymentID) (chan bool, error) {
+	var err error
 	if target == common.EmptyAddress {
 		log.Error("target address is invalid:", target)
 		return nil, fmt.Errorf("target address is invalid")
@@ -987,11 +997,15 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 	tokenNetworkIdentifier := transfer.GetTokenNetworkIdentifierByTokenAddress(chainState,
 		paymentNetworkIdentifier, tokenAddress)
 
+	if err = self.Transport.StartHealthCheck(common.Address(target)); err != nil {
+		log.Errorf("[DirectTransferAsync] StartHealthCheck error: %s", err.Error())
+		return nil, err
+	}
+
 	if !self.CanTransfer(target, amount) {
 		return nil, fmt.Errorf("contract balance small than transfer amount")
 	}
 
-	self.Transport.StartHealthCheck(common.Address(target))
 	if identifier == common.PaymentID(0) {
 		identifier = CreateDefaultIdentifier()
 	}
@@ -1023,6 +1037,7 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	tokenAddress common.TokenAddress, amount common.TokenAmount, target common.Address,
 	identifier common.PaymentID) (chan bool, error) {
 
+	var err error
 	if target == common.EmptyAddress {
 		log.Error("target address is invalid:", target)
 		return nil, fmt.Errorf("target address is invalid")
@@ -1033,7 +1048,10 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	}
 
 	//log.Infof("[MediaTransfer] try to connect :%s", common.ToBase58(target))
-	self.Transport.StartHealthCheck(target)
+	if err = self.Transport.StartHealthCheck(target); err != nil {
+		log.Errorf("[MediaTransfer] StartHealthCheck error: %s", err.Error())
+		return nil, err
+	}
 
 	chainState := self.StateFromChannel()
 

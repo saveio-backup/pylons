@@ -102,7 +102,7 @@ func main() {
 		}
 	}()
 
-	chanId := channel.Service.OpenChannel(tokenAddress, common.Address(partner))
+	chanId, err := channel.Service.OpenChannel(tokenAddress, common.Address(partner))
 	log.Info("[OpenChannel] ChanId: ", chanId)
 
 	err = channel.Service.SetTotalChannelDeposit(tokenAddress, common.Address(partner), 20000*FACTOR)
