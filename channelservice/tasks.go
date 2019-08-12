@@ -52,7 +52,7 @@ func (self *AlarmTask) RemoveCallback(callback AlarmTaskCallback) {
 }
 
 func (self *AlarmTask) LoopUntilStop() {
-	var lastBlockHeight, latestBlockHeight common.BlockHeight
+	var channelBlockHeight, chainBlockHeight common.BlockHeight
 	var blockHash common.BlockHash
 	var err error
 	interval := self.interval
@@ -62,18 +62,18 @@ func (self *AlarmTask) LoopUntilStop() {
 		case <-self.stopEvent:
 			return
 		case <-time.After(time.Duration(interval) * time.Millisecond):
-			lastBlockHeight = self.lastBlockHeight
-			latestBlockHeight, blockHash, err = self.GetLatestBlock()
+			channelBlockHeight = self.lastBlockHeight
+			chainBlockHeight, blockHash, err = self.GetLatestBlock()
 			if err != nil {
 				log.Error(err)
 				continue
 			}
 
-			if latestBlockHeight > lastBlockHeight {
-				if latestBlockHeight > lastBlockHeight+1 {
-					log.Infof("missing block(s), latest Block number %d, last Block number %d", latestBlockHeight, lastBlockHeight)
+			if chainBlockHeight > channelBlockHeight {
+				if chainBlockHeight > channelBlockHeight+1 {
+					log.Infof("Missing block(s), Chain Block Height %d, channel Block Height %d", chainBlockHeight, channelBlockHeight)
 				}
-				self.runCallbacks(latestBlockHeight, blockHash)
+				self.runCallbacks(chainBlockHeight, blockHash)
 			}
 		}
 	}

@@ -76,7 +76,6 @@ func SetGetHostAddrCallback(getHostAddrCallback GetHostAddrCallbackType) error {
 	} else {
 		return setGetHostAddrCallbackReq.Ret.Err
 	}
-
 }
 
 func OpenChannel(tokenAddress common.TokenAddress, target common.Address) (common.ChannelID, error) {
@@ -429,7 +428,7 @@ func GetPaymentResult(target common.Address, identifier common.PaymentID) (*Paym
 	getPaymentResultReq := &GetPaymentResultReq{target, identifier, ret}
 	ChannelServerPid.Tell(getPaymentResultReq)
 
-	if err := waitForCallDone(getPaymentResultReq.Ret.Done, "GetAllChannels", defaultMinTimeOut); err != nil {
+	if err := waitForCallDone(getPaymentResultReq.Ret.Done, "GetPaymentResult", defaultMinTimeOut); err != nil {
 		return nil, err
 	} else {
 		return getPaymentResultReq.Ret.Ret, nil

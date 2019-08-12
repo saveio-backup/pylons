@@ -433,9 +433,9 @@ func (self *ChannelService) UpdateRouteMap() {
 	log.Info("[UpdateRouteMap] UpdateRouteMap finished")
 }
 
-func (self *ChannelService) CallbackNewBlock(latestBlock common.BlockHeight, blockHash common.BlockHash) {
+func (self *ChannelService) CallbackNewBlock(chainBlockHeight common.BlockHeight, blockHash common.BlockHash) {
 	fromBlock := self.lastFilterBlock + 1
-	toBlock := latestBlock
+	toBlock := chainBlockHeight
 
 	log.Infof("[CallbackNewBlock] from %d to %d", fromBlock, toBlock)
 	fastMode := false

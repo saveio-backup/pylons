@@ -9,13 +9,13 @@ import (
 	"reflect"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/saveio/carrier/network/components/keepalive"
 	"github.com/saveio/pylons/actor/client"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network/transport/messages"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis/common/log"
+	"github.com/saveio/carrier/network"
 )
 
 const (
@@ -253,7 +253,7 @@ func (this *Transport) GetHostAddrByLocal(walletAddr common.Address) (string, er
 	if v, ok := this.NodeAddressToIpPort.Load(walletAddr); ok {
 		nodeNetAddr := v.(string)
 		state := client.GetNodeNetworkState(nodeNetAddr)
-		if state == int(keepalive.PEER_REACHABLE) {
+		if state == int(network.PEER_REACHABLE) {
 			return nodeNetAddr, nil
 		} else {
 			return nodeNetAddr, fmt.Errorf("[GetHostAddrByLocal] %s is not reachable", common.ToBase58(walletAddr))
@@ -267,7 +267,7 @@ func (this *Transport) GetHostAddrByCallBack(walletAddr common.Address) (string,
 	if this.getHostAddrCallback != nil {
 		nodeNetAddr, err := this.getHostAddrCallback(walletAddr)
 		if err == nil {
-			if client.GetNodeNetworkState(nodeNetAddr) == int(keepalive.PEER_REACHABLE) {
+			if client.GetNodeNetworkState(nodeNetAddr) == int(network.PEER_REACHABLE) {
 				this.SetHostAddr(walletAddr, nodeNetAddr)
 				return nodeNetAddr, nil
 			} else {
@@ -362,13 +362,13 @@ func (this *Transport) GetNodeNetworkState(nodeAddr interface{}) string {
 	}
 
 	state := client.GetNodeNetworkState(nodeNetAddress)
-	nodeNetState := keepalive.PeerState(state)
+	nodeNetState := network.PeerState(state)
 	switch nodeNetState {
-	case keepalive.PEER_UNKNOWN:
+	case network.PEER_UNKNOWN:
 		return transfer.NetworkUnknown
-	case keepalive.PEER_UNREACHABLE:
+	case network.PEER_UNREACHABLE:
 		return transfer.NetworkUnreachable
-	case keepalive.PEER_REACHABLE:
+	case network.PEER_REACHABLE:
 		return transfer.NetworkReachable
 	}
 	return ""

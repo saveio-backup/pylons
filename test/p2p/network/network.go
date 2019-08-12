@@ -305,7 +305,7 @@ func (this *Network) Connect(tAddr string) error {
 		return fmt.Errorf("[Connect] this is nil")
 	}
 	peerState, _ := this.GetPeerStateByAddress(tAddr)
-	if peerState == keepalive.PEER_REACHABLE {
+	if peerState == network.PEER_REACHABLE {
 		return nil
 	}
 
@@ -334,8 +334,8 @@ func (this *Network) ConnectAndWait(addr string) error {
 	return nil
 }
 
-func (this *Network) GetPeerStateByAddress(addr string) (keepalive.PeerState, error) {
-	return this.keepalive.GetPeerStateByAddress(addr)
+func (this *Network) GetPeerStateByAddress(addr string) (network.PeerState, error) {
+	return this.GetPeerStateByAddress(addr)
 }
 
 func (this *Network) WaitForConnected(addr string, timeout time.Duration) error {
@@ -347,7 +347,7 @@ func (this *Network) WaitForConnected(addr string, timeout time.Duration) error 
 	for i := 0; i < secs; i++ {
 		state, _ := this.GetPeerStateByAddress(addr)
 		log.Debugf("this.keepalive: %p, GetPeerStateByAddress state addr:%s, :%d", this.keepalive, addr, state)
-		if state == keepalive.PEER_REACHABLE {
+		if state == network.PEER_REACHABLE {
 			return nil
 		}
 		<-time.After(interval)
@@ -399,8 +399,8 @@ func (this *Network) Send(msg proto.Message, toAddr string) error {
 	// if _, ok := this.ActivePeers.Load(toAddr); !ok {
 	// 	return fmt.Errorf("can not send to inactive peer %s", toAddr)
 	// }
-	state, _ := this.keepalive.GetPeerStateByAddress(toAddr)
-	if state != keepalive.PEER_REACHABLE {
+	state, _ := this.GetPeerStateByAddress(toAddr)
+	if state != network.PEER_REACHABLE {
 		return fmt.Errorf("can not send to inactive peer %s", toAddr)
 	}
 	signed, err := this.P2p.PrepareMessage(context.Background(), msg)
