@@ -10,6 +10,7 @@ import (
 	"github.com/saveio/themis/account"
 	"github.com/saveio/themis/common/log"
 	"github.com/saveio/themis/core/types"
+	"github.com/saveio/themis/smartcontract/service/native/micropayment"
 )
 
 type BlockchainService struct {
@@ -71,6 +72,10 @@ func NewBlockChainService(clientType string, url []string, account *account.Acco
 
 func (this *BlockchainService) GetAccount() *account.Account {
 	return this.Account
+}
+
+func (this *BlockchainService) GetAllOpenChannels() (*micropayment.AllChannels, error) {
+	return this.ChannelClient.GetAllOpenChannels()
 }
 
 func (this *BlockchainService) BlockHeight() (uint32, error) {

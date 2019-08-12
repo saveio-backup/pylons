@@ -28,7 +28,6 @@ import (
 	"github.com/saveio/themis/account"
 	comm "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
-	mpay "github.com/saveio/themis/smartcontract/service/native/micropayment"
 	scUtils "github.com/saveio/themis/smartcontract/service/native/utils"
 )
 
@@ -406,31 +405,46 @@ func (self *ChannelService) GetLastFilterBlock() common.BlockHeight {
 }
 
 func (self *ChannelService) UpdateRouteMap() {
-	log.Info("[UpdateRouteMap] UpdateRouteMap start...")
-	tokenNetwork := transfer.GetTokenNetworkByIdentifier(self.StateFromChannel(), common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
-	var partAddr comm.Address
+	//log.Info("[UpdateRouteMap] UpdateRouteMap start...")
+	//tokenNetwork := transfer.GetTokenNetworkByIdentifier(self.StateFromChannel(), common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
+	//var partAddr comm.Address
+	//
+	//channelCounter, err := self.chain.ChannelClient.GetChannelCounter()
+	//if err != nil {
+	//	log.Warnf("[UpdateRouteMap] get channelCounter error %s", err)
+	//	return
+	//}
+	//
+	//log.Infof("[UpdateRouteMap] channel counter is %d", channelCounter)
+	//
+	//for chanId := uint64(101); chanId <= channelCounter; chanId++ {
+	//	channelInfo, err := self.chain.ChannelClient.GetChannelInfo(chanId, partAddr, partAddr)
+	//	log.Infof("[UpdateRouteMap] channelInfo: %v", channelInfo)
+	//	if err == nil && channelInfo != nil && channelInfo.ChannelID == chanId && channelInfo.ChannelState == mpay.Opened {
+	//		var partAddr1, partAddr2 common.Address
+	//		copy(partAddr1[:], channelInfo.Participant1.WalletAddr[:20])
+	//		copy(partAddr2[:], channelInfo.Participant2.WalletAddr[:20])
+	//
+	//		log.Infof("[UpdateRouteMap], AddRoute ChannelId: %d", channelInfo.ChannelID)
+	//		tokenNetwork.AddRoute(partAddr1, partAddr2, common.ChannelID(channelInfo.ChannelID))
+	//	}
+	//}
+	//log.Info("[UpdateRouteMap] UpdateRouteMap finished")
 
-	channelCounter, err := self.chain.ChannelClient.GetChannelCounter()
+	tokenNetwork := transfer.GetTokenNetworkByIdentifier(self.StateFromChannel(), common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
+	allOpenChannels, err := self.chain.ChannelClient.GetAllOpenChannels()
 	if err != nil {
-		log.Warnf("[UpdateRouteMap] get channelCounter error %s", err)
+		log.Errorf("[UpdateRouteMap] GetAllOpenChannels error: %s", err.Error())
 		return
 	}
-
-	log.Infof("[UpdateRouteMap] channel counter is %d", channelCounter)
-
-	for chanId := uint64(101); chanId <= channelCounter; chanId++ {
-		channelInfo, err := self.chain.ChannelClient.GetChannelInfo(chanId, partAddr, partAddr)
-		log.Infof("[UpdateRouteMap] channelInfo: %v", channelInfo)
-		if err == nil && channelInfo != nil && channelInfo.ChannelID == chanId && channelInfo.ChannelState == mpay.Opened {
-			var partAddr1, partAddr2 common.Address
-			copy(partAddr1[:], channelInfo.Participant1.WalletAddr[:20])
-			copy(partAddr2[:], channelInfo.Participant2.WalletAddr[:20])
-
-			log.Infof("[UpdateRouteMap], AddRoute ChannelId: %d", channelInfo.ChannelID)
-			tokenNetwork.AddRoute(partAddr1, partAddr2, common.ChannelID(channelInfo.ChannelID))
-		}
+	for i := uint64(0); i < allOpenChannels.ParticipantNum; i++ {
+		openedChannel := allOpenChannels.Participants[i]
+		var partAddr1, partAddr2 common.Address
+		copy(partAddr1[:], openedChannel.Part1Addr[:20])
+		copy(partAddr2[:], openedChannel.Part2Addr[:20])
+		log.Infof("[UpdateRouteMap], AddRoute ChannelId: %d", openedChannel.ChannelID)
+		tokenNetwork.AddRoute(partAddr1, partAddr2, common.ChannelID(openedChannel.ChannelID))
 	}
-	log.Info("[UpdateRouteMap] UpdateRouteMap finished")
 }
 
 func (self *ChannelService) CallbackNewBlock(chainBlockHeight common.BlockHeight, blockHash common.BlockHash) {
