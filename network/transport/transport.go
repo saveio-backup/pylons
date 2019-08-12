@@ -214,8 +214,8 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 	msg := item.(*QueueItem).message
 	log.Debugf("send msg msg = %+v\n", msg)
 	address, err := this.GetHostAddr(queueId.Recipient)
-	if address == "" || err != nil {
-		log.Errorf("[PeekAndSend] GetHostAddr address is nil for %s", common.ToBase58(queueId.Recipient))
+	if err != nil {
+		log.Errorf("[PeekAndSend] GetHostAddr %s, error: %s", common.ToBase58(queueId.Recipient), err.Error())
 		return errors.New("no valid address to send message")
 	}
 
@@ -233,8 +233,8 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 
 func (this *Transport) Send(address common.Address, msg proto.Message) error {
 	nodeAddress, err := this.GetHostAddr(address)
-	if nodeAddress == "" || err != nil {
-		log.Error("[Send] GetHostAddr address is nil for %s", common.ToBase58(address))
+	if err != nil {
+		log.Error("[Send] GetHostAddr address %s, error: %s", common.ToBase58(address), err.Error())
 		return errors.New("no valid address to send message")
 	}
 
@@ -256,7 +256,7 @@ func (this *Transport) GetHostAddrByLocal(walletAddr common.Address) (string, er
 		if state == int(network.PEER_REACHABLE) {
 			return nodeNetAddr, nil
 		} else {
-			return nodeNetAddr, fmt.Errorf("[GetHostAddrByLocal] %s is not reachable", common.ToBase58(walletAddr))
+			return "", fmt.Errorf("[GetHostAddrByLocal] %s is not reachable", common.ToBase58(walletAddr))
 		}
 	} else {
 		return "", fmt.Errorf("[GetHostAddrByLocal] %s not found", common.ToBase58(walletAddr))
@@ -271,7 +271,7 @@ func (this *Transport) GetHostAddrByCallBack(walletAddr common.Address) (string,
 				this.SetHostAddr(walletAddr, nodeNetAddr)
 				return nodeNetAddr, nil
 			} else {
-				return nodeNetAddr, fmt.Errorf("[GetHostAddrByCallBack] %s is not reachable", common.ToBase58(walletAddr))
+				return "", fmt.Errorf("[GetHostAddrByCallBack] %s is not reachable", common.ToBase58(walletAddr))
 			}
 		} else {
 			return "", fmt.Errorf("[GetHostAddrByCallBack] %s error: %s", common.ToBase58(walletAddr), err.Error())
