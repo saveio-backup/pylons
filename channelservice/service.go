@@ -439,7 +439,7 @@ func (self *ChannelService) CallbackNewBlock(chainBlockHeight common.BlockHeight
 
 	log.Infof("[CallbackNewBlock] from %d to %d", fromBlock, toBlock)
 	fastMode := false
-	if (toBlock - fromBlock) > 100 {
+	if (toBlock - fromBlock) > 10 {
 		fastMode = true
 		log.Infof("[CallbackNewBlock] fast sync mode")
 	}
