@@ -335,7 +335,7 @@ func (this *Network) ConnectAndWait(addr string) error {
 }
 
 func (this *Network) GetPeerStateByAddress(addr string) (network.PeerState, error) {
-	return this.GetPeerStateByAddress(addr)
+	return this.P2p.GetRealConnState(addr)
 }
 
 func (this *Network) WaitForConnected(addr string, timeout time.Duration) error {
