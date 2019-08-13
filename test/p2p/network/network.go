@@ -366,15 +366,6 @@ func (this *Network) Close(tAddr string) error {
 	return nil
 }
 
-func (this *Network) Dial(addr string) error {
-	log.Debugf("[DSPNetwork] Dial")
-	if this.P2p == nil {
-		return errors.New("network is nil")
-	}
-	_, err := this.P2p.Dial(addr)
-	return err
-}
-
 func (this *Network) Disconnect(addr string) error {
 	if this.P2p == nil {
 		return errors.New("network is nil")
