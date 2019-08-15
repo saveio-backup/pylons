@@ -24,6 +24,8 @@ const (
 	QueueNotExist
 )
 
+const MAX_RETRY = 5
+
 type ChannelServiceInterface interface {
 	OnMessage(proto.Message, string)
 	Sign(message interface{}) error
@@ -148,9 +150,22 @@ func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier)
 
 			item, _ := queue.Peek()
 			msg := item.(*QueueItem).message
-			log.Warnf("Timeout retry for msg = %+v\n", msg)
+			log.Warnf("Timeout retry for msg = %+v to %s\n", msg, common.ToBase58(queueId.Recipient))
 
-			t.Reset((time.Duration)(retryTimes+1) * interval * time.Second)
+			t.Reset(interval * time.Second)
+
+			// if reach max try , only try to send when networkstate is reachable
+			if retryTimes == MAX_RETRY {
+				_, err := this.GetHostAddr(queueId.Recipient)
+				if err != nil {
+					log.Debugf("[QueueSend] reach max retry, dont send message")
+					continue
+				} else {
+					log.Debugf("[QueueSend] network recovered, retry send message")
+					retryTimes = 0
+				}
+			}
+
 			err := this.PeekAndSend(queue, &queueId)
 			if err != nil {
 				log.Errorf("send message to %s failed: %s", common.ToBase58(queueId.Recipient), err)
@@ -181,11 +196,11 @@ func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier)
 				if queue.Len() != 0 {
 					log.Debug("msgId.MessageId == item.messageId.MessageId queue.Len() != 0")
 					t.Reset(interval * time.Second)
-					retryTimes = 0
 					this.PeekAndSend(queue, &queueId)
 				} else {
 					this.SetTargetQueueState(queueId.Recipient, QueueFree)
 				}
+				retryTimes = 0
 			} else {
 				log.Debug("[DeliverChan] msgId.MessageId != item.messageId.MessageId queue.Len: ", queue.Len())
 				log.Warnf("[DeliverChan] MessageId not match (%d  %d)", msgId.MessageId, item.messageId.MessageId)
