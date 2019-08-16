@@ -72,12 +72,6 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 			msg.Ret.Err = nil
 			msg.Ret.Done <- true
 		}()
-	case *SetHostAddrReq:
-		go func() {
-			this.chSrv.Service.SetHostAddr(msg.WalletAddr, msg.NetAddr)
-			msg.Ret.Err = nil
-			msg.Ret.Done <- true
-		}()
 	case *GetHostAddrReq:
 		go func() {
 			msg.Ret.NetAddr, msg.Ret.Err = this.chSrv.Service.GetHostAddr(msg.WalletAddr)

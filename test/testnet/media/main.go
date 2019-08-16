@@ -40,7 +40,6 @@ func main() {
 		ClientType:    tc.Parameters.BaseConfig.Init1ClientType,
 		ChainNodeURLs: tc.Parameters.BaseConfig.ChainNodeURLs,
 		ListenAddress: tc.Parameters.BaseConfig.DnsListenAddr,
-		Protocol:      tc.Parameters.BaseConfig.Protocol,
 	}
 
 	//start channel and actor
@@ -49,18 +48,11 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(tc.Initiator1Addr, tc.Parameters.BaseConfig.Init1ListenAddr); err != nil {
+	if err = ch_actor.SetGetHostAddrCallback(tc.GetHostAddrCallBack); err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetHostAddr(tc.Dns1Addr, tc.Parameters.BaseConfig.DnsListenAddr); err != nil {
-		log.Fatal(err)
-		return
-	}
-	if err = ch_actor.SetHostAddr(tc.Initiator2Addr, tc.Parameters.BaseConfig.Init2ListenAddr); err != nil {
-		log.Fatal(err)
-		return
-	}
+
 	chnPid := ChannelActor.GetLocalPID()
 	//start p2p and actor
 	channelP2p := p2p.NewP2P()
@@ -71,7 +63,7 @@ func main() {
 		PublicKey:  bPub,
 	}
 
-	err = channelP2p.Start(Media.Protocol + "://" + Media.ListenAddress)
+	err = channelP2p.Start(Media.ListenAddress)
 	if err != nil {
 		log.Fatal(err)
 		return

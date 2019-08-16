@@ -1047,7 +1047,7 @@ func (self *ChannelService) CheckPayRoute(mediaAddr common.Address, targetAddr c
 	}
 
 	if state := self.Transport.GetNodeNetworkState(targetAddr); state != transfer.NetworkReachable {
-		return false, fmt.Errorf("[CheckPayRoute] TargetNetworkState(%s) status is not reachable", common.ToBase58(targetAddr))
+		log.Warn("[CheckPayRoute] TargetNetworkState(%s) status is not reachable", common.ToBase58(targetAddr))
 	}
 	if self.Transport.GetTargetQueueState(targetAddr) == transport.QueueBusy {
 		return false, fmt.Errorf("[CheckPayRoute] TargetQueue(%s) status is busy", common.ToBase58(targetAddr))
@@ -1234,17 +1234,12 @@ func (self *ChannelService) GetEventsPaymentHistory(tokenAddress common.TokenAdd
 	for e := events.Front(); e != nil; e = e.Next() {
 		event := e.Value.(*storage.TimestampedEvent)
 		result.PushBack(event.WrappedEvent)
-
 	}
 	return result
 }
 
 func (self *ChannelService) GetInternalEventsWithTimestamps(limit int, offset int) *list.List {
 	return self.Wal.Storage.GetEventsWithTimestamps(limit, offset)
-}
-
-func (self *ChannelService) SetHostAddr(nodeAddress common.Address, hostAddr string) {
-	self.Transport.SetHostAddr(nodeAddress, self.config["protocol"]+"://"+hostAddr)
 }
 
 func (self *ChannelService) GetHostAddr(nodeAddress common.Address) (string, error) {

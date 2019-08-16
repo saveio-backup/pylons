@@ -34,9 +34,6 @@ type ChannelServiceInterface interface {
 }
 
 type Transport struct {
-	NodeIpPortToAddress *sync.Map
-	NodeAddressToIpPort *sync.Map
-
 	messageQueues       *sync.Map
 	addressQueueMap     *sync.Map
 	targetQueueState    *sync.Map
@@ -52,13 +49,11 @@ type QueueItem struct {
 
 func NewTransport(channelService ChannelServiceInterface) *Transport {
 	return &Transport{
-		kill:                make(chan struct{}),
-		messageQueues:       new(sync.Map),
-		addressQueueMap:     new(sync.Map),
-		NodeIpPortToAddress: new(sync.Map),
-		NodeAddressToIpPort: new(sync.Map),
-		targetQueueState:    new(sync.Map),
-		ChannelService:      channelService,
+		kill:             make(chan struct{}),
+		messageQueues:    new(sync.Map),
+		addressQueueMap:  new(sync.Map),
+		targetQueueState: new(sync.Map),
+		ChannelService:   channelService,
 	}
 }
 
@@ -260,63 +255,62 @@ func (this *Transport) Send(address common.Address, msg proto.Message) error {
 	return nil
 }
 
+func (this *Transport) GetNodeNetworkState(nodeAddr common.Address) string {
+	var err error
+	var nodeNetAddress string
+
+	if this.getHostAddrCallback == nil {
+		log.Errorf("[GetNodeNetworkState] getHostAddrCallback is not set!!!")
+		panic("[GetNodeNetworkState] getHostAddrCallback is not set!!!")
+	}
+	if nodeNetAddress, err = this.getHostAddrCallback(nodeAddr); err != nil {
+		log.Errorf("[GetNodeNetworkState] getHostAddrCallback err: %s", err.Error())
+		return transfer.NetworkUnknown
+	}
+
+	state := client.GetNodeNetworkState(nodeNetAddress)
+	nodeNetState := network.PeerState(state)
+	switch nodeNetState {
+	case network.PEER_UNKNOWN:
+		log.Errorf("[GetNodeNetworkState] nodeNetAddress: %s is unknown", nodeNetAddress)
+		return transfer.NetworkUnknown
+	case network.PEER_UNREACHABLE:
+		log.Errorf("[GetNodeNetworkState] nodeNetAddress: %s is unreachable", nodeNetAddress)
+		return transfer.NetworkUnreachable
+	case network.PEER_REACHABLE:
+		return transfer.NetworkReachable
+	}
+	return ""
+}
+
 func (this *Transport) SetGetHostAddrCallback(getHostAddrCallback func(address common.Address) (string, error)) {
 	this.getHostAddrCallback = getHostAddrCallback
 }
 
-func (this *Transport) GetHostAddrByLocal(walletAddr common.Address) (string, error) {
-	if v, ok := this.NodeAddressToIpPort.Load(walletAddr); ok {
-		nodeNetAddr := v.(string)
-		state := client.GetNodeNetworkState(nodeNetAddr)
-		if state == int(network.PEER_REACHABLE) {
+func (this *Transport) GetHostAddrByCallBack(walletAddr common.Address) (string, error) {
+	if this.getHostAddrCallback == nil {
+		log.Errorf("[GetHostAddrByCallBack] getHostAddrCallback is not set!!!")
+		panic("[GetHostAddrByCallBack] getHostAddrCallback is not set!!!")
+	}
+
+	nodeNetAddr, err := this.getHostAddrCallback(walletAddr)
+	if err == nil {
+		if client.GetNodeNetworkState(nodeNetAddr) == int(network.PEER_REACHABLE) {
 			return nodeNetAddr, nil
 		} else {
-			return "", fmt.Errorf("[GetHostAddrByLocal] %s is not reachable", common.ToBase58(walletAddr))
+			return "", fmt.Errorf("[GetHostAddrByCallBack] %s is unreachable", common.ToBase58(walletAddr))
 		}
 	} else {
-		return "", fmt.Errorf("[GetHostAddrByLocal] %s not found", common.ToBase58(walletAddr))
-	}
-}
-
-func (this *Transport) GetHostAddrByCallBack(walletAddr common.Address) (string, error) {
-	if this.getHostAddrCallback != nil {
-		nodeNetAddr, err := this.getHostAddrCallback(walletAddr)
-		if err == nil {
-			if client.GetNodeNetworkState(nodeNetAddr) == int(network.PEER_REACHABLE) {
-				this.SetHostAddr(walletAddr, nodeNetAddr)
-				return nodeNetAddr, nil
-			} else {
-				return "", fmt.Errorf("[GetHostAddrByCallBack] %s is not reachable", common.ToBase58(walletAddr))
-			}
-		} else {
-			return "", fmt.Errorf("[GetHostAddrByCallBack] %s error: %s", common.ToBase58(walletAddr), err.Error())
-		}
-	} else {
-		return "", fmt.Errorf("[GetHostAddrByCallBack] error: getHostAddrCallback is not set")
+		return "", fmt.Errorf("[GetHostAddrByCallBack] %s error: %s", common.ToBase58(walletAddr), err.Error())
 	}
 }
 
 func (this *Transport) GetHostAddr(walletAddr common.Address) (string, error) {
-	var err error
-	var nodeNetAddr string
-
-	nodeNetAddr, err = this.GetHostAddrByLocal(walletAddr)
-	if err == nil {
-		return nodeNetAddr, nil
-	} else {
-		log.Warnf("[GetHostAddr] GetHostAddrByLocal: %s error: %s , Try GetHostAddrByCallBack",
-			common.ToBase58(walletAddr), err.Error())
-	}
-	nodeNetAddr, err = this.GetHostAddrByCallBack(walletAddr)
+	nodeNetAddr, err := this.GetHostAddrByCallBack(walletAddr)
 	if err != nil {
 		log.Errorf("[GetHostAddr] GetHostAddrByCallBack: %s error: %s", common.ToBase58(walletAddr), err.Error())
 	}
 	return nodeNetAddr, err
-}
-
-func (this *Transport) SetHostAddr(address common.Address, hostAddr string) {
-	this.NodeAddressToIpPort.Store(address, hostAddr)
-	this.NodeIpPortToAddress.Store(hostAddr, address)
 }
 
 func (this *Transport) StartHealthCheck(walletAddr common.Address) error {
@@ -324,29 +318,24 @@ func (this *Transport) StartHealthCheck(walletAddr common.Address) error {
 
 	var err error
 	var nodeNetAddr string
-	if v, ok := this.NodeAddressToIpPort.Load(walletAddr); ok {
-		nodeNetAddr = v.(string)
-	} else {
-		if this.getHostAddrCallback == nil {
-			err = fmt.Errorf("[StartHealthCheck] error: getHostAddrCallback is not set")
-			log.Errorf("[StartHealthCheck] error:", err.Error())
-			return err
-		} else {
-			nodeNetAddr, err = this.getHostAddrCallback(walletAddr)
-			if err != nil {
-				err = fmt.Errorf("[StartHealthCheck] getHostAddrCallback error: %s", err.Error())
-				log.Errorf("[StartHealthCheck] error:", err.Error())
-				return err
-			}
-		}
+
+	if this.getHostAddrCallback == nil {
+		log.Errorf("[StartHealthCheck] getHostAddrCallback is not set!!!")
+		panic("[StartHealthCheck] getHostAddrCallback is not set!!!")
+	}
+
+	nodeNetAddr, err = this.getHostAddrCallback(walletAddr)
+	if err != nil {
+		err = fmt.Errorf("[StartHealthCheck] getHostAddrCallback error: %s", err.Error())
+		log.Errorf("[StartHealthCheck] error:", err.Error())
+		return err
 	}
 	if nodeNetAddr == "" {
 		err = fmt.Errorf("[StartHealthCheck] error: nodeNetAddr is nil string")
 		log.Error("[StartHealthCheck] error:", err.Error())
 		return err
 	} else {
-		client.P2pConnect(nodeNetAddr)
-		return nil
+		return client.P2pConnect(nodeNetAddr)
 	}
 }
 
@@ -361,32 +350,6 @@ func (this *Transport) GetTargetQueueState(walletAddr common.Address) int {
 	} else {
 		return QueueNotExist
 	}
-}
-
-func (this *Transport) GetNodeNetworkState(nodeAddr interface{}) string {
-	var nodeNetAddress string
-	switch nodeAddr.(type) {
-	case string:
-		nodeNetAddress = nodeAddr.(string)
-	case common.Address:
-		if v, ok := this.NodeAddressToIpPort.Load(nodeAddr); ok {
-			nodeNetAddress = v.(string)
-		} else {
-			return transfer.NetworkUnknown
-		}
-	}
-
-	state := client.GetNodeNetworkState(nodeNetAddress)
-	nodeNetState := network.PeerState(state)
-	switch nodeNetState {
-	case network.PEER_UNKNOWN:
-		return transfer.NetworkUnknown
-	case network.PEER_UNREACHABLE:
-		return transfer.NetworkUnreachable
-	case network.PEER_REACHABLE:
-		return transfer.NetworkReachable
-	}
-	return ""
 }
 
 func (this *Transport) Receive(message proto.Message, from string) {
@@ -471,26 +434,18 @@ func (this *Transport) ReceiveMessage(message proto.Message, fromNetAddr string)
 	//var nodeNetAddress string
 	err := this.ChannelService.Sign(deliveredMessage)
 	if err == nil {
-		if senderWallerAddr != common.EmptyAddress {
-			this.SetHostAddr(senderWallerAddr, fromNetAddr)
-		}
-		log.Debugf("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v",
-			reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier.MessageId,
-			fromNetAddr)
+		log.Debugf("SendDeliver (%v) MessageId: %d to:  %s", reflect.TypeOf(message).String(),
+			deliveredMessage.DeliveredMessageIdentifier.MessageId, fromNetAddr)
 
-		state := this.GetNodeNetworkState(fromNetAddr)
-		if state != transfer.NetworkReachable {
-			log.Errorf("[PeekAndSend] state != NetworkReachable %s", fromNetAddr)
-			//log.Warn("[PeekAndSend] state != NetworkReachable reconnect %s", nodeNetAddress)
-			//if err = client.P2pConnect(nodeNetAddress); err != nil {
-			//	log.Errorf("[PeekAndSend] state != NetworkReachable connect error: %s", err.Error())
-			//}
+		senderNetAddr, err := this.GetHostAddr(senderWallerAddr)
+		if err != nil {
+			log.Errorf("[PeekAndSend] state != NetworkReachable %s", senderNetAddr)
 		}
 
-		if err = client.P2pSend(fromNetAddr, deliveredMessage); err != nil {
+		if err = client.P2pSend(senderNetAddr, deliveredMessage); err != nil {
 			log.Errorf("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v error: %s",
 				reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier.MessageId,
-				fromNetAddr, err.Error())
+				senderNetAddr, err.Error())
 		}
 	} else {
 		log.Errorf("SendDeliveredMessage (%v) deliveredMessage Sign error: ", err.Error(),

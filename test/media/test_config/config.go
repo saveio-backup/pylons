@@ -5,41 +5,36 @@ import (
 	"github.com/saveio/pylons/common"
 )
 
-const PROTOCOL = "tcp"
+const PROTOCOL = "tcp://"
 
 var Initiator1 = &ch.ChannelConfig{
 	ClientType:    "rpc",
 	ChainNodeURLs: []string{"http://127.0.0.1:20336"},
-	ListenAddress: "127.0.0.1:3001",
-	Protocol:      PROTOCOL,
+	ListenAddress: PROTOCOL + "127.0.0.1:3001",
 }
 
 var Initiator2 = &ch.ChannelConfig{
 	ClientType:    "rpc",
 	ChainNodeURLs: []string{"http://127.0.0.1:20336"},
-	ListenAddress: "127.0.0.1:3002",
-	Protocol:      PROTOCOL,
+	ListenAddress: PROTOCOL + "127.0.0.1:3002",
 }
 
 var Media = &ch.ChannelConfig{
 	ClientType:    "rpc",
 	ChainNodeURLs: []string{"http://127.0.0.1:20336"},
-	ListenAddress: "127.0.0.1:3003",
-	Protocol:      PROTOCOL,
+	ListenAddress: PROTOCOL + "127.0.0.1:3003",
 }
 
 var Target1 = &ch.ChannelConfig{
 	ClientType:    "rpc",
 	ChainNodeURLs: []string{"http://127.0.0.1:20336"},
-	ListenAddress: "127.0.0.1:3004",
-	Protocol:      PROTOCOL,
+	ListenAddress: PROTOCOL + "127.0.0.1:3004",
 }
 
 var Target2 = &ch.ChannelConfig{
 	ClientType:    "rpc",
 	ChainNodeURLs: []string{"http://127.0.0.1:20336"},
-	ListenAddress: "127.0.0.1:3005",
-	Protocol:      PROTOCOL,
+	ListenAddress: PROTOCOL + "127.0.0.1:3005",
 }
 
 type BaseConf struct {

@@ -12,7 +12,6 @@ import (
 
 type BaseConf struct {
 	NetworkId           uint32   `json:"NetworkId"`
-	Protocol            string   `json:"Protocol"`
 	NATProxyServerAddrs string   `json:"NATProxyServerAddrs"`
 	ChainNodeURLs       []string `json:"ChainNodeURLs"`
 	DnsAddr             string   `json:"DnsAddr"`
@@ -64,6 +63,18 @@ func GetTestConf() *TestNetConf {
 		panic("[GetJsonObjectFromFile] error")
 	}
 	return cfg
+}
+
+func GetHostAddrCallBack(walletAddr common.Address) (string, error) {
+	if walletAddr == Dns1Addr {
+		return Parameters.BaseConfig.DnsListenAddr, nil
+	} else if walletAddr == Initiator1Addr {
+		return Parameters.BaseConfig.Init1ListenAddr, nil
+	} else if walletAddr == Initiator2Addr {
+		return Parameters.BaseConfig.Init2ListenAddr, nil
+	} else {
+		return "", fmt.Errorf("[GetHostAddrCallBack] error: not known")
+	}
 }
 
 var Dns1Addr common.Address

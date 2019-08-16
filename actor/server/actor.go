@@ -30,21 +30,6 @@ func GetVersion() (string, error) {
 	}
 }
 
-func SetHostAddr(walletAddr common.Address, netAddr string) error {
-	ret := &SetHostAddrRet{
-		Done: make(chan bool, 1),
-		Err:  nil,
-	}
-	setHostAddrReq := &SetHostAddrReq{WalletAddr: walletAddr, NetAddr: netAddr, Ret: ret}
-	ChannelServerPid.Tell(setHostAddrReq)
-
-	if err := waitForCallDone(setHostAddrReq.Ret.Done, "SetHostAddr", defaultMinTimeOut); err != nil {
-		return err
-	} else {
-		return setHostAddrReq.Ret.Err
-	}
-}
-
 func GetHostAddr(walletAddr common.Address) (string, error) {
 	ret := &GetHostAddrRet{
 		WalletAddr: common.EmptyAddress,

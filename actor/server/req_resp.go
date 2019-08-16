@@ -32,17 +32,6 @@ type VersionReq struct {
 	Ret *VersionRet
 }
 
-type SetHostAddrRet struct {
-	Done chan bool
-	Err  error
-}
-
-type SetHostAddrReq struct {
-	WalletAddr common.Address
-	NetAddr    string
-	Ret        *SetHostAddrRet
-}
-
 type GetHostAddrRet struct {
 	WalletAddr common.Address
 	NetAddr    string

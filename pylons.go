@@ -21,10 +21,7 @@ type ChannelConfig struct {
 	ClientType    string
 	ChainNodeURLs []string
 
-	// Transport config
-	ListenAddress  string // ip + port
-	Protocol       string // tcp or kcp
-	MappingAddress string // ip + port, used to register in Endpoint contract when use address mapping
+	ListenAddress string // protocol + ip + port
 
 	DBPath        string
 	SettleTimeout string
@@ -40,8 +37,7 @@ func DefaultChannelConfig() *ChannelConfig {
 	config := &ChannelConfig{
 		ClientType:    "rpc",
 		ChainNodeURLs: []string{"http://localhost:20336"},
-		ListenAddress: "127.0.0.1:3001",
-		Protocol:      "tcp",
+		ListenAddress: "tpc://127.0.0.1:3001",
 		DBPath:        ".",
 	}
 	return config
@@ -69,9 +65,7 @@ func NewChannelService(config *ChannelConfig, account *account.Account) (*Channe
 	// construct the option map
 	option := map[string]string{
 		"database_path":  config.DBPath,
-		"protocol":       config.Protocol,
 		"listenAddr":     config.ListenAddress,
-		"mappingAddr":    config.MappingAddress,
 		"settle_timeout": strconv.Itoa(settleTimeout),
 		"reveal_timeout": strconv.Itoa(revealTimeout),
 	}
