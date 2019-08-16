@@ -4,6 +4,7 @@ import (
 	"container/list"
 
 	"github.com/saveio/pylons/common"
+	"sync"
 )
 
 // Topology represents a network topology
@@ -22,26 +23,27 @@ type Edge struct {
 type ShortPathTree [][]common.Address
 
 // NewTopology creates a new topology
-func NewTopology(nodes map[common.Address]int64, edges map[common.EdgeId]int64) *Topology {
+func NewTopology(nodes *sync.Map, edges *sync.Map) *Topology {
 	t := &Topology{
 		nodes: make(map[common.Address]int64),
 		edges: make(map[common.Address]map[common.Address]int64),
 	}
 
-	for n := range nodes {
-		t.nodes[n] = -1
-	}
+	nodes.Range(func(key, value interface{}) bool {
+		t.nodes[key.(common.Address)] = -1
+		return true
+	})
 
-	for e, d := range edges {
-		addr1 := e.GetAddr1()
-		addr2 := e.GetAddr2()
+	edges.Range(func(key, value interface{}) bool {
+		addr1 := key.(common.EdgeId).GetAddr1()
+		addr2 := key.(common.EdgeId).GetAddr2()
 		if _, ok := t.edges[addr1]; !ok {
 			t.edges[addr1] = make(map[common.Address]int64)
 		}
 
-		t.edges[addr1][addr2] = d
-	}
-
+		t.edges[addr1][addr2] = value.(int64)
+		return true
+	})
 	return t
 }
 
@@ -53,11 +55,6 @@ func (self *Topology) GetShortPath(node common.Address) ShortPathTree {
 			lst.PushBack(n)
 		}
 	}
-
-	//for e := lst.Front(); e != nil ; e = e.Next()  {
-	//fmt.Println(e.Value.(common.Address))
-	//}
-	//fmt.Println()
 
 	var lastLstLen = lst.Len()
 	for e := lst.Front(); lst.Len() != 0; e = e.Next() {

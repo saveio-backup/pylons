@@ -7,6 +7,7 @@ import (
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/themis/common/log"
 	"sort"
+	"sync"
 )
 
 type SecretHashToLock map[common.SecretHash]*HashTimeLockState
@@ -206,8 +207,8 @@ func (self *PaymentNetworkState) AdjustPaymentNetworkState() {
 }
 
 type TokenNetworkGraph struct {
-	Nodes map[common.Address]int64
-	Edges map[common.EdgeId]int64
+	Nodes *sync.Map
+	Edges *sync.Map
 }
 
 type TokenNetworkState struct {
@@ -224,10 +225,10 @@ func NewTokenNetworkState(localAddr common.Address) *TokenNetworkState {
 	result.PartnerAddressesToChannels = make(map[common.Address]map[common.ChannelID]*NettingChannelState)
 
 	result.NetworkGraph = TokenNetworkGraph{}
-	result.NetworkGraph.Nodes = make(map[common.Address]int64)
-	result.NetworkGraph.Edges = make(map[common.EdgeId]int64)
+	result.NetworkGraph.Nodes = new(sync.Map)
+	result.NetworkGraph.Edges = new(sync.Map)
+	result.NetworkGraph.Nodes.Store(localAddr, int64(1))
 
-	result.NetworkGraph.Nodes[localAddr] = 1
 	return result
 }
 
@@ -243,23 +244,23 @@ func (self *TokenNetworkState) AddRoute(addr1 common.Address, addr2 common.Addre
 	copy(node2Node1[:constants.ADDR_LEN], addr2[:])
 	copy(node2Node1[constants.ADDR_LEN:], addr1[:])
 
-	if _, ok := networkGraphState.Edges[node1Node2]; !ok {
-		networkGraphState.Edges[node1Node2] = 1
-		if _, ok := networkGraphState.Nodes[addr1]; ok {
-			networkGraphState.Nodes[addr1] = networkGraphState.Nodes[addr1] + 1
+	if _, ok := networkGraphState.Edges.Load(node1Node2); !ok {
+		networkGraphState.Edges.Store(node1Node2, int64(1))
+		if v, ok := networkGraphState.Nodes.Load(addr1); ok {
+			networkGraphState.Nodes.Store(addr1, v.(int64) + 1)
 		} else {
-			networkGraphState.Nodes[addr1] = 1
+			networkGraphState.Nodes.Store(addr1,int64(1))
 		}
 	} else {
 		return
 	}
 
-	if _, ok := networkGraphState.Edges[node2Node1]; !ok {
-		networkGraphState.Edges[node2Node1] = 1
-		if _, ok := networkGraphState.Nodes[addr2]; ok {
-			networkGraphState.Nodes[addr2] = networkGraphState.Nodes[addr2] + 1
+	if _, ok := networkGraphState.Edges.Load(node2Node1); !ok {
+		networkGraphState.Edges.Store(node2Node1, int64(1))
+		if v, ok := networkGraphState.Nodes.Load(addr2); ok {
+			networkGraphState.Nodes.Store(addr2, v.(int64) + 1)
 		} else {
-			networkGraphState.Nodes[addr2] = 1
+			networkGraphState.Nodes.Store(addr2, int64(1))
 		}
 	} else {
 		return
@@ -281,24 +282,25 @@ func (self *TokenNetworkState) DelRoute(channelId common.ChannelID) {
 		copy(node2Node1[:constants.ADDR_LEN], addr2[:])
 		copy(node2Node1[constants.ADDR_LEN:], addr1[:])
 
-		if _, ok := networkGraphState.Edges[node1Node2]; ok {
-			delete(networkGraphState.Edges, node1Node2)
-			if _, ok := networkGraphState.Nodes[addr1]; ok {
-				if networkGraphState.Nodes[addr1] == 1 {
-					delete(networkGraphState.Nodes, addr1)
+		if _, ok := networkGraphState.Edges.Load(node1Node2); ok {
+			networkGraphState.Edges.Delete(node1Node2)
+			if v, ok := networkGraphState.Nodes.Load(addr1); ok {
+				if v.(int64) <= 1 {
+					networkGraphState.Nodes.Delete(addr1)
+				} else {
+					networkGraphState.Nodes.Store(addr1, v.(int64) - 1)
 				}
-				networkGraphState.Nodes[addr1] = networkGraphState.Nodes[addr1] - 1
-
 			}
 		}
 
-		if _, ok := networkGraphState.Edges[node2Node1]; ok {
-			delete(networkGraphState.Edges, node2Node1)
-			if _, ok := networkGraphState.Nodes[addr2]; ok {
-				if networkGraphState.Nodes[addr2] == 1 {
-					delete(networkGraphState.Nodes, addr2)
+		if _, ok := networkGraphState.Edges.Load(node2Node1); ok {
+			networkGraphState.Edges.Delete(node2Node1)
+			if v, ok := networkGraphState.Nodes.Load(addr2); ok {
+				if v.(int64) <= 1 {
+					networkGraphState.Nodes.Delete(addr2)
+				} else {
+					networkGraphState.Nodes.Store(addr2, v.(int64) - 1)
 				}
-				networkGraphState.Nodes[addr2] = networkGraphState.Nodes[addr2] - 1
 			}
 		}
 	}

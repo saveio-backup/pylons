@@ -434,7 +434,7 @@ func (this *Transport) ReceiveMessage(message proto.Message, fromNetAddr string)
 	//var nodeNetAddress string
 	err := this.ChannelService.Sign(deliveredMessage)
 	if err == nil {
-		log.Debugf("SendDeliver (%v) MessageId: %d to:  %s", reflect.TypeOf(message).String(),
+		log.Debugf("[SendDeliver] (%v) MessageId: %d to:  %s", reflect.TypeOf(message).String(),
 			deliveredMessage.DeliveredMessageIdentifier.MessageId, fromNetAddr)
 
 		senderNetAddr, err := this.GetHostAddr(senderWallerAddr)
@@ -443,12 +443,12 @@ func (this *Transport) ReceiveMessage(message proto.Message, fromNetAddr string)
 		}
 
 		if err = client.P2pSend(senderNetAddr, deliveredMessage); err != nil {
-			log.Errorf("SendDeliveredMessage (%v) Time: %s DeliveredMessageIdentifier: %v deliveredMessage from: %v error: %s",
-				reflect.TypeOf(message).String(), time.Now().String(), deliveredMessage.DeliveredMessageIdentifier.MessageId,
+			log.Errorf("[SendDeliver] (%v) MessageId: %d to: %s error: %s",
+				reflect.TypeOf(message).String(), deliveredMessage.DeliveredMessageIdentifier.MessageId,
 				senderNetAddr, err.Error())
 		}
 	} else {
-		log.Errorf("SendDeliveredMessage (%v) deliveredMessage Sign error: ", err.Error(),
+		log.Errorf("[SendDeliver] (%v) deliveredMessage Sign error: ", err.Error(),
 			reflect.TypeOf(message).String(), fromNetAddr)
 	}
 }
