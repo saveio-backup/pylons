@@ -1042,15 +1042,8 @@ func (self *ChannelService) CheckPayRoute(mediaAddr common.Address, targetAddr c
 	if state := self.Transport.GetNodeNetworkState(mediaAddr); state != transfer.NetworkReachable {
 		return false, fmt.Errorf("[CheckPayRoute] MediaNetworkState(%s) status is not reachable", common.ToBase58(mediaAddr))
 	}
-	if self.Transport.GetTargetQueueState(mediaAddr) == transport.QueueBusy {
-		return false, fmt.Errorf("[CheckPayRoute] MediaQueue(%s) status is busy", common.ToBase58(mediaAddr))
-	}
-
 	if state := self.Transport.GetNodeNetworkState(targetAddr); state != transfer.NetworkReachable {
 		log.Warn("[CheckPayRoute] TargetNetworkState(%s) status is not reachable", common.ToBase58(targetAddr))
-	}
-	if self.Transport.GetTargetQueueState(targetAddr) == transport.QueueBusy {
-		return false, fmt.Errorf("[CheckPayRoute] TargetQueue(%s) status is busy", common.ToBase58(targetAddr))
 	}
 	return true, nil
 }

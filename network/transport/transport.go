@@ -18,12 +18,6 @@ import (
 	"github.com/saveio/themis/common/log"
 )
 
-const (
-	QueueBusy = iota
-	QueueFree
-	QueueNotExist
-)
-
 const MAX_RETRY = 5
 
 type ChannelServiceInterface interface {
@@ -36,7 +30,6 @@ type ChannelServiceInterface interface {
 type Transport struct {
 	messageQueues       *sync.Map
 	addressQueueMap     *sync.Map
-	targetQueueState    *sync.Map
 	kill                chan struct{}
 	getHostAddrCallback func(address common.Address) (string, error)
 	ChannelService      ChannelServiceInterface
@@ -49,11 +42,10 @@ type QueueItem struct {
 
 func NewTransport(channelService ChannelServiceInterface) *Transport {
 	return &Transport{
-		kill:             make(chan struct{}),
-		messageQueues:    new(sync.Map),
-		addressQueueMap:  new(sync.Map),
-		targetQueueState: new(sync.Map),
-		ChannelService:   channelService,
+		kill:            make(chan struct{}),
+		messageQueues:   new(sync.Map),
+		addressQueueMap: new(sync.Map),
+		ChannelService:  channelService,
 	}
 }
 
@@ -114,7 +106,6 @@ func (this *Transport) GetQueue(queueId *transfer.QueueIdentifier) *Queue {
 
 func (this *Transport) InitQueue(queueId *transfer.QueueIdentifier) *Queue {
 	q := NewQueue(constants.MAX_MSG_QUEUE)
-	this.SetTargetQueueState(queueId.Recipient, QueueFree)
 	this.messageQueues.Store(*queueId, q)
 
 	// queueId cannot be pointer type otherwise it might be updated outside QueueSend
@@ -136,10 +127,8 @@ func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier)
 			this.PeekAndSend(queue, &queueId)
 		// handle timeout retry
 		case <-t.C:
-			this.SetTargetQueueState(queueId.Recipient, QueueBusy)
 			log.Debugf("[QueueSend]  <-t.C Time: %s queue: %p\n", time.Now().String(), queue)
 			if queue.Len() == 0 {
-				this.SetTargetQueueState(queueId.Recipient, QueueFree)
 				continue
 			}
 
@@ -176,7 +165,6 @@ func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier)
 			data, _ := queue.Peek()
 			if data == nil {
 				log.Warn("[DeliverChan] msgId := <-queue.DeliverChan data == nil")
-				this.SetTargetQueueState(queueId.Recipient, QueueFree)
 				continue
 			}
 			item := data.(*QueueItem)
@@ -192,17 +180,13 @@ func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier)
 					log.Debug("msgId.MessageId == item.messageId.MessageId queue.Len() != 0")
 					t.Reset(interval * time.Second)
 					this.PeekAndSend(queue, &queueId)
-				} else {
-					this.SetTargetQueueState(queueId.Recipient, QueueFree)
 				}
 				retryTimes = 0
 			} else {
 				log.Debug("[DeliverChan] msgId.MessageId != item.messageId.MessageId queue.Len: ", queue.Len())
 				log.Warnf("[DeliverChan] MessageId not match (%d  %d)", msgId.MessageId, item.messageId.MessageId)
-				this.SetTargetQueueState(queueId.Recipient, QueueBusy)
 			}
 		case <-this.kill:
-			this.targetQueueState.Delete(queueId.Recipient)
 			log.Info("[QueueSend] msgId := <-this.kill")
 			t.Stop()
 			return
@@ -336,19 +320,6 @@ func (this *Transport) StartHealthCheck(walletAddr common.Address) error {
 		return err
 	} else {
 		return client.P2pConnect(nodeNetAddr)
-	}
-}
-
-func (this *Transport) SetTargetQueueState(walletAddr common.Address, state int) {
-	this.targetQueueState.Store(walletAddr, state)
-}
-
-func (this *Transport) GetTargetQueueState(walletAddr common.Address) int {
-	queueState, exist := this.targetQueueState.Load(walletAddr)
-	if exist {
-		return queueState.(int)
-	} else {
-		return QueueNotExist
 	}
 }
 

@@ -247,9 +247,9 @@ func (self *TokenNetworkState) AddRoute(addr1 common.Address, addr2 common.Addre
 	if _, ok := networkGraphState.Edges.Load(node1Node2); !ok {
 		networkGraphState.Edges.Store(node1Node2, int64(1))
 		if v, ok := networkGraphState.Nodes.Load(addr1); ok {
-			networkGraphState.Nodes.Store(addr1, v.(int64) + 1)
+			networkGraphState.Nodes.Store(addr1, v.(int64)+1)
 		} else {
-			networkGraphState.Nodes.Store(addr1,int64(1))
+			networkGraphState.Nodes.Store(addr1, int64(1))
 		}
 	} else {
 		return
@@ -258,7 +258,7 @@ func (self *TokenNetworkState) AddRoute(addr1 common.Address, addr2 common.Addre
 	if _, ok := networkGraphState.Edges.Load(node2Node1); !ok {
 		networkGraphState.Edges.Store(node2Node1, int64(1))
 		if v, ok := networkGraphState.Nodes.Load(addr2); ok {
-			networkGraphState.Nodes.Store(addr2, v.(int64) + 1)
+			networkGraphState.Nodes.Store(addr2, v.(int64)+1)
 		} else {
 			networkGraphState.Nodes.Store(addr2, int64(1))
 		}
@@ -288,7 +288,7 @@ func (self *TokenNetworkState) DelRoute(channelId common.ChannelID) {
 				if v.(int64) <= 1 {
 					networkGraphState.Nodes.Delete(addr1)
 				} else {
-					networkGraphState.Nodes.Store(addr1, v.(int64) - 1)
+					networkGraphState.Nodes.Store(addr1, v.(int64)-1)
 				}
 			}
 		}
@@ -299,7 +299,7 @@ func (self *TokenNetworkState) DelRoute(channelId common.ChannelID) {
 				if v.(int64) <= 1 {
 					networkGraphState.Nodes.Delete(addr2)
 				} else {
-					networkGraphState.Nodes.Store(addr2, v.(int64) - 1)
+					networkGraphState.Nodes.Store(addr2, v.(int64)-1)
 				}
 			}
 		}
