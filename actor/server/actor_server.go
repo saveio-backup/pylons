@@ -36,7 +36,9 @@ func NewChannelActor(config *oc.ChannelConfig, account *account.Account) (*Chann
 	if channelActorServer.chSrv, err = oc.NewChannelService(config, account); err != nil {
 		return nil, err
 	}
-	channelActorServer.chSrv.Service.InitDB()
+	if err = channelActorServer.chSrv.Service.InitDB(); err != nil {
+		return nil, err
+	}
 	ChannelServerPid = channelActorServer.localPID
 	return channelActorServer, nil
 }

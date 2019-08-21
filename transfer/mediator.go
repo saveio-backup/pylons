@@ -511,7 +511,7 @@ func backwardTransferPair(backwardChannel *NettingChannelState, payerTransfer *L
 	return transferPair, events
 }
 
-func setOffchainSecret(state *MediatorTransferState,
+func setOffChainSecret(state *MediatorTransferState,
 	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
 	secret common.Secret, secretHash common.SecretHash) []Event {
 
@@ -968,7 +968,7 @@ func eventsToRemoveExpiredLocks(mediatorState *MediatorTransferState,
 			lock = channelState.OurState.SecretHashesToUnLockedLocks[secretHash].Lock
 		}
 		if lock != nil {
-			lockExpirationThreshold := lock.Expiration + DefaultNumberOfBlockConfirmations*2
+			lockExpirationThreshold := lock.Expiration + common.BlockHeight(common.Config.ConfirmBlockCount)*2
 			hasLockExpired, _ := IsLockExpired(channelState.OurState, lock, blockNumber, lockExpirationThreshold)
 			if hasLockExpired {
 				transferPair.PayeeState = "payee_expired"
@@ -995,7 +995,7 @@ func secretLearned(state *MediatorTransferState, channelIdentifiersToChannels ma
 		register the secret on-chain.
 	*/
 	var events []Event
-	secretRevealEvents := setOffchainSecret(state, channelIdentifiersToChannels, secret, secretHash)
+	secretRevealEvents := setOffChainSecret(state, channelIdentifiersToChannels, secret, secretHash)
 
 	setOffchainRevealState(state.TransfersPair, payeeAddress)
 

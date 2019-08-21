@@ -32,7 +32,7 @@ func BuildDirectTransfer(chainID common.ChainID, nonce common.Nonce, amount comm
 
 	return msg
 }
-func TestVerifySiganature(t *testing.T) {
+func TestVerifySignature(t *testing.T) {
 	account := account.NewAccount("")
 
 	chainID := common.ChainID(0)

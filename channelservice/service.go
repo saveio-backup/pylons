@@ -172,7 +172,6 @@ func (self *ChannelService) setDBPath(customDBPath string, dbId uint32) {
 }
 
 func (self *ChannelService) InitDB() error {
-
 	sqliteStorage, err := storage.NewSQLiteStorage(self.databasePath)
 	if err != nil {
 		log.Error("create db failed:", err)
@@ -214,7 +213,13 @@ func (self *ChannelService) InitDB() error {
 		self.HandleStateChange(stateChange)
 		self.InitializeTokenNetwork()
 	} else {
-		lastLogBlockHeight = transfer.GetBlockHeight(self.StateFromChannel())
+		chainState := self.StateFromChannel()
+		lastLogBlockHeight = transfer.GetBlockHeight(chainState)
+		err = self.checkAddressIntegrity(chainState)
+		if err != nil {
+			log.Errorf("check address integrity failed: %s", err)
+			return err
+		}
 		log.Infof("Restored state from WAL,last log BlockHeight=%d", lastLogBlockHeight)
 	}
 	//set filter start block number
@@ -224,7 +229,6 @@ func (self *ChannelService) InitDB() error {
 }
 
 func (self *ChannelService) StartService() error {
-
 	self.alarm.RegisterCallback(self.CallbackNewBlock)
 	err := self.alarm.FirstRun()
 	if err != nil {
@@ -232,26 +236,17 @@ func (self *ChannelService) StartService() error {
 		return err
 	}
 
-	err = self.checkAddressIntegrity()
-	if err != nil {
-		log.Errorf("check address integrity failed: %s", err)
-		return err
-	}
-
 	chainState := self.StateFromChannel()
 	self.InitializeTransactionsQueues(chainState)
-	self.alarm.Start()
 	self.InitializeMessagesQueues(chainState)
 
+	self.alarm.Start()
 	self.StartNeighboursHealthCheck()
-	//self.UpdateRouteMap()
 	log.Info("channel service started")
 	return nil
 }
 
-func (self *ChannelService) checkAddressIntegrity() error {
-	chainState := self.StateFromChannel()
-
+func (self *ChannelService) checkAddressIntegrity(chainState *transfer.ChainState) error {
 	if chainState != nil && !common.AddressEqual(self.address, chainState.Address) {
 		return fmt.Errorf("[checkAddressIntegrity] failed, self.address : %s, chainState.Address : %s",
 			common.ToBase58(self.address), common.ToBase58(chainState.Address))
@@ -264,10 +259,6 @@ func (self *ChannelService) Stop() {
 	self.Wal.Storage.Close()
 	self.Transport.Stop()
 	log.Info("channel service stopped")
-}
-
-func (self *ChannelService) AddPendingRoutine() {
-
 }
 
 func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) []transfer.Event {
@@ -291,7 +282,6 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 
 func (self *ChannelService) StartNeighboursHealthCheck() {
 	neighbours := transfer.GetNeighbours(self.StateFromChannel())
-
 	for _, v := range neighbours {
 		log.Debugf("[StartNeighboursHealthCheck] Neighbour: %s", common.ToBase58(v))
 		self.Transport.StartHealthCheck(v)
@@ -405,32 +395,6 @@ func (self *ChannelService) GetLastFilterBlock() common.BlockHeight {
 }
 
 func (self *ChannelService) UpdateRouteMap() {
-	//log.Info("[UpdateRouteMap] UpdateRouteMap start...")
-	//tokenNetwork := transfer.GetTokenNetworkByIdentifier(self.StateFromChannel(), common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
-	//var partAddr comm.Address
-	//
-	//channelCounter, err := self.chain.ChannelClient.GetChannelCounter()
-	//if err != nil {
-	//	log.Warnf("[UpdateRouteMap] get channelCounter error %s", err)
-	//	return
-	//}
-	//
-	//log.Infof("[UpdateRouteMap] channel counter is %d", channelCounter)
-	//
-	//for chanId := uint64(101); chanId <= channelCounter; chanId++ {
-	//	channelInfo, err := self.chain.ChannelClient.GetChannelInfo(chanId, partAddr, partAddr)
-	//	log.Infof("[UpdateRouteMap] channelInfo: %v", channelInfo)
-	//	if err == nil && channelInfo != nil && channelInfo.ChannelID == chanId && channelInfo.ChannelState == mpay.Opened {
-	//		var partAddr1, partAddr2 common.Address
-	//		copy(partAddr1[:], channelInfo.Participant1.WalletAddr[:20])
-	//		copy(partAddr2[:], channelInfo.Participant2.WalletAddr[:20])
-	//
-	//		log.Infof("[UpdateRouteMap], AddRoute ChannelId: %d", channelInfo.ChannelID)
-	//		tokenNetwork.AddRoute(partAddr1, partAddr2, common.ChannelID(channelInfo.ChannelID))
-	//	}
-	//}
-	//log.Info("[UpdateRouteMap] UpdateRouteMap finished")
-
 	tokenNetwork := transfer.GetTokenNetworkByIdentifier(self.StateFromChannel(), common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
 	allOpenChannels, err := self.chain.ChannelClient.GetAllOpenChannels()
 	if err != nil {
@@ -444,6 +408,12 @@ func (self *ChannelService) UpdateRouteMap() {
 		copy(partAddr2[:], openedChannel.Part2Addr[:20])
 		log.Infof("[UpdateRouteMap], AddRoute ChannelId: %d", openedChannel.ChannelID)
 		tokenNetwork.AddRoute(partAddr1, partAddr2, common.ChannelID(openedChannel.ChannelID))
+		if common.AddressEqual(partAddr1, self.address) {
+			if err = self.Transport.StartHealthCheck(partAddr2); err != nil {
+				log.Errorf("[UpdateRouteMap] StartHealthCheck PartAddr2: %s error: %s",
+					common.ToBase58(partAddr2), err.Error())
+			}
+		}
 	}
 }
 

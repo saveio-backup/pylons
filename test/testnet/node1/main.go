@@ -80,6 +80,8 @@ func main() {
 	}
 
 	chnPid := ChannelActor.GetLocalPID()
+
+
 	//start p2p and actor
 	channelP2p := p2p.NewP2P()
 	bPrivate := keypair.SerializePrivateKey(account.PrivKey())
