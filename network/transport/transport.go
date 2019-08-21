@@ -105,7 +105,7 @@ func (this *Transport) GetQueue(queueId *transfer.QueueIdentifier) *Queue {
 }
 
 func (this *Transport) InitQueue(queueId *transfer.QueueIdentifier) *Queue {
-	q := NewQueue(constants.MAX_MSG_QUEUE)
+	q := NewQueue(uint32(constants.MaxMsgQueue))
 	this.messageQueues.Store(*queueId, q)
 
 	// queueId cannot be pointer type otherwise it might be updated outside QueueSend

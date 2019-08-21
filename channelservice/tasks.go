@@ -33,7 +33,7 @@ func NewAlarmTask(chain *network.BlockchainService) *AlarmTask {
 	}
 
 	self.lastBlockHeight = 0
-	self.interval = constants.ALARM_INTERVAL
+	self.interval = constants.AlarmInterval
 	self.stopEvent = make(chan int)
 
 	return self

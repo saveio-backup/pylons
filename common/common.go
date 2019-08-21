@@ -35,7 +35,7 @@ func GetMsgID() MessageID {
 func AddressEqual(address1 Address, address2 Address) bool {
 	result := true
 
-	for i := 0; i < constants.ADDR_LEN; i++ {
+	for i := 0; i < constants.AddrLen; i++ {
 		if address1[i] != address2[i] {
 			result = false
 			break
@@ -48,7 +48,7 @@ func AddressEqual(address1 Address, address2 Address) bool {
 func Keccak256Compare(one *Keccak256, two *Keccak256) int {
 	result := 0
 
-	for i := 0; i < constants.HASH_LEN; i++ {
+	for i := 0; i < constants.HashLen; i++ {
 		if one[i] > two[i] {
 			result = 1
 			break
@@ -96,10 +96,10 @@ func (self PaymentNetworkID) MarshalText() (text []byte, err error) {
 	var e bytes.Buffer
 
 	e.WriteByte('[')
-	for i := 0; i < constants.ADDR_LEN; i++ {
+	for i := 0; i < constants.AddrLen; i++ {
 		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
 		e.Write(b)
-		if i < constants.ADDR_LEN-1 {
+		if i < constants.AddrLen-1 {
 			e.WriteByte(' ')
 		}
 
@@ -113,7 +113,7 @@ func (self *PaymentNetworkID) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
-	for i := 0; i < constants.ADDR_LEN; i++ {
+	for i := 0; i < constants.AddrLen; i++ {
 		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
 			startIdx++
 		}
@@ -150,10 +150,10 @@ func (self TokenNetworkID) MarshalText() (text []byte, err error) {
 	var e bytes.Buffer
 
 	e.WriteByte('[')
-	for i := 0; i < constants.ADDR_LEN; i++ {
+	for i := 0; i < constants.AddrLen; i++ {
 		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
 		e.Write(b)
-		if i < constants.ADDR_LEN-1 {
+		if i < constants.AddrLen-1 {
 			e.WriteByte(' ')
 		}
 
@@ -167,7 +167,7 @@ func (self *TokenNetworkID) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
-	for i := 0; i < constants.ADDR_LEN; i++ {
+	for i := 0; i < constants.AddrLen; i++ {
 		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
 			startIdx++
 		}
@@ -204,10 +204,10 @@ func (self Address) MarshalText() (text []byte, err error) {
 	var e bytes.Buffer
 
 	e.WriteByte('[')
-	for i := 0; i < constants.ADDR_LEN; i++ {
+	for i := 0; i < constants.AddrLen; i++ {
 		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
 		e.Write(b)
-		if i < constants.ADDR_LEN-1 {
+		if i < constants.AddrLen-1 {
 			e.WriteByte(' ')
 		}
 
@@ -221,7 +221,7 @@ func (self *Address) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
-	for i := 0; i < constants.ADDR_LEN; i++ {
+	for i := 0; i < constants.AddrLen; i++ {
 		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
 			startIdx++
 		}
@@ -247,13 +247,13 @@ func (self *Address) UnmarshalText(text []byte) error {
 
 func (self EdgeId) GetAddr1() Address {
 	var tmp Address
-	copy(tmp[:], self[0:constants.ADDR_LEN])
+	copy(tmp[:], self[0:constants.AddrLen])
 	return tmp
 }
 
 func (self EdgeId) GetAddr2() Address {
 	var tmp Address
-	copy(tmp[:], self[constants.ADDR_LEN:])
+	copy(tmp[:], self[constants.AddrLen:])
 	return tmp
 }
 
@@ -262,10 +262,10 @@ func (self EdgeId) MarshalText() (text []byte, err error) {
 	var e bytes.Buffer
 
 	e.WriteByte('[')
-	for i := 0; i < constants.EDGEID_LEN; i++ {
+	for i := 0; i < constants.EdgeIdLen; i++ {
 		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
 		e.Write(b)
-		if i < constants.EDGEID_LEN-1 {
+		if i < constants.EdgeIdLen-1 {
 			e.WriteByte(' ')
 		}
 
@@ -279,7 +279,7 @@ func (self *EdgeId) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
-	for i := 0; i < constants.EDGEID_LEN; i++ {
+	for i := 0; i < constants.EdgeIdLen; i++ {
 		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
 			startIdx++
 		}
@@ -316,10 +316,10 @@ func (self TokenAddress) MarshalText() (text []byte, err error) {
 	var e bytes.Buffer
 
 	e.WriteByte('[')
-	for i := 0; i < constants.ADDR_LEN; i++ {
+	for i := 0; i < constants.AddrLen; i++ {
 		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
 		e.Write(b)
-		if i < constants.ADDR_LEN-1 {
+		if i < constants.AddrLen-1 {
 			e.WriteByte(' ')
 		}
 
@@ -333,7 +333,7 @@ func (self *TokenAddress) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
-	for i := 0; i < constants.ADDR_LEN; i++ {
+	for i := 0; i < constants.AddrLen; i++ {
 		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
 			startIdx++
 		}
@@ -370,10 +370,10 @@ func (self SecretHash) MarshalText() (text []byte, err error) {
 	var e bytes.Buffer
 
 	e.WriteByte('[')
-	for i := 0; i < constants.HASH_LEN; i++ {
+	for i := 0; i < constants.HashLen; i++ {
 		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
 		e.Write(b)
-		if i < constants.HASH_LEN-1 {
+		if i < constants.HashLen-1 {
 			e.WriteByte(' ')
 		}
 
@@ -387,7 +387,7 @@ func (self *SecretHash) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
-	for i := 0; i < constants.HASH_LEN; i++ {
+	for i := 0; i < constants.HashLen; i++ {
 		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
 			startIdx++
 		}
@@ -424,10 +424,10 @@ func (self BalanceHash) MarshalText() (text []byte, err error) {
 	var e bytes.Buffer
 
 	e.WriteByte('[')
-	for i := 0; i < constants.HASH_LEN; i++ {
+	for i := 0; i < constants.HashLen; i++ {
 		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
 		e.Write(b)
-		if i < constants.HASH_LEN-1 {
+		if i < constants.HashLen-1 {
 			e.WriteByte(' ')
 		}
 
@@ -441,7 +441,7 @@ func (self *BalanceHash) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
-	for i := 0; i < constants.HASH_LEN; i++ {
+	for i := 0; i < constants.HashLen; i++ {
 		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
 			startIdx++
 		}
@@ -478,10 +478,10 @@ func (self Locksroot) MarshalText() (text []byte, err error) {
 	var e bytes.Buffer
 
 	e.WriteByte('[')
-	for i := 0; i < constants.HASH_LEN; i++ {
+	for i := 0; i < constants.HashLen; i++ {
 		b := strconv.AppendUint(scratch[:0], uint64(self[i]), 10)
 		e.Write(b)
-		if i < constants.HASH_LEN-1 {
+		if i < constants.HashLen-1 {
 			e.WriteByte(' ')
 		}
 
@@ -495,7 +495,7 @@ func (self *Locksroot) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
-	for i := 0; i < constants.HASH_LEN; i++ {
+	for i := 0; i < constants.HashLen; i++ {
 		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
 			startIdx++
 		}

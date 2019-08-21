@@ -238,11 +238,11 @@ func (self *TokenNetworkState) AddRoute(addr1 common.Address, addr2 common.Addre
 	networkGraphState := self.NetworkGraph
 
 	var node1Node2, node2Node1 common.EdgeId
-	copy(node1Node2[:constants.ADDR_LEN], addr1[:])
-	copy(node1Node2[constants.ADDR_LEN:], addr2[:])
+	copy(node1Node2[:constants.AddrLen], addr1[:])
+	copy(node1Node2[constants.AddrLen:], addr2[:])
 
-	copy(node2Node1[:constants.ADDR_LEN], addr2[:])
-	copy(node2Node1[constants.ADDR_LEN:], addr1[:])
+	copy(node2Node1[:constants.AddrLen], addr2[:])
+	copy(node2Node1[constants.AddrLen:], addr1[:])
 
 	if _, ok := networkGraphState.Edges.Load(node1Node2); !ok {
 		networkGraphState.Edges.Store(node1Node2, int64(1))
@@ -276,11 +276,11 @@ func (self *TokenNetworkState) DelRoute(channelId common.ChannelID) {
 		log.Infof("[DelRoute] [%v] [%v]", common.ToBase58(addr1), common.ToBase58(addr2))
 
 		var node1Node2, node2Node1 common.EdgeId
-		copy(node1Node2[:constants.ADDR_LEN], addr1[:])
-		copy(node1Node2[constants.ADDR_LEN:], addr2[:])
+		copy(node1Node2[:constants.AddrLen], addr1[:])
+		copy(node1Node2[constants.AddrLen:], addr2[:])
 
-		copy(node2Node1[:constants.ADDR_LEN], addr2[:])
-		copy(node2Node1[constants.ADDR_LEN:], addr1[:])
+		copy(node2Node1[:constants.AddrLen], addr2[:])
+		copy(node2Node1[constants.AddrLen:], addr1[:])
 
 		if _, ok := networkGraphState.Edges.Load(node1Node2); ok {
 			networkGraphState.Edges.Delete(node1Node2)

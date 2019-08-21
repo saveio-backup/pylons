@@ -25,7 +25,7 @@ func WaitForBlock(channel *ChannelService, blockNumber common.BlockHeight,
 }
 
 func WaitForNewChannel(channel *ChannelService, paymentNetworkID common.PaymentNetworkID,
-	tokenAddress common.TokenAddress, partnerAddress common.Address, retryTimeout float32, retryTimes int) *transfer.NettingChannelState {
+	tokenAddress common.TokenAddress, partnerAddress common.Address, retryTimeout int, retryTimes int) *transfer.NettingChannelState {
 
 	var channelState *transfer.NettingChannelState
 
@@ -37,7 +37,7 @@ func WaitForNewChannel(channel *ChannelService, paymentNetworkID common.PaymentN
 		if count >= retryTimes {
 			return nil
 		}
-		time.Sleep(time.Duration(retryTimeout*1000) * time.Millisecond)
+		time.Sleep(time.Duration(retryTimeout) * time.Millisecond)
 		channelState = transfer.GetChannelStateFor(channel.StateFromChannel(), paymentNetworkID, tokenAddress,
 			partnerAddress)
 		count++
@@ -48,7 +48,7 @@ func WaitForNewChannel(channel *ChannelService, paymentNetworkID common.PaymentN
 
 func WaitForParticipantNewBalance(channel *ChannelService, paymentNetworkId common.PaymentNetworkID,
 	tokenAddress common.TokenAddress, partnerAddress common.Address, targetAddress common.Address,
-	targetBalance common.TokenAmount, retryTimeout float32) error {
+	targetBalance common.TokenAmount, retryTimeout int) error {
 
 	chainState := channel.StateFromChannel()
 	var channelState *transfer.NettingChannelState
@@ -66,7 +66,7 @@ func WaitForParticipantNewBalance(channel *ChannelService, paymentNetworkId comm
 				return err
 			}
 			if currentBalance < targetBalance {
-				time.Sleep(time.Duration(retryTimeout*1000) * time.Millisecond)
+				time.Sleep(time.Duration(retryTimeout) * time.Millisecond)
 				channelState = transfer.GetChannelStateFor(channel.StateFromChannel(), paymentNetworkId, tokenAddress,
 					partnerAddress)
 			} else {

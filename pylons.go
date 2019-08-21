@@ -21,11 +21,12 @@ type ChannelConfig struct {
 	ClientType    string
 	ChainNodeURLs []string
 
-	ListenAddress string // protocol + ip + port
-
 	DBPath        string
+	BlockDelay    string
 	SettleTimeout string
 	RevealTimeout string
+
+	ListenAddress string // protocol + ip + port
 }
 
 type Channel struct {
@@ -37,8 +38,9 @@ func DefaultChannelConfig() *ChannelConfig {
 	config := &ChannelConfig{
 		ClientType:    "rpc",
 		ChainNodeURLs: []string{"http://localhost:20336"},
-		ListenAddress: "tpc://127.0.0.1:3001",
+		ListenAddress: "tcp://127.0.0.1:3001",
 		DBPath:        ".",
+		BlockDelay:    "3",
 	}
 	return config
 }
@@ -65,7 +67,7 @@ func NewChannelService(config *ChannelConfig, account *account.Account) (*Channe
 	// construct the option map
 	option := map[string]string{
 		"database_path":  config.DBPath,
-		"listenAddr":     config.ListenAddress,
+		"block_delay":    config.BlockDelay,
 		"settle_timeout": strconv.Itoa(settleTimeout),
 		"reveal_timeout": strconv.Itoa(revealTimeout),
 	}
@@ -79,7 +81,7 @@ func NewChannelService(config *ChannelConfig, account *account.Account) (*Channe
 }
 
 func getTimeout(config *ChannelConfig) (settle int, reveal int, err error) {
-	settleTimeout := constants.SETTLE_TIMEOUT
+	settleTimeout := constants.DefaultSettleTimeout
 	if config.SettleTimeout != "" {
 		settleTimeout, err = strconv.Atoi(config.SettleTimeout)
 		if err != nil {
@@ -88,7 +90,7 @@ func getTimeout(config *ChannelConfig) (settle int, reveal int, err error) {
 		}
 	}
 
-	revealTimeout := constants.DEFAULT_REVEAL_TIMEOUT
+	revealTimeout := constants.DefaultRevealTimeout
 	if config.RevealTimeout != "" {
 		revealTimeout, err = strconv.Atoi(config.RevealTimeout)
 		if err != nil {

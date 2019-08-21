@@ -162,7 +162,7 @@ func (self *MessageHandler) HandleMessageRefundTransfer(channel *ChannelService,
 
 	role := transfer.GetTransferRole(chainState, common.SecretHash(fromTransfer.Lock.SecretHash))
 	if role == "initiator" {
-		secret := common.SecretRandom(constants.SECRET_LEN)
+		secret := common.SecretRandom(constants.SecretLen)
 		stateChange := &transfer.ReceiveTransferRefundCancelRoute{
 			Routes:   routes,
 			Transfer: fromTransfer,

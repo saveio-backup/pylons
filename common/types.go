@@ -13,9 +13,9 @@ const (
 	PAYMENT_MEDIATED
 )
 
-type EdgeId [constants.EDGEID_LEN]byte
+type EdgeId [constants.EdgeIdLen]byte
 
-type Address [constants.ADDR_LEN]byte
+type Address [constants.AddrLen]byte
 
 type Keccak256Slice []Keccak256
 
@@ -25,7 +25,7 @@ type BlockExpiration int
 
 type Balance uint64
 
-type BalanceHash [constants.HASH_LEN]byte
+type BalanceHash [constants.HashLen]byte
 
 type BlockGasLimit int
 
@@ -41,9 +41,9 @@ type ChannelID uint32
 
 type ChannelState int
 
-type Locksroot [constants.HASH_LEN]byte
+type Locksroot [constants.HashLen]byte
 
-type LockHash [constants.HASH_LEN]byte
+type LockHash [constants.HashLen]byte
 
 type MerkleTreeLeaves list.List
 
@@ -65,9 +65,9 @@ type ChainID int
 
 type Keccak256 [32]byte
 
-type TokenAddress [constants.ADDR_LEN]byte
+type TokenAddress [constants.AddrLen]byte
 
-type TokenNetworkAddress [constants.ADDR_LEN]byte
+type TokenNetworkAddress [constants.AddrLen]byte
 
 type TokenNetworkID [20]byte
 
@@ -77,9 +77,9 @@ type TransferID []byte
 
 type Secret []byte
 
-type SecretHash [constants.HASH_LEN]byte
+type SecretHash [constants.HashLen]byte
 
-type SecretRegistryAddress [constants.ADDR_LEN]byte
+type SecretRegistryAddress [constants.AddrLen]byte
 
 type Signature []byte
 

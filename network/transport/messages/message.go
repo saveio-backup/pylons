@@ -607,7 +607,7 @@ func GetSender(message SignedMessageInterface) (common.Address, error) {
 		return sender, fmt.Errorf("Unknow message type to GetSender")
 	}
 
-	if len(senderBuf) != constants.ADDR_LEN {
+	if len(senderBuf) != constants.AddrLen {
 		return sender, fmt.Errorf("invalid sender length")
 	}
 

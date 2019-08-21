@@ -71,7 +71,7 @@ func IsLockExpired(endState *NettingChannelEndState, lock *HashTimeLockState,
 
 func TransferExpired(transfer *LockedTransferSignedState, affectedChannel *NettingChannelState,
 	blockNumber common.BlockHeight) bool {
-	lockExpirationThreshold := transfer.Lock.Expiration + common.BlockHeight(DefaultNumberOfConfirmationsBlock*2)
+	lockExpirationThreshold := transfer.Lock.Expiration + common.BlockHeight(constants.DefaultNumberOfConfirmationsBlock*2)
 	hasLockExpired, _ := IsLockExpired(affectedChannel.OurState, transfer.Lock, blockNumber, lockExpirationThreshold)
 	return hasLockExpired
 }
@@ -255,9 +255,9 @@ func isDepositConfirmed(channelState *NettingChannelState, blockNumber common.Bl
 	return result
 }
 
-func IsTransactionConfirmed(transactionBlockHeight common.BlockHeight, blockchainBlockHeight common.BlockHeight) bool {
-	confirmationBlock := transactionBlockHeight + (common.BlockHeight)(constants.COUNT_OF_CONFIRM_BLOCK)
-	return blockchainBlockHeight > confirmationBlock
+func IsTransactionConfirmed(transactionBlockHeight common.BlockHeight, blockChainBlockHeight common.BlockHeight) bool {
+	confirmationBlock := transactionBlockHeight + (common.BlockHeight)(constants.DefaultNumberOfConfirmationsBlock)
+	return blockChainBlockHeight > confirmationBlock
 }
 
 func IsBalanceProofSafeForOnchainOperations(balanceProof *BalanceProofSignedState) bool {
@@ -499,7 +499,7 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 	} else {
 		locksRootWithoutLock := MerkleRoot(merkleTree.Layers)
 		hasExpired, err := IsLockExpired(receiverState, lock, blockNumber,
-			lock.Expiration+common.BlockHeight(DefaultNumberOfConfirmationsBlock))
+			lock.Expiration+common.BlockHeight(constants.DefaultNumberOfConfirmationsBlock))
 		if !hasExpired {
 			return nil, fmt.Errorf("Invalid LockExpired message. %s ", err.Error())
 		} else if receivedBalanceProof.LocksRoot != common.Locksroot(locksRootWithoutLock) {
@@ -2055,7 +2055,7 @@ func handleBlock(channelState *NettingChannelState, stateChange *Block,
 
 	if GetStatus(channelState) == ChannelStateOpened {
 		if withdraw := GetWithdrawTransaction(channelState); withdraw != nil {
-			if withdraw.StartedBlockHeight+common.BlockHeight(constants.DEFAULT_WITHDRAW_TIMEOUT) < blockNumber {
+			if withdraw.StartedBlockHeight+common.BlockHeight(constants.DefaultWithdrawTimeout) < blockNumber {
 				event := &EventWithdrawRequestTimeout{
 					ChannelIdentifier:      channelState.Identifier,
 					TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,

@@ -38,13 +38,13 @@ func (self *ChannelService) HandleChannelNew(event map[string]interface{}) {
 		channelProxy := self.chain.PaymentChannel(common.Address(tokenNetworkIdentifier), channelIdentifier, event)
 		var revealTimeout common.BlockHeight
 		if _, exist := self.config["reveal_timeout"]; exist == false {
-			revealTimeout = common.BlockHeight(constants.DEFAULT_REVEAL_TIMEOUT)
+			revealTimeout = common.BlockHeight(constants.DefaultRevealTimeout)
 		} else {
 			rt := self.config["reveal_timeout"]
 			if ret, err := strconv.Atoi(rt); err != nil {
 				log.Warn("reveal timeout invalid in channel config %s, use default value %d",
-					rt, constants.DEFAULT_REVEAL_TIMEOUT)
-				revealTimeout = common.BlockHeight(constants.DEFAULT_REVEAL_TIMEOUT)
+					rt, constants.DefaultRevealTimeout)
+				revealTimeout = common.BlockHeight(constants.DefaultRevealTimeout)
 			} else {
 				revealTimeout = common.BlockHeight(ret)
 			}
@@ -511,7 +511,7 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 		case "nonce":
 			events[item] = common.Nonce(value.(float64))
 		case "secret":
-			var secret [constants.SECRET_LEN]byte
+			var secret [constants.SecretLen]byte
 
 			for index, data := range value.([]interface{}) {
 				value := data.(float64)

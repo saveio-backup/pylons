@@ -8,8 +8,6 @@ import (
 	"github.com/saveio/pylons/common"
 )
 
-const DefaultNumberOfConfirmationsBlock int = 0
-
 func BytesToUint64(data []byte) uint64 {
 	var n uint64
 	bytesBuffer := bytes.NewBuffer(data)

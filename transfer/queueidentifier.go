@@ -25,10 +25,10 @@ func (self QueueIdentifier) MarshalText() (text []byte, err error) {
 	var e bytes.Buffer
 
 	e.WriteByte('[')
-	for i := 0; i < constants.ADDR_LEN; i++ {
+	for i := 0; i < constants.AddrLen; i++ {
 		b := strconv.AppendUint(scratch[:0], uint64(self.Recipient[i]), 10)
 		e.Write(b)
-		if i < constants.ADDR_LEN-1 {
+		if i < constants.AddrLen-1 {
 			e.WriteByte(' ')
 		}
 
@@ -45,7 +45,7 @@ func (self *QueueIdentifier) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
-	for i := 0; i < constants.ADDR_LEN; i++ {
+	for i := 0; i < constants.AddrLen; i++ {
 		for newText[startIdx] == ' ' || newText[startIdx] == '[' {
 			startIdx++
 		}

@@ -194,12 +194,12 @@ func (self *TokenNetwork) detailParticipant(channelIdentifier common.ChannelID,
 
 	var balanceHash common.BalanceHash
 
-	if len(info.BalanceHash) != 0 && len(info.BalanceHash) != constants.HASH_LEN {
+	if len(info.BalanceHash) != 0 && len(info.BalanceHash) != constants.HashLen {
 		log.Errorf("GetChannelParticipantInfo: length error for balance hash")
 		return nil
 	}
 
-	if len(info.BalanceHash) == constants.HASH_LEN {
+	if len(info.BalanceHash) == constants.HashLen {
 		for index, value := range info.BalanceHash {
 			balanceHash[index] = value
 		}
@@ -207,12 +207,12 @@ func (self *TokenNetwork) detailParticipant(channelIdentifier common.ChannelID,
 
 	var locksroot common.Locksroot
 
-	if len(info.LocksRoot) != 0 && len(info.LocksRoot) != constants.HASH_LEN {
+	if len(info.LocksRoot) != 0 && len(info.LocksRoot) != constants.HashLen {
 		log.Errorf("GetChannelParticipantInfo: length error for balance hash")
 		return nil
 	}
 
-	if len(info.LocksRoot) == constants.HASH_LEN {
+	if len(info.LocksRoot) == constants.HashLen {
 		for index, value := range info.LocksRoot {
 			locksroot[index] = value
 		}

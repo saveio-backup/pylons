@@ -41,13 +41,13 @@ func TestSPT(t *testing.T) {
 		addrB, _ := chainComm.AddressFromBase58(NodeB)
 
 		var nodeANodeB common.EdgeId
-		copy(nodeANodeB[:constants.ADDR_LEN], addrA[:])
-		copy(nodeANodeB[constants.ADDR_LEN:], addrB[:])
+		copy(nodeANodeB[:constants.AddrLen], addrA[:])
+		copy(nodeANodeB[constants.AddrLen:], addrB[:])
 		edges[nodeANodeB] = 1
 
 		var nodeBNodeA common.EdgeId
-		copy(nodeBNodeA[:constants.ADDR_LEN], addrB[:])
-		copy(nodeBNodeA[constants.ADDR_LEN:], addrA[:])
+		copy(nodeBNodeA[:constants.AddrLen], addrB[:])
+		copy(nodeBNodeA[constants.AddrLen:], addrA[:])
 		edges[nodeBNodeA] = 1
 	}
 	fmt.Println(edges)

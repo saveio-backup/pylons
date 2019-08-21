@@ -85,7 +85,7 @@ func getValuesFromBalanceProof(data interface{}, prefix string) (common.TokenAmo
 
 	locksrootValue := balanceProofValue.FieldByName("LocksRoot")
 	len := locksrootValue.Len()
-	if len != constants.HASH_LEN {
+	if len != constants.HashLen {
 		panic("locksroot length invalid")
 	}
 

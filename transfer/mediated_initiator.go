@@ -6,6 +6,7 @@ import (
 
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/themis/common/log"
+	"github.com/saveio/pylons/common/constants"
 )
 
 const MaximumPendingTransfers int = 160
@@ -55,7 +56,7 @@ func InitHandleBlock(initiatorState *InitiatorTransferState, stateChange *Block,
 		}
 	}
 
-	lockExpirationThreshold := lockedLock.Expiration + common.BlockHeight(DefaultNumberOfConfirmationsBlock)*2
+	lockExpirationThreshold := lockedLock.Expiration + common.BlockHeight(constants.DefaultNumberOfConfirmationsBlock)*2
 	lockHasExpired, _ := IsLockExpired(channelState.OurState, lockedLock, stateChange.BlockHeight, lockExpirationThreshold)
 
 	if lockHasExpired {
