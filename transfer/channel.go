@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/saveio/pylons/common"
-	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/themis/common/log"
 	"github.com/saveio/themis/errors"
 )
@@ -63,6 +62,8 @@ func IsLockExpired(endState *NettingChannelEndState, lock *HashTimeLockState,
 	}
 
 	if blockNumber < lockExpirationThreshold {
+		return false, fmt.Errorf("current block number: %d is not larger than lockExpirationThreshold: %d",
+			blockNumber, lockExpirationThreshold)
 		return false, errors.NewErr("current block number is not larger than lock expiration + confirmation blocks")
 	}
 
@@ -71,7 +72,7 @@ func IsLockExpired(endState *NettingChannelEndState, lock *HashTimeLockState,
 
 func TransferExpired(transfer *LockedTransferSignedState, affectedChannel *NettingChannelState,
 	blockNumber common.BlockHeight) bool {
-	lockExpirationThreshold := transfer.Lock.Expiration + common.BlockHeight(constants.DefaultNumberOfConfirmationsBlock*2)
+	lockExpirationThreshold := transfer.Lock.Expiration + common.BlockHeight(common.Config.ConfirmBlockCount*2)
 	hasLockExpired, _ := IsLockExpired(affectedChannel.OurState, transfer.Lock, blockNumber, lockExpirationThreshold)
 	return hasLockExpired
 }
@@ -256,7 +257,7 @@ func isDepositConfirmed(channelState *NettingChannelState, blockNumber common.Bl
 }
 
 func IsTransactionConfirmed(transactionBlockHeight common.BlockHeight, blockChainBlockHeight common.BlockHeight) bool {
-	confirmationBlock := transactionBlockHeight + (common.BlockHeight)(constants.DefaultNumberOfConfirmationsBlock)
+	confirmationBlock := transactionBlockHeight + (common.BlockHeight)(common.Config.ConfirmBlockCount)
 	return blockChainBlockHeight > confirmationBlock
 }
 
@@ -488,34 +489,36 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 	//result: MerkleTreeOrError = (False, None, None)
 
 	if lockRegisteredOnChain {
-		return nil, fmt.Errorf("Invalid LockExpired mesage. Lock was unlocked on-chain. ")
+		return nil, fmt.Errorf("[IsValidLockExpired] Invalid LockExpired mesage. Lock was unlocked on-chain. ")
 	} else if lock == nil {
-		return nil, fmt.Errorf("Invalid LockExpired message. Lock with secrethash %s is not known. ",
+		return nil, fmt.Errorf("[IsValidLockExpired] Invalid LockExpired message. Lock with secrethash %s is not known. ",
 			hex.EncodeToString(secretHash[:]))
 	} else if !isBalanceProofUsable {
-		return nil, fmt.Errorf("Invalid LockExpired message. %s ", invalidBalanceProofMsg)
+		return nil, fmt.Errorf("[IsValidLockExpired] Invalid LockExpired message. %s ", invalidBalanceProofMsg)
 	} else if merkleTree == nil {
-		return nil, fmt.Errorf("Invalid LockExpired message. Same lockhash handled twice. ")
+		return nil, fmt.Errorf("[IsValidLockExpired] Invalid LockExpired message. Same lockhash handled twice. ")
 	} else {
 		locksRootWithoutLock := MerkleRoot(merkleTree.Layers)
-		hasExpired, err := IsLockExpired(receiverState, lock, blockNumber,
-			lock.Expiration+common.BlockHeight(constants.DefaultNumberOfConfirmationsBlock))
+		hasExpired, err := IsLockExpired(receiverState, lock, blockNumber, lock.Expiration+
+			common.BlockHeight(common.Config.ConfirmBlockCount-common.Config.MaxBlockDelay))
 		if !hasExpired {
-			return nil, fmt.Errorf("Invalid LockExpired message. %s ", err.Error())
+			log.Info("[IsValidLockExpired] blockNumber: %d, lock.Expiration: %d MaxBlockDelay:%d",
+				blockNumber, lock.Expiration, common.Config.MaxBlockDelay)
+			return nil, fmt.Errorf("[IsValidLockExpired] Invalid LockExpired message. %s ", err.Error())
 		} else if receivedBalanceProof.LocksRoot != common.Locksroot(locksRootWithoutLock) {
 			//The locksRoot must be updated, and the expired lock must be *removed*
-			return nil, fmt.Errorf("Invalid LockExpired message. "+
+			return nil, fmt.Errorf("[IsValidLockExpired] Invalid LockExpired message. "+
 				"Balance proof's locksroot didn't match, expected: %s got: %s. ",
 				hex.EncodeToString(locksRootWithoutLock[:]),
 				hex.EncodeToString(receivedBalanceProof.LocksRoot[:]))
 		} else if receivedBalanceProof.TransferredAmount != currentTransferredAmount {
 			//# Given an expired lock, transferred amount should stay the same
-			return nil, fmt.Errorf("Invalid LockExpired message. "+
+			return nil, fmt.Errorf("[IsValidLockExpired] Invalid LockExpired message. "+
 				"Balance proof's transferred_amount changed, expected: %d got: %d. ",
 				currentTransferredAmount, receivedBalanceProof.TransferredAmount)
 		} else if receivedBalanceProof.LockedAmount != expectedLockedAmount {
 			//# locked amount should be the same found inside the balance proof
-			return nil, fmt.Errorf("Invalid LockExpired message. "+
+			return nil, fmt.Errorf("[IsValidLockExpired] Invalid LockExpired message. "+
 				"Balance proof's locked_amount is invalid, expected: %d got: %d. ",
 				expectedLockedAmount, receivedBalanceProof.LockedAmount)
 		} else {
@@ -2055,7 +2058,7 @@ func handleBlock(channelState *NettingChannelState, stateChange *Block,
 
 	if GetStatus(channelState) == ChannelStateOpened {
 		if withdraw := GetWithdrawTransaction(channelState); withdraw != nil {
-			if withdraw.StartedBlockHeight+common.BlockHeight(constants.DefaultWithdrawTimeout) < blockNumber {
+			if withdraw.StartedBlockHeight+common.BlockHeight(common.Config.WithdrawTimeout) < blockNumber {
 				event := &EventWithdrawRequestTimeout{
 					ChannelIdentifier:      channelState.Identifier,
 					TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,

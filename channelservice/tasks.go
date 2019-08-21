@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/saveio/pylons/common"
-	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network"
 	"github.com/saveio/themis/common/log"
 )
@@ -33,7 +32,7 @@ func NewAlarmTask(chain *network.BlockchainService) *AlarmTask {
 	}
 
 	self.lastBlockHeight = 0
-	self.interval = constants.AlarmInterval
+	self.interval = common.Config.AlarmInterval
 	self.stopEvent = make(chan int)
 
 	return self

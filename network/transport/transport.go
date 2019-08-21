@@ -12,7 +12,6 @@ import (
 	"github.com/saveio/carrier/network"
 	"github.com/saveio/pylons/actor/client"
 	"github.com/saveio/pylons/common"
-	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network/transport/messages"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis/common/log"
@@ -105,7 +104,7 @@ func (this *Transport) GetQueue(queueId *transfer.QueueIdentifier) *Queue {
 }
 
 func (this *Transport) InitQueue(queueId *transfer.QueueIdentifier) *Queue {
-	q := NewQueue(uint32(constants.MaxMsgQueue))
+	q := NewQueue(uint32(common.Config.MaxMsgQueue))
 	this.messageQueues.Store(*queueId, q)
 
 	// queueId cannot be pointer type otherwise it might be updated outside QueueSend

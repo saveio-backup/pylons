@@ -45,14 +45,14 @@ func DefaultChannelConfig() *ChannelConfig {
 	return config
 }
 
-func NewChannelService(config *ChannelConfig, account *account.Account) (*Channel, error) {
-	settleTimeout, revealTimeout, err := getTimeout(config)
+func NewChannelService(channelConfig *ChannelConfig, account *account.Account) (*Channel, error) {
+	settleTimeout, revealTimeout, err := getTimeout(channelConfig)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
 
-	blockChainService := network.NewBlockChainService(config.ClientType, config.ChainNodeURLs, account)
+	blockChainService := network.NewBlockChainService(channelConfig.ClientType, channelConfig.ChainNodeURLs, account)
 	if blockChainService == nil {
 		log.Fatal("creating blockChain service failed")
 		return nil, errors.New("creating blockChain service failed")
@@ -66,17 +66,27 @@ func NewChannelService(config *ChannelConfig, account *account.Account) (*Channe
 
 	// construct the option map
 	option := map[string]string{
-		"database_path":  config.DBPath,
-		"block_delay":    config.BlockDelay,
+		"database_path":  channelConfig.DBPath,
+		"block_delay":    channelConfig.BlockDelay,
 		"settle_timeout": strconv.Itoa(settleTimeout),
 		"reveal_timeout": strconv.Itoa(revealTimeout),
+	}
+
+	if channelConfig.BlockDelay != "" {
+		blockDelay, err := strconv.Atoi(channelConfig.BlockDelay)
+		if err != nil {
+			log.Fatal("Invalid BlockDelay")
+			return nil, fmt.Errorf("invalid BlockDelay error:%s", err.Error())
+		}
+		common.SetMaxBlockDelay(blockDelay)
+		log.Infof("[NewChannelService] SetMaxBlockDelay blockDelay: %d", blockDelay)
 	}
 
 	service := ch.NewChannelService(blockChainService, common.BlockHeight(startBlock),
 		common.Address(utils.MicroPayContractAddress), new(ch.MessageHandler), option)
 	log.Info("channel service created, use account ", blockChainService.GetAccount().Address.ToBase58())
 
-	channel := &Channel{Config: config, Service: service}
+	channel := &Channel{Config: channelConfig, Service: service}
 	return channel, nil
 }
 

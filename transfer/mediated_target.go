@@ -18,7 +18,7 @@ func TgEventsForOnChainSecretReveal(targetState *TargetTransferState, channelSta
 
 	secretKnownOffChain := IsSecretKnownOffChain(channelState.PartnerState, common.SecretHash(transfer.Lock.SecretHash))
 
-	hasOnchainRevealStarted := (targetState.State == "onchain_secret_reveal")
+	hasOnchainRevealStarted := targetState.State == "onchain_secret_reveal"
 	if !safeToWait && secretKnownOffChain && !hasOnchainRevealStarted {
 		targetState.State = "onchain_secret_reveal"
 		secret := GetSecret(channelState.PartnerState, common.SecretHash(transfer.Lock.SecretHash))

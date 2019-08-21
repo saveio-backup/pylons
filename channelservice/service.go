@@ -179,7 +179,7 @@ func (self *ChannelService) InitDB() error {
 		return err
 	}
 	stateChangeQty := sqliteStorage.CountStateChanges()
-	self.snapshotGroup = stateChangeQty / constants.SnapshotStateChangeCount
+	self.snapshotGroup = stateChangeQty / common.Config.SnapshotStateChangeCount
 
 	var lastLogBlockHeight common.BlockHeight
 	self.Wal = storage.RestoreToStateChange(transfer.StateTransition, sqliteStorage, "latest",
@@ -280,7 +280,7 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 	}
 	//take snapshot
 
-	newSnapShotGroup := self.Wal.StateChangeId / constants.SnapshotStateChangeCount
+	newSnapShotGroup := self.Wal.StateChangeId / common.Config.SnapshotStateChangeCount
 	if newSnapShotGroup > self.snapshotGroup {
 		log.Infof("storing snapshot, Snapshot Id = %d, LastFilterBlockHeight = %d", newSnapShotGroup, self.GetLastFilterBlock())
 		self.Wal.Snapshot()
@@ -768,7 +768,7 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 	log.Info("wait for new channel ... ")
 	channelState := WaitForNewChannel(self, common.PaymentNetworkID(self.microAddress),
 		common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), partnerAddress,
-		constants.OpenChannelRetryTimeOut, constants.OpenChannelRetryTimes)
+		common.Config.OpenChannelRetryTimeOut, common.Config.OpenChannelRetryTimes)
 	if channelState == nil {
 		err = fmt.Errorf("WaitForNewChannel setup channel timeout")
 		log.Errorf("[OpenChannel] error: %s", err.Error())
@@ -824,7 +824,7 @@ func (self *ChannelService) SetTotalChannelDeposit(tokenAddress common.TokenAddr
 	targetAddress := self.address
 	log.Info("wait for balance updated...")
 	err = WaitForParticipantNewBalance(self, common.PaymentNetworkID(self.microAddress), tokenAddress, partnerAddress,
-		targetAddress, totalDeposit, constants.DepositRetryTimeout)
+		targetAddress, totalDeposit, common.Config.DepositRetryTimeout)
 
 	if err != nil {
 		log.Errorf("wait for new balance failed, err", err)

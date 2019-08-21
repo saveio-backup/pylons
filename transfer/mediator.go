@@ -68,7 +68,8 @@ func MdIsSafeToWait(lockExpiration common.BlockExpiration, revealTimeout common.
 
 	lockTimeout := common.BlockHeight(lockExpiration) - blockNumber
 	if common.BlockTimeout(lockTimeout) > revealTimeout {
-		log.Debugf("lock timeout is safe. LockExpiration %d, blockNumber %d, revealTimeout %d", lockExpiration, blockNumber, revealTimeout)
+		log.Debugf("lock timeout is safe. LockExpiration %d, blockNumber %d, revealTimeout %d",
+			lockExpiration, blockNumber, revealTimeout)
 		return true, nil
 	}
 	err = fmt.Errorf(`lock timeout is unsafe. timeout must be larger than %d,
@@ -968,9 +969,7 @@ func eventsToRemoveExpiredLocks(mediatorState *MediatorTransferState,
 		}
 		if lock != nil {
 			lockExpirationThreshold := lock.Expiration + DefaultNumberOfBlockConfirmations*2
-			hasLockExpired, _ := IsLockExpired(channelState.OurState, lock, blockNumber,
-				lockExpirationThreshold)
-
+			hasLockExpired, _ := IsLockExpired(channelState.OurState, lock, blockNumber, lockExpirationThreshold)
 			if hasLockExpired {
 				transferPair.PayeeState = "payee_expired"
 				expiredLockEvents := EventsForExpiredLock(channelState, lock)
@@ -1157,18 +1156,16 @@ func MdHandleBlock(mediatorState *MediatorTransferState, stateChange *Block,
 		return nil
 	}
 
-	secretRevealEvents := eventsForOnChainSecretRevealIfDangerzone(
-		channelIdentifiersToChannels, mediatorState.SecretHash,
-		mediatorState.TransfersPair, stateChange.BlockHeight)
+	secretRevealEvents := eventsForOnChainSecretRevealIfDangerzone(channelIdentifiersToChannels,
+		mediatorState.SecretHash, mediatorState.TransfersPair, stateChange.BlockHeight)
 	if len(secretRevealEvents) != 0 {
 		log.Debug("[MdHandleBlock] eventsForOnChainSecretRevealIfDangerzone len(secretRevealEvents) != 0")
 	} else {
 		log.Debug("[MdHandleBlock] eventsForOnChainSecretRevealIfDangerzone len(secretRevealEvents) == 0")
 	}
 
-	unlockFailEvents := eventsForExpiredPairs(channelIdentifiersToChannels,
-		mediatorState.TransfersPair, mediatorState.WaitingTransfer,
-		stateChange.BlockHeight)
+	unlockFailEvents := eventsForExpiredPairs(channelIdentifiersToChannels, mediatorState.TransfersPair,
+		mediatorState.WaitingTransfer, stateChange.BlockHeight)
 	if len(unlockFailEvents) != 0 {
 		log.Debug("[MdHandleBlock] eventsForExpiredPairs len(unlockFailEvents) != 0")
 	} else {
@@ -1178,13 +1175,7 @@ func MdHandleBlock(mediatorState *MediatorTransferState, stateChange *Block,
 	events = append(events, unlockFailEvents...)
 	events = append(events, secretRevealEvents...)
 	events = append(events, expiredLocksEvents...)
-
-	iteration := &TransitionResult{
-		NewState: mediatorState,
-		Events:   events,
-	}
-
-	return iteration
+	return &TransitionResult{NewState: mediatorState, Events: events}
 }
 
 func MdHandleRefundTransfer(mediatorState *MediatorTransferState, mediatorStateChange *ReceiveTransferRefund,
