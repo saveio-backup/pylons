@@ -28,6 +28,7 @@ import (
 	"github.com/saveio/themis/account"
 	comm "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
+	mpay "github.com/saveio/themis/smartcontract/service/native/micropayment"
 	scUtils "github.com/saveio/themis/smartcontract/service/native/utils"
 )
 
@@ -436,12 +437,22 @@ func (self *ChannelService) CallbackNewBlock(chainBlockHeight common.BlockHeight
 			return
 		}
 
+		secretRevealEvents, secretRevealPos, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannelByEventId(
+			comm.Address(self.microAddress), comm.ADDRESS_EMPTY, mpay.EVENT_SECRET_REVEALED, uint32(fromBlock), uint32(toBlock))
+		if err != nil {
+			log.Errorf("CallbackNewBlock GetFilterArgsForAllEventsFromChannelByEventId for secret reveal error: %s", err)
+			return
+		}
+
+		var start uint32
+		var end uint32
 		for i := fromBlock; i <= toBlock; i++ {
 			self.lastFilterBlock = i
 
+			// handle channel events releated with self
 			if pos, ok := posMap[uint32(i)]; ok {
-				start := pos[0]
-				end := pos[1]
+				start = pos[0]
+				end = pos[1]
 				if end == 0 {
 					end = start
 				}
@@ -451,6 +462,21 @@ func (self *ChannelService) CallbackNewBlock(chainBlockHeight common.BlockHeight
 					OnBlockchainEvent(self, event)
 				}
 			}
+
+			// handle secret reveal events
+			if secPos, ok := secretRevealPos[uint32(i)]; ok {
+				start = secPos[0]
+				end = secPos[1]
+				if end == 0 {
+					end = start
+				}
+
+				eventsSlice := secretRevealEvents[start : end+1]
+				for _, event := range eventsSlice {
+					OnBlockchainEvent(self, event)
+				}
+			}
+
 			block := new(transfer.Block)
 			block.BlockHeight = i
 			block.BlockHash = common.BlockHash{}
