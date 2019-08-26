@@ -242,7 +242,6 @@ func (self *ChannelService) StartService() error {
 	self.InitializeMessagesQueues(chainState)
 
 	self.alarm.Start()
-	self.StartNeighboursHealthCheck()
 	log.Info("channel service started")
 	return nil
 }
