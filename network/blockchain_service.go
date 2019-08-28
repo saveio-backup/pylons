@@ -19,7 +19,7 @@ type BlockchainService struct {
 	mutex         sync.Mutex
 	ChainClient   *chainsdk.Chain
 	ChannelClient *chnsdk.Channel
-	currentHeight uint32
+	currentHeight common.BlockHeight
 
 	tokenNetwork               *proxies.TokenNetwork
 	secretRegistry             *proxies.SecretRegistry
@@ -57,14 +57,14 @@ func NewBlockChainService(clientType string, url []string, account *account.Acco
 	}
 
 	if account == nil {
-		log.Error("NewBlockchainservice Account is nil")
+		log.Error("NewBlockChainService Account is nil")
 		return nil
 	}
 
 	this.Account = account
 	this.ChainClient.SetDefaultAccount(account)
 	this.ChannelClient = this.ChainClient.Native.Channel
-	log.Info("blockchain service link to", url)
+	log.Info("blockChain service link to", url)
 	this.currentHeight, _ = this.BlockHeight()
 	this.Address = common.Address(account.Address)
 	return this
@@ -78,11 +78,11 @@ func (this *BlockchainService) GetAllOpenChannels() (*micropayment.AllChannels, 
 	return this.ChannelClient.GetAllOpenChannels()
 }
 
-func (this *BlockchainService) BlockHeight() (uint32, error) {
+func (this *BlockchainService) BlockHeight() (common.BlockHeight, error) {
 	if height, err := this.ChainClient.GetCurrentBlockHeight(); err == nil {
-		return height, nil
+		return common.BlockHeight(height), nil
 	} else {
-		return uint32(0), err
+		return 0, err
 	}
 }
 

@@ -417,82 +417,97 @@ func (self *ChannelService) UpdateRouteMap() {
 	}
 }
 
-func (self *ChannelService) CallbackNewBlock(chainBlockHeight common.BlockHeight, blockHash common.BlockHash) {
-	fromBlock := self.lastFilterBlock + 1
-	toBlock := chainBlockHeight
-
-	log.Infof("[CallbackNewBlock] from %d to %d", fromBlock, toBlock)
-	fastMode := false
-	if (toBlock - fromBlock) > 10 {
-		fastMode = true
-		log.Infof("[CallbackNewBlock] fast sync mode")
+func (self *ChannelService) CallbackNewBlock() {
+	chainBlockHeight, err := self.chain.BlockHeight()
+	if err != nil {
+		log.Errorf("[CallbackNewBlock] GetBlockHeight error: %s", err.Error())
+		return
+	}
+	if chainBlockHeight <= self.lastFilterBlock {
+		return
 	}
 
-	if self.firstRun || fastMode {
-		events, posMap, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannelByEventId(
-			comm.Address(self.microAddress), self.Account.Address, 0, uint32(fromBlock), uint32(toBlock))
-		if err != nil {
-			log.Errorf("CallbackNewBlock GetFilterArgsForAllEventsFromChannelByEventId error: %s", err)
-			return
-		}
+	if self.firstRun || chainBlockHeight-self.lastFilterBlock > 10 {
+		for ; ; {
+			bgnBlockHeight := self.lastFilterBlock + 1
+			endBlockHeight, err := self.chain.BlockHeight()
+			if err != nil {
+				log.Errorf("[CallbackNewBlock] GetBlockHeight error: %s", err.Error())
+				time.Sleep(3 * time.Second)
+				continue
+			}
+			if endBlockHeight-self.lastFilterBlock < 3 {
+				log.Infof("[CallbackNewBlock] FastSync done. LastFilterBlock(%d) ChainBlockHeight(%d)",
+					self.lastFilterBlock, endBlockHeight)
+				break
+			}
+			log.Infof("[CallbackNewBlock] FastSync begin, From: %d, To: %d", bgnBlockHeight, endBlockHeight)
 
-		secretRevealEvents, secretRevealPos, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannelByEventId(
-			comm.Address(self.microAddress), comm.ADDRESS_EMPTY, mpay.EVENT_SECRET_REVEALED, uint32(fromBlock), uint32(toBlock))
-		if err != nil {
-			log.Errorf("CallbackNewBlock GetFilterArgsForAllEventsFromChannelByEventId for secret reveal error: %s", err)
-			return
-		}
-
-		var start uint32
-		var end uint32
-		for i := fromBlock; i <= toBlock; i++ {
-			self.lastFilterBlock = i
-
-			// handle channel events releated with self
-			if pos, ok := posMap[uint32(i)]; ok {
-				start = pos[0]
-				end = pos[1]
-				if end == 0 {
-					end = start
-				}
-
-				eventsSlice := events[start : end+1]
-				for _, event := range eventsSlice {
-					OnBlockchainEvent(self, event)
-				}
+			events, posMap, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannelByEventId(
+				comm.Address(self.microAddress), self.Account.Address, 0, uint32(bgnBlockHeight), uint32(endBlockHeight))
+			if err != nil {
+				log.Errorf("CallbackNewBlock GetFilterArgsForAllEventsFromChannelByEventId error: %s", err)
+				return
 			}
 
-			// handle secret reveal events
-			if secPos, ok := secretRevealPos[uint32(i)]; ok {
-				start = secPos[0]
-				end = secPos[1]
-				if end == 0 {
-					end = start
-				}
-
-				eventsSlice := secretRevealEvents[start : end+1]
-				for _, event := range eventsSlice {
-					OnBlockchainEvent(self, event)
-				}
+			secretRevealEvents, secretRevealPos, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannelByEventId(
+				comm.Address(self.microAddress), comm.ADDRESS_EMPTY, mpay.EVENT_SECRET_REVEALED, uint32(bgnBlockHeight), uint32(endBlockHeight))
+			if err != nil {
+				log.Errorf("CallbackNewBlock GetFilterArgsForAllEventsFromChannelByEventId for secret reveal error: %s", err)
+				return
 			}
 
-			block := new(transfer.Block)
-			block.BlockHeight = i
-			block.BlockHash = common.BlockHash{}
-			self.HandleStateChange(block)
-		}
+			var start uint32
+			var end uint32
+			for i := bgnBlockHeight; i <= endBlockHeight; i++ {
+				// handle channel events releate with self
+				if pos, ok := posMap[uint32(i)]; ok {
+					start = pos[0]
+					end = pos[1]
+					if end == 0 {
+						end = start
+					}
 
+					eventsSlice := events[start : end+1]
+					for _, event := range eventsSlice {
+						OnBlockchainEvent(self, event)
+					}
+				}
+
+				// handle secret reveal events
+				if secPos, ok := secretRevealPos[uint32(i)]; ok {
+					start = secPos[0]
+					end = secPos[1]
+					if end == 0 {
+						end = start
+					}
+
+					eventsSlice := secretRevealEvents[start : end+1]
+					for _, event := range eventsSlice {
+						OnBlockchainEvent(self, event)
+					}
+				}
+
+				block := &transfer.Block{}
+				block.BlockHeight = common.BlockHeight(i)
+				block.BlockHash = common.BlockHash{}
+				self.HandleStateChange(block)
+				self.lastFilterBlock = common.BlockHeight(i)
+			}
+		}
 		self.UpdateRouteMap()
 		self.firstRun = false
 	} else {
-		for i := fromBlock; i <= toBlock; i++ {
+		bgnBlockHeight := self.lastFilterBlock + 1
+		log.Infof("[CallbackNewBlock] From: %d, To: %d, BlockCount: %d", bgnBlockHeight, chainBlockHeight,
+			chainBlockHeight-bgnBlockHeight+1)
+		for i := bgnBlockHeight; i <= chainBlockHeight; i++ {
 			events, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannel(0, uint32(i), uint32(i))
 			if err != nil {
-				self.lastFilterBlock = i - 1
-				log.Errorf("CallbackNewBlock GetFilterArgsForAllEventsFromChannel error: %s", err)
+				log.Errorf("[CallbackNewBlock] GetFilterArgsForAllEventsFromChannel error: %s", err)
 				return
 			}
-			self.lastFilterBlock = i
+
 			for _, event := range events {
 				OnBlockchainEvent(self, event)
 			}
@@ -500,18 +515,17 @@ func (self *ChannelService) CallbackNewBlock(chainBlockHeight common.BlockHeight
 			/*
 				hash, err := self.chain.ChannelClient.Client.GetBlockHash(uint32(i))
 				if err != nil {
-					self.lastFilterBlock = i - 1
 					return
 				}
 			*/
-			block := new(transfer.Block)
+			block := &transfer.Block{}
 			block.BlockHeight = i
 			//block.BlockHash = common.BlockHash(hash[:])
 			block.BlockHash = common.BlockHash{}
 			self.HandleStateChange(block)
+			self.lastFilterBlock = i
 		}
 	}
-	self.lastFilterBlock = toBlock
 	log.Infof("[CallbackNewBlock] finish")
 }
 
