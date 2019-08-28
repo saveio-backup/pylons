@@ -120,7 +120,7 @@ func NewChannelService(chain *network.BlockchainService, queryStartBlock common.
 
 	customDBPath, _ := config["database_path"]
 	self.setDBPath(customDBPath, networkId)
-
+	self.initDB()
 	return self
 }
 
@@ -172,7 +172,7 @@ func (self *ChannelService) setDBPath(customDBPath string, dbId uint32) {
 	log.Info("[setDBPath] database set to", self.databasePath)
 }
 
-func (self *ChannelService) InitDB() error {
+func (self *ChannelService) initDB() error {
 	sqliteStorage, err := storage.NewSQLiteStorage(self.databasePath)
 	if err != nil {
 		log.Error("create db failed:", err)
@@ -229,14 +229,17 @@ func (self *ChannelService) InitDB() error {
 	return nil
 }
 
-func (self *ChannelService) StartService() error {
+func (self *ChannelService) SyncBlockData() error {
 	self.alarm.RegisterCallback(self.CallbackNewBlock)
-	err := self.alarm.FirstRun()
-	if err != nil {
-		log.Error("run alarm call back failed:", err)
+	if err := self.alarm.FirstRun(); err != nil {
+		log.Error("[SyncBlockData] run alarm call back failed:", err)
 		return err
 	}
+	return nil
+}
 
+func (self *ChannelService) StartService() error {
+	self.UpdateRouteMap()
 	chainState := self.StateFromChannel()
 	self.InitializeTransactionsQueues(chainState)
 	self.InitializeMessagesQueues(chainState)
@@ -254,10 +257,10 @@ func (self *ChannelService) checkAddressIntegrity(chainState *transfer.ChainStat
 	return nil
 }
 
-func (self *ChannelService) Stop() {
+func (self *ChannelService) StopService() {
+	self.Transport.Stop()
 	self.alarm.Stop()
 	self.Wal.Storage.Close()
-	self.Transport.Stop()
 	log.Info("channel service stopped")
 }
 
@@ -428,7 +431,7 @@ func (self *ChannelService) CallbackNewBlock() {
 	}
 
 	if self.firstRun || chainBlockHeight-self.lastFilterBlock > 10 {
-		for ; ; {
+		for {
 			bgnBlockHeight := self.lastFilterBlock + 1
 			endBlockHeight, err := self.chain.BlockHeight()
 			if err != nil {
@@ -495,7 +498,9 @@ func (self *ChannelService) CallbackNewBlock() {
 				self.lastFilterBlock = common.BlockHeight(i)
 			}
 		}
-		self.UpdateRouteMap()
+		if self.firstRun == false {
+			self.UpdateRouteMap()
+		}
 		self.firstRun = false
 	} else {
 		bgnBlockHeight := self.lastFilterBlock + 1

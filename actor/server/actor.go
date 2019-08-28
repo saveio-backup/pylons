@@ -15,6 +15,34 @@ const (
 	defaultMaxTimeOut = 24000
 )
 
+func StartPylons() error {
+	ret := &StartPylonsRet{
+		Done: make(chan bool, 1),
+		Err:  nil,
+	}
+	startPylonsReq := &StartPylonsReq{Ret: ret}
+	ChannelServerPid.Tell(startPylonsReq)
+	if err := waitForCallDone(startPylonsReq.Ret.Done, "StartPylons", defaultMaxTimeOut); err != nil {
+		return err
+	} else {
+		return startPylonsReq.Ret.Err
+	}
+}
+
+func StopPylons() error {
+	ret := &StopPylonsRet{
+		Done: make(chan bool, 1),
+		Err:  nil,
+	}
+	stopPylonsReq := &StopPylonsReq{Ret: ret}
+	ChannelServerPid.Tell(stopPylonsReq)
+	if err := waitForCallDone(stopPylonsReq.Ret.Done, "StopPylons", defaultMaxTimeOut); err != nil {
+		return err
+	} else {
+		return stopPylonsReq.Ret.Err
+	}
+}
+
 func GetVersion() (string, error) {
 	ret := &VersionRet{
 		Version: "",

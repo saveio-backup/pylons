@@ -1936,7 +1936,7 @@ func HandleReceiveLockedTransfer(channelState *NettingChannelState,
 		}}
 		events = append(events, sendProcessed)
 	} else {
-		log.Error("[HandleReceiveLockedTransfer] IsValidLockedTransfer, error: %s", err.Error())
+		log.Errorf("[HandleReceiveLockedTransfer] IsValidLockedTransfer, error: %s", err.Error())
 		invalidLocked := &EventInvalidReceivedLockedTransfer{
 			PaymentIdentifier: mediatedTransfer.PaymentIdentifier,
 			Reason:            err.Error(),

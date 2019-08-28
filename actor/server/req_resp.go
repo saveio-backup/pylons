@@ -22,6 +22,24 @@ type ChannelsInfoResp struct {
 	Channels      []*ChannelInfo
 }
 
+type StartPylonsRet struct {
+	Done chan bool
+	Err  error
+}
+
+type StartPylonsReq struct {
+	Ret *StartPylonsRet
+}
+
+type StopPylonsRet struct {
+	Done chan bool
+	Err  error
+}
+
+type StopPylonsReq struct {
+	Ret *StopPylonsRet
+}
+
 type VersionRet struct {
 	Version string
 	Done    chan bool

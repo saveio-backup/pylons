@@ -36,24 +36,16 @@ func NewChannelActor(config *oc.ChannelConfig, account *account.Account) (*Chann
 	if channelActorServer.chSrv, err = oc.NewChannelService(config, account); err != nil {
 		return nil, err
 	}
-	if err = channelActorServer.chSrv.Service.InitDB(); err != nil {
-		return nil, err
-	}
 	ChannelServerPid = channelActorServer.localPID
 	return channelActorServer, nil
 }
 
-func (this *ChannelActorServer) Start() error {
-	var err error
-	err = this.chSrv.StartService()
+func (this *ChannelActorServer) SyncBlockData() error {
+	err := this.chSrv.Service.SyncBlockData()
 	if err != nil {
-		log.Error("[ChannelActorServer] ChannelService Start error: ", err.Error())
+		log.Error("[ChannelActorServer] SyncBlockData error: ", err.Error())
 	}
 	return err
-}
-
-func (this *ChannelActorServer) Stop() {
-	this.chSrv.Stop()
 }
 
 func (this *ChannelActorServer) Receive(ctx actor.Context) {
@@ -68,6 +60,17 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		log.Debug("[ChannelActorServer] Actor started")
 	case *actor.Restart:
 		log.Warn("[ChannelActorServer] Actor restart")
+	case *StartPylonsReq:
+		go func() {
+			msg.Ret.Err = this.chSrv.StartPylons()
+			msg.Ret.Done <- true
+		}()
+	case *StopPylonsReq:
+		go func() {
+			this.chSrv.StopPylons()
+			msg.Ret.Err = nil
+			msg.Ret.Done <- true
+		}()
 	case *VersionReq:
 		go func() {
 			msg.Ret.Version = this.chSrv.GetVersion()

@@ -14,7 +14,6 @@ import (
 	"github.com/saveio/pylons/actor/client"
 	ch_actor "github.com/saveio/pylons/actor/server"
 	"github.com/saveio/pylons/common"
-	"github.com/saveio/pylons/test/p2p/actor/req"
 	p2p_actor "github.com/saveio/pylons/test/p2p/actor/server"
 	p2p "github.com/saveio/pylons/test/p2p/network"
 	tc "github.com/saveio/pylons/test/testnet/test_config"
@@ -74,14 +73,13 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetGetHostAddrCallback(tc.GetHostAddrCallBack); err != nil {
+	err = ChannelActor.SyncBlockData()
+	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	chnPid := ChannelActor.GetLocalPID()
-
-	//start p2p and actor
+	//start p2p
 	channelP2p := p2p.NewP2P()
 	bPrivate := keypair.SerializePrivateKey(account.PrivKey())
 	bPub := keypair.SerializePublicKey(account.PubKey())
@@ -95,6 +93,8 @@ func main() {
 		log.Fatal(err)
 		return
 	}
+
+	//bind p2p and p2p actor
 	p2pActor, err := p2p_actor.NewP2PActor()
 	if err != nil {
 		log.Fatal(err)
@@ -102,11 +102,16 @@ func main() {
 	}
 	p2pActor.SetChannelNetwork(channelP2p)
 
-	//binding channel and p2p pid
-	req.SetChannelPid(chnPid)
+	//binding channel and p2p actor
 	client.SetP2pPid(p2pActor.GetLocalPID())
+
+	if err = ch_actor.SetGetHostAddrCallback(tc.GetHostAddrCallBack); err != nil {
+		log.Fatal(err)
+		return
+	}
+
 	//start channel service
-	err = ChannelActor.Start()
+	err = ch_actor.StartPylons()
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -128,7 +133,7 @@ func main() {
 			return
 		}
 		log.Info("deposit successful")
-
+		time.Sleep(6 * time.Second)
 		//for {
 		//	ret, err := ch_actor.ChannelReachable(tc.Dns1Addr)
 		//	var state string

@@ -11,7 +11,6 @@ import (
 	"github.com/saveio/pylons/actor/client"
 	ch_actor "github.com/saveio/pylons/actor/server"
 	"github.com/saveio/pylons/common"
-	"github.com/saveio/pylons/test/p2p/actor/req"
 	p2p_actor "github.com/saveio/pylons/test/p2p/actor/server"
 	p2p "github.com/saveio/pylons/test/p2p/network"
 	tc "github.com/saveio/pylons/test/testnet/test_config"
@@ -25,7 +24,6 @@ import (
 
 func main() {
 	log.Init(log.PATH, log.Stdout)
-	//tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 
 	wallet, err := wallet.OpenWallet("./wallet.dat")
 	if err != nil {
@@ -48,13 +46,13 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	if err = ch_actor.SetGetHostAddrCallback(tc.GetHostAddrCallBack); err != nil {
+	err = ChannelActor.SyncBlockData()
+	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	chnPid := ChannelActor.GetLocalPID()
-	//start p2p and actor
+	//start p2p
 	channelP2p := p2p.NewP2P()
 	bPrivate := keypair.SerializePrivateKey(account.PrivKey())
 	bPub := keypair.SerializePublicKey(account.PubKey())
@@ -63,11 +61,13 @@ func main() {
 		PublicKey:  bPub,
 	}
 
-	err = channelP2p.Start(Media.ListenAddress)
+	err = channelP2p.Start(tc.Parameters.BaseConfig.DnsListenAddr)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
+
+	//bind p2p and p2p actor
 	p2pActor, err := p2p_actor.NewP2PActor()
 	if err != nil {
 		log.Fatal(err)
@@ -75,33 +75,21 @@ func main() {
 	}
 	p2pActor.SetChannelNetwork(channelP2p)
 
-	//binding channel and p2p pid
-	req.SetChannelPid(chnPid)
+	//binding channel and p2p actor
 	client.SetP2pPid(p2pActor.GetLocalPID())
+
+	if err = ch_actor.SetGetHostAddrCallback(tc.GetHostAddrCallBack); err != nil {
+		log.Fatal(err)
+		return
+	}
+
 	//start channel service
-	err = ChannelActor.Start()
+	err = ch_actor.StartPylons()
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 	time.Sleep(time.Second)
-	//
-	//channelId, err := ch_actor.OpenChannel(tokenAddress, tc.Target1Addr)
-	//if err != nil {
-	//	log.Fatal(err)
-	//	return
-	//}
-	//
-	//depositAmount := common.TokenAmount(1000 * 1000000000)
-	//log.Infof("start to deposit %d token to channel %d", depositAmount, channelId)
-	//err = ch_actor.SetTotalChannelDeposit(tokenAddress, tc.Target1Addr, depositAmount)
-	//if err != nil {
-	//	log.Fatal(err)
-	//	return
-	//}
-	//log.Info("deposit successful")
-
-	//	go currentBalance(ChannelActor.GetChannelService())
 	waitToExit()
 }
 

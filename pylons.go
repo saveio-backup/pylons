@@ -118,12 +118,12 @@ func getTimeout(config *ChannelConfig) (settle int, reveal int, err error) {
 	return settleTimeout, revealTimeout, nil
 }
 
-func (this *Channel) StartService() error {
+func (this *Channel) StartPylons() error {
 	return this.Service.StartService()
 }
 
-func (this *Channel) Stop() {
-	this.Service.Stop()
+func (this *Channel) StopPylons() {
+	this.Service.StopService()
 }
 
 func (this *Channel) RegisterReceiveNotification(notificationChannel chan *transfer.EventPaymentReceivedSuccess) {
