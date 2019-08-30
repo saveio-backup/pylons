@@ -45,8 +45,8 @@ func GetPendingTransactions(chainState *ChainState) []Event {
 	return chainState.PendingTransactions
 }
 
-func GetAllMessageQueues(chainState *ChainState) *QueueIdsToQueuesType {
-	return &chainState.QueueIdsToQueues
+func GetAllMessageQueues(chainState *ChainState) QueueIdsToQueuesType {
+	return chainState.QueueIdsToQueues
 }
 
 func GetNetworkStatuses(chainState *ChainState) *map[common.Address]string {

@@ -24,6 +24,7 @@ type ChannelServiceInterface interface {
 	Sign(message interface{}) error
 	HandleStateChange(stateChange transfer.StateChange) []transfer.Event
 	StateFromChannel() *transfer.ChainState
+	GetAllMessageQueues() transfer.QueueIdsToQueuesType
 }
 
 type Transport struct {
@@ -198,6 +199,23 @@ func (this *Transport) Stop() {
 	log.Debug("transport stopped")
 }
 
+func (this *Transport) CheckIfNeedRemove(queueId *transfer.QueueIdentifier, item *QueueItem) bool {
+	messageId := common.MessageID(item.messageId.MessageId)
+	queues := this.ChannelService.GetAllMessageQueues()
+
+	// check if queue exist
+	if events, exist := queues[*queueId]; exist {
+		// check if messageid in queue
+		for _, event := range events {
+			message := transfer.GetSenderMessageEvent(event)
+			if message.MessageIdentifier == messageId {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifier) error {
 	item, ok := queue.Peek()
 	if !ok {
@@ -205,6 +223,14 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 	}
 
 	msg := item.(*QueueItem).message
+	msgId := common.MessageID(item.(*QueueItem).messageId.MessageId)
+
+	if this.CheckIfNeedRemove(queueId, item.(*QueueItem)) {
+		log.Debugf("remove msg msg = %+v\n", msg)
+		queue.DeliverChan <- &messages.MessageID{MessageId: uint64(msgId)}
+		return nil
+	}
+
 	log.Debugf("send msg msg = %+v\n", msg)
 	address, err := this.GetHostAddr(queueId.Recipient)
 	if err != nil {
@@ -212,7 +238,6 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifi
 		return errors.New("no valid address to send message")
 	}
 
-	msgId := common.MessageID(item.(*QueueItem).messageId.MessageId)
 	log.Debugf("[PeekAndSend] address: %s msgId: %v, queue: %p\n", address, msgId, queue)
 
 	this.addressQueueMap.LoadOrStore(msgId, queue)

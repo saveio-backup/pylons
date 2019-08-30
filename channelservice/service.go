@@ -360,7 +360,7 @@ func (self *ChannelService) InitializeMessagesQueues(chainState *transfer.ChainS
 	eventsQueues := transfer.GetAllMessageQueues(chainState)
 	log.Debug("InitializeMessagesQueues len(chainState.PendingTransactions): ", len(chainState.PendingTransactions))
 
-	for queueIdentifier, eventQueue := range *eventsQueues {
+	for queueIdentifier, eventQueue := range eventsQueues {
 		self.Transport.StartHealthCheck(queueIdentifier.Recipient)
 		log.Debug("[InitializeMessagesQueues] : ChannelIdentifier", queueIdentifier.ChannelIdentifier)
 
@@ -1407,6 +1407,10 @@ func (self *ChannelService) GetAvailableBalance(partnerAddress common.Address) (
 		return 0, errors.New("GetAvailableBalance error, channel state is nil")
 	}
 	return transfer.GetDistributable(channelState.OurState, channelState.PartnerState), nil
+}
+
+func (self *ChannelService) GetAllMessageQueues() transfer.QueueIdsToQueuesType {
+	return transfer.GetAllMessageQueues(self.StateFromChannel())
 }
 
 type ChannelInfo struct {

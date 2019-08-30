@@ -144,6 +144,11 @@ func GetSenderMessageEvent(event Event) *SendMessageEvent {
 		result.Recipient = v.Recipient
 		result.ChannelIdentifier = v.ChannelIdentifier
 		result.MessageIdentifier = v.MessageIdentifier
+	case *SendCooperativeSettle:
+		v, _ := event.(*SendCooperativeSettle)
+		result.Recipient = v.Recipient
+		result.ChannelIdentifier = v.ChannelIdentifier
+		result.MessageIdentifier = v.MessageIdentifier
 	default:
 		//log.Warn("[GetSenderMessageEvent] eventType: ", reflect.TypeOf(event).String())
 		result = nil
