@@ -558,15 +558,20 @@ func SecretRandom(len int) []byte {
 	} else {
 		return nil
 	}
-
 }
 
 func ToBase58(address Address) string {
 	addr := chainCom.Address(address)
 	return addr.ToBase58()
 }
-func FromBase58(addr string) (chainCom.Address, error) {
-	return chainCom.AddressFromBase58(addr)
+func FromBase58(addr string) (Address, error) {
+	addressTmp, err := chainCom.AddressFromBase58(addr)
+	if err != nil {
+		return Address{}, err
+	}
+	var addrTmp Address
+	copy(addrTmp[:], addressTmp[:])
+	return addrTmp, nil
 }
 func PathExists(path string) bool {
 	_, err := os.Stat(path)
