@@ -23,7 +23,6 @@ import (
 	act "github.com/saveio/pylons/actor/server"
 	"github.com/saveio/pylons/network/transport/messages"
 	test "github.com/saveio/pylons/test/test/config"
-	pm "github.com/saveio/scan/messages/protoMessages"
 	"github.com/saveio/themis/common/log"
 )
 
@@ -66,9 +65,6 @@ var opCodes = map[opcode.Opcode]proto.Message{
 	OpCodeWithdraw:                 &messages.Withdraw{},
 	OpCodeCooperativeSettleRequest: &messages.CooperativeSettleRequest{},
 	OpCodeCooperativeSettle:        &messages.CooperativeSettle{},
-	TempOpCodeTorrent:              &pm.Torrent{}, // TODO: remove this after scan refactoring
-	TempOpCodeRegistry:             &pm.Registry{},
-	TempOpCodeUnRegistry:           &pm.UnRegistry{},
 }
 
 type Network struct {
