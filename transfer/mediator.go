@@ -482,8 +482,7 @@ func backwardTransferPair(backwardChannel *NettingChannelState, payerTransfer *L
 	var lockTimeout common.BlockTimeout
 
 	lock := payerTransfer.Lock
-	log.Debug("lock.Expiration : ", lock.Expiration)
-	log.Debug("blockNumber : ", blockNumber)
+	log.Debugf("lock.Expiration: %d, blockNumber: %d", lock.Expiration, blockNumber)
 	if lock.Expiration > blockNumber {
 		lockTimeout = common.BlockTimeout(lock.Expiration - blockNumber)
 	} else {

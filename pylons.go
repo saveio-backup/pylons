@@ -25,8 +25,6 @@ type ChannelConfig struct {
 	BlockDelay    string
 	SettleTimeout string
 	RevealTimeout string
-
-	ListenAddress string // protocol + ip + port
 }
 
 type Channel struct {
@@ -38,7 +36,6 @@ func DefaultChannelConfig() *ChannelConfig {
 	config := &ChannelConfig{
 		ClientType:    "rpc",
 		ChainNodeURLs: []string{"http://localhost:20336"},
-		ListenAddress: "tcp://127.0.0.1:3001",
 		DBPath:        ".",
 		BlockDelay:    "3",
 	}
@@ -112,7 +109,8 @@ func getTimeout(config *ChannelConfig) (settle int, reveal int, err error) {
 	if settleTimeout < 2*revealTimeout {
 		log.Fatalf("settle timeout(%d) should be at least double of revealTimeout(%d)",
 			settleTimeout, revealTimeout)
-		return 0, 0, err
+		return 0, 0, fmt.Errorf("settle timeout(%d) should be at least double of revealTimeout(%d)",
+			settleTimeout, revealTimeout)
 	}
 
 	return settleTimeout, revealTimeout, nil

@@ -56,7 +56,8 @@ func StartPylons() {
 	var NodeConfig = &ch.ChannelConfig{
 		ClientType:    tc.Parameters.BaseConfig.ChainClientType,
 		ChainNodeURLs: tc.Parameters.BaseConfig.ChainNodeURLs,
-		ListenAddress: listenAddr,
+		SettleTimeout: "50",
+		RevealTimeout: "20",
 	}
 
 	//start channel and actor
