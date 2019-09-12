@@ -13,11 +13,11 @@ const (
 	DefaultMaxMsgQueue              = 10000
 	DefaultAlarmInterval            = 1000
 	DefaultSnapshotStateChangeCount = 5000
-	DefaultPollForConfirmed         = 15
-	DefaultOpenChannelRetryTimeOut  = 300 //ms
-	DefaultOpenChannelRetryTimes    = 5
-	DefaultDepositRetryTimeout      = 300 //ms
-	DefaultDepositRetryTimes        = 5
+	DefaultPollForConfirmed         = 16
+	DefaultOpenChannelRetryTimeOut  = 1000 //ms
+	DefaultOpenChannelRetryTimes    = 16
+	DefaultDepositRetryTimeout      = 1000 //ms
+	DefaultDepositRetryTimes        = 16
 
 	DefaultWithdrawTimeout            = 5
 	DefaultNumberOfMaxBlockDelay      = 3
