@@ -73,6 +73,34 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	return availableRoutes, nil
 }
 
+func GetSpecifiedRoute(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID, media common.Address,
+	fromAddress common.Address, amount common.TokenAmount) ([]transfer.RouteState, error) {
+	var channelId common.ChannelID
+	networkState := channelSrv.GetNodeNetworkState(media)
+	if networkState == transfer.NetworkReachable {
+		channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(),
+			tokenNetworkId, media)
+		if channelState != nil {
+			channelId = channelState.Identifier
+			if valid, err := checkRouteAvailable(channelState, media, fromAddress, amount); valid {
+				log.Infof("[GetSpecifiedRoute] checkRouteAvailable %s valid", common.ToBase58(media))
+			} else {
+				log.Errorf("[GetBestRoutes] checkRouteAvailable %s error: %s", common.ToBase58(media), err.Error())
+				return nil, fmt.Errorf("[GetBestRoutes] checkRouteAvailable %s error: %s", common.ToBase58(media), err.Error())
+			}
+		} else {
+			log.Errorf("[GetBestRoutes] GetChannelStateByTokenNetworkAndPartner %s error", common.ToBase58(media))
+			return nil, fmt.Errorf("[GetBestRoutes] GetChannelStateByTokenNetworkAndPartner %s error", common.ToBase58(media))
+		}
+	} else {
+		log.Errorf("[GetBestRoutes] %s is NetworkUnReachable", common.ToBase58(media))
+		return nil, fmt.Errorf("[GetBestRoutes] %s is NetworkUnReachable", common.ToBase58(media))
+	}
+
+	availableRoutes := []transfer.RouteState{{NodeAddress: media, ChannelIdentifier: channelId}}
+	return availableRoutes, nil
+}
+
 func checkRouteAvailable(channelState *transfer.NettingChannelState, partAddr common.Address,
 	fromAddress common.Address, amount common.TokenAmount) (bool, error) {
 	if transfer.GetStatus(channelState) != transfer.ChannelStateOpened {

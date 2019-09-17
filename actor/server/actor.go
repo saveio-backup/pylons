@@ -128,8 +128,7 @@ func SetTotalChannelDeposit(tokenAddress common.TokenAddress, partnerAddress com
 	}
 }
 
-func DirectTransferAsync(amount common.TokenAmount, target common.Address,
-	identifier common.PaymentID) (bool, error) {
+func DirectTransferAsync(target common.Address, amount common.TokenAmount, identifier common.PaymentID) (bool, error) {
 	ret := &DirectTransferRet{
 		Success: false,
 		Done:    make(chan bool, 1),
@@ -150,8 +149,8 @@ func DirectTransferAsync(amount common.TokenAmount, target common.Address,
 	}
 }
 
-func MediaTransfer(registryAddress common.PaymentNetworkID, tokenAddress common.TokenAddress,
-	amount common.TokenAmount, target common.Address, identifier common.PaymentID) (bool, error) {
+func MediaTransfer(registryAddress common.PaymentNetworkID, tokenAddress common.TokenAddress, media common.Address,
+	target common.Address, amount common.TokenAmount, identifier common.PaymentID) (bool, error) {
 	ret := &MediaTransferRet{
 		Success: false,
 		Done:    make(chan bool, 1),
@@ -160,6 +159,7 @@ func MediaTransfer(registryAddress common.PaymentNetworkID, tokenAddress common.
 	mediaTransferReq := &MediaTransferReq{
 		RegisterAddress: registryAddress,
 		TokenAddress:    tokenAddress,
+		Media:           media,
 		Target:          target,
 		Amount:          amount,
 		Identifier:      identifier,

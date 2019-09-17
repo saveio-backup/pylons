@@ -1062,9 +1062,8 @@ func (self *ChannelService) CheckPayRoute(mediaAddr common.Address, targetAddr c
 	return true, nil
 }
 
-func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkID,
-	tokenAddress common.TokenAddress, amount common.TokenAmount, target common.Address,
-	paymentId common.PaymentID) (chan bool, error) {
+func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkID, tokenAddress common.TokenAddress,
+	media common.Address, target common.Address, amount common.TokenAmount, paymentId common.PaymentID) (chan bool, error) {
 
 	var err error
 	if target == common.EmptyAddress {
@@ -1124,7 +1123,12 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	paymentStatus = self.RegisterPaymentStatus(target, paymentId, common.PAYMENT_MEDIATED,
 		amount, tokenNetworkId)
 
-	actionInitiator, err := self.InitiatorInit(paymentId, amount, secret, tokenNetworkId, target)
+	var actionInitiator *transfer.ActionInitInitiator
+	if media == common.EmptyAddress {
+		actionInitiator, err = self.InitiatorInit(paymentId, amount, secret, tokenNetworkId, target)
+	} else {
+		actionInitiator, err = self.InitiatorInitBySpecifiedMedia(paymentId, media, amount, secret, tokenNetworkId, target)
+	}
 	if err != nil {
 		log.Error("[MediaTransfer]:", err.Error())
 		return nil, err
@@ -1141,9 +1145,8 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	return paymentStatus.paymentDone, nil
 }
 
-func (self *ChannelService) InitiatorInit(transferIdentifier common.PaymentID,
-	transferAmount common.TokenAmount, transferSecret common.Secret,
-	tokenNetworkIdentifier common.TokenNetworkID,
+func (self *ChannelService) InitiatorInit(paymentId common.PaymentID, transferAmount common.TokenAmount,
+	transferSecret common.Secret, tokenNetworkIdentifier common.TokenNetworkID,
 	targetAddress common.Address) (*transfer.ActionInitInitiator, error) {
 	if 0 == bytes.Compare(transferSecret, common.EmptySecretHash[:]) {
 		return nil, fmt.Errorf("Should never end up initiating transfer with Secret 0x0 ")
@@ -1153,7 +1156,7 @@ func (self *ChannelService) InitiatorInit(transferIdentifier common.PaymentID,
 	log.Debug("[InitiatorInit] secretHash: ", secretHash)
 	transferState := &transfer.TransferDescriptionWithSecretState{
 		PaymentNetworkIdentifier: common.PaymentNetworkID{},
-		PaymentIdentifier:        transferIdentifier,
+		PaymentIdentifier:        paymentId,
 		Amount:                   transferAmount,
 		TokenNetworkIdentifier:   tokenNetworkIdentifier,
 		Initiator:                self.address,
@@ -1165,6 +1168,37 @@ func (self *ChannelService) InitiatorInit(transferIdentifier common.PaymentID,
 	var previousAddress common.Address
 	routes, err := GetBestRoutes(self, tokenNetworkIdentifier, self.address, targetAddress, transferAmount,
 		previousAddress)
+	if err != nil {
+		return nil, err
+	}
+	initInitiatorStateChange := &transfer.ActionInitInitiator{
+		TransferDescription: transferState,
+		Routes:              routes,
+	}
+	return initInitiatorStateChange, nil
+}
+
+func (self *ChannelService) InitiatorInitBySpecifiedMedia(paymentId common.PaymentID, media common.Address,
+	transferAmount common.TokenAmount, transferSecret common.Secret, tokenNetworkIdentifier common.TokenNetworkID,
+	targetAddress common.Address) (*transfer.ActionInitInitiator, error) {
+	if 0 == bytes.Compare(transferSecret, common.EmptySecretHash[:]) {
+		return nil, fmt.Errorf("Should never end up initiating transfer with Secret 0x0 ")
+	}
+
+	secretHash := common.GetHash(transferSecret)
+	log.Debug("[InitiatorInitBySpecifiedMedia] secretHash: ", secretHash)
+	transferState := &transfer.TransferDescriptionWithSecretState{
+		PaymentNetworkIdentifier: common.PaymentNetworkID{},
+		PaymentIdentifier:        paymentId,
+		Amount:                   transferAmount,
+		TokenNetworkIdentifier:   tokenNetworkIdentifier,
+		Initiator:                self.address,
+		Target:                   targetAddress,
+		Secret:                   transferSecret,
+		SecretHash:               secretHash,
+	}
+
+	routes, err := GetSpecifiedRoute(self, tokenNetworkIdentifier, media, self.address, transferAmount)
 	if err != nil {
 		return nil, err
 	}

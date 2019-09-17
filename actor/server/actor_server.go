@@ -113,7 +113,7 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 	case *MediaTransferReq:
 		go func() {
 			ret, err := this.chSrv.Service.MediaTransfer(msg.RegisterAddress, msg.TokenAddress,
-				msg.Amount, msg.Target, msg.Identifier)
+				msg.Media, msg.Target, msg.Amount, msg.Identifier)
 			if err == nil {
 				msg.Ret.Success = <-ret
 				msg.Ret.Err = nil

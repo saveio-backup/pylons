@@ -158,7 +158,7 @@ func DirectLoopTest(amount int, target common.Address, times int) {
 	log.Info("wait for loopTest canTransfer...")
 
 	for index := int(0); index < times; index++ {
-		ret, err := ch_actor.DirectTransferAsync(common.TokenAmount(amount), target, common.PaymentID(r.Int63()))
+		ret, err := ch_actor.DirectTransferAsync(target, common.TokenAmount(amount), common.PaymentID(r.Int63()))
 		if err != nil {
 			log.Error("[loopTest] direct transfer failed:", err)
 			break
@@ -183,8 +183,8 @@ func MediaLoopTest(amount int, target common.Address, times int) {
 	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 
 	for index := int(0); index < times; index++ {
-		ret, err := ch_actor.MediaTransfer(registryAddress, tokenAddress, common.TokenAmount(amount),
-			target, common.PaymentID(r.Int63()))
+		ret, err := ch_actor.MediaTransfer(registryAddress, tokenAddress, common.EmptyAddress, target, common.TokenAmount(amount),
+			common.PaymentID(r.Int63()))
 		if err != nil {
 			log.Error("[loopTest] media transfer failed:", err)
 			break

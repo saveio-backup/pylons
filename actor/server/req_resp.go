@@ -118,6 +118,7 @@ type MediaTransferRet struct {
 type MediaTransferReq struct {
 	RegisterAddress common.PaymentNetworkID
 	TokenAddress    common.TokenAddress
+	Media           common.Address
 	Target          common.Address
 	Amount          common.TokenAmount
 	Identifier      common.PaymentID
