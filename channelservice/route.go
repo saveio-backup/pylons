@@ -37,6 +37,7 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	//log.Debugf("SPT:", spt)
 
 	var partAddr common.Address
+	var channelId common.ChannelID
 	var i int
 	for i = 0; i < sptLen; i++ {
 		sp := spt[i]
@@ -45,10 +46,21 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 			partAddr = sp[0]
 			networkState := channelSrv.GetNodeNetworkState(partAddr)
 			if networkState == transfer.NetworkReachable {
-				log.Infof("[GetBestRoutes]: %s", common.ToBase58(partAddr))
-				break
+				channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(),
+					tokenNetworkId, partAddr)
+				if channelState != nil {
+					channelId = channelState.Identifier
+					if valid, err := checkRouteAvailable(channelState, partAddr, fromAddress, amount); valid {
+						log.Infof("[GetBestRoutes]: %s", common.ToBase58(partAddr))
+						break
+					} else {
+						log.Warnf("[GetBestRoutes] checkRouteAvailable %s error: ", common.ToBase58(partAddr), err.Error())
+					}
+				} else {
+					log.Warnf("[GetBestRoutes] GetChannelStateByTokenNetworkAndPartner %s error", common.ToBase58(partAddr))
+				}
 			} else {
-				log.Warnf("[GetBestRoutes]: %s is NetworkUnReachable", common.ToBase58(partAddr))
+				log.Warnf("[GetBestRoutes] %s is NetworkUnReachable", common.ToBase58(partAddr))
 			}
 		}
 	}
@@ -56,28 +68,22 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 		log.Errorf("[GetBestRoutes] no route to target")
 		return nil, fmt.Errorf("[GetBestRoutes] no route to target")
 	}
-	channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(), tokenNetworkId, partAddr)
-	if channelState == nil {
-		return nil, fmt.Errorf("GetChannelStateByTokenNetworkAndPartner error")
-	}
 
+	availableRoutes := []transfer.RouteState{{NodeAddress: partAddr, ChannelIdentifier: channelId}}
+	return availableRoutes, nil
+}
+
+func checkRouteAvailable(channelState *transfer.NettingChannelState, partAddr common.Address,
+	fromAddress common.Address, amount common.TokenAmount) (bool, error) {
 	if transfer.GetStatus(channelState) != transfer.ChannelStateOpened {
-		return nil, fmt.Errorf("channel is not opened, ignoring %s, %s ", hex.EncodeToString(fromAddress[:]),
+		return false, fmt.Errorf("channel is not opened, ignoring %s, %s ", hex.EncodeToString(fromAddress[:]),
 			hex.EncodeToString(partAddr[:]))
 	}
 
 	distributable := transfer.GetDistributable(channelState.OurState, channelState.PartnerState)
 	if amount > distributable {
-		return nil, fmt.Errorf("channel doesnt have enough funds, ignoring %s, %s, %d, %d ", hex.EncodeToString(fromAddress[:]),
-			hex.EncodeToString(partAddr[:]), amount, distributable)
+		return false, fmt.Errorf("channel doesnt have enough funds, ignoring %s, %s, %d, %d ",
+			hex.EncodeToString(fromAddress[:]), hex.EncodeToString(partAddr[:]), amount, distributable)
 	}
-
-	routeState := transfer.RouteState{
-		NodeAddress:       partAddr,
-		ChannelIdentifier: channelState.Identifier,
-	}
-
-	var availableRoutes []transfer.RouteState
-	availableRoutes = append(availableRoutes, routeState)
-	return availableRoutes, nil
+	return true, nil
 }
