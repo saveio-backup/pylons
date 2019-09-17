@@ -28,7 +28,7 @@ var mate = flag.String("mate", "", "node which open channel with")
 var deposit = flag.Int("deposit", 10000, "deposit count")
 var transferTo = flag.String("transferTo", "", "transfer asset to")
 var transferAmount = flag.Int("amount", 1000, "test transfer amount")
-var transferType = flag.Int("type", 0, "transferType [0: MediaTransfer; 1: DirectTransfer]")
+var transferType = flag.Int("type", 0, "transferType [0: MediaTransfer; 1: DirectTransfer; Other: MediaTransferBySpecificMedia]")
 
 var tokenAddress = common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 var channelActor *ch_actor.ChannelActorServer
@@ -142,7 +142,7 @@ func main() {
 			log.Info("begin media single route transfer test...")
 			transferTo, _ := common.FromBase58(*transferTo)
 
-			go singleRouteTest(1, transferTo, *transferAmount)
+			go singleRouteTest(mateAddr, 1, transferTo, *transferAmount)
 		}
 		go currentBalance(channelActor.GetChannelService(), mateAddr)
 	}
@@ -199,14 +199,40 @@ func MediaLoopTest(amount int, target common.Address, times int) {
 	chInt <- 0
 }
 
-func singleRouteTest(microAmount int, target common.Address, times int) {
+func MediaLoopTestBySpecificMedia(media common.Address, amount int, target common.Address, times int) {
+	r := rand.NewSource(time.Now().UnixNano())
+	log.Info("wait for loopTest canTransfer...")
+
+	registryAddress := common.PaymentNetworkID(utils.MicroPayContractAddress)
+	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
+
+	for index := int(0); index < times; index++ {
+		ret, err := ch_actor.MediaTransfer(registryAddress, tokenAddress, media, target, common.TokenAmount(amount),
+			common.PaymentID(r.Int63()))
+		if err != nil {
+			log.Error("[loopTest] media transfer failed:", err)
+			break
+		}
+		if !ret {
+			log.Error("[loopTest] media transfer failed")
+			break
+		} else {
+			//log.Info("[loopTest] media transfer successfully")
+		}
+	}
+	chInt <- 0
+}
+
+func singleRouteTest(media common.Address, microAmount int, target common.Address, times int) {
 	chInt = make(chan int, 1)
 	time1 := time.Now().Unix()
 
 	if *transferType == 0 {
 		MediaLoopTest(microAmount, target, times)
-	} else {
+	} else if *transferType == 1{
 		DirectLoopTest(microAmount, target, times)
+	} else {
+		MediaLoopTestBySpecificMedia(media, microAmount, target, times)
 	}
 
 	time2 := time.Now().Unix()
