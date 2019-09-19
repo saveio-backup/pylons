@@ -198,18 +198,18 @@ func MdFilterUsedRoutes(transfersPair []*MediationPairState, routes []RouteState
 	return routeState
 }
 
-func GetPayeeChannel(channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+func GetPayeeChannel(channelsMap map[common.ChannelID]*NettingChannelState,
 	transferPair *MediationPairState) *NettingChannelState {
 
 	payeeChannelIdentifier := transferPair.PayeeTransfer.BalanceProof.ChannelIdentifier
-	return channelIdentifiersToChannels[payeeChannelIdentifier]
+	return channelsMap[payeeChannelIdentifier]
 }
 
-func GetPayerChannel(channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+func GetPayerChannel(channelsMap map[common.ChannelID]*NettingChannelState,
 	transferPair *MediationPairState) *NettingChannelState {
 
 	payerChannelIdentifier := transferPair.PayerTransfer.BalanceProof.ChannelIdentifier
-	return channelIdentifiersToChannels[payerChannelIdentifier]
+	return channelsMap[payerChannelIdentifier]
 }
 
 func GetPendingTransferPairs(transfersPair []*MediationPairState) []*MediationPairState {
@@ -315,7 +315,7 @@ func SanityCheck(state *MediatorTransferState) error {
 }
 
 func clearIfFinalized(iteration *TransitionResult,
-	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState) *TransitionResult {
+	channelsMap map[common.ChannelID]*NettingChannelState) *TransitionResult {
 
 	//"""Clear the mediator task if all the locks have been finalized.
 	//A lock is considered finalized if it has been removed from the merkle tree
@@ -334,11 +334,11 @@ func clearIfFinalized(iteration *TransitionResult,
 	secretHash := state.SecretHash
 	for i := 0; i < len(state.TransfersPair); i++ {
 		pair := state.TransfersPair[i]
-		payerChannel := GetPayerChannel(channelIdentifiersToChannels, pair)
+		payerChannel := GetPayerChannel(channelsMap, pair)
 		if payerChannel != nil && IsLockPending(payerChannel.PartnerState, secretHash) {
 			return iteration
 		}
-		payeeChannel := GetPayeeChannel(channelIdentifiersToChannels, pair)
+		payeeChannel := GetPayeeChannel(channelsMap, pair)
 		if payeeChannel != nil && IsLockPending(payeeChannel.OurState, secretHash) {
 			return iteration
 		}
@@ -347,7 +347,7 @@ func clearIfFinalized(iteration *TransitionResult,
 	if state.WaitingTransfer != nil {
 		waitingTransfer := state.WaitingTransfer.Transfer
 		waitingChannelIdentifier := waitingTransfer.BalanceProof.ChannelIdentifier
-		waitingChannel := channelIdentifiersToChannels[waitingChannelIdentifier]
+		waitingChannel := channelsMap[waitingChannelIdentifier]
 
 		if waitingChannel != nil && IsLockPending(waitingChannel.PartnerState, secretHash) {
 			return iteration
@@ -357,7 +357,7 @@ func clearIfFinalized(iteration *TransitionResult,
 }
 
 func nextChannelFromRoutes(availableRoutes []RouteState,
-	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+	channelsMap map[common.ChannelID]*NettingChannelState,
 	transferAmount common.PaymentAmount, lockTimeout common.BlockTimeout) *NettingChannelState {
 	/*
 		Returns the first route that may be used to mediated the transfer.
@@ -368,7 +368,7 @@ func nextChannelFromRoutes(availableRoutes []RouteState,
 			availableRoutes: Current available routes that may be used, it's
 			assumed that the available_routes list is ordered from best to
 			worst.
-			channelIdentifiersToChannels: Mapping from channel identifier
+			channelsMap: Mapping from channel identifier
 		to NettingChannelState.
 			transferAmount: The amount of tokens that will be transferred
 		through the given route.
@@ -377,14 +377,14 @@ func nextChannelFromRoutes(availableRoutes []RouteState,
 			Returns: The next route.
 	*/
 	for _, route := range availableRoutes {
-		channelState := channelIdentifiersToChannels[route.ChannelIdentifier]
+		channelState := channelsMap[route.ChannelIdentifier]
 
 		addr := common.ToBase58(route.NodeAddress)
 		if channelState == nil {
-			log.Debug("nextChannelFromRoutes channelIdentifiersToChannels == nil", addr)
+			log.Debug("nextChannelFromRoutes channelsMap == nil", addr)
 			continue
 		}
-		log.Debug("nextChannelFromRoutes channelIdentifiersToChannels != nil", addr)
+		log.Debug("nextChannelFromRoutes channelsMap != nil", addr)
 		if MdIsChannelUsable(channelState, transferAmount, lockTimeout) {
 			return channelState
 		}
@@ -393,7 +393,7 @@ func nextChannelFromRoutes(availableRoutes []RouteState,
 }
 
 func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRoutes []RouteState,
-	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+	channelsMap map[common.ChannelID]*NettingChannelState,
 	blockNumber common.BlockHeight) (*MediationPairState, []Event, error) {
 	/*
 		Given a payer transfer tries a new route to proceed with the mediation.
@@ -419,7 +419,7 @@ func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRout
 		lockTimeout = 0
 	}
 
-	payeeChannel := nextChannelFromRoutes(availableRoutes, channelIdentifiersToChannels,
+	payeeChannel := nextChannelFromRoutes(availableRoutes, channelsMap,
 		common.PaymentAmount(payerTransfer.Lock.Amount), lockTimeout)
 
 	if payeeChannel != nil {
@@ -511,7 +511,7 @@ func backwardTransferPair(backwardChannel *NettingChannelState, payerTransfer *L
 }
 
 func setOffChainSecret(state *MediatorTransferState,
-	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+	channelsMap map[common.ChannelID]*NettingChannelState,
 	secret common.Secret, secretHash common.SecretHash) []Event {
 
 	var events []Event
@@ -519,13 +519,13 @@ func setOffChainSecret(state *MediatorTransferState,
 	state.Secret = secret
 
 	for _, pair := range state.TransfersPair {
-		payerChannel := channelIdentifiersToChannels[pair.PayerTransfer.BalanceProof.ChannelIdentifier]
+		payerChannel := channelsMap[pair.PayerTransfer.BalanceProof.ChannelIdentifier]
 
 		if payerChannel != nil {
 			RegisterOffChainSecret(payerChannel, secret, secretHash)
 		}
 
-		payeeChannel, exist := channelIdentifiersToChannels[pair.PayeeTransfer.BalanceProof.ChannelIdentifier]
+		payeeChannel, exist := channelsMap[pair.PayeeTransfer.BalanceProof.ChannelIdentifier]
 		if exist {
 			RegisterOffChainSecret(payeeChannel, secret, secretHash)
 		}
@@ -540,7 +540,7 @@ func setOffChainSecret(state *MediatorTransferState,
 	//# has sent another transfer which reached the target (meaning someone along
 	//# the path will lose tokens).
 	if state.WaitingTransfer != nil {
-		payerChannel := channelIdentifiersToChannels[state.WaitingTransfer.Transfer.BalanceProof.ChannelIdentifier]
+		payerChannel := channelsMap[state.WaitingTransfer.Transfer.BalanceProof.ChannelIdentifier]
 
 		if payerChannel != nil {
 			RegisterOffChainSecret(payerChannel, secret, secretHash)
@@ -556,7 +556,7 @@ func setOffChainSecret(state *MediatorTransferState,
 }
 
 func setOnChainSecret(state *MediatorTransferState,
-	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+	channelsMap map[common.ChannelID]*NettingChannelState,
 	secret common.Secret, secretHash common.SecretHash, blockNumber common.BlockHeight) []Event {
 	var events []Event
 	/*
@@ -566,12 +566,12 @@ func setOnChainSecret(state *MediatorTransferState,
 	state.Secret = secret
 
 	for _, pair := range state.TransfersPair {
-		payerChannel := channelIdentifiersToChannels[pair.PayerTransfer.BalanceProof.ChannelIdentifier]
+		payerChannel := channelsMap[pair.PayerTransfer.BalanceProof.ChannelIdentifier]
 		if payerChannel != nil {
 			RegisterOnChainSecret(payerChannel, secret, secretHash, blockNumber, true)
 		}
 
-		payeeChannel := channelIdentifiersToChannels[pair.PayeeTransfer.BalanceProof.ChannelIdentifier]
+		payeeChannel := channelsMap[pair.PayeeTransfer.BalanceProof.ChannelIdentifier]
 		if payeeChannel != nil {
 			RegisterOnChainSecret(payeeChannel, secret, secretHash, blockNumber, true)
 		}
@@ -581,7 +581,7 @@ func setOnChainSecret(state *MediatorTransferState,
 	//# on-chain if there is a waiting transfer.
 
 	if state.WaitingTransfer != nil {
-		payerChannel := channelIdentifiersToChannels[state.WaitingTransfer.Transfer.BalanceProof.ChannelIdentifier]
+		payerChannel := channelsMap[state.WaitingTransfer.Transfer.BalanceProof.ChannelIdentifier]
 		if payerChannel != nil {
 			RegisterOnChainSecret(payerChannel, secret, secretHash, blockNumber, true)
 		}
@@ -605,7 +605,7 @@ func setOffchainRevealState(transfersPair []*MediationPairState, payeeAddress co
 	}
 }
 
-func eventsForExpiredPairs(channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+func eventsForExpiredPairs(channelsMap map[common.ChannelID]*NettingChannelState,
 	transfersPair []*MediationPairState, waitingTransfer *WaitingTransferState,
 	blockNumber common.BlockHeight) []Event {
 
@@ -615,7 +615,7 @@ func eventsForExpiredPairs(channelIdentifiersToChannels map[common.ChannelID]*Ne
 	var events []Event
 	for _, pair := range pendingTransfersPairs {
 		payerBalanceProof := pair.PayerTransfer.BalanceProof
-		payerChannel := channelIdentifiersToChannels[payerBalanceProof.ChannelIdentifier]
+		payerChannel := channelsMap[payerBalanceProof.ChannelIdentifier]
 		if payerChannel == nil {
 			continue
 		}
@@ -743,7 +743,7 @@ func eventsForSecretReveal(transfersPair []*MediationPairState, payerChannelId c
 	return events
 }
 
-func eventsForBalanceProof(channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+func eventsForBalanceProof(channelsMap map[common.ChannelID]*NettingChannelState,
 	transfersPair []*MediationPairState, blockNumber common.BlockHeight, secret common.Secret,
 	secrethash common.SecretHash) ([]Event, error) {
 	//""" While it's safe do the off-chain unlock. """
@@ -767,9 +767,9 @@ func eventsForBalanceProof(channelIdentifiersToChannels map[common.ChannelID]*Ne
 			}
 		}
 
-		payeeChannel := GetPayeeChannel(channelIdentifiersToChannels, pair)
+		payeeChannel := GetPayeeChannel(channelsMap, pair)
 		payeeChannelOpen := payeeChannel != nil && GetStatus(payeeChannel) == ChannelStateOpened
-		payerChannel := GetPayerChannel(channelIdentifiersToChannels, pair)
+		payerChannel := GetPayerChannel(channelsMap, pair)
 
 		//# The mediator must not send to the payee a balance proof if the lock
 		//# is in the danger zone, because the payer may not do the same and the
@@ -925,7 +925,7 @@ func eventsForOnChainSecretRevealIfClosed(channelmap map[common.ChannelID]*Netti
 }
 
 func eventsToRemoveExpiredLocks(mediatorState *MediatorTransferState,
-	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+	channelsMap map[common.ChannelID]*NettingChannelState,
 	blockNumber common.BlockHeight) ([]Event, error) {
 	/*
 		Clear the channels which have expired locks.
@@ -937,7 +937,7 @@ func eventsToRemoveExpiredLocks(mediatorState *MediatorTransferState,
 	for _, transferPair := range mediatorState.TransfersPair {
 		balanceProof := transferPair.PayeeTransfer.BalanceProof
 		channelIdentifier := balanceProof.ChannelIdentifier
-		channelState := channelIdentifiersToChannels[channelIdentifier]
+		channelState := channelsMap[channelIdentifier]
 		if channelState == nil {
 			continue
 		}
@@ -986,7 +986,7 @@ func eventsToRemoveExpiredLocks(mediatorState *MediatorTransferState,
 	return events, nil
 }
 
-func secretLearned(state *MediatorTransferState, channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+func secretLearned(state *MediatorTransferState, channelsMap map[common.ChannelID]*NettingChannelState,
 	blockNumber common.BlockHeight, secret common.Secret, secretHash common.SecretHash, payerChannelId common.ChannelID,
 	payeeAddress common.Address) (*TransitionResult, error) {
 	/*
@@ -994,16 +994,16 @@ func secretLearned(state *MediatorTransferState, channelIdentifiersToChannels ma
 		register the secret on-chain.
 	*/
 	var events []Event
-	secretRevealEvents := setOffChainSecret(state, channelIdentifiersToChannels, secret, secretHash)
+	secretRevealEvents := setOffChainSecret(state, channelsMap, secret, secretHash)
 
 	setOffchainRevealState(state.TransfersPair, payeeAddress)
 
-	OnChainSecretReveal := eventsForOnChainSecretRevealIfClosed(channelIdentifiersToChannels,
+	OnChainSecretReveal := eventsForOnChainSecretRevealIfClosed(channelsMap,
 		state.TransfersPair, secret, secretHash)
 
 	offChainSecretReveal := eventsForSecretReveal(state.TransfersPair, payerChannelId, secret)
 
-	balanceProof, err := eventsForBalanceProof(channelIdentifiersToChannels, state.TransfersPair,
+	balanceProof, err := eventsForBalanceProof(channelsMap, state.TransfersPair,
 		blockNumber, secret, secretHash)
 	if err != nil {
 		return nil, err
@@ -1019,7 +1019,7 @@ func secretLearned(state *MediatorTransferState, channelIdentifiersToChannels ma
 }
 
 func mediateTransfer(state *MediatorTransferState, possibleRoutes []RouteState,
-	payerChannel *NettingChannelState, channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+	payerChannel *NettingChannelState, channelsMap map[common.ChannelID]*NettingChannelState,
 	payerTransfer *LockedTransferSignedState, blockNumber common.BlockHeight) (*TransitionResult, error) {
 	/*
 		""" Try a new route or fail back to a refund.
@@ -1048,7 +1048,7 @@ func mediateTransfer(state *MediatorTransferState, possibleRoutes []RouteState,
 	//}
 
 	transferPair, mediatedEvents, err := forwardTransferPair(payerTransfer, availableRoutes,
-		channelIdentifiersToChannels, blockNumber)
+		channelsMap, blockNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -1060,7 +1060,7 @@ func mediateTransfer(state *MediatorTransferState, possibleRoutes []RouteState,
 		var originalChannel *NettingChannelState
 		if state.TransfersPair != nil {
 			originalPair := state.TransfersPair[0]
-			originalChannel = GetPayerChannel(channelIdentifiersToChannels, originalPair)
+			originalChannel = GetPayerChannel(channelsMap, originalPair)
 		} else {
 			originalChannel = payerChannel
 		}
@@ -1089,17 +1089,17 @@ func mediateTransfer(state *MediatorTransferState, possibleRoutes []RouteState,
 	return &TransitionResult{NewState: state, Events: mediatedEvents}, nil
 }
 
-func handleInit(stateChange *ActionInitMediator, channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+func HandleInitMediator(stateChange *ActionInitMediator, channelsMap map[common.ChannelID]*NettingChannelState,
 	blockNumber common.BlockHeight) *TransitionResult {
 
 	routes := stateChange.Routes
 	fromRoute := stateChange.FromRoute
 	fromTransfer := stateChange.FromTransfer
-	payerChannel := channelIdentifiersToChannels[fromRoute.ChannelIdentifier]
+	payerChannel := channelsMap[fromRoute.ChannelIdentifier]
 
 	//# There is no corresponding channel for the message, ignore it
 	if payerChannel == nil {
-		log.Warn("[handleInit] payerChannel is nil")
+		log.Warn("[HandleInitMediator] payerChannel is nil")
 		return &TransitionResult{NewState: nil, Events: nil}
 	}
 	mediatorState := &MediatorTransferState{
@@ -1111,30 +1111,30 @@ func handleInit(stateChange *ActionInitMediator, channelIdentifiersToChannels ma
 		//# If the balance proof is not valid, do *not* create a task. Otherwise it's
 		//# possible for an attacker to send multiple invalid transfers, and increase
 		//# the memory usage of this Node.
-		log.Warn("[handleInit] HandleReceiveLockedTransfer :", err.Error())
+		log.Warn("[HandleInitMediator] HandleReceiveLockedTransfer :", err.Error())
 		return &TransitionResult{NewState: nil, Events: events}
 	}
 	for _, e := range events {
-		log.Debug("[handleInit]: ", reflect.TypeOf(e).String())
+		log.Debug("[HandleInitMediator]: ", reflect.TypeOf(e).String())
 	}
 
 	iteration, err := mediateTransfer(mediatorState, routes, payerChannel,
-		channelIdentifiersToChannels, fromTransfer, blockNumber)
+		channelsMap, fromTransfer, blockNumber)
 
 	events = append(events, iteration.Events...)
 	for _, e := range iteration.Events {
-		log.Debug("[handleInit]: ", reflect.TypeOf(e).String())
+		log.Debug("[HandleInitMediator]: ", reflect.TypeOf(e).String())
 	}
 
 	if IsStateNil(iteration.NewState) {
-		log.Debug("[handleInit]     iteration.NewState == nil")
+		log.Debug("[HandleInitMediator]     iteration.NewState == nil")
 	}
 
 	return &TransitionResult{NewState: iteration.NewState, Events: events}
 }
 
 func MdHandleBlock(mediatorState *MediatorTransferState, stateChange *Block,
-	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState) *TransitionResult {
+	channelsMap map[common.ChannelID]*NettingChannelState) *TransitionResult {
 	/*
 		        After Raiden learns about a new block this function must be called to
 			handle expiration of the hash time locks.
@@ -1144,7 +1144,7 @@ func MdHandleBlock(mediatorState *MediatorTransferState, stateChange *Block,
 			TransitionResult: The resulting iteration
 	*/
 	var events []Event
-	expiredLocksEvents, err := eventsToRemoveExpiredLocks(mediatorState, channelIdentifiersToChannels,
+	expiredLocksEvents, err := eventsToRemoveExpiredLocks(mediatorState, channelsMap,
 		stateChange.BlockHeight)
 	if len(expiredLocksEvents) != 0 {
 		log.Debug("[MdHandleBlock] eventsToRemoveExpiredLocks len(expiredLocksEvents) != 0")
@@ -1155,7 +1155,7 @@ func MdHandleBlock(mediatorState *MediatorTransferState, stateChange *Block,
 		return nil
 	}
 
-	secretRevealEvents := eventsForOnChainSecretRevealIfDangerzone(channelIdentifiersToChannels,
+	secretRevealEvents := eventsForOnChainSecretRevealIfDangerzone(channelsMap,
 		mediatorState.SecretHash, mediatorState.TransfersPair, stateChange.BlockHeight)
 	if len(secretRevealEvents) != 0 {
 		log.Debug("[MdHandleBlock] eventsForOnChainSecretRevealIfDangerzone len(secretRevealEvents) != 0")
@@ -1163,7 +1163,7 @@ func MdHandleBlock(mediatorState *MediatorTransferState, stateChange *Block,
 		log.Debug("[MdHandleBlock] eventsForOnChainSecretRevealIfDangerzone len(secretRevealEvents) == 0")
 	}
 
-	unlockFailEvents := eventsForExpiredPairs(channelIdentifiersToChannels, mediatorState.TransfersPair,
+	unlockFailEvents := eventsForExpiredPairs(channelsMap, mediatorState.TransfersPair,
 		mediatorState.WaitingTransfer, stateChange.BlockHeight)
 	if len(unlockFailEvents) != 0 {
 		log.Debug("[MdHandleBlock] eventsForExpiredPairs len(unlockFailEvents) != 0")
@@ -1178,7 +1178,7 @@ func MdHandleBlock(mediatorState *MediatorTransferState, stateChange *Block,
 }
 
 func MdHandleRefundTransfer(mediatorState *MediatorTransferState, mediatorStateChange *ReceiveTransferRefund,
-	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+	channelsMap map[common.ChannelID]*NettingChannelState,
 	blockNumber common.BlockHeight) *TransitionResult {
 	//	     Validate and handle a ReceiveTransferRefund mediator_state change.
 	//	A node might participate in mediated transfer more than once because of
@@ -1206,7 +1206,7 @@ func MdHandleRefundTransfer(mediatorState *MediatorTransferState, mediatorStateC
 		payeeTransfer := transferPair.PayeeTransfer
 		payerTransfer := mediatorStateChange.Transfer
 		channelIdentifier := payerTransfer.BalanceProof.ChannelIdentifier
-		payerChannel := channelIdentifiersToChannels[channelIdentifier]
+		payerChannel := channelsMap[channelIdentifier]
 
 		if payerChannel != nil {
 			return &TransitionResult{NewState: mediatorState, Events: nil}
@@ -1218,7 +1218,7 @@ func MdHandleRefundTransfer(mediatorState *MediatorTransferState, mediatorStateC
 		}
 
 		iteration, err = mediateTransfer(mediatorState, mediatorStateChange.Routes,
-			payerChannel, channelIdentifiersToChannels, payerTransfer, blockNumber)
+			payerChannel, channelsMap, payerTransfer, blockNumber)
 
 		events = append(events, channelEvents...)
 		events = append(events, iteration.Events...)
@@ -1229,7 +1229,7 @@ func MdHandleRefundTransfer(mediatorState *MediatorTransferState, mediatorStateC
 }
 
 func handleOffChainSecretReveal(mediatorState *MediatorTransferState, mediatorStateChange *ReceiveSecretReveal,
-	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+	channelsMap map[common.ChannelID]*NettingChannelState,
 	blockNumber common.BlockHeight) (*TransitionResult, error) {
 
 	//""" Handles the secret reveal and sends SendBalanceProof/RevealSecret if necessary. """
@@ -1247,7 +1247,7 @@ func handleOffChainSecretReveal(mediatorState *MediatorTransferState, mediatorSt
 
 	payerTransfer := transferPair.PayerTransfer
 	payerChannelId := payerTransfer.BalanceProof.ChannelIdentifier
-	payerChannel := channelIdentifiersToChannels[payerChannelId]
+	payerChannel := channelsMap[payerChannelId]
 	if payerChannel == nil {
 		return &TransitionResult{NewState: mediatorState, Events: nil}, nil
 	}
@@ -1260,7 +1260,7 @@ func handleOffChainSecretReveal(mediatorState *MediatorTransferState, mediatorSt
 
 	if isSecretUnknown && isValidReveal && !hasPayerTransferExpired {
 		secretHash := sha256.Sum256(mediatorStateChange.Secret)
-		iteration, err = secretLearned(mediatorState, channelIdentifiersToChannels,
+		iteration, err = secretLearned(mediatorState, channelsMap,
 			blockNumber, mediatorStateChange.Secret, secretHash, payerChannelId, mediatorStateChange.Sender)
 		if err != nil {
 			return nil, err
@@ -1282,7 +1282,7 @@ func handleOffChainSecretReveal(mediatorState *MediatorTransferState, mediatorSt
 
 func handleOnChainSecretReveal(mediatorState *MediatorTransferState,
 	OnChainSecretReveal *ContractReceiveSecretReveal,
-	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+	channelsMap map[common.ChannelID]*NettingChannelState,
 	blockNumber common.BlockHeight) *TransitionResult {
 
 	//The secret was revealed on-chain, set the state of all transfers to secret known.
@@ -1296,10 +1296,10 @@ func handleOnChainSecretReveal(mediatorState *MediatorTransferState,
 		//# Compare against the block number at which the event was emitted.
 		blockNumber = OnChainSecretReveal.BlockHeight
 
-		secretReveal := setOnChainSecret(mediatorState, channelIdentifiersToChannels,
+		secretReveal := setOnChainSecret(mediatorState, channelsMap,
 			secret, secretHash, blockNumber)
 
-		balanceProof, err := eventsForBalanceProof(channelIdentifiersToChannels,
+		balanceProof, err := eventsForBalanceProof(channelsMap,
 			mediatorState.TransfersPair, blockNumber, secret, secretHash)
 		if err != nil {
 			return nil
@@ -1314,7 +1314,7 @@ func handleOnChainSecretReveal(mediatorState *MediatorTransferState,
 }
 
 func handleUnlock(mediatorState *MediatorTransferState, stateChange *ReceiveUnlock,
-	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState) *TransitionResult {
+	channelsMap map[common.ChannelID]*NettingChannelState) *TransitionResult {
 
 	//""" Handle a ReceiveUnlock state change. """
 	var events []Event
@@ -1323,7 +1323,7 @@ func handleUnlock(mediatorState *MediatorTransferState, stateChange *ReceiveUnlo
 
 	for _, pair := range mediatorState.TransfersPair {
 		if pair.PayerTransfer.BalanceProof.Sender == balanceProofSender {
-			channelState := channelIdentifiersToChannels[channelIdentifier]
+			channelState := channelsMap[channelIdentifier]
 
 			if channelState != nil {
 				isValid, channelEvents, _ := HandleUnlock(channelState, stateChange)
@@ -1346,13 +1346,13 @@ func handleUnlock(mediatorState *MediatorTransferState, stateChange *ReceiveUnlo
 }
 
 func handleLockExpired(mediatorState *MediatorTransferState, stateChange *ReceiveLockExpired,
-	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+	channelsMap map[common.ChannelID]*NettingChannelState,
 	blockNumber common.BlockHeight) *TransitionResult {
 
 	var events []Event
 	for _, transferPair := range mediatorState.TransfersPair {
 		balanceProof := transferPair.PayerTransfer.BalanceProof
-		channelState := channelIdentifiersToChannels[balanceProof.ChannelIdentifier]
+		channelState := channelsMap[balanceProof.ChannelIdentifier]
 
 		if channelState == nil {
 			return &TransitionResult{NewState: mediatorState, Events: nil}
@@ -1373,7 +1373,7 @@ func handleLockExpired(mediatorState *MediatorTransferState, stateChange *Receiv
 	}
 
 	if mediatorState.WaitingTransfer != nil {
-		waitingChannel := channelIdentifiersToChannels[mediatorState.WaitingTransfer.Transfer.BalanceProof.ChannelIdentifier]
+		waitingChannel := channelsMap[mediatorState.WaitingTransfer.Transfer.BalanceProof.ChannelIdentifier]
 
 		if waitingChannel != nil {
 			result := handleReceiveLockExpired(
@@ -1385,7 +1385,7 @@ func handleLockExpired(mediatorState *MediatorTransferState, stateChange *Receiv
 }
 
 func MdStateTransition(mediatorState *MediatorTransferState, stateChange interface{},
-	channelIdentifiersToChannels map[common.ChannelID]*NettingChannelState,
+	channelsMap map[common.ChannelID]*NettingChannelState,
 	blockNumber common.BlockHeight) (*TransitionResult, error) {
 	//""" State machine for a node mediating a transfer. """
 	//# pylint: disable=too-many-branches
@@ -1405,31 +1405,31 @@ func MdStateTransition(mediatorState *MediatorTransferState, stateChange interfa
 	case *ActionInitMediator:
 		if mediatorState == nil {
 			sc := stateChange.(*ActionInitMediator)
-			iteration = handleInit(sc, channelIdentifiersToChannels, blockNumber)
+			iteration = HandleInitMediator(sc, channelsMap, blockNumber)
 		} else {
 			log.Debug("[MdStateTransition] mediatorState is not nil")
 		}
 	case *Block:
 		sc := stateChange.(*Block)
-		iteration = MdHandleBlock(mediatorState, sc, channelIdentifiersToChannels)
+		iteration = MdHandleBlock(mediatorState, sc, channelsMap)
 	case *ReceiveTransferRefund:
 		sc := stateChange.(*ReceiveTransferRefund)
-		iteration = MdHandleRefundTransfer(mediatorState, sc, channelIdentifiersToChannels, blockNumber)
+		iteration = MdHandleRefundTransfer(mediatorState, sc, channelsMap, blockNumber)
 	case *ReceiveSecretReveal:
 		sc := stateChange.(*ReceiveSecretReveal)
-		iteration, err = handleOffChainSecretReveal(mediatorState, sc, channelIdentifiersToChannels, blockNumber)
+		iteration, err = handleOffChainSecretReveal(mediatorState, sc, channelsMap, blockNumber)
 		if err != nil {
 			return nil, err
 		}
 	case *ContractReceiveSecretReveal:
 		sc := stateChange.(*ContractReceiveSecretReveal)
-		iteration = handleOnChainSecretReveal(mediatorState, sc, channelIdentifiersToChannels, blockNumber)
+		iteration = handleOnChainSecretReveal(mediatorState, sc, channelsMap, blockNumber)
 	case *ReceiveUnlock:
 		sc := stateChange.(*ReceiveUnlock)
-		iteration = handleUnlock(mediatorState, sc, channelIdentifiersToChannels)
+		iteration = handleUnlock(mediatorState, sc, channelsMap)
 	case *ReceiveLockExpired:
 		sc := stateChange.(*ReceiveLockExpired)
-		iteration = handleLockExpired(mediatorState, sc, channelIdentifiersToChannels, blockNumber)
+		iteration = handleLockExpired(mediatorState, sc, channelsMap, blockNumber)
 	default:
 		log.Error("[MdStateTransition] stateChange Type error: ", reflect.TypeOf(stateChange).String())
 		return nil, fmt.Errorf("[MdStateTransition] stateChange Type error ")
@@ -1443,5 +1443,5 @@ func MdStateTransition(mediatorState *MediatorTransferState, stateChange interfa
 		mediatorTransferState := iteration.NewState.(*MediatorTransferState)
 		SanityCheck(mediatorTransferState)
 	}
-	return clearIfFinalized(iteration, channelIdentifiersToChannels), nil
+	return clearIfFinalized(iteration, channelsMap), nil
 }

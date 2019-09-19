@@ -361,7 +361,6 @@ func (self *TokenNetwork) CanTransfer(participant1 common.Address,
 	} else {
 		return false
 	}
-
 }
 
 //token balance should divided by Decimals of token

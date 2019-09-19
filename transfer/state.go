@@ -598,7 +598,7 @@ type LockedTransferSignedState struct {
 	Target            common.Address
 }
 
-//NOTE, need calcuate SecretHash based on Secret in construct func
+//NOTE, need calculate SecretHash based on Secret in construct func
 type TransferDescriptionWithSecretState struct {
 	PaymentNetworkIdentifier common.PaymentNetworkID
 	PaymentIdentifier        common.PaymentID

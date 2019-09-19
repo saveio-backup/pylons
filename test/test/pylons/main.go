@@ -229,7 +229,7 @@ func singleRouteTest(media common.Address, microAmount int, target common.Addres
 
 	if *transferType == 0 {
 		MediaLoopTest(microAmount, target, times)
-	} else if *transferType == 1{
+	} else if *transferType == 1 {
 		DirectLoopTest(microAmount, target, times)
 	} else {
 		MediaLoopTestBySpecificMedia(media, microAmount, target, times)

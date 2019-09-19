@@ -13,41 +13,41 @@ import (
 type MessageHandler struct {
 }
 
-func (self *MessageHandler) OnMessage(channel *ChannelService, message interface{}) {
+func (self *MessageHandler) OnMessage(channelSrv *ChannelService, message interface{}) {
 	log.Debug("[OnMessage] message: ", reflect.TypeOf(message).String())
-	switch message.(type) {
+	switch msg := message.(type) {
 	case *messages.DirectTransfer:
-		self.HandleMessageDirecttransfer(channel, message.(*messages.DirectTransfer))
+		self.HandleMessageDirectTransfer(channelSrv, msg)
 	case *messages.Delivered:
-		self.HandleMessageDelivered(channel, message.(*messages.Delivered))
+		self.HandleMessageDelivered(channelSrv, msg)
 	case *messages.Processed:
-		self.HandleMessageProcessed(channel, message.(*messages.Processed))
+		self.HandleMessageProcessed(channelSrv, msg)
 	case *messages.SecretRequest:
-		self.HandleMessageSecretRequest(channel, message.(*messages.SecretRequest))
+		self.HandleMessageSecretRequest(channelSrv, msg)
 	case *messages.RevealSecret:
-		self.HandleMessageRevealSecret(channel, message.(*messages.RevealSecret))
+		self.HandleMessageRevealSecret(channelSrv, msg)
 	case *messages.Secret:
-		self.HandleMessageSecret(channel, message.(*messages.Secret))
+		self.HandleMessageSecret(channelSrv, msg)
 	case *messages.LockExpired:
-		self.HandleMessageLockExpired(channel, message.(*messages.LockExpired))
+		self.HandleMessageLockExpired(channelSrv, msg)
 	case *messages.RefundTransfer:
-		self.HandleMessageRefundTransfer(channel, message.(*messages.RefundTransfer))
+		self.HandleMessageRefundTransfer(channelSrv, msg)
 	case *messages.LockedTransfer:
-		self.HandleMessageLockedTransfer(channel, message.(*messages.LockedTransfer))
+		self.HandleMessageLockedTransfer(channelSrv, msg)
 	case *messages.WithdrawRequest:
-		self.HandleMessageWithdrawRequest(channel, message.(*messages.WithdrawRequest))
+		self.HandleMessageWithdrawRequest(channelSrv, msg)
 	case *messages.Withdraw:
-		self.HandleMessageWithdraw(channel, message.(*messages.Withdraw))
+		self.HandleMessageWithdraw(channelSrv, msg)
 	case *messages.CooperativeSettleRequest:
-		self.HandleMessageCooperativeSettleRequest(channel, message.(*messages.CooperativeSettleRequest))
+		self.HandleMessageCooperativeSettleRequest(channelSrv, msg)
 	case *messages.CooperativeSettle:
-		self.HandleMessageCooperativeSettle(channel, message.(*messages.CooperativeSettle))
+		self.HandleMessageCooperativeSettle(channelSrv, msg)
 	default:
-		log.Warn("[OnMessage] Unkown message. ", reflect.TypeOf(message).String())
+		log.Warn("[OnMessage] Unknown message. ", reflect.TypeOf(message).String())
 	}
 }
 
-func (self *MessageHandler) HandleMessageDirecttransfer(channel *ChannelService, message *messages.DirectTransfer) {
+func (self *MessageHandler) HandleMessageDirectTransfer(channel *ChannelService, message *messages.DirectTransfer) {
 	var tokenNetworkIdentifier common.TokenNetworkID
 
 	copy(tokenNetworkIdentifier[:], message.EnvelopeMessage.TokenNetworkAddress.TokenNetworkAddress[:20])
