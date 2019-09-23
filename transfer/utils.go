@@ -22,10 +22,10 @@ func Uint64ToBytes(n uint64) []byte {
 }
 
 func HashBalanceData(transferredAmount common.TokenAmount,
-	lockedAmount common.TokenAmount, locksRoot common.Locksroot) common.BalanceHash {
+	lockedAmount common.TokenAmount, locksRoot common.LocksRoot) common.BalanceHash {
 	var balanceHash common.BalanceHash
 
-	empty := common.Locksroot{}
+	empty := common.LocksRoot{}
 
 	if transferredAmount == 0 && lockedAmount == 0 && compareLocksroot(locksRoot, empty) == true {
 		return balanceHash

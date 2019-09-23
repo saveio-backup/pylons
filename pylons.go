@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strconv"
 
-	ch "github.com/saveio/pylons/channelservice"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network"
+	"github.com/saveio/pylons/service"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis/account"
 	"github.com/saveio/themis/common/log"
@@ -29,7 +29,7 @@ type ChannelConfig struct {
 
 type Channel struct {
 	Config  *ChannelConfig
-	Service *ch.ChannelService
+	Service *service.ChannelService
 }
 
 func DefaultChannelConfig() *ChannelConfig {
@@ -79,8 +79,8 @@ func NewChannelService(channelConfig *ChannelConfig, account *account.Account) (
 		log.Infof("[NewChannelService] SetMaxBlockDelay blockDelay: %d", blockDelay)
 	}
 
-	service := ch.NewChannelService(blockChainService, common.BlockHeight(startBlock),
-		common.Address(utils.MicroPayContractAddress), new(ch.MessageHandler), option)
+	service := service.NewChannelService(blockChainService, common.BlockHeight(startBlock),
+		common.Address(utils.MicroPayContractAddress), new(service.MessageHandler), option)
 	log.Info("channel service created, use account ", blockChainService.GetAccount().Address.ToBase58())
 
 	channel := &Channel{Config: channelConfig, Service: service}

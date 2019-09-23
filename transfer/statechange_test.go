@@ -10,22 +10,22 @@ import (
 func TestActionInitTargetMarshal(t *testing.T) {
 	var initTarget1 ActionInitTarget
 	initTarget1.Route = &RouteState{
-		NodeAddress:       common.EmptyAddress,
-		ChannelIdentifier: common.ChannelID(0),
+		NodeAddress: common.EmptyAddress,
+		ChannelId:   common.ChannelID(0),
 	}
 
 	balanceProof := &BalanceProofSignedState{
-		Nonce:                  common.Nonce(0),
-		TransferredAmount:      common.TokenAmount(0),
-		LockedAmount:           common.TokenAmount(0),
-		LocksRoot:              common.EmptySecretHash,
-		TokenNetworkIdentifier: common.TokenNetworkID(common.EmptyTokenAddress),
-		ChannelIdentifier:      common.ChannelID(0),
-		MessageHash:            common.EmptySecretHash,
-		Signature:              common.Signature{0x00},
-		Sender:                 common.EmptyAddress,
-		ChainId:                common.ChainID(0),
-		PublicKey:              common.PubKey{0x00},
+		Nonce:             common.Nonce(0),
+		TransferredAmount: common.TokenAmount(0),
+		LockedAmount:      common.TokenAmount(0),
+		LocksRoot:         common.EmptySecretHash,
+		TokenNetworkId:    common.TokenNetworkID(common.EmptyTokenAddress),
+		ChannelId:         common.ChannelID(0),
+		MessageHash:       common.EmptySecretHash,
+		Signature:         common.Signature{0x00},
+		Sender:            common.EmptyAddress,
+		ChainId:           common.ChainID(0),
+		PublicKey:         common.PubKey{0x00},
 	}
 
 	lock := &HashTimeLockState{
@@ -37,13 +37,13 @@ func TestActionInitTargetMarshal(t *testing.T) {
 	}
 
 	initTarget1.Transfer = &LockedTransferSignedState{
-		MessageIdentifier: common.GetMsgID(),
-		PaymentIdentifier: common.PaymentID(0),
-		Token:             common.EmptyAddress,
-		BalanceProof:      balanceProof,
-		Lock:              lock,
-		Initiator:         common.EmptyAddress,
-		Target:            common.EmptyAddress,
+		MessageId:    common.GetMsgID(),
+		PaymentId:    common.PaymentID(0),
+		Token:        common.EmptyAddress,
+		BalanceProof: balanceProof,
+		Lock:         lock,
+		Initiator:    common.EmptyAddress,
+		Target:       common.EmptyAddress,
 	}
 
 	data, err := jsonext.Marshal(initTarget1)

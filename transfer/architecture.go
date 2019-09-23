@@ -17,9 +17,9 @@ type Event interface {
 }
 
 type SendMessageEvent struct {
-	Recipient         common.Address
-	ChannelIdentifier common.ChannelID
-	MessageIdentifier common.MessageID
+	Recipient common.Address
+	ChannelId common.ChannelID
+	MessageId common.MessageID
 }
 
 type AuthenticatedSenderStateChange struct {

@@ -1,4 +1,4 @@
-package channelservice
+package service
 
 import (
 	"reflect"
@@ -122,9 +122,9 @@ func (self ChannelEventHandler) HandleSendDirectTransfer(channel *ChannelService
 			return
 		}
 
-		queueId := &transfer.QueueIdentifier{
-			Recipient:         common.Address(sendDirectTransfer.Recipient),
-			ChannelIdentifier: sendDirectTransfer.ChannelIdentifier,
+		queueId := &transfer.QueueId{
+			Recipient: common.Address(sendDirectTransfer.Recipient),
+			ChannelId: sendDirectTransfer.ChannelId,
 		}
 
 		ret := channel.Transport.SendAsync(queueId, message)
@@ -143,9 +143,9 @@ func (self ChannelEventHandler) HandleSendProcessed(channel *ChannelService, pro
 		if err != nil {
 			return
 		}
-		queueId := &transfer.QueueIdentifier{
-			Recipient:         common.Address(processedEvent.Recipient),
-			ChannelIdentifier: processedEvent.ChannelIdentifier,
+		queueId := &transfer.QueueId{
+			Recipient: common.Address(processedEvent.Recipient),
+			ChannelId: processedEvent.ChannelId,
 		}
 
 		channel.Transport.SendAsync(queueId, message)
@@ -223,12 +223,12 @@ func (self ChannelEventHandler) HandleContractSendChannelClose(channel *ChannelS
 		publicKey = balanceProof.PublicKey
 	}
 
-	args := channel.GetPaymentChannelArgs(channelCloseEvent.TokenNetworkIdentifier, channelCloseEvent.ChannelIdentifier)
+	args := channel.GetPaymentChannelArgs(channelCloseEvent.TokenNetworkId, channelCloseEvent.ChannelId)
 	if args == nil {
 		panic("error in HandleContractSendChannelClose, cannot get paymentchannel args")
 	}
 
-	channelProxy := channel.chain.PaymentChannel(common.Address(channelCloseEvent.TokenNetworkIdentifier), channelCloseEvent.ChannelIdentifier, args)
+	channelProxy := channel.chain.PaymentChannel(common.Address(channelCloseEvent.TokenNetworkId), channelCloseEvent.ChannelId, args)
 
 	channelProxy.Close(nonce, balanceHash, common.AdditionalHash(messageHash[:]), signature, publicKey)
 }
@@ -237,12 +237,12 @@ func (self ChannelEventHandler) HandelContractSendChannelUpdate(channel *Channel
 	balanceProof := channelUpdateEvent.BalanceProof
 
 	if balanceProof != nil {
-		args := channel.GetPaymentChannelArgs(channelUpdateEvent.TokenNetworkIdentifier, channelUpdateEvent.ChannelIdentifier)
+		args := channel.GetPaymentChannelArgs(channelUpdateEvent.TokenNetworkId, channelUpdateEvent.ChannelId)
 		if args == nil {
 			panic("error in HandleContractSendChannelClose, cannot get paymentchannel args")
 		}
 
-		channelProxy := channel.chain.PaymentChannel(common.Address(channelUpdateEvent.TokenNetworkIdentifier), channelUpdateEvent.ChannelIdentifier, args)
+		channelProxy := channel.chain.PaymentChannel(common.Address(channelUpdateEvent.TokenNetworkId), channelUpdateEvent.ChannelId, args)
 
 		balanceHash := transfer.HashBalanceData(
 			balanceProof.TransferredAmount,
@@ -259,7 +259,7 @@ func (self ChannelEventHandler) HandelContractSendChannelUpdate(channel *Channel
 
 		nonClosingData := transfer.PackBalanceProofUpdate(
 			balanceProof.Nonce, balanceHash, common.AdditionalHash(balanceProof.MessageHash[:]),
-			balanceProof.ChannelIdentifier, common.TokenNetworkAddress(balanceProof.TokenNetworkIdentifier),
+			balanceProof.ChannelId, common.TokenNetworkAddress(balanceProof.TokenNetworkId),
 			balanceProof.ChainId, balanceProof.Signature)
 
 		var ourSignature common.Signature
@@ -282,22 +282,22 @@ func (self ChannelEventHandler) HandelContractSendChannelUpdate(channel *Channel
 func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *ChannelService, channelSettleEvent *transfer.ContractSendChannelSettle) {
 	var ourTransferredAmount common.TokenAmount
 	var ourLockedAmount common.TokenAmount
-	var ourLocksroot common.Locksroot
+	var ourLocksroot common.LocksRoot
 	var partnerTransferredAmount common.TokenAmount
 	var partnerLockedAmount common.TokenAmount
-	var partnerLocksroot common.Locksroot
+	var partnerLocksroot common.LocksRoot
 	var ourBalanceProof *transfer.BalanceProofUnsignedState
 	var partnerBalanceProof *transfer.BalanceProofSignedState
 
 	var chainID common.ChainID
 
-	args := channel.GetPaymentChannelArgs(common.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier), channelSettleEvent.ChannelIdentifier)
+	args := channel.GetPaymentChannelArgs(common.TokenNetworkID(channelSettleEvent.TokenNetworkId), channelSettleEvent.ChannelId)
 	if args == nil {
 		panic("error in HandleContractSendChannelClose, cannot get paymentchannel args")
 	}
-	channelProxy := channel.chain.PaymentChannel(common.Address(channelSettleEvent.TokenNetworkIdentifier), channelSettleEvent.ChannelIdentifier, args)
+	channelProxy := channel.chain.PaymentChannel(common.Address(channelSettleEvent.TokenNetworkId), channelSettleEvent.ChannelId, args)
 
-	participanatsDetails := channelProxy.TokenNetwork.DetailParticipants(channelProxy.Participant1, channelProxy.Participant2, channelSettleEvent.ChannelIdentifier)
+	participanatsDetails := channelProxy.TokenNetwork.DetailParticipants(channelProxy.Participant1, channelProxy.Participant2, channelSettleEvent.ChannelId)
 
 	// when ourDetails or PartnerDetails is nil, it means the channel has been settled already
 	if participanatsDetails.OurDetails == nil || participanatsDetails.PartnerDetails == nil {
@@ -308,8 +308,8 @@ func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *Channel
 	log.Debugf("[ChannelSettle] ourBalanceHash %v", ourBalanceHash)
 	if !common.IsEmptyBalanceHash(ourBalanceHash) {
 		ourBalanceProof = storage.GetLatestKnownBalanceProofFromEvents(
-			channel.Wal.Storage, chainID, common.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier),
-			channelSettleEvent.ChannelIdentifier, ourBalanceHash)
+			channel.Wal.Storage, chainID, common.TokenNetworkID(channelSettleEvent.TokenNetworkId),
+			channelSettleEvent.ChannelId, ourBalanceHash)
 	}
 
 	if ourBalanceProof != nil {
@@ -322,8 +322,8 @@ func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *Channel
 	log.Debugf("[ChannelSettle] partnerBalanceHash %v", partnerBalanceHash)
 	if !common.IsEmptyBalanceHash(partnerBalanceHash) {
 		partnerBalanceProof = storage.GetLatestKnownBalanceProofFromStateChanges(
-			channel.Wal.Storage, chainID, common.TokenNetworkID(channelSettleEvent.TokenNetworkIdentifier),
-			channelSettleEvent.ChannelIdentifier, partnerBalanceHash, participanatsDetails.PartnerDetails.Address)
+			channel.Wal.Storage, chainID, common.TokenNetworkID(channelSettleEvent.TokenNetworkId),
+			channelSettleEvent.ChannelId, partnerBalanceHash, participanatsDetails.PartnerDetails.Address)
 	}
 
 	if partnerBalanceProof != nil {
@@ -349,9 +349,9 @@ func (self ChannelEventHandler) HandleSendLockedTransfer(channel *ChannelService
 			return
 		}
 
-		queueId := &transfer.QueueIdentifier{
-			Recipient:         common.Address(sendLockedTransfer.Recipient),
-			ChannelIdentifier: sendLockedTransfer.ChannelIdentifier,
+		queueId := &transfer.QueueId{
+			Recipient: common.Address(sendLockedTransfer.Recipient),
+			ChannelId: sendLockedTransfer.ChannelId,
 		}
 		channel.Transport.SendAsync(queueId, mediatedTransferMessage)
 	} else {
@@ -369,9 +369,9 @@ func (self ChannelEventHandler) HandleSendLockedExpire(channel *ChannelService, 
 			return
 		}
 
-		queueId := &transfer.QueueIdentifier{
-			Recipient:         common.Address(sendLockExpired.Recipient),
-			ChannelIdentifier: sendLockExpired.ChannelIdentifier,
+		queueId := &transfer.QueueId{
+			Recipient: common.Address(sendLockExpired.Recipient),
+			ChannelId: sendLockExpired.ChannelId,
 		}
 		channel.Transport.SendAsync(queueId, sendLockExpiredEventMessage)
 	} else {
@@ -389,9 +389,9 @@ func (self ChannelEventHandler) HandleSendSecretReveal(channel *ChannelService, 
 			return
 		}
 
-		queueId := &transfer.QueueIdentifier{
-			Recipient:         common.Address(revealSecretEvent.Recipient),
-			ChannelIdentifier: revealSecretEvent.ChannelIdentifier,
+		queueId := &transfer.QueueId{
+			Recipient: common.Address(revealSecretEvent.Recipient),
+			ChannelId: revealSecretEvent.ChannelId,
 		}
 		channel.Transport.SendAsync(queueId, revealSecretMessage)
 	} else {
@@ -408,9 +408,9 @@ func (self ChannelEventHandler) HandleSendBalanceProof(channel *ChannelService, 
 			log.Error("[HandleSendBalanceProof] ", err.Error())
 			return
 		}
-		queueId := &transfer.QueueIdentifier{
-			Recipient:         common.Address(balanceProofEvent.Recipient),
-			ChannelIdentifier: balanceProofEvent.ChannelIdentifier,
+		queueId := &transfer.QueueId{
+			Recipient: common.Address(balanceProofEvent.Recipient),
+			ChannelId: balanceProofEvent.ChannelId,
 		}
 		channel.Transport.SendAsync(queueId, unlockMessage)
 	} else {
@@ -428,9 +428,9 @@ func (self ChannelEventHandler) HandleSendSecretRequest(channel *ChannelService,
 			log.Error("[HandleSendSecretRequest] ", err.Error())
 			return
 		}
-		queueId := &transfer.QueueIdentifier{
-			Recipient:         common.Address(secretRequestEvent.Recipient),
-			ChannelIdentifier: secretRequestEvent.ChannelIdentifier,
+		queueId := &transfer.QueueId{
+			Recipient: common.Address(secretRequestEvent.Recipient),
+			ChannelId: secretRequestEvent.ChannelId,
 		}
 		channel.Transport.SendAsync(queueId, secretRequestMessage)
 	} else {
@@ -447,9 +447,9 @@ func (self ChannelEventHandler) HandleSendRefundTransfer(channel *ChannelService
 			log.Error("[HandleSendRefundTransfer] ", err.Error())
 			return
 		}
-		queueId := &transfer.QueueIdentifier{
-			Recipient:         common.Address(refundTransferEvent.Recipient),
-			ChannelIdentifier: refundTransferEvent.ChannelIdentifier,
+		queueId := &transfer.QueueId{
+			Recipient: common.Address(refundTransferEvent.Recipient),
+			ChannelId: refundTransferEvent.ChannelId,
 		}
 		channel.Transport.SendAsync(queueId, refundTransferMessage)
 	} else {
@@ -493,9 +493,9 @@ func (self ChannelEventHandler) HandleSendWithdrawRequest(channel *ChannelServic
 			return
 		}
 		/*
-			queueId := &transfer.QueueIdentifier{
+			queueId := &transfer.QueueId{
 				Recipient:         common.Address(withdrawRequestEvent.Recipient),
-				ChannelIdentifier: withdrawRequestEvent.ChannelIdentifier,
+				ChannelId: withdrawRequestEvent.ChannelId,
 			}
 			channel.Transport.SendAsync(queueId, withdrawRequestMessage)
 		*/
@@ -504,7 +504,7 @@ func (self ChannelEventHandler) HandleSendWithdrawRequest(channel *ChannelServic
 		err = channel.Transport.Send(withdrawRequestEvent.Recipient, withdrawRequestMessage)
 		if err != nil {
 			log.Debugf("SendWithdrawRequest failed : %s", err)
-			self.handleWithdrawFailure(channel, withdrawRequestEvent.TokenNetworkIdentifier, withdrawRequestEvent.ChannelIdentifier)
+			self.handleWithdrawFailure(channel, withdrawRequestEvent.TokenNetworkId, withdrawRequestEvent.ChannelId)
 		}
 	} else {
 		log.Warn("[HandleSendWithdrawRequest] Message is nil")
@@ -521,9 +521,9 @@ func (self ChannelEventHandler) HandleSendWithdraw(channel *ChannelService, with
 			return
 		}
 		/*
-			queueId := &transfer.QueueIdentifier{
+			queueId := &transfer.QueueId{
 				Recipient:         common.Address(withdrawEvent.Recipient),
-				ChannelIdentifier: withdrawEvent.ChannelIdentifier,
+				ChannelId: withdrawEvent.ChannelId,
 			}
 			channel.Transport.SendAsync(queueId, withdrawMessage)
 		*/
@@ -539,12 +539,12 @@ func (self ChannelEventHandler) HandleSendWithdraw(channel *ChannelService, with
 
 func (self ChannelEventHandler) HandleContractSendChannelWithdraw(channel *ChannelService, channelWithdrawEvent *transfer.ContractSendChannelWithdraw) {
 
-	args := channel.GetPaymentChannelArgs(channelWithdrawEvent.TokenNetworkIdentifier, channelWithdrawEvent.ChannelIdentifier)
+	args := channel.GetPaymentChannelArgs(channelWithdrawEvent.TokenNetworkId, channelWithdrawEvent.ChannelId)
 	if args == nil {
 		panic("error in HandleContractSendChannelWithdraw, cannot get paymentchannel args")
 	}
 
-	channelProxy := channel.chain.PaymentChannel(common.Address(channelWithdrawEvent.TokenNetworkIdentifier), channelWithdrawEvent.ChannelIdentifier, args)
+	channelProxy := channel.chain.PaymentChannel(common.Address(channelWithdrawEvent.TokenNetworkId), channelWithdrawEvent.ChannelId, args)
 
 	// run in a goroutine in order that partner will not time out for the delivered message for withdraw
 	go func() {
@@ -552,7 +552,7 @@ func (self ChannelEventHandler) HandleContractSendChannelWithdraw(channel *Chann
 			channelWithdrawEvent.ParticipantSignature, channelWithdrawEvent.ParticipantPublicKey)
 		if err != nil {
 			log.Warnf("HandleContractSendChannelWithdraw, proxy returns: %s", err)
-			ok := channel.WithdrawResultNotify(channelWithdrawEvent.ChannelIdentifier, false)
+			ok := channel.WithdrawResultNotify(channelWithdrawEvent.ChannelId, false)
 			if !ok {
 				log.Warnf("error in HandleContractSendChannelWithdraw, no withdraw status found in the map")
 			}
@@ -562,26 +562,26 @@ func (self ChannelEventHandler) HandleContractSendChannelWithdraw(channel *Chann
 
 func (self ChannelEventHandler) HandleWithdrawRequestSentFailed(channel *ChannelService, withdrawRequestSentFailedEvent *transfer.EventWithdrawRequestSentFailed) {
 	log.Debugf("HandleWithdrawRequestSentFailed")
-	self.handleWithdrawFailure(channel, withdrawRequestSentFailedEvent.TokenNetworkIdentifier, withdrawRequestSentFailedEvent.ChannelIdentifier)
+	self.handleWithdrawFailure(channel, withdrawRequestSentFailedEvent.TokenNetworkId, withdrawRequestSentFailedEvent.ChannelId)
 }
 
 func (self ChannelEventHandler) HandleInvalidReceivedWithdraw(channel *ChannelService, invalidWithdrawReceivedEvent *transfer.EventInvalidReceivedWithdraw) {
 	log.Debugf("HandleInvalidReceivedWithdraw")
-	self.handleWithdrawFailure(channel, invalidWithdrawReceivedEvent.TokenNetworkIdentifier, invalidWithdrawReceivedEvent.ChannelIdentifier)
+	self.handleWithdrawFailure(channel, invalidWithdrawReceivedEvent.TokenNetworkId, invalidWithdrawReceivedEvent.ChannelId)
 }
 
 func (self ChannelEventHandler) HandleWithdrawRequestTimeout(channel *ChannelService, withdrawRequestTimeoutEvent *transfer.EventWithdrawRequestTimeout) {
 	log.Debugf("HandleWithdrawRequestTimeout")
-	self.handleWithdrawFailure(channel, withdrawRequestTimeoutEvent.TokenNetworkIdentifier, withdrawRequestTimeoutEvent.ChannelIdentifier)
+	self.handleWithdrawFailure(channel, withdrawRequestTimeoutEvent.TokenNetworkId, withdrawRequestTimeoutEvent.ChannelId)
 }
 
-func (self ChannelEventHandler) handleWithdrawFailure(channel *ChannelService, tokenNetworkIdentifier common.TokenNetworkID, channelIdentifier common.ChannelID) {
-	ok := channel.WithdrawResultNotify(channelIdentifier, false)
+func (self ChannelEventHandler) handleWithdrawFailure(channel *ChannelService, TokenNetworkId common.TokenNetworkID, channelId common.ChannelID) {
+	ok := channel.WithdrawResultNotify(channelId, false)
 	if !ok {
 		log.Warnf("handleWithdrawFailure no withdraw status found in the map")
 	}
 
-	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(channel.StateFromChannel(), tokenNetworkIdentifier, channelIdentifier)
+	channelState := transfer.GetChannelStateByTokenNetworkId(channel.StateFromChannel(), TokenNetworkId, channelId)
 	if channelState == nil {
 		panic("error in handleWithdrawFailure, channelState is nil")
 	}
@@ -597,9 +597,9 @@ func (self ChannelEventHandler) HandleSendCooperativeSettleRequest(channel *Chan
 			log.Error("[HandleSendCooperativeSettleRequest] ", err.Error())
 			return
 		}
-		queueId := &transfer.QueueIdentifier{
-			Recipient:         common.Address(cooperativeSettleRequestEvent.Recipient),
-			ChannelIdentifier: cooperativeSettleRequestEvent.ChannelIdentifier,
+		queueId := &transfer.QueueId{
+			Recipient: common.Address(cooperativeSettleRequestEvent.Recipient),
+			ChannelId: cooperativeSettleRequestEvent.ChannelId,
 		}
 		channel.Transport.SendAsync(queueId, cooperativeSettleRequestMessage)
 	} else {
@@ -616,9 +616,9 @@ func (self ChannelEventHandler) HandleSendCooperativeSettle(channel *ChannelServ
 			log.Error("[HandleSendCooperativeSettle] ", err.Error())
 			return
 		}
-		queueId := &transfer.QueueIdentifier{
-			Recipient:         common.Address(cooperativeSettleEvent.Recipient),
-			ChannelIdentifier: cooperativeSettleEvent.ChannelIdentifier,
+		queueId := &transfer.QueueId{
+			Recipient: common.Address(cooperativeSettleEvent.Recipient),
+			ChannelId: cooperativeSettleEvent.ChannelId,
 		}
 		channel.Transport.SendAsync(queueId, cooperativeSettleMessage)
 	} else {
@@ -629,12 +629,12 @@ func (self ChannelEventHandler) HandleSendCooperativeSettle(channel *ChannelServ
 
 func (self ChannelEventHandler) HandleContractSendChannelCooperativeSettle(channel *ChannelService, channelCooperativeSettleEvent *transfer.ContractSendChannelCooperativeSettle) {
 	log.Debug("in HandleContractSendChannelCooperativeSettle")
-	args := channel.GetPaymentChannelArgs(channelCooperativeSettleEvent.TokenNetworkIdentifier, channelCooperativeSettleEvent.ChannelIdentifier)
+	args := channel.GetPaymentChannelArgs(channelCooperativeSettleEvent.TokenNetworkId, channelCooperativeSettleEvent.ChannelId)
 	if args == nil {
 		panic("error in HandleContractSendChannelCooperativeSettle, cannot get paymentchannel args")
 	}
 
-	channelProxy := channel.chain.PaymentChannel(common.Address(channelCooperativeSettleEvent.TokenNetworkIdentifier), channelCooperativeSettleEvent.ChannelIdentifier, args)
+	channelProxy := channel.chain.PaymentChannel(common.Address(channelCooperativeSettleEvent.TokenNetworkId), channelCooperativeSettleEvent.ChannelId, args)
 
 	go func() {
 		err := channelProxy.CooperativeSettle(channelCooperativeSettleEvent.Participant1, channelCooperativeSettleEvent.Participant1Balance,
@@ -649,27 +649,27 @@ func (self ChannelEventHandler) HandleContractSendChannelCooperativeSettle(chann
 func (self ChannelEventHandler) HandleContractSendChannelUnlock(channel *ChannelService, channelUnlockEvent *transfer.ContractSendChannelBatchUnlock) {
 	var chainID common.ChainID
 
-	tokenNetworkIdentifier := channelUnlockEvent.TokenNetworkIdentifier
-	channelIdentifier := channelUnlockEvent.ChannelIdentifier
+	TokenNetworkId := channelUnlockEvent.TokenNetworkId
+	channelId := channelUnlockEvent.ChannelId
 	participant := channelUnlockEvent.Participant
 	tokenAddress := channelUnlockEvent.TokenAddress
 
-	args := channel.GetPaymentChannelArgs(tokenNetworkIdentifier, channelIdentifier)
+	args := channel.GetPaymentChannelArgs(TokenNetworkId, channelId)
 	if args == nil {
 		panic("error in HandleContractSendChannelUnlock, cannot get paymentchannel args")
 	}
 
-	channelProxy := channel.chain.PaymentChannel(common.Address(tokenNetworkIdentifier), channelIdentifier, args)
+	channelProxy := channel.chain.PaymentChannel(common.Address(TokenNetworkId), channelId, args)
 
-	participanatsDetails := channelProxy.TokenNetwork.DetailParticipants(channelProxy.Participant1, channelProxy.Participant2, channelIdentifier)
+	participanatsDetails := channelProxy.TokenNetwork.DetailParticipants(channelProxy.Participant1, channelProxy.Participant2, channelId)
 
 	ourDetails := participanatsDetails.OurDetails
-	ourLocksroot := ourDetails.Locksroot
+	ourLocksroot := ourDetails.LocksRoot
 
 	partnerDetails := participanatsDetails.PartnerDetails
-	partnerLocksroot := partnerDetails.Locksroot
+	partnerLocksroot := partnerDetails.LocksRoot
 
-	emptyHash := common.Locksroot{}
+	emptyHash := common.LocksRoot{}
 	isPartnerUnlock := false
 	if partnerDetails.Address == participant && partnerLocksroot != emptyHash {
 		isPartnerUnlock = true
@@ -684,7 +684,7 @@ func (self ChannelEventHandler) HandleContractSendChannelUnlock(channel *Channel
 
 	if isPartnerUnlock {
 		stateChangeRecord := storage.GetStateChangeWithBalanceProofByLocksroot(
-			channel.Wal.Storage, chainID, tokenNetworkIdentifier, channelIdentifier,
+			channel.Wal.Storage, chainID, TokenNetworkId, channelId,
 			partnerLocksroot, partnerDetails.Address)
 
 		if stateChangeRecord != nil {
@@ -692,7 +692,7 @@ func (self ChannelEventHandler) HandleContractSendChannelUnlock(channel *Channel
 		}
 	} else if isOurUnlock {
 		eventRecord := storage.GetEventWithBalanceProofByLocksroot(
-			channel.Wal.Storage, chainID, tokenNetworkIdentifier, channelIdentifier,
+			channel.Wal.Storage, chainID, TokenNetworkId, channelId,
 			ourLocksroot)
 
 		if eventRecord != nil {
@@ -708,7 +708,7 @@ func (self ChannelEventHandler) HandleContractSendChannelUnlock(channel *Channel
 	}
 
 	restoredChannelState := storage.ChannelStateUntilStateChange(channel.Wal.Storage, common.PaymentNetworkID{},
-		tokenAddress, channelIdentifier, stateChangeIdentifier, channel.address)
+		tokenAddress, channelId, stateChangeIdentifier, channel.address)
 
 	ourState := restoredChannelState.OurState
 	partnerState := restoredChannelState.PartnerState

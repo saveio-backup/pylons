@@ -11,16 +11,16 @@ import (
 	"github.com/saveio/pylons/common/constants"
 )
 
-type QueueIdentifier struct {
-	Recipient         common.Address
-	ChannelIdentifier common.ChannelID
+type QueueId struct {
+	Recipient common.Address
+	ChannelId common.ChannelID
 }
 
-func (self QueueIdentifier) String() string {
-	return fmt.Sprintf("%v-%v", self.Recipient, self.ChannelIdentifier)
+func (self QueueId) String() string {
+	return fmt.Sprintf("%v-%v", self.Recipient, self.ChannelId)
 }
 
-func (self QueueIdentifier) MarshalText() (text []byte, err error) {
+func (self QueueId) MarshalText() (text []byte, err error) {
 	var scratch [64]byte
 	var e bytes.Buffer
 
@@ -35,13 +35,13 @@ func (self QueueIdentifier) MarshalText() (text []byte, err error) {
 	}
 	e.WriteByte(']')
 
-	b := strconv.AppendInt(scratch[:0], int64(self.ChannelIdentifier), 10)
+	b := strconv.AppendInt(scratch[:0], int64(self.ChannelId), 10)
 	e.Write(b)
 
 	return e.Bytes(), nil
 }
 
-func (self *QueueIdentifier) UnmarshalText(text []byte) error {
+func (self *QueueId) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
@@ -58,7 +58,7 @@ func (self *QueueIdentifier) UnmarshalText(text []byte) error {
 		res, err := strconv.ParseUint(string(newText[startIdx:toIdx]), 10, 8)
 
 		if err != nil {
-			return errors.New("QueueIdentifier TextUnmarshaler error!")
+			return errors.New("QueueId TextUnmarshaler error!")
 		} else {
 			self.Recipient[i] = byte(res)
 		}
@@ -73,9 +73,9 @@ func (self *QueueIdentifier) UnmarshalText(text []byte) error {
 	res, err := strconv.ParseInt(string(newText[startIdx:]), 10, 32)
 
 	if err != nil {
-		return errors.New("QueueIdentifier TextUnmarshaler error!")
+		return errors.New("QueueId TextUnmarshaler error!")
 	} else {
-		self.ChannelIdentifier = common.ChannelID(res)
+		self.ChannelId = common.ChannelID(res)
 	}
 
 	return nil

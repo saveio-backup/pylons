@@ -465,15 +465,15 @@ func (self *BalanceHash) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func (self Locksroot) String() string {
+func (self LocksRoot) String() string {
 	str, err := jsonext.Marshal(self)
 	if err != nil {
-		return "emptyLocksroot"
+		return "emptyLocksRoot"
 	}
 	return string(str)
 }
 
-func (self Locksroot) MarshalText() (text []byte, err error) {
+func (self LocksRoot) MarshalText() (text []byte, err error) {
 	var scratch [64]byte
 	var e bytes.Buffer
 
@@ -491,7 +491,7 @@ func (self Locksroot) MarshalText() (text []byte, err error) {
 	return e.Bytes(), nil
 }
 
-func (self *Locksroot) UnmarshalText(text []byte) error {
+func (self *LocksRoot) UnmarshalText(text []byte) error {
 	newText := text[1:]
 
 	startIdx := 0
@@ -508,7 +508,7 @@ func (self *Locksroot) UnmarshalText(text []byte) error {
 		res, err := strconv.ParseUint(string(newText[startIdx:toIdx]), 10, 8)
 
 		if err != nil {
-			return errors.New("Locksroot TextUnmarshaler error!")
+			return errors.New("LocksRoot TextUnmarshaler error!")
 		} else {
 			self[i] = byte(res)
 		}
@@ -537,7 +537,7 @@ func SliceEqual(a, b []byte) bool {
 	return true
 }
 
-func LocksrootEmpty(a Locksroot) bool {
+func LocksRootEmpty(a LocksRoot) bool {
 	for _, v := range a {
 		if v != 0 {
 			return false

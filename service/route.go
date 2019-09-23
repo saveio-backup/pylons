@@ -1,4 +1,4 @@
-package channelservice
+package service
 
 import (
 	"encoding/hex"
@@ -51,7 +51,7 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 				if channelState != nil {
 					channelId = channelState.Identifier
 					if valid, err := checkRouteAvailable(channelState, partAddr, fromAddress, amount); valid {
-						log.Infof("[GetBestRoutes]: %s", common.ToBase58(partAddr))
+						log.Debugf("[GetBestRoutes]: %s", common.ToBase58(partAddr))
 						break
 					} else {
 						log.Warnf("[GetBestRoutes] checkRouteAvailable %s error: ", common.ToBase58(partAddr), err.Error())
@@ -69,7 +69,7 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 		return nil, fmt.Errorf("[GetBestRoutes] no route to target")
 	}
 
-	availableRoutes := []transfer.RouteState{{NodeAddress: partAddr, ChannelIdentifier: channelId}}
+	availableRoutes := []transfer.RouteState{{NodeAddress: partAddr, ChannelId: channelId}}
 	return availableRoutes, nil
 }
 
@@ -97,7 +97,7 @@ func GetSpecifiedRoute(channelSrv *ChannelService, tokenNetworkId common.TokenNe
 		return nil, fmt.Errorf("[GetBestRoutes] %s is NetworkUnReachable", common.ToBase58(media))
 	}
 
-	availableRoutes := []transfer.RouteState{{NodeAddress: media, ChannelIdentifier: channelId}}
+	availableRoutes := []transfer.RouteState{{NodeAddress: media, ChannelId: channelId}}
 	return availableRoutes, nil
 }
 

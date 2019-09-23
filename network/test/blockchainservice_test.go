@@ -11,7 +11,7 @@ import (
 var (
 	WALLET_PATH       = "./wallet.dat"
 	WALLET_PWD        = []byte("123456")
-	blockchainService *network.BlockchainService
+	blockchainService *network.BlockChainService
 )
 
 func init() {

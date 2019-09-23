@@ -3,14 +3,13 @@ package transfer
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math"
-
 	"sync"
 
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/themis/common/log"
-	"github.com/saveio/themis/errors"
 )
 
 func Min(x, y uint64) uint64 {
@@ -28,7 +27,7 @@ func Max(x, y uint64) uint64 {
 }
 
 type BalanceProofData struct {
-	locksRoot         common.Locksroot
+	locksRoot         common.LocksRoot
 	nonce             common.Nonce
 	transferredAmount common.TokenAmount
 	lockedAmount      common.TokenAmount
@@ -58,13 +57,13 @@ func IsLockExpired(endState *NettingChannelEndState, lock *HashTimeLockState,
 
 	secretHash := common.SecretHash(lock.SecretHash)
 	if _, exist := endState.SecretHashesToOnChainUnLockedLocks[secretHash]; exist {
-		return false, errors.NewErr("lock has been unlocked on-chain")
+		return false, errors.New("lock has been unlocked on-chain")
 	}
 
 	if blockNumber < lockExpirationThreshold {
 		return false, fmt.Errorf("current block number: %d is not larger than lockExpirationThreshold: %d",
 			blockNumber, lockExpirationThreshold)
-		return false, errors.NewErr("current block number is not larger than lock expiration + confirmation blocks")
+		return false, errors.New("current block number is not larger than lock expiration + confirmation blocks")
 	}
 
 	return true, nil
@@ -229,7 +228,7 @@ func RegisterOnChainSecret(channelState *NettingChannelState, secret common.Secr
 	return
 }
 
-func compareLocksroot(one common.Locksroot, two common.Locksroot) bool {
+func compareLocksroot(one common.LocksRoot, two common.LocksRoot) bool {
 	result := true
 
 	if len(one) != len(two) {
@@ -313,7 +312,7 @@ func IsValidUnlock(unlock *ReceiveUnlock, channelState *NettingChannelState,
 
 	if !isBalanceProofUsable {
 		return false, nil, fmt.Errorf("invalid Unlock message. %s", invalidBalanceProofMsg)
-	} else if receivedBalanceProof.LocksRoot != common.Locksroot(locksRootWithoutLock) {
+	} else if receivedBalanceProof.LocksRoot != common.LocksRoot(locksRootWithoutLock) {
 		//# Secret messages remove a known lock, the new locksroot must have only
 		//# that lock removed, otherwise the sender may be trying to remove
 		//# additional locks.
@@ -355,10 +354,10 @@ func IsValidSignature(balanceProof *BalanceProofSignedState, senderAddress commo
 		balanceProof.LockedAmount, balanceProof.LocksRoot)
 
 	dataThatWasSigned := PackBalanceProof(common.Nonce(balanceProof.Nonce), balanceHash, common.AdditionalHash(balanceProof.MessageHash[:]),
-		balanceProof.ChannelIdentifier, common.TokenNetworkAddress(balanceProof.TokenNetworkIdentifier), balanceProof.ChainId, 1)
+		balanceProof.ChannelId, common.TokenNetworkAddress(balanceProof.TokenNetworkId), balanceProof.ChainId, 1)
 
 	if dataThatWasSigned == nil {
-		return false, errors.NewErr("Signature invalid, could not be recovered dataThatWasSigned is nil")
+		return false, errors.New("Signature invalid, could not be recovered dataThatWasSigned is nil")
 	}
 
 	return isValidSignature(dataThatWasSigned, balanceProof.PublicKey, balanceProof.Signature, senderAddress)
@@ -374,19 +373,19 @@ func IsBalanceProofUsableOnChain(receivedBalanceProof *BalanceProofSignedState,
 		return isValidSignature, error
 	}
 	if GetStatus(channelState) != ChannelStateOpened {
-		return false, errors.NewErr("The channel is already closed.")
-	} else if receivedBalanceProof.ChannelIdentifier != channelState.Identifier {
+		return false, errors.New("The channel is already closed.")
+	} else if receivedBalanceProof.ChannelId != channelState.Identifier {
 		return false, fmt.Errorf("channel_identifier does not match. expected:%d got:%d",
-			channelState.Identifier, receivedBalanceProof.ChannelIdentifier)
-	} else if common.AddressEqual(common.Address(receivedBalanceProof.TokenNetworkIdentifier),
-		common.Address(channelState.TokenNetworkIdentifier)) == false {
+			channelState.Identifier, receivedBalanceProof.ChannelId)
+	} else if common.AddressEqual(common.Address(receivedBalanceProof.TokenNetworkId),
+		common.Address(channelState.TokenNetworkId)) == false {
 		return false, fmt.Errorf("token_network_identifier does not match. expected:%d got:%d",
-			channelState.TokenNetworkIdentifier, receivedBalanceProof.TokenNetworkIdentifier)
+			channelState.TokenNetworkId, receivedBalanceProof.TokenNetworkId)
 	} else if receivedBalanceProof.ChainId != channelState.ChainId {
 		return false, fmt.Errorf("chain id does not match channel's chain id. expected:%d got:%d",
 			channelState.ChainId, receivedBalanceProof.ChainId)
 	} else if IsBalanceProofSafeForOnchainOperations(receivedBalanceProof) == false {
-		return false, errors.NewErr("Balance proof total transferred amount would overflow onchain.")
+		return false, errors.New("Balance proof total transferred amount would overflow onchain.")
 	} else if receivedBalanceProof.Nonce != expectedNonce {
 		return false, fmt.Errorf("nonce did not change sequentially, expected:%d got:%d",
 			expectedNonce, receivedBalanceProof.Nonce)
@@ -505,7 +504,7 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 			log.Info("[IsValidLockExpired] blockNumber: %d, lock.Expiration: %d MaxBlockDelay:%d",
 				blockNumber, lock.Expiration, common.Config.MaxBlockDelay)
 			return nil, fmt.Errorf("[IsValidLockExpired] Invalid LockExpired message. %s ", err.Error())
-		} else if receivedBalanceProof.LocksRoot != common.Locksroot(locksRootWithoutLock) {
+		} else if receivedBalanceProof.LocksRoot != common.LocksRoot(locksRootWithoutLock) {
 			//The locksRoot must be updated, and the expired lock must be *removed*
 			return nil, fmt.Errorf("[IsValidLockExpired] Invalid LockExpired message. "+
 				"Balance proof's locksroot didn't match, expected: %s got: %s. ",
@@ -559,7 +558,7 @@ func ValidLockedTransferCheck(channelState *NettingChannelState, senderState *Ne
 	} else {
 		locksRootWithLock := MerkleRoot(merkleTree.Layers)
 
-		if receivedBalanceProof.LocksRoot != common.Locksroot(locksRootWithLock) {
+		if receivedBalanceProof.LocksRoot != common.LocksRoot(locksRootWithLock) {
 			//The locksRoot must be updated to include the new lock
 			return nil, fmt.Errorf("Invalid %s message. Balance proof's locksroot didn't match, expected: %s got: %s ",
 				messageName, hex.EncodeToString(locksRootWithLock[:]),
@@ -651,7 +650,7 @@ func getCurrentBalanceProof(endState *NettingChannelEndState) (*BalanceProofData
 		}, nil
 	} else {
 		return &BalanceProofData{
-			locksRoot:         common.Locksroot{},
+			locksRoot:         common.LocksRoot{},
 			nonce:             0,
 			transferredAmount: 0,
 			lockedAmount:      0,
@@ -862,9 +861,10 @@ func computeMerkleTreeWithout(merkleTree *MerkleTreeState, lockHash common.LockH
 }
 
 func createSendLockedTransfer(channelState *NettingChannelState, initiator common.Address,
-	target common.Address, amount common.PaymentAmount, messageIdentifier common.MessageID,
-	paymentIdentifier common.PaymentID, expiration common.BlockExpiration,
+	target common.Address, amount common.PaymentAmount, messageId common.MessageID,
+	paymentId common.PaymentID, expiration common.BlockExpiration, encSecret common.EncSecret,
 	secretHash common.SecretHash) (*SendLockedTransfer, *MerkleTreeState, error) {
+
 	var err error
 	ourState := channelState.OurState
 	partnerState := channelState.PartnerState
@@ -915,32 +915,33 @@ func createSendLockedTransfer(channelState *NettingChannelState, initiator commo
 	lockedAmount := getAmountLocked(ourState) + common.Balance(amount)
 
 	balanceProof := &BalanceProofUnsignedState{
-		Nonce:                  nonce,
-		TransferredAmount:      transferAmount,
-		LockedAmount:           common.TokenAmount(lockedAmount),
-		LocksRoot:              common.Locksroot(locksRoot),
-		TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,
-		ChannelIdentifier:      channelState.Identifier,
-		ChainId:                channelState.ChainId,
+		Nonce:             nonce,
+		TransferredAmount: transferAmount,
+		LockedAmount:      common.TokenAmount(lockedAmount),
+		LocksRoot:         common.LocksRoot(locksRoot),
+		TokenNetworkId:    channelState.TokenNetworkId,
+		ChannelId:         channelState.Identifier,
+		ChainId:           channelState.ChainId,
 	}
 
 	balanceProof.BalanceHash = HashBalanceData(balanceProof.TransferredAmount,
 		balanceProof.LockedAmount, balanceProof.LocksRoot)
 
 	transfer := &LockedTransferUnsignedState{
-		PaymentIdentifier: paymentIdentifier,
-		Token:             token,
-		BalanceProof:      balanceProof,
-		Lock:              lock,
-		Initiator:         common.Address(initiator),
-		Target:            common.Address(target),
+		PaymentId:    paymentId,
+		Token:        token,
+		BalanceProof: balanceProof,
+		Lock:         lock,
+		Initiator:    common.Address(initiator),
+		Target:       common.Address(target),
+		EncSecret:    encSecret,
 	}
 
 	lockedTransfer := &SendLockedTransfer{
 		SendMessageEvent: SendMessageEvent{
-			Recipient:         common.Address(recipient),
-			ChannelIdentifier: channelState.Identifier,
-			MessageIdentifier: messageIdentifier,
+			Recipient: common.Address(recipient),
+			ChannelId: channelState.Identifier,
+			MessageId: messageId,
 		},
 		Transfer: transfer,
 	}
@@ -949,7 +950,7 @@ func createSendLockedTransfer(channelState *NettingChannelState, initiator commo
 }
 
 func createSendDirectTransfer(channelState *NettingChannelState, amount common.PaymentAmount,
-	messageIdentifier common.MessageID, paymentIdentifier common.PaymentID) *SendDirectTransfer {
+	messageId common.MessageID, paymentId common.PaymentID) *SendDirectTransfer {
 
 	ourState := channelState.OurState
 	partnerState := channelState.PartnerState
@@ -965,14 +966,14 @@ func createSendDirectTransfer(channelState *NettingChannelState, amount common.P
 	ourBalanceProof := channelState.OurState.BalanceProof
 
 	var transferAmount common.TokenAmount
-	var locksRoot common.Locksroot
+	var locksRoot common.LocksRoot
 
 	if ourBalanceProof != nil {
 		transferAmount = common.TokenAmount(amount) + ourBalanceProof.TransferredAmount
 		locksRoot = ourBalanceProof.LocksRoot
 	} else {
 		transferAmount = common.TokenAmount(amount)
-		locksRoot = common.Locksroot{}
+		locksRoot = common.LocksRoot{}
 	}
 
 	nonce := getNextNonce(ourState)
@@ -980,13 +981,13 @@ func createSendDirectTransfer(channelState *NettingChannelState, amount common.P
 	lockedAmount := getAmountLocked(ourState)
 
 	balanceProof := &BalanceProofUnsignedState{
-		Nonce:                  nonce,
-		TransferredAmount:      transferAmount,
-		LockedAmount:           common.TokenAmount(lockedAmount),
-		LocksRoot:              locksRoot,
-		TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,
-		ChannelIdentifier:      channelState.Identifier,
-		ChainId:                channelState.ChainId,
+		Nonce:             nonce,
+		TransferredAmount: transferAmount,
+		LockedAmount:      common.TokenAmount(lockedAmount),
+		LocksRoot:         locksRoot,
+		TokenNetworkId:    channelState.TokenNetworkId,
+		ChannelId:         channelState.Identifier,
+		ChainId:           channelState.ChainId,
 	}
 
 	balanceProof.BalanceHash = HashBalanceData(balanceProof.TransferredAmount,
@@ -994,40 +995,40 @@ func createSendDirectTransfer(channelState *NettingChannelState, amount common.P
 
 	sendDirectTransfer := SendDirectTransfer{
 		SendMessageEvent: SendMessageEvent{
-			Recipient:         common.Address(recipient),
-			ChannelIdentifier: channelState.Identifier,
-			MessageIdentifier: messageIdentifier,
+			Recipient: common.Address(recipient),
+			ChannelId: channelState.Identifier,
+			MessageId: messageId,
 		},
-		PaymentIdentifier: paymentIdentifier,
-		BalanceProof:      balanceProof,
-		TokenAddress:      common.TokenAddress(channelState.TokenAddress),
+		PaymentId:    paymentId,
+		BalanceProof: balanceProof,
+		TokenAddress: common.TokenAddress(channelState.TokenAddress),
 	}
 
 	return &sendDirectTransfer
 }
 
 func sendDirectTransfer(channelState *NettingChannelState, amount common.PaymentAmount,
-	messageIdentifier common.MessageID, paymentIdentifier common.PaymentID) *SendDirectTransfer {
+	messageId common.MessageID, paymentId common.PaymentID) *SendDirectTransfer {
 
-	directTransfer := createSendDirectTransfer(channelState, amount, messageIdentifier, paymentIdentifier)
+	directTransfer := createSendDirectTransfer(channelState, amount, messageId, paymentId)
 
 	//Construct fake BalanceProofSignedState from BalanceProofUnsignedState!
 	channelState.OurState.BalanceProof = &BalanceProofSignedState{
-		Nonce:                  directTransfer.BalanceProof.Nonce,
-		TransferredAmount:      directTransfer.BalanceProof.TransferredAmount,
-		LockedAmount:           directTransfer.BalanceProof.LockedAmount,
-		LocksRoot:              directTransfer.BalanceProof.LocksRoot,
-		TokenNetworkIdentifier: directTransfer.BalanceProof.TokenNetworkIdentifier,
-		ChannelIdentifier:      directTransfer.BalanceProof.ChannelIdentifier,
-		ChainId:                directTransfer.BalanceProof.ChainId,
-		BalanceHash:            directTransfer.BalanceProof.BalanceHash,
+		Nonce:             directTransfer.BalanceProof.Nonce,
+		TransferredAmount: directTransfer.BalanceProof.TransferredAmount,
+		LockedAmount:      directTransfer.BalanceProof.LockedAmount,
+		LocksRoot:         directTransfer.BalanceProof.LocksRoot,
+		TokenNetworkId:    directTransfer.BalanceProof.TokenNetworkId,
+		ChannelId:         directTransfer.BalanceProof.ChannelId,
+		ChainId:           directTransfer.BalanceProof.ChainId,
+		BalanceHash:       directTransfer.BalanceProof.BalanceHash,
 	}
 
 	return directTransfer
 }
 
-func CreateUnlock(channelState *NettingChannelState, messageIdentifier common.MessageID,
-	paymentIdentifier common.PaymentID, secret common.Secret,
+func CreateUnlock(channelState *NettingChannelState, messageId common.MessageID,
+	paymentId common.PaymentID, secret common.Secret,
 	lock *HashTimeLockState) (*SendBalanceProof, *MerkleTreeState, error) {
 	ourState := channelState.OurState
 	if !IsLockPending(ourState, common.SecretHash(lock.SecretHash)) {
@@ -1071,13 +1072,13 @@ func CreateUnlock(channelState *NettingChannelState, messageIdentifier common.Me
 		lockedAmount, amountLocked, lock.Amount)
 
 	balanceProof := &BalanceProofUnsignedState{
-		Nonce:                  nonce,
-		TransferredAmount:      transferredAmount,
-		LockedAmount:           lockedAmount,
-		LocksRoot:              common.Locksroot(locksRoot),
-		TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,
-		ChannelIdentifier:      channelState.Identifier,
-		ChainId:                channelState.ChainId,
+		Nonce:             nonce,
+		TransferredAmount: transferredAmount,
+		LockedAmount:      lockedAmount,
+		LocksRoot:         common.LocksRoot(locksRoot),
+		TokenNetworkId:    channelState.TokenNetworkId,
+		ChannelId:         channelState.Identifier,
+		ChainId:           channelState.ChainId,
 	}
 
 	balanceProof.BalanceHash = HashBalanceData(balanceProof.TransferredAmount,
@@ -1085,28 +1086,25 @@ func CreateUnlock(channelState *NettingChannelState, messageIdentifier common.Me
 
 	unlockLock := &SendBalanceProof{
 		SendMessageEvent: SendMessageEvent{
-			Recipient:         common.Address(recipient),
-			ChannelIdentifier: channelState.Identifier,
-			MessageIdentifier: messageIdentifier,
+			Recipient: common.Address(recipient),
+			ChannelId: channelState.Identifier,
+			MessageId: messageId,
 		},
-		PaymentIdentifier: paymentIdentifier,
-		TokenAddress:      common.TokenAddress(tokenAddress),
-		Secret:            secret,
-		BalanceProof:      balanceProof,
+		PaymentId:    paymentId,
+		TokenAddress: common.TokenAddress(tokenAddress),
+		Secret:       secret,
+		BalanceProof: balanceProof,
 	}
 
 	return unlockLock, merkleTree, nil
 }
 
-func sendLockedTransfer(channelState *NettingChannelState,
-	initiator common.Address, target common.Address,
-	amount common.PaymentAmount, messageIdentifier common.MessageID,
-	paymentIdentifier common.PaymentID, expiration common.BlockExpiration,
-	secretHash common.SecretHash) *SendLockedTransfer {
+func sendLockedTransfer(channelState *NettingChannelState, initiator common.Address, target common.Address,
+	amount common.PaymentAmount, messageId common.MessageID, paymentId common.PaymentID,
+	expiration common.BlockExpiration, encSecret common.EncSecret, secretHash common.SecretHash) *SendLockedTransfer {
 
-	sendLockedTransferEvent, merkleTree, err := createSendLockedTransfer(
-		channelState, initiator, target, amount, messageIdentifier,
-		paymentIdentifier, expiration, secretHash)
+	sendLockedTransferEvent, merkleTree, err := createSendLockedTransfer(channelState, initiator, target, amount,
+		messageId, paymentId, expiration, encSecret, secretHash)
 	if err != nil {
 		log.Error("[sendLockedTransfer] createSendLockedTransfer error: %s", err.Error())
 	}
@@ -1115,14 +1113,14 @@ func sendLockedTransfer(channelState *NettingChannelState,
 	lock := transfer.Lock
 
 	channelState.OurState.BalanceProof = &BalanceProofSignedState{
-		Nonce:                  transfer.BalanceProof.Nonce,
-		TransferredAmount:      transfer.BalanceProof.TransferredAmount,
-		LockedAmount:           transfer.BalanceProof.LockedAmount,
-		LocksRoot:              transfer.BalanceProof.LocksRoot,
-		TokenNetworkIdentifier: transfer.BalanceProof.TokenNetworkIdentifier,
-		ChannelIdentifier:      transfer.BalanceProof.ChannelIdentifier,
-		ChainId:                transfer.BalanceProof.ChainId,
-		BalanceHash:            transfer.BalanceProof.BalanceHash,
+		Nonce:             transfer.BalanceProof.Nonce,
+		TransferredAmount: transfer.BalanceProof.TransferredAmount,
+		LockedAmount:      transfer.BalanceProof.LockedAmount,
+		LocksRoot:         transfer.BalanceProof.LocksRoot,
+		TokenNetworkId:    transfer.BalanceProof.TokenNetworkId,
+		ChannelId:         transfer.BalanceProof.ChannelId,
+		ChainId:           transfer.BalanceProof.ChainId,
+		BalanceHash:       transfer.BalanceProof.BalanceHash,
 	}
 	channelState.OurState.MerkleTree = merkleTree
 
@@ -1133,17 +1131,17 @@ func sendLockedTransfer(channelState *NettingChannelState,
 }
 
 func sendRefundTransfer(channelState *NettingChannelState, initiator common.Address,
-	target common.Address, amount common.PaymentAmount, messageIdentifier common.MessageID,
-	paymentIdentifier common.PaymentID, expiration common.BlockExpiration,
-	secretHash common.SecretHash) (*SendRefundTransfer, error) {
+	target common.Address, amount common.PaymentAmount, messageId common.MessageID,
+	paymentId common.PaymentID, expiration common.BlockExpiration,
+	sencSecret common.EncSecret, secretHash common.SecretHash) (*SendRefundTransfer, error) {
 
 	if _, ok := channelState.PartnerState.SecretHashesToLockedLocks[secretHash]; !ok {
 		return nil, fmt.Errorf("Refunds are only valid for *known and pending* transfers ")
 	}
 
 	sendMediatedTransfer, merkleTree, err := createSendLockedTransfer(
-		channelState, initiator, target, amount, messageIdentifier, paymentIdentifier,
-		expiration, secretHash)
+		channelState, initiator, target, amount, messageId, paymentId,
+		expiration, sencSecret, secretHash)
 	if err != nil {
 		log.Error("[sendRefundTransfer] createSendLockedTransfer error: %s", err.Error())
 		return nil, err
@@ -1153,14 +1151,14 @@ func sendRefundTransfer(channelState *NettingChannelState, initiator common.Addr
 
 	//todo
 	channelState.OurState.BalanceProof = &BalanceProofSignedState{
-		Nonce:                  mediatedTransfer.BalanceProof.Nonce,
-		TransferredAmount:      mediatedTransfer.BalanceProof.TransferredAmount,
-		LockedAmount:           mediatedTransfer.BalanceProof.LockedAmount,
-		LocksRoot:              mediatedTransfer.BalanceProof.LocksRoot,
-		TokenNetworkIdentifier: mediatedTransfer.BalanceProof.TokenNetworkIdentifier,
-		ChannelIdentifier:      mediatedTransfer.BalanceProof.ChannelIdentifier,
-		ChainId:                mediatedTransfer.BalanceProof.ChainId,
-		BalanceHash:            mediatedTransfer.BalanceProof.BalanceHash,
+		Nonce:             mediatedTransfer.BalanceProof.Nonce,
+		TransferredAmount: mediatedTransfer.BalanceProof.TransferredAmount,
+		LockedAmount:      mediatedTransfer.BalanceProof.LockedAmount,
+		LocksRoot:         mediatedTransfer.BalanceProof.LocksRoot,
+		TokenNetworkId:    mediatedTransfer.BalanceProof.TokenNetworkId,
+		ChannelId:         mediatedTransfer.BalanceProof.ChannelId,
+		ChainId:           mediatedTransfer.BalanceProof.ChainId,
+		BalanceHash:       mediatedTransfer.BalanceProof.BalanceHash,
 	}
 	channelState.OurState.MerkleTree = merkleTree
 	channelState.OurState.SecretHashesToLockedLocks[common.SecretHash(lock.SecretHash)] = lock
@@ -1169,24 +1167,24 @@ func sendRefundTransfer(channelState *NettingChannelState, initiator common.Addr
 	return refundTransfer, nil
 }
 
-func SendUnlock(channelState *NettingChannelState, messageIdentifier common.MessageID,
-	paymentIdentifier common.PaymentID, secret common.Secret, secretHash common.SecretHash) *SendBalanceProof {
+func SendUnlock(channelState *NettingChannelState, messageId common.MessageID,
+	paymentId common.PaymentID, secret common.Secret, secretHash common.SecretHash) *SendBalanceProof {
 	lock := GetLock(channelState.OurState, secretHash)
 	if lock == nil {
 		return nil
 	}
 
-	unlock, merkleTree, _ := CreateUnlock(channelState, messageIdentifier, paymentIdentifier, secret, lock)
+	unlock, merkleTree, _ := CreateUnlock(channelState, messageId, paymentId, secret, lock)
 
 	channelState.OurState.BalanceProof = &BalanceProofSignedState{
-		Nonce:                  unlock.BalanceProof.Nonce,
-		TransferredAmount:      unlock.BalanceProof.TransferredAmount,
-		LockedAmount:           unlock.BalanceProof.LockedAmount,
-		LocksRoot:              unlock.BalanceProof.LocksRoot,
-		TokenNetworkIdentifier: unlock.BalanceProof.TokenNetworkIdentifier,
-		ChannelIdentifier:      unlock.BalanceProof.ChannelIdentifier,
-		ChainId:                unlock.BalanceProof.ChainId,
-		BalanceHash:            unlock.BalanceProof.BalanceHash,
+		Nonce:             unlock.BalanceProof.Nonce,
+		TransferredAmount: unlock.BalanceProof.TransferredAmount,
+		LockedAmount:      unlock.BalanceProof.LockedAmount,
+		LocksRoot:         unlock.BalanceProof.LocksRoot,
+		TokenNetworkId:    unlock.BalanceProof.TokenNetworkId,
+		ChannelId:         unlock.BalanceProof.ChannelId,
+		ChainId:           unlock.BalanceProof.ChainId,
+		BalanceHash:       unlock.BalanceProof.BalanceHash,
 	}
 	channelState.OurState.MerkleTree = merkleTree
 	DelLock(channelState.OurState, common.SecretHash(lock.SecretHash))
@@ -1203,7 +1201,7 @@ func EventsForClose(channelState *NettingChannelState, blockNumber common.BlockH
 
 		closeEvent := &ContractSendChannelClose{ContractSendEvent{},
 			channelState.Identifier, common.TokenAddress(channelState.TokenAddress),
-			channelState.TokenNetworkIdentifier, channelState.PartnerState.BalanceProof}
+			channelState.TokenNetworkId, channelState.PartnerState.BalanceProof}
 
 		events = append(events, closeEvent)
 	}
@@ -1212,8 +1210,8 @@ func EventsForClose(channelState *NettingChannelState, blockNumber common.BlockH
 }
 
 func createSendExpiredLock(senderEndState *NettingChannelEndState, lockedLock *HashTimeLockState,
-	chainId common.ChainID, tokenNetworkIdentifier common.TokenNetworkID,
-	channelIdentifier common.ChannelID, recipient common.Address) (*SendLockExpired, *MerkleTreeState) {
+	chainId common.ChainID, TokenNetworkId common.TokenNetworkID,
+	channelId common.ChannelID, recipient common.Address) (*SendLockExpired, *MerkleTreeState) {
 
 	nonce := getNextNonce(senderEndState)
 	lockedAmount := getAmountLocked(senderEndState)
@@ -1235,13 +1233,13 @@ func createSendExpiredLock(senderEndState *NettingChannelEndState, lockedLock *H
 
 	//todo: check
 	balanceProofEx := &BalanceProofUnsignedState{
-		Nonce:                  nonce,
-		TransferredAmount:      transferredAmount,
-		LockedAmount:           updatedLockedAmount,
-		LocksRoot:              common.Locksroot(locksRoot),
-		TokenNetworkIdentifier: tokenNetworkIdentifier,
-		ChannelIdentifier:      channelIdentifier,
-		ChainId:                chainId,
+		Nonce:             nonce,
+		TransferredAmount: transferredAmount,
+		LockedAmount:      updatedLockedAmount,
+		LocksRoot:         common.LocksRoot(locksRoot),
+		TokenNetworkId:    TokenNetworkId,
+		ChannelId:         channelId,
+		ChainId:           chainId,
 	}
 
 	balanceProof.BalanceHash = HashBalanceData(balanceProof.TransferredAmount,
@@ -1249,9 +1247,9 @@ func createSendExpiredLock(senderEndState *NettingChannelEndState, lockedLock *H
 
 	sendLockExpired := &SendLockExpired{
 		SendMessageEvent: SendMessageEvent{
-			Recipient:         common.Address(recipient),
-			ChannelIdentifier: channelIdentifier,
-			MessageIdentifier: common.GetMsgID(),
+			Recipient: common.Address(recipient),
+			ChannelId: channelId,
+			MessageId: common.GetMsgID(),
 		},
 		BalanceProof: balanceProofEx,
 		SecretHash:   common.SecretHash(lockedLock.SecretHash),
@@ -1263,21 +1261,21 @@ func EventsForExpiredLock(channelState *NettingChannelState, lockedLock *HashTim
 	var lockExpired []Event
 	sendLockExpired, merkleTree := createSendExpiredLock(
 		channelState.OurState, lockedLock, channelState.ChainId,
-		channelState.TokenNetworkIdentifier,
+		channelState.TokenNetworkId,
 		channelState.Identifier, channelState.PartnerState.Address,
 	)
 
 	if sendLockExpired != nil {
 		channelState.OurState.MerkleTree = merkleTree
 		channelState.OurState.BalanceProof = &BalanceProofSignedState{
-			Nonce:                  sendLockExpired.BalanceProof.Nonce,
-			TransferredAmount:      sendLockExpired.BalanceProof.TransferredAmount,
-			LockedAmount:           sendLockExpired.BalanceProof.LockedAmount,
-			LocksRoot:              sendLockExpired.BalanceProof.LocksRoot,
-			BalanceHash:            sendLockExpired.BalanceProof.BalanceHash,
-			TokenNetworkIdentifier: sendLockExpired.BalanceProof.TokenNetworkIdentifier,
-			ChannelIdentifier:      sendLockExpired.BalanceProof.ChannelIdentifier,
-			ChainId:                sendLockExpired.BalanceProof.ChainId,
+			Nonce:             sendLockExpired.BalanceProof.Nonce,
+			TransferredAmount: sendLockExpired.BalanceProof.TransferredAmount,
+			LockedAmount:      sendLockExpired.BalanceProof.LockedAmount,
+			LocksRoot:         sendLockExpired.BalanceProof.LocksRoot,
+			BalanceHash:       sendLockExpired.BalanceProof.BalanceHash,
+			TokenNetworkId:    sendLockExpired.BalanceProof.TokenNetworkId,
+			ChannelId:         sendLockExpired.BalanceProof.ChannelId,
+			ChainId:           sendLockExpired.BalanceProof.ChainId,
 		}
 
 		DelUnclaimedLock(channelState.OurState, common.SecretHash(lockedLock.SecretHash))
@@ -1293,7 +1291,7 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 	var events []Event
 
 	amount := common.TokenAmount(stateChange.Amount)
-	paymentIdentifier := stateChange.PaymentIdentifier
+	paymentId := stateChange.PaymentId
 	targetAddress := stateChange.ReceiverAddress
 	distributableAmount := GetDistributable(channelState.OurState, channelState.PartnerState)
 
@@ -1321,29 +1319,29 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 		canPay = true
 	}
 	if isOpen && isValid && canPay {
-		messageIdentifier := common.GetMsgID()
-		directTransfer := sendDirectTransfer(channelState, common.PaymentAmount(amount), messageIdentifier, paymentIdentifier)
+		messageId := common.GetMsgID()
+		directTransfer := sendDirectTransfer(channelState, common.PaymentAmount(amount), messageId, paymentId)
 		events = append(events, directTransfer)
 	} else {
 		if isOpen == false {
 			msg := fmt.Sprintf("Channel is not opened")
 			failure := &EventPaymentSentFailed{
-				PaymentNetworkIdentifier: channelState.PaymentNetworkIdentifier,
-				TokenNetworkIdentifier:   channelState.TokenNetworkIdentifier,
-				Identifier:               paymentIdentifier,
-				Target:                   common.Address(targetAddress),
-				Reason:                   msg,
+				PaymentNetworkId: channelState.PaymentNetworkId,
+				TokenNetworkId:   channelState.TokenNetworkId,
+				Identifier:       paymentId,
+				Target:           common.Address(targetAddress),
+				Reason:           msg,
 			}
 			log.Warn("[handleSendDirectTransfer] failure: ", msg)
 			events = append(events, failure)
 		} else if isValid == false {
 			msg := fmt.Sprintf("Payment amount is invalid. Transfer %d", amount)
 			failure := &EventPaymentSentFailed{
-				PaymentNetworkIdentifier: channelState.PaymentNetworkIdentifier,
-				TokenNetworkIdentifier:   channelState.TokenNetworkIdentifier,
-				Identifier:               paymentIdentifier,
-				Target:                   common.Address(targetAddress),
-				Reason:                   msg,
+				PaymentNetworkId: channelState.PaymentNetworkId,
+				TokenNetworkId:   channelState.TokenNetworkId,
+				Identifier:       paymentId,
+				Target:           common.Address(targetAddress),
+				Reason:           msg,
 			}
 			log.Warn("[handleSendDirectTransfer] failure: ", msg)
 			events = append(events, failure)
@@ -1351,11 +1349,11 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 			msg := fmt.Sprintf("Payment amount exceeds the available capacity. Capacity:%d, Transfer:%d",
 				distributableAmount, amount)
 			failure := &EventPaymentSentFailed{
-				PaymentNetworkIdentifier: channelState.PaymentNetworkIdentifier,
-				TokenNetworkIdentifier:   channelState.TokenNetworkIdentifier,
-				Identifier:               paymentIdentifier,
-				Target:                   common.Address(targetAddress),
-				Reason:                   msg,
+				PaymentNetworkId: channelState.PaymentNetworkId,
+				TokenNetworkId:   channelState.TokenNetworkId,
+				Identifier:       paymentId,
+				Target:           common.Address(targetAddress),
+				Reason:           msg,
 			}
 			log.Warn("[handleSendDirectTransfer] failure: ", msg)
 			events = append(events, failure)
@@ -1375,31 +1373,31 @@ func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *A
 		isOpen = true
 		isValid, err = isValidWithdrawAmount(channelState.GetChannelEndState(0), channelState.GetChannelEndState(1), stateChange.TotalWithdraw)
 	} else {
-		err = errors.NewErr("channel is not opened")
+		err = errors.New("channel is not opened")
 	}
 
 	if isOpen && isValid {
-		messageIdentifier := common.GetMsgID()
+		messageId := common.GetMsgID()
 		sendWithdrawRequest := &SendWithdrawRequest{
 			SendMessageEvent: SendMessageEvent{
-				Recipient:         stateChange.Partner,
-				ChannelIdentifier: stateChange.ChannelIdentifier,
-				MessageIdentifier: messageIdentifier,
+				Recipient: stateChange.Partner,
+				ChannelId: stateChange.ChannelId,
+				MessageId: messageId,
 			},
 
-			Participant:            stateChange.Participant,
-			TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,
-			WithdrawAmount:         stateChange.TotalWithdraw,
+			Participant:    stateChange.Participant,
+			TokenNetworkId: channelState.TokenNetworkId,
+			WithdrawAmount: stateChange.TotalWithdraw,
 		}
 
 		events = append(events, sendWithdrawRequest)
 		RecordWithdrawTransaction(channelState, blockNumber)
 	} else {
 		failure := &EventWithdrawRequestSentFailed{
-			ChannelIdentifier:      stateChange.ChannelIdentifier,
-			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
-			WithdrawAmount:         stateChange.TotalWithdraw,
-			Reason:                 err.Error(),
+			ChannelId:      stateChange.ChannelId,
+			TokenNetworkId: stateChange.TokenNetworkId,
+			WithdrawAmount: stateChange.TotalWithdraw,
+			Reason:         err.Error(),
 		}
 		log.Warn("[handleSendWithdrawRequest] failure: ", err.Error())
 		events = append(events, failure)
@@ -1412,11 +1410,11 @@ func isValidWithdrawAmount(participant *NettingChannelEndState, partner *Netting
 	amountToWithdraw := totalWithdraw - currentWithdraw
 
 	if totalWithdraw < currentWithdraw {
-		return false, errors.NewErr("total withdraw smaller than current")
+		return false, errors.New("total withdraw smaller than current")
 	}
 
 	if amountToWithdraw <= 0 {
-		return false, errors.NewErr("amount to withdraw no larger than 0")
+		return false, errors.New("amount to withdraw no larger than 0")
 	}
 
 	totalDeposit := participant.GetContractBalance() + partner.GetContractBalance()
@@ -1453,26 +1451,26 @@ func handleWithdrawRequestReceived(channelState *NettingChannelState, stateChang
 
 	valid, err := isValidWithdrawRequest(channelState, stateChange)
 	if valid {
-		messageIdentifier := common.GetMsgID()
+		messageId := common.GetMsgID()
 		sendWithdraw := &SendWithdraw{
 			SendMessageEvent: SendMessageEvent{
-				Recipient:         stateChange.Participant,
-				ChannelIdentifier: stateChange.ChannelIdentifier,
-				MessageIdentifier: messageIdentifier,
+				Recipient: stateChange.Participant,
+				ChannelId: stateChange.ChannelId,
+				MessageId: messageId,
 			},
-			Participant:            stateChange.Participant,
-			TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,
-			WithdrawAmount:         stateChange.TotalWithdraw,
-			ParticipantSignature:   stateChange.ParticipantSignature,
-			ParticipantAddress:     stateChange.ParticipantAddress,
-			ParticipantPublicKey:   stateChange.ParticipantPublicKey,
+			Participant:          stateChange.Participant,
+			TokenNetworkId:       channelState.TokenNetworkId,
+			WithdrawAmount:       stateChange.TotalWithdraw,
+			ParticipantSignature: stateChange.ParticipantSignature,
+			ParticipantAddress:   stateChange.ParticipantAddress,
+			ParticipantPublicKey: stateChange.ParticipantPublicKey,
 		}
 
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
-				Recipient:         stateChange.Participant,
-				ChannelIdentifier: ChannelIdentifierGlobalQueue,
-				MessageIdentifier: stateChange.MessageIdentifier,
+				Recipient: stateChange.Participant,
+				ChannelId: ChannelIdGlobalQueue,
+				MessageId: stateChange.MessageId,
 			},
 		}
 
@@ -1480,10 +1478,10 @@ func handleWithdrawRequestReceived(channelState *NettingChannelState, stateChang
 		events = append(events, sendProcessed)
 	} else {
 		failure := &EventInvalidReceivedWithdrawRequest{
-			ChannelIdentifier: stateChange.ChannelIdentifier,
-			Participant:       stateChange.Participant,
-			TotalWithdraw:     stateChange.TotalWithdraw,
-			Reason:            err.Error(),
+			ChannelId:     stateChange.ChannelId,
+			Participant:   stateChange.Participant,
+			TotalWithdraw: stateChange.TotalWithdraw,
+			Reason:        err.Error(),
 		}
 		log.Warn("[handleWithdrawRequestReceived] failure: ", err.Error())
 		events = append(events, failure)
@@ -1493,16 +1491,16 @@ func handleWithdrawRequestReceived(channelState *NettingChannelState, stateChang
 
 func isValidWithdrawRequest(channelState *NettingChannelState, stateChange *ReceiveWithdrawRequest) (bool, error) {
 	if GetStatus(channelState) != ChannelStateOpened {
-		return false, errors.NewErr("channel is not opened")
+		return false, errors.New("channel is not opened")
 	}
 	// check if participant is valid,
 	partnerState := channelState.PartnerState
 	if !common.AddressEqual(partnerState.Address, stateChange.Participant) {
-		return false, errors.NewErr("participant address invalid")
+		return false, errors.New("participant address invalid")
 	}
 
 	if !common.AddressEqual(stateChange.Participant, stateChange.ParticipantAddress) {
-		return false, errors.NewErr("participant address is same as the signer")
+		return false, errors.New("participant address is same as the signer")
 	}
 
 	isValid, err := isValidWithdrawAmount(channelState.GetChannelEndState(1), channelState.GetChannelEndState(0), stateChange.TotalWithdraw)
@@ -1511,23 +1509,23 @@ func isValidWithdrawRequest(channelState *NettingChannelState, stateChange *Rece
 	}
 
 	// verify if signature is valid
-	dataToSign := PackWithdraw(stateChange.ChannelIdentifier, stateChange.Participant, stateChange.TotalWithdraw)
+	dataToSign := PackWithdraw(stateChange.ChannelId, stateChange.Participant, stateChange.TotalWithdraw)
 	return isValidSignature(dataToSign, stateChange.ParticipantPublicKey, stateChange.ParticipantSignature, stateChange.ParticipantAddress)
 }
 
 func isValidSignature(dataToSign []byte, publicKey common.PubKey, signature common.Signature, senderAddress common.Address) (bool, error) {
 	if len(dataToSign) == 0 {
-		return false, errors.NewErr("Signature invalid, dataToSign is nil")
+		return false, errors.New("Signature invalid, dataToSign is nil")
 	}
 
 	pubKey, err := common.GetPublicKey(publicKey)
 	if err != nil {
-		return false, errors.NewErr("Failed to get public key")
+		return false, errors.New("Failed to get public key")
 	}
 
 	err = common.VerifySignature(pubKey, dataToSign, signature)
 	if err != nil {
-		return false, errors.NewErr("Signature invalid, could not be recovered")
+		return false, errors.New("Signature invalid, could not be recovered")
 	}
 
 	signerAddress := common.GetAddressFromPubKey(pubKey)
@@ -1535,7 +1533,7 @@ func isValidSignature(dataToSign []byte, publicKey common.PubKey, signature comm
 		return true, nil
 	} else {
 		log.Debugf("PubKey:%v, senderAddr: %s", pubKey, common.ToBase58(senderAddress))
-		return false, errors.NewErr("Signature was valid but the expected address does not match.")
+		return false, errors.New("Signature was valid but the expected address does not match.")
 	}
 }
 
@@ -1545,26 +1543,26 @@ func handleWithdrawReceived(channelState *NettingChannelState, stateChange *Rece
 	valid, err := isValidWithdraw(channelState, stateChange)
 	if valid {
 		contractSendChannelWithdraw := &ContractSendChannelWithdraw{
-			ChannelIdentifier:      stateChange.ChannelIdentifier,
-			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
-			Participant:            stateChange.Participant,
-			TotalWithdraw:          stateChange.TotalWithdraw,
-			ParticipantSignature:   stateChange.ParticipantSignature,
-			ParticipantAddress:     stateChange.ParticipantAddress,
-			ParticipantPublicKey:   stateChange.ParticipantPublicKey,
-			PartnerSignature:       stateChange.PartnerSignature,
-			PartnerAddress:         stateChange.PartnerAddress,
-			PartnerPublicKey:       stateChange.PartnerPublicKey,
+			ChannelId:            stateChange.ChannelId,
+			TokenNetworkId:       stateChange.TokenNetworkId,
+			Participant:          stateChange.Participant,
+			TotalWithdraw:        stateChange.TotalWithdraw,
+			ParticipantSignature: stateChange.ParticipantSignature,
+			ParticipantAddress:   stateChange.ParticipantAddress,
+			ParticipantPublicKey: stateChange.ParticipantPublicKey,
+			PartnerSignature:     stateChange.PartnerSignature,
+			PartnerAddress:       stateChange.PartnerAddress,
+			PartnerPublicKey:     stateChange.PartnerPublicKey,
 		}
 
 		events = append(events, contractSendChannelWithdraw)
 	} else {
 		failure := &EventInvalidReceivedWithdraw{
-			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
-			ChannelIdentifier:      stateChange.ChannelIdentifier,
-			Participant:            stateChange.Participant,
-			TotalWithdraw:          stateChange.TotalWithdraw,
-			Reason:                 err.Error(),
+			TokenNetworkId: stateChange.TokenNetworkId,
+			ChannelId:      stateChange.ChannelId,
+			Participant:    stateChange.Participant,
+			TotalWithdraw:  stateChange.TotalWithdraw,
+			Reason:         err.Error(),
 		}
 		log.Warn("[handleWithdrawReceived] failure: ", err.Error())
 		events = append(events, failure)
@@ -1573,16 +1571,16 @@ func handleWithdrawReceived(channelState *NettingChannelState, stateChange *Rece
 }
 func isValidWithdraw(channelState *NettingChannelState, stateChange *ReceiveWithdraw) (bool, error) {
 	if GetStatus(channelState) != ChannelStateOpened {
-		return false, errors.NewErr("channel is not opened")
+		return false, errors.New("channel is not opened")
 	}
 	// check if participant is valid,
 	ourState := channelState.OurState
 	if !common.AddressEqual(ourState.Address, stateChange.Participant) {
-		return false, errors.NewErr("[isValidWithdraw] participant address invalid")
+		return false, errors.New("[isValidWithdraw] participant address invalid")
 	}
 
 	// verify if signature is valid
-	dataToSign := PackWithdraw(stateChange.ChannelIdentifier, stateChange.Participant, stateChange.TotalWithdraw)
+	dataToSign := PackWithdraw(stateChange.ChannelId, stateChange.Participant, stateChange.TotalWithdraw)
 	return isValidSignature(dataToSign, stateChange.PartnerPublicKey, stateChange.PartnerSignature, stateChange.PartnerAddress)
 }
 
@@ -1611,21 +1609,21 @@ func handleSendCooperativeSettleRequest(channelState *NettingChannelState, state
 	if GetStatus(channelState) == ChannelStateOpened {
 		ourBalance, partnerBalance := GetCooprativeSettleBalances(channelState)
 
-		messageIdentifier := common.GetMsgID()
+		messageId := common.GetMsgID()
 		ourAddress := channelState.OurState.GetAddress()
 		partnerAddress := channelState.PartnerState.GetAddress()
 
 		sendCooperativeSettleRequest := &SendCooperativeSettleRequest{
 			SendMessageEvent: SendMessageEvent{
-				Recipient:         partnerAddress,
-				ChannelIdentifier: stateChange.ChannelIdentifier,
-				MessageIdentifier: messageIdentifier,
+				Recipient: partnerAddress,
+				ChannelId: stateChange.ChannelId,
+				MessageId: messageId,
 			},
-			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
-			Participant1:           ourAddress,
-			Participant1Balance:    ourBalance,
-			Participant2:           partnerAddress,
-			Participant2Balance:    partnerBalance,
+			TokenNetworkId:      stateChange.TokenNetworkId,
+			Participant1:        ourAddress,
+			Participant1Balance: ourBalance,
+			Participant2:        partnerAddress,
+			Participant2Balance: partnerBalance,
 		}
 
 		//record there is an cooperative settlement ongoing
@@ -1635,9 +1633,9 @@ func handleSendCooperativeSettleRequest(channelState *NettingChannelState, state
 	} else {
 		msg := fmt.Sprintf("Channel is not opened")
 		failure := &EventCooperativeSettleRequestSentFailed{
-			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
-			ChannelIdentifier:      stateChange.ChannelIdentifier,
-			Reason:                 msg,
+			TokenNetworkId: stateChange.TokenNetworkId,
+			ChannelId:      stateChange.ChannelId,
+			Reason:         msg,
 		}
 		log.Warn("[handleSendCooperativeSettleRequest] failure: ", msg)
 		events = append(events, failure)
@@ -1682,28 +1680,28 @@ func handleCooperativeSettleRequestReceived(channelState *NettingChannelState, s
 
 	valid, err := isValidCooperativeSettleRequest(channelState, stateChange)
 	if valid {
-		messageIdentifier := common.GetMsgID()
+		messageId := common.GetMsgID()
 		sendCooperativeSettle := &SendCooperativeSettle{
 			SendMessageEvent: SendMessageEvent{
-				Recipient:         stateChange.Participant1,
-				ChannelIdentifier: stateChange.ChannelIdentifier,
-				MessageIdentifier: messageIdentifier,
+				Recipient: stateChange.Participant1,
+				ChannelId: stateChange.ChannelId,
+				MessageId: messageId,
 			},
-			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
-			Participant1:           stateChange.Participant1,
-			Participant1Balance:    stateChange.Participant1Balance,
-			Participant2:           stateChange.Participant2,
-			Participant2Balance:    stateChange.Participant2Balance,
-			Participant1Signature:  stateChange.Participant1Signature,
-			Participant1Address:    stateChange.Participant1Address,
-			Participant1PublicKey:  stateChange.Participant1PublicKey,
+			TokenNetworkId:        stateChange.TokenNetworkId,
+			Participant1:          stateChange.Participant1,
+			Participant1Balance:   stateChange.Participant1Balance,
+			Participant2:          stateChange.Participant2,
+			Participant2Balance:   stateChange.Participant2Balance,
+			Participant1Signature: stateChange.Participant1Signature,
+			Participant1Address:   stateChange.Participant1Address,
+			Participant1PublicKey: stateChange.Participant1PublicKey,
 		}
 
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
-				Recipient:         stateChange.Participant1,
-				ChannelIdentifier: ChannelIdentifierGlobalQueue,
-				MessageIdentifier: stateChange.MessageIdentifier,
+				Recipient: stateChange.Participant1,
+				ChannelId: ChannelIdGlobalQueue,
+				MessageId: stateChange.MessageId,
 			},
 		}
 
@@ -1714,9 +1712,9 @@ func handleCooperativeSettleRequestReceived(channelState *NettingChannelState, s
 		events = append(events, sendProcessed)
 	} else {
 		failure := &EventInvalidReceivedCooperativeSettleRequest{
-			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
-			ChannelIdentifier:      stateChange.ChannelIdentifier,
-			Reason:                 err.Error(),
+			TokenNetworkId: stateChange.TokenNetworkId,
+			ChannelId:      stateChange.ChannelId,
+			Reason:         err.Error(),
 		}
 		log.Warn("[handleCooperativeSettleRequestReceived] failure: ", err.Error())
 		events = append(events, failure)
@@ -1726,18 +1724,18 @@ func handleCooperativeSettleRequestReceived(channelState *NettingChannelState, s
 
 func isValidCooperativeSettleRequest(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettleRequest) (bool, error) {
 	if GetStatus(channelState) != ChannelStateOpened {
-		return false, errors.NewErr("channel is not opened")
+		return false, errors.New("channel is not opened")
 	}
 
 	ourState := channelState.GetChannelEndState(0)
 	partnerState := channelState.GetChannelEndState(1)
 
 	if !common.AddressEqual(partnerState.Address, stateChange.Participant1) {
-		return false, errors.NewErr("participant1 address invalid")
+		return false, errors.New("participant1 address invalid")
 	} else if !common.AddressEqual(ourState.Address, stateChange.Participant2) {
-		return false, errors.NewErr("participant2 address invalid")
+		return false, errors.New("participant2 address invalid")
 	} else if !common.AddressEqual(stateChange.Participant1, stateChange.Participant1Address) {
-		return false, errors.NewErr("participant address is same as the signer")
+		return false, errors.New("participant address is same as the signer")
 	}
 
 	// calculate the final balance and compare with incoming balance values
@@ -1749,7 +1747,7 @@ func isValidCooperativeSettleRequest(channelState *NettingChannelState, stateCha
 			ourBalance, partnerBalance, stateChange.Participant1Balance, stateChange.Participant2Balance)
 	}
 	// verify if signature is valid
-	dataToSign := PackCooperativeSettle(stateChange.ChannelIdentifier, stateChange.Participant1, stateChange.Participant1Balance,
+	dataToSign := PackCooperativeSettle(stateChange.ChannelId, stateChange.Participant1, stateChange.Participant1Balance,
 		stateChange.Participant2, stateChange.Participant2Balance)
 	return isValidSignature(dataToSign, stateChange.Participant1PublicKey, stateChange.Participant1Signature, stateChange.Participant1Address)
 }
@@ -1760,27 +1758,27 @@ func handleCooperativeSettleReceived(channelState *NettingChannelState, stateCha
 	valid, err := isValidCooperativeSettle(channelState, stateChange)
 	if valid {
 		contractSendChannelCooperativeSettle := &ContractSendChannelCooperativeSettle{
-			ChannelIdentifier:      stateChange.ChannelIdentifier,
-			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
-			Participant1:           stateChange.Participant1,
-			Participant1Balance:    stateChange.Participant1Balance,
-			Participant2:           stateChange.Participant2,
-			Participant2Balance:    stateChange.Participant2Balance,
-			Participant1Signature:  stateChange.Participant1Signature,
-			Participant1Address:    stateChange.Participant1Address,
-			Participant1PublicKey:  stateChange.Participant1PublicKey,
-			Participant2Signature:  stateChange.Participant2Signature,
-			Participant2Address:    stateChange.Participant2Address,
-			Participant2PublicKey:  stateChange.Participant2PublicKey,
+			ChannelId:             stateChange.ChannelId,
+			TokenNetworkId:        stateChange.TokenNetworkId,
+			Participant1:          stateChange.Participant1,
+			Participant1Balance:   stateChange.Participant1Balance,
+			Participant2:          stateChange.Participant2,
+			Participant2Balance:   stateChange.Participant2Balance,
+			Participant1Signature: stateChange.Participant1Signature,
+			Participant1Address:   stateChange.Participant1Address,
+			Participant1PublicKey: stateChange.Participant1PublicKey,
+			Participant2Signature: stateChange.Participant2Signature,
+			Participant2Address:   stateChange.Participant2Address,
+			Participant2PublicKey: stateChange.Participant2PublicKey,
 		}
 
 		events = append(events, contractSendChannelCooperativeSettle)
 	} else {
 		channelState.SettleTransaction = nil
 		failure := &EventInvalidReceivedCooperativeSettle{
-			TokenNetworkIdentifier: stateChange.TokenNetworkIdentifier,
-			ChannelIdentifier:      stateChange.ChannelIdentifier,
-			Reason:                 err.Error(),
+			TokenNetworkId: stateChange.TokenNetworkId,
+			ChannelId:      stateChange.ChannelId,
+			Reason:         err.Error(),
 		}
 		log.Warn("[handleCooperativeSettleReceived] failure: ", err.Error())
 		events = append(events, failure)
@@ -1790,20 +1788,20 @@ func handleCooperativeSettleReceived(channelState *NettingChannelState, stateCha
 func isValidCooperativeSettle(channelState *NettingChannelState, stateChange *ReceiveCooperativeSettle) (bool, error) {
 	if GetStatus(channelState) != ChannelStateSettling {
 
-		return false, errors.NewErr("channel is not opened")
+		return false, errors.New("channel is not opened")
 	}
 
 	ourState := channelState.GetChannelEndState(0)
 	partnerState := channelState.GetChannelEndState(1)
 
 	if !common.AddressEqual(ourState.Address, stateChange.Participant1) {
-		return false, errors.NewErr("participant1 address invalid")
+		return false, errors.New("participant1 address invalid")
 	} else if !common.AddressEqual(partnerState.Address, stateChange.Participant2) {
-		return false, errors.NewErr("participant2 address invalid")
+		return false, errors.New("participant2 address invalid")
 	} else if !common.AddressEqual(stateChange.Participant1, stateChange.Participant1Address) {
-		return false, errors.NewErr("participant1 address is same as the signer")
+		return false, errors.New("participant1 address is same as the signer")
 	} else if !common.AddressEqual(stateChange.Participant2, stateChange.Participant2Address) {
-		return false, errors.NewErr("participant1 address is same as the signer")
+		return false, errors.New("participant1 address is same as the signer")
 	}
 
 	// calculate again the final balance and compare with incoming balance values
@@ -1815,7 +1813,7 @@ func isValidCooperativeSettle(channelState *NettingChannelState, stateChange *Re
 			ourBalance, partnerBalance, stateChange.Participant1Balance, stateChange.Participant2Balance)
 	}
 
-	dataToSign := PackCooperativeSettle(stateChange.ChannelIdentifier, stateChange.Participant1, stateChange.Participant1Balance,
+	dataToSign := PackCooperativeSettle(stateChange.ChannelId, stateChange.Participant1, stateChange.Participant1Balance,
 		stateChange.Participant2, stateChange.Participant2Balance)
 	ok, err := isValidSignature(dataToSign, stateChange.Participant1PublicKey, stateChange.Participant1Signature, stateChange.Participant1Address)
 	if !ok {
@@ -1828,7 +1826,7 @@ func handleChannelCooperativeSettled(channelState *NettingChannelState, stateCha
 	var events []Event
 	log.Debugf("[handleChannelCooperativeSettled]")
 
-	if stateChange.ChannelIdentifier == channelState.Identifier {
+	if stateChange.ChannelId == channelState.Identifier {
 		setSettled(channelState, stateChange.BlockHeight)
 		// set to nil to delete the channel
 		channelState = nil
@@ -1858,16 +1856,16 @@ func handleRefundTransfer(receivedTransfer *LockedTransferUnsignedState, channel
 
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
-				Recipient:         common.Address(refund.Transfer.BalanceProof.Sender),
-				ChannelIdentifier: ChannelIdentifierGlobalQueue,
-				MessageIdentifier: refund.Transfer.MessageIdentifier,
+				Recipient: common.Address(refund.Transfer.BalanceProof.Sender),
+				ChannelId: ChannelIdGlobalQueue,
+				MessageId: refund.Transfer.MessageId,
 			},
 		}
 		events = append(events, sendProcessed)
 	} else {
 		invalidRefund := &EventInvalidReceivedTransferRefund{
-			PaymentIdentifier: receivedTransfer.PaymentIdentifier,
-			Reason:            err.Error(),
+			PaymentId: receivedTransfer.PaymentId,
+			Reason:    err.Error(),
 		}
 		events = append(events, invalidRefund)
 	}
@@ -1891,9 +1889,9 @@ func handleReceiveLockExpired(channelState *NettingChannelState, stateChange *Re
 
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
-				Recipient:         common.Address(stateChange.BalanceProof.Sender),
-				ChannelIdentifier: ChannelIdentifierGlobalQueue,
-				MessageIdentifier: stateChange.MessageIdentifier,
+				Recipient: common.Address(stateChange.BalanceProof.Sender),
+				ChannelId: ChannelIdGlobalQueue,
+				MessageId: stateChange.MessageId,
 			},
 		}
 		events = append(events, sendProcessed)
@@ -1930,16 +1928,16 @@ func HandleReceiveLockedTransfer(channelState *NettingChannelState,
 		//log.Debug("[HandleReceiveLockedTransfer] SendProcessed to: ", addr2.ToBase58())
 
 		sendProcessed := &SendProcessed{SendMessageEvent: SendMessageEvent{
-			Recipient:         common.Address(mediatedTransfer.BalanceProof.Sender),
-			ChannelIdentifier: ChannelIdentifierGlobalQueue,
-			MessageIdentifier: mediatedTransfer.MessageIdentifier,
+			Recipient: common.Address(mediatedTransfer.BalanceProof.Sender),
+			ChannelId: ChannelIdGlobalQueue,
+			MessageId: mediatedTransfer.MessageId,
 		}}
 		events = append(events, sendProcessed)
 	} else {
 		log.Errorf("[HandleReceiveLockedTransfer] IsValidLockedTransfer, error: %s", err.Error())
 		invalidLocked := &EventInvalidReceivedLockedTransfer{
-			PaymentIdentifier: mediatedTransfer.PaymentIdentifier,
-			Reason:            err.Error(),
+			PaymentId: mediatedTransfer.PaymentId,
+			Reason:    err.Error(),
 		}
 		events = append(events, invalidLocked)
 	}
@@ -1967,25 +1965,25 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 		channelState.PartnerState.BalanceProof = directTransfer.BalanceProof
 
 		paymentReceivedSuccess := &EventPaymentReceivedSuccess{
-			PaymentNetworkIdentifier: channelState.PaymentNetworkIdentifier,
-			TokenNetworkIdentifier:   channelState.TokenNetworkIdentifier,
-			Identifier:               directTransfer.PaymentIdentifier,
-			Amount:                   transferAmount,
-			Initiator:                channelState.PartnerState.Address,
+			PaymentNetworkId: channelState.PaymentNetworkId,
+			TokenNetworkId:   channelState.TokenNetworkId,
+			Identifier:       directTransfer.PaymentId,
+			Amount:           transferAmount,
+			Initiator:        channelState.PartnerState.Address,
 		}
 
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
-				Recipient:         common.Address(directTransfer.BalanceProof.Sender),
-				ChannelIdentifier: ChannelIdentifierGlobalQueue,
-				MessageIdentifier: directTransfer.MessageIdentifier,
+				Recipient: common.Address(directTransfer.BalanceProof.Sender),
+				ChannelId: ChannelIdGlobalQueue,
+				MessageId: directTransfer.MessageId,
 			},
 		}
 		events = append(events, paymentReceivedSuccess)
 		events = append(events, sendProcessed)
 	} else {
 		transferInvalidEvent := &EventTransferReceivedInvalidDirectTransfer{
-			Identifier: directTransfer.PaymentIdentifier,
+			Identifier: directTransfer.PaymentId,
 			Reason:     err.Error(),
 		}
 
@@ -2008,9 +2006,9 @@ func HandleUnlock(channelState *NettingChannelState, unlock *ReceiveUnlock) (boo
 
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
-				Recipient:         common.Address(unlock.BalanceProof.Sender),
-				ChannelIdentifier: ChannelIdentifierGlobalQueue,
-				MessageIdentifier: unlock.MessageIdentifier,
+				Recipient: common.Address(unlock.BalanceProof.Sender),
+				ChannelId: ChannelIdGlobalQueue,
+				MessageId: unlock.MessageId,
 			},
 		}
 		events = append(events, sendProcessed)
@@ -2042,9 +2040,9 @@ func handleBlock(channelState *NettingChannelState, stateChange *Block,
 			}
 
 			event := &ContractSendChannelSettle{
-				ContractSendEvent:      ContractSendEvent{},
-				ChannelIdentifier:      channelState.Identifier,
-				TokenNetworkIdentifier: common.TokenNetworkAddress(channelState.TokenNetworkIdentifier),
+				ContractSendEvent: ContractSendEvent{},
+				ChannelId:         channelState.Identifier,
+				TokenNetworkId:    common.TokenNetworkAddress(channelState.TokenNetworkId),
 			}
 			events = append(events, event)
 		}
@@ -2060,8 +2058,8 @@ func handleBlock(channelState *NettingChannelState, stateChange *Block,
 		if withdraw := GetWithdrawTransaction(channelState); withdraw != nil {
 			if withdraw.StartedBlockHeight+common.BlockHeight(common.Config.WithdrawTimeout) < blockNumber {
 				event := &EventWithdrawRequestTimeout{
-					ChannelIdentifier:      channelState.Identifier,
-					TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,
+					ChannelId:      channelState.Identifier,
+					TokenNetworkId: channelState.TokenNetworkId,
 				}
 				events = append(events, event)
 			}
@@ -2077,7 +2075,7 @@ func handleChannelClosed(channelState *NettingChannelState, stateChange *Contrac
 	justClosed := false
 
 	status := GetStatus(channelState)
-	if stateChange.ChannelIdentifier == channelState.Identifier &&
+	if stateChange.ChannelId == channelState.Identifier &&
 		(status == ChannelStateOpened || status == ChannelStateClosing) {
 		justClosed = true
 	}
@@ -2100,9 +2098,9 @@ func handleChannelClosed(channelState *NettingChannelState, stateChange *Contrac
 					ContractSendEvent: ContractSendEvent{},
 					Expiration:        common.BlockExpiration(expiration),
 				},
-				ChannelIdentifier:      channelState.Identifier,
-				TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,
-				BalanceProof:           balanceProof,
+				ChannelId:      channelState.Identifier,
+				TokenNetworkId: channelState.TokenNetworkId,
+				BalanceProof:   balanceProof,
 			}
 
 			channelState.UpdateTransaction = &TransactionExecutionStatus{stateChange.BlockHeight,
@@ -2118,7 +2116,7 @@ func handleChannelClosed(channelState *NettingChannelState, stateChange *Contrac
 func handleChannelUpdatedTransfer(channelState *NettingChannelState,
 	stateChange *ContractReceiveUpdateTransfer, blockNumber common.BlockHeight) TransitionResult {
 
-	if stateChange.ChannelIdentifier == channelState.Identifier {
+	if stateChange.ChannelId == channelState.Identifier {
 		channelState.UpdateTransaction = &TransactionExecutionStatus{
 			0, 0, "success"}
 	}
@@ -2131,7 +2129,7 @@ func handleChannelSettled(channelState *NettingChannelState,
 
 	var events []Event
 
-	if stateChange.ChannelIdentifier == channelState.Identifier {
+	if stateChange.ChannelId == channelState.Identifier {
 		setSettled(channelState, stateChange.BlockHeight)
 		isSettlePending := false
 		if channelState.OurUnlockTransaction != nil {
@@ -2142,11 +2140,11 @@ func handleChannelSettled(channelState *NettingChannelState,
 
 		if isSettlePending == false && merkleTreeLeaves != nil && len(merkleTreeLeaves) != 0 {
 			onChainUnlock := &ContractSendChannelBatchUnlock{
-				ContractSendEvent:      ContractSendEvent{},
-				TokenAddress:           common.TokenAddress(channelState.TokenAddress),
-				TokenNetworkIdentifier: channelState.TokenNetworkIdentifier,
-				ChannelIdentifier:      channelState.Identifier,
-				Participant:            channelState.PartnerState.Address,
+				ContractSendEvent: ContractSendEvent{},
+				TokenAddress:      common.TokenAddress(channelState.TokenAddress),
+				TokenNetworkId:    channelState.TokenNetworkId,
+				ChannelId:         channelState.Identifier,
+				Participant:       channelState.PartnerState.Address,
 			}
 
 			events = append(events, onChainUnlock)

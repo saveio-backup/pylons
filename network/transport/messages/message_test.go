@@ -9,25 +9,25 @@ import (
 )
 
 func BuildDirectTransfer(chainID common.ChainID, nonce common.Nonce, amount common.TokenAmount,
-	lockedAmount common.TokenAmount, locksRoot common.Locksroot, channelID common.ChannelID,
+	lockedAmount common.TokenAmount, locksRoot common.LocksRoot, channelID common.ChannelID,
 	tokenNetworkID common.TokenNetworkID, messageID common.MessageID,
 	paymentID common.PaymentID, tokenAddress common.TokenAddress, recipient common.Address) proto.Message {
 	env := &EnvelopeMessage{
-		ChainId:             &ChainID{uint64(chainID)},
+		ChainId:             &ChainID{ChainId: uint64(chainID)},
 		Nonce:               uint64(nonce),
-		TransferredAmount:   &TokenAmount{uint64(amount)},
-		LockedAmount:        &TokenAmount{uint64(lockedAmount)},
-		Locksroot:           &Locksroot{[]byte(locksRoot[:])},
-		ChannelIdentifier:   &ChannelID{uint64(channelID)},
-		TokenNetworkAddress: &TokenNetworkAddress{tokenNetworkID[:]},
+		TransferredAmount:   &TokenAmount{TokenAmount: uint64(amount)},
+		LockedAmount:        &TokenAmount{TokenAmount: uint64(lockedAmount)},
+		LocksRoot:           &LocksRoot{LocksRoot: []byte(locksRoot[:])},
+		ChannelId:           &ChannelID{ChannelId: uint64(channelID)},
+		TokenNetworkAddress: &TokenNetworkAddress{TokenNetworkAddress: tokenNetworkID[:]},
 	}
 
 	msg := &DirectTransfer{
-		EnvelopeMessage:   env,
-		MessageIdentifier: &MessageID{uint64(messageID)},
-		PaymentIdentifier: &PaymentID{uint64(paymentID)},
-		Token:             &Address{tokenAddress[:]},
-		Recipient:         &Address{recipient[:]},
+		EnvelopeMessage: env,
+		MessageId:       &MessageID{MessageId: uint64(messageID)},
+		PaymentId:       &PaymentID{PaymentId: uint64(paymentID)},
+		Token:           &Address{Address: tokenAddress[:]},
+		Recipient:       &Address{Address: recipient[:]},
 	}
 
 	return msg
@@ -40,7 +40,7 @@ func TestVerifySignature(t *testing.T) {
 	amount := common.TokenAmount(100)
 	lockedAmount := common.TokenAmount(200)
 
-	var locksRoot common.Locksroot
+	var locksRoot common.LocksRoot
 	var tokenAddress common.TokenAddress
 	var recipient common.Address
 	var tokenNetworkID common.TokenNetworkID

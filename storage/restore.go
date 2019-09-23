@@ -8,12 +8,12 @@ import (
 )
 
 func ChannelStateUntilStateChange(
-	storage *SQLiteStorage, paymentNetworkIdentifier common.PaymentNetworkID, tokenAddress common.TokenAddress,
-	channelIdentifier common.ChannelID, stateChangeIdentifier int, address common.Address) *transfer.NettingChannelState {
+	storage *SQLiteStorage, paymentNetworkId common.PaymentNetworkID, tokenAddress common.TokenAddress,
+	channelId common.ChannelID, stateChangeIdentifier int, address common.Address) *transfer.NettingChannelState {
 
 	var chainState *transfer.ChainState
 
-	tokenNetworkIdentifier := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
+	TokenNetworkId := common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 	wal := RestoreToStateChange(transfer.StateTransition, storage, stateChangeIdentifier, address)
 
 	state := wal.StateManager.CurrentState
@@ -21,7 +21,7 @@ func ChannelStateUntilStateChange(
 		chainState, _ = state.(*transfer.ChainState)
 	}
 
-	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(chainState, tokenNetworkIdentifier, channelIdentifier)
+	channelState := transfer.GetChannelStateByTokenNetworkId(chainState, TokenNetworkId, channelId)
 	if channelState == nil {
 		log.Errorf("Channel was not found before state_change %d", stateChangeIdentifier)
 		return nil

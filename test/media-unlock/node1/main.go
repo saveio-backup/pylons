@@ -97,7 +97,7 @@ func main() {
 		for {
 			select {
 			case info := <-notify:
-				log.Errorf("New channel notify: channel id = %v, partner address = %v", info.ChannelIdentifier, info.PartnerAddress)
+				log.Errorf("New channel notify: channel id = %v, partner address = %v", info.ChannelId, info.PartnerAddress)
 			}
 		}
 	}()

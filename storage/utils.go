@@ -66,13 +66,13 @@ func formatBalanceHashForQuery(balanceHash common.BalanceHash) string {
 	return str[1 : len(str)-1]
 }
 
-func formatLocksrootForQuery(locksroot common.Locksroot) string {
-	str := locksroot.String()
+func formatLocksrootForQuery(locksRoot common.LocksRoot) string {
+	str := locksRoot.String()
 	return str[1 : len(str)-1]
 }
 
-func getValuesFromBalanceProof(data interface{}, prefix string) (common.TokenAmount, common.TokenAmount, common.Locksroot) {
-	var locksroot common.Locksroot
+func getValuesFromBalanceProof(data interface{}, prefix string) (common.TokenAmount, common.TokenAmount, common.LocksRoot) {
+	var locksRoot common.LocksRoot
 
 	value := reflect.ValueOf(data)
 	if len(prefix) != 0 {
@@ -86,14 +86,14 @@ func getValuesFromBalanceProof(data interface{}, prefix string) (common.TokenAmo
 	locksrootValue := balanceProofValue.FieldByName("LocksRoot")
 	len := locksrootValue.Len()
 	if len != constants.HashLen {
-		panic("locksroot length invalid")
+		panic("locksRoot length invalid")
 	}
 
 	for i := 0; i < len; i++ {
-		locksroot[i] = byte(locksrootValue.Index(i).Uint())
+		locksRoot[i] = byte(locksrootValue.Index(i).Uint())
 	}
 
-	return transferredAmount, lockedAmount, locksroot
+	return transferredAmount, lockedAmount, locksRoot
 
 }
 
@@ -103,7 +103,7 @@ func getPrefixesForBalanceProofQuery() []string {
 
 func GetLatestKnownBalanceProofFromStateChanges(
 	storage *SQLiteStorage, chainID common.ChainID, tokenNetworkID common.TokenNetworkID,
-	channelIdentifier common.ChannelID, balanceHash common.BalanceHash, sender common.Address) *transfer.BalanceProofSignedState {
+	channelId common.ChannelID, balanceHash common.BalanceHash, sender common.Address) *transfer.BalanceProofSignedState {
 
 	for _, prefix := range getPrefixesForBalanceProofQuery() {
 		bpPrefix := prefix
@@ -113,10 +113,10 @@ func GetLatestKnownBalanceProofFromStateChanges(
 
 		filters := map[string]interface{}{
 			//"BalanceProof.ChainId":                 chainID,
-			//"BalanceProof.TokenNetworkIdentifier ": tokenNetworkID,
-			bpPrefix + "BalanceProof.ChannelIdentifier": channelIdentifier,
-			bpPrefix + "BalanceProof.BalanceHash":       formatBalanceHashForQuery(balanceHash),
-			bpPrefix + "BalanceProof.Sender":            formatAddressForQuery(sender),
+			//"BalanceProof.TokenNetworkId ": tokenNetworkID,
+			bpPrefix + "BalanceProof.ChannelId":   channelId,
+			bpPrefix + "BalanceProof.BalanceHash": formatBalanceHashForQuery(balanceHash),
+			bpPrefix + "BalanceProof.Sender":      formatAddressForQuery(sender),
 		}
 
 		log.Debugf("[GetLatestKnownBalanceProofFromStateChanges] with parameter: %v", filters)
@@ -142,7 +142,7 @@ func GetLatestKnownBalanceProofFromStateChanges(
 
 func GetLatestKnownBalanceProofFromEvents(
 	storage *SQLiteStorage, chainID common.ChainID, tokenNetworkID common.TokenNetworkID,
-	channelIdentifier common.ChannelID, balanceHash common.BalanceHash) *transfer.BalanceProofUnsignedState {
+	channelId common.ChannelID, balanceHash common.BalanceHash) *transfer.BalanceProofUnsignedState {
 
 	for _, prefix := range getPrefixesForBalanceProofQuery() {
 		bpPrefix := prefix
@@ -151,9 +151,9 @@ func GetLatestKnownBalanceProofFromEvents(
 		}
 		filters := map[string]interface{}{
 			//"BalanceProof.ChainId":                 chainID,
-			//"BalanceProof.TokenNetworkIdentifier ": tokenNetworkID,
-			bpPrefix + "BalanceProof.ChannelIdentifier": channelIdentifier,
-			bpPrefix + "BalanceProof.BalanceHash":       formatBalanceHashForQuery(balanceHash),
+			//"BalanceProof.TokenNetworkId ": tokenNetworkID,
+			bpPrefix + "BalanceProof.ChannelId":   channelId,
+			bpPrefix + "BalanceProof.BalanceHash": formatBalanceHashForQuery(balanceHash),
 		}
 
 		log.Debugf("[GetLatestKnownBalanceProofFromEvents] with parameter: %v", filters)
@@ -179,7 +179,7 @@ func GetLatestKnownBalanceProofFromEvents(
 
 func GetStateChangeWithBalanceProofByLocksroot(
 	storage *SQLiteStorage, chainID common.ChainID, tokenNetworkID common.TokenNetworkID,
-	channelIdentifier common.ChannelID, locksroot common.Locksroot, sender common.Address) *StateChangeRecord {
+	channelId common.ChannelID, locksRoot common.LocksRoot, sender common.Address) *StateChangeRecord {
 
 	for _, prefix := range getPrefixesForBalanceProofQuery() {
 		bpPrefix := prefix
@@ -189,10 +189,10 @@ func GetStateChangeWithBalanceProofByLocksroot(
 
 		filters := map[string]interface{}{
 			//"BalanceProof.ChainId":                 chainID,
-			//"BalanceProof.TokenNetworkIdentifier ": tokenNetworkID,
-			bpPrefix + "BalanceProof.ChannelIdentifier": channelIdentifier,
-			bpPrefix + "BalanceProof.Sender":            formatAddressForQuery(sender),
-			bpPrefix + "BalanceProof.LocksRoot":         formatLocksrootForQuery(locksroot),
+			//"BalanceProof.TokenNetworkId ": tokenNetworkID,
+			bpPrefix + "BalanceProof.ChannelId": channelId,
+			bpPrefix + "BalanceProof.Sender":    formatAddressForQuery(sender),
+			bpPrefix + "BalanceProof.LocksRoot": formatLocksrootForQuery(locksRoot),
 		}
 
 		log.Debugf("[GetStateChangeWithBalanceProofByLocksroot] with parameter: %v", filters)
@@ -218,7 +218,7 @@ func GetStateChangeWithBalanceProofByLocksroot(
 
 func GetEventWithBalanceProofByLocksroot(
 	storage *SQLiteStorage, chainID common.ChainID, tokenNetworkID common.TokenNetworkID,
-	channelIdentifier common.ChannelID, locksroot common.Locksroot) *EventRecord {
+	channelId common.ChannelID, locksRoot common.LocksRoot) *EventRecord {
 
 	for _, prefix := range getPrefixesForBalanceProofQuery() {
 		bpPrefix := prefix
@@ -228,9 +228,9 @@ func GetEventWithBalanceProofByLocksroot(
 
 		filters := map[string]interface{}{
 			//"BalanceProof.ChainId":                 chainID,
-			//"BalanceProof.TokenNetworkIdentifier ": tokenNetworkID,
-			bpPrefix + "BalanceProof.ChannelIdentifier": channelIdentifier,
-			bpPrefix + "BalanceProof.LocksRoot":         formatLocksrootForQuery(locksroot),
+			//"BalanceProof.TokenNetworkId ": tokenNetworkID,
+			bpPrefix + "BalanceProof.ChannelId": channelId,
+			bpPrefix + "BalanceProof.LocksRoot": formatLocksrootForQuery(locksRoot),
 		}
 
 		log.Debugf("[GetEventWithBalanceProofByLocksroot] with parameter: %v", filters)

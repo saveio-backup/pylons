@@ -5,6 +5,7 @@ import (
 
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/network/proxies"
+	"github.com/saveio/pylons/network/secretcrypt"
 	chainsdk "github.com/saveio/themis-go-sdk"
 	chnsdk "github.com/saveio/themis-go-sdk/channel"
 	"github.com/saveio/themis/account"
@@ -13,7 +14,7 @@ import (
 	"github.com/saveio/themis/smartcontract/service/native/micropayment"
 )
 
-type BlockchainService struct {
+type BlockChainService struct {
 	Address       common.Address
 	Account       *account.Account
 	mutex         sync.Mutex
@@ -31,13 +32,13 @@ type BlockchainService struct {
 	secretRegistryCreateLock sync.Mutex
 }
 
-func NewBlockChainService(clientType string, url []string, account *account.Account) *BlockchainService {
+func NewBlockChainService(clientType string, url []string, account *account.Account) *BlockChainService {
 	if clientType == "" || len(url) == 0 {
 		log.Error("chain node url is invalid")
 		return nil
 	}
 
-	this := &BlockchainService{}
+	this := &BlockChainService{}
 	this.identifierToPaymentChannel = make(map[common.ChannelID]*proxies.PaymentChannel)
 
 	this.ChainClient = chainsdk.NewChain()
@@ -67,18 +68,19 @@ func NewBlockChainService(clientType string, url []string, account *account.Acco
 	log.Info("blockChain service link to", url)
 	this.currentHeight, _ = this.BlockHeight()
 	this.Address = common.Address(account.Address)
+	secretcrypt.NewSecretCryptService(account, this.ChannelClient)
 	return this
 }
 
-func (this *BlockchainService) GetAccount() *account.Account {
+func (this *BlockChainService) GetAccount() *account.Account {
 	return this.Account
 }
 
-func (this *BlockchainService) GetAllOpenChannels() (*micropayment.AllChannels, error) {
+func (this *BlockChainService) GetAllOpenChannels() (*micropayment.AllChannels, error) {
 	return this.ChannelClient.GetAllOpenChannels()
 }
 
-func (this *BlockchainService) BlockHeight() (common.BlockHeight, error) {
+func (this *BlockChainService) BlockHeight() (common.BlockHeight, error) {
 	if height, err := this.ChainClient.GetCurrentBlockHeight(); err == nil {
 		return common.BlockHeight(height), nil
 	} else {
@@ -86,7 +88,7 @@ func (this *BlockchainService) BlockHeight() (common.BlockHeight, error) {
 	}
 }
 
-func (this *BlockchainService) GetBlock(param interface{}) (*types.Block, error) {
+func (this *BlockChainService) GetBlock(param interface{}) (*types.Block, error) {
 	switch (param).(type) {
 	case string:
 		identifier := param.(string)
@@ -107,7 +109,7 @@ func (this *BlockchainService) GetBlock(param interface{}) (*types.Block, error)
 	}
 }
 
-func (this *BlockchainService) GetBlockHash(height uint32) (common.BlockHash, error) {
+func (this *BlockChainService) GetBlockHash(height uint32) (common.BlockHash, error) {
 	blockHash, err := this.ChainClient.GetBlockHash(height)
 	if err != nil {
 		return common.BlockHash{}, err
@@ -115,7 +117,7 @@ func (this *BlockchainService) GetBlockHash(height uint32) (common.BlockHash, er
 	return blockHash[:], nil
 }
 
-func (this *BlockchainService) SecretRegistry(address common.SecretRegistryAddress) *proxies.SecretRegistry {
+func (this *BlockChainService) SecretRegistry(address common.SecretRegistryAddress) *proxies.SecretRegistry {
 	this.secretRegistryCreateLock.Lock()
 	defer this.secretRegistryCreateLock.Unlock()
 
@@ -127,7 +129,7 @@ func (this *BlockchainService) SecretRegistry(address common.SecretRegistryAddre
 	return this.secretRegistry
 }
 
-func (this *BlockchainService) NewTokenNetwork(address common.Address) *proxies.TokenNetwork {
+func (this *BlockChainService) NewTokenNetwork(address common.Address) *proxies.TokenNetwork {
 	this.tokenNetworkCreateLock.Lock()
 	defer this.tokenNetworkCreateLock.Unlock()
 
@@ -139,7 +141,7 @@ func (this *BlockchainService) NewTokenNetwork(address common.Address) *proxies.
 	return this.tokenNetwork
 }
 
-func (this *BlockchainService) PaymentChannel(tokenNetworkAddress common.Address,
+func (this *BlockChainService) PaymentChannel(tokenNetworkAddress common.Address,
 	channelId common.ChannelID, args map[string]interface{}) *proxies.PaymentChannel {
 
 	this.paymentChannelCreateLock.Lock()

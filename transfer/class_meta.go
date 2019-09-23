@@ -1,6 +1,6 @@
 package transfer
 
-const ChannelIdentifierGlobalQueue = 0
+const ChannelIdGlobalQueue = 0
 const DefaultNumberOfBlockConfirmations = 5
 
 //state

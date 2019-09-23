@@ -6,8 +6,8 @@ import (
 	"github.com/ontio/ontology-eventbus/actor"
 	oc "github.com/saveio/pylons"
 	p2p_act "github.com/saveio/pylons/actor/client"
-	"github.com/saveio/pylons/channelservice"
 	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/service"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis-go-sdk/usdt"
 	"github.com/saveio/themis/account"
@@ -265,7 +265,7 @@ func (this *ChannelActorServer) GetLocalPID() *actor.PID {
 func (this *ChannelActorServer) GetChannelService() *oc.Channel {
 	return this.chSrv
 }
-func getChannelsInfoRespFromChannelsInfo(channelInfos []*channelservice.ChannelInfo) *ChannelsInfoResp {
+func getChannelsInfoRespFromChannelsInfo(channelInfos []*service.ChannelInfo) *ChannelsInfoResp {
 	resp := &ChannelsInfoResp{}
 	totalBalance := uint64(0)
 	infos := make([]*ChannelInfo, 0)

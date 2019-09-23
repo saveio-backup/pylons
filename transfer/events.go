@@ -6,31 +6,31 @@ import (
 
 type ContractSendChannelClose struct {
 	ContractSendEvent
-	ChannelIdentifier      common.ChannelID
-	TokenAddress           common.TokenAddress
-	TokenNetworkIdentifier common.TokenNetworkID
-	BalanceProof           *BalanceProofSignedState
+	ChannelId      common.ChannelID
+	TokenAddress   common.TokenAddress
+	TokenNetworkId common.TokenNetworkID
+	BalanceProof   *BalanceProofSignedState
 }
 
 type ContractSendChannelSettle struct {
 	ContractSendEvent
-	ChannelIdentifier      common.ChannelID
-	TokenNetworkIdentifier common.TokenNetworkAddress
+	ChannelId      common.ChannelID
+	TokenNetworkId common.TokenNetworkAddress
 }
 
 type ContractSendChannelUpdateTransfer struct {
 	ContractSendExpireAbleEvent
-	ChannelIdentifier      common.ChannelID
-	TokenNetworkIdentifier common.TokenNetworkID
-	BalanceProof           *BalanceProofSignedState
+	ChannelId      common.ChannelID
+	TokenNetworkId common.TokenNetworkID
+	BalanceProof   *BalanceProofSignedState
 }
 
 type ContractSendChannelBatchUnlock struct {
 	ContractSendEvent
-	TokenAddress           common.TokenAddress
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	Participant            common.Address
+	TokenAddress   common.TokenAddress
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
+	Participant    common.Address
 }
 
 type ContractSendSecretReveal struct {
@@ -39,27 +39,27 @@ type ContractSendSecretReveal struct {
 }
 
 type EventPaymentSentSuccess struct {
-	PaymentNetworkIdentifier common.PaymentNetworkID
-	TokenNetworkIdentifier   common.TokenNetworkID
-	Identifier               common.PaymentID
-	Amount                   common.TokenAmount
-	Target                   common.Address
+	PaymentNetworkId common.PaymentNetworkID
+	TokenNetworkId   common.TokenNetworkID
+	Identifier       common.PaymentID
+	Amount           common.TokenAmount
+	Target           common.Address
 }
 
 type EventPaymentSentFailed struct {
-	PaymentNetworkIdentifier common.PaymentNetworkID
-	TokenNetworkIdentifier   common.TokenNetworkID
-	Identifier               common.PaymentID
-	Target                   common.Address
-	Reason                   string
+	PaymentNetworkId common.PaymentNetworkID
+	TokenNetworkId   common.TokenNetworkID
+	Identifier       common.PaymentID
+	Target           common.Address
+	Reason           string
 }
 
 type EventPaymentReceivedSuccess struct {
-	PaymentNetworkIdentifier common.PaymentNetworkID
-	TokenNetworkIdentifier   common.TokenNetworkID
-	Identifier               common.PaymentID
-	Amount                   common.TokenAmount
-	Initiator                common.Address
+	PaymentNetworkId common.PaymentNetworkID
+	TokenNetworkId   common.TokenNetworkID
+	Identifier       common.PaymentID
+	Amount           common.TokenAmount
+	Initiator        common.Address
 }
 
 type EventTransferReceivedInvalidDirectTransfer struct {
@@ -69,9 +69,9 @@ type EventTransferReceivedInvalidDirectTransfer struct {
 
 type SendDirectTransfer struct {
 	SendMessageEvent
-	PaymentIdentifier common.PaymentID
-	BalanceProof      *BalanceProofUnsignedState
-	TokenAddress      common.TokenAddress
+	PaymentId    common.PaymentID
+	BalanceProof *BalanceProofUnsignedState
+	TokenAddress common.TokenAddress
 }
 
 type EventInvalidReceivedUnlock struct {
@@ -85,27 +85,27 @@ type SendProcessed struct {
 
 type SendWithdrawRequest struct {
 	SendMessageEvent
-	Participant            common.Address
-	TokenNetworkIdentifier common.TokenNetworkID
-	WithdrawAmount         common.TokenAmount
+	Participant    common.Address
+	TokenNetworkId common.TokenNetworkID
+	WithdrawAmount common.TokenAmount
 }
 
 type SendWithdraw struct {
 	SendMessageEvent
-	Participant            common.Address
-	TokenNetworkIdentifier common.TokenNetworkID
-	WithdrawAmount         common.TokenAmount
-	ParticipantSignature   common.Signature
-	ParticipantAddress     common.Address
-	ParticipantPublicKey   common.PubKey
+	Participant          common.Address
+	TokenNetworkId       common.TokenNetworkID
+	WithdrawAmount       common.TokenAmount
+	ParticipantSignature common.Signature
+	ParticipantAddress   common.Address
+	ParticipantPublicKey common.PubKey
 }
 
 type ContractSendChannelWithdraw struct {
 	ContractSendEvent
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	Participant            common.Address
-	TotalWithdraw          common.TokenAmount
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
+	Participant    common.Address
+	TotalWithdraw  common.TokenAmount
 
 	ParticipantSignature common.Signature
 	ParticipantAddress   common.Address
@@ -117,90 +117,90 @@ type ContractSendChannelWithdraw struct {
 }
 
 type EventWithdrawRequestSentFailed struct {
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	WithdrawAmount         common.TokenAmount
-	Reason                 string
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
+	WithdrawAmount common.TokenAmount
+	Reason         string
 }
 
 type EventInvalidReceivedWithdrawRequest struct {
-	ChannelIdentifier common.ChannelID
-	Participant       common.Address
-	TotalWithdraw     common.TokenAmount
-	Reason            string
+	ChannelId     common.ChannelID
+	Participant   common.Address
+	TotalWithdraw common.TokenAmount
+	Reason        string
 }
 
 type EventInvalidReceivedWithdraw struct {
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	Participant            common.Address
-	TotalWithdraw          common.TokenAmount
-	Reason                 string
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
+	Participant    common.Address
+	TotalWithdraw  common.TokenAmount
+	Reason         string
 }
 
 type EventWithdrawRequestTimeout struct {
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	Reason                 string
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
+	Reason         string
 }
 type SendCooperativeSettleRequest struct {
 	SendMessageEvent
-	TokenNetworkIdentifier common.TokenNetworkID
-	Participant1           common.Address
-	Participant1Balance    common.TokenAmount
-	Participant2           common.Address
-	Participant2Balance    common.TokenAmount
+	TokenNetworkId      common.TokenNetworkID
+	Participant1        common.Address
+	Participant1Balance common.TokenAmount
+	Participant2        common.Address
+	Participant2Balance common.TokenAmount
 }
 
 type SendCooperativeSettle struct {
 	SendMessageEvent
-	TokenNetworkIdentifier common.TokenNetworkID
-	Participant1           common.Address
-	Participant1Balance    common.TokenAmount
-	Participant2           common.Address
-	Participant2Balance    common.TokenAmount
-	Participant1Signature  common.Signature
-	Participant1Address    common.Address
-	Participant1PublicKey  common.PubKey
+	TokenNetworkId        common.TokenNetworkID
+	Participant1          common.Address
+	Participant1Balance   common.TokenAmount
+	Participant2          common.Address
+	Participant2Balance   common.TokenAmount
+	Participant1Signature common.Signature
+	Participant1Address   common.Address
+	Participant1PublicKey common.PubKey
 }
 
 type ContractSendChannelCooperativeSettle struct {
 	ContractSendEvent
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	Participant1           common.Address
-	Participant1Balance    common.TokenAmount
-	Participant2           common.Address
-	Participant2Balance    common.TokenAmount
-	Participant1Signature  common.Signature
-	Participant1Address    common.Address
-	Participant1PublicKey  common.PubKey
-	Participant2Signature  common.Signature
-	Participant2Address    common.Address
-	Participant2PublicKey  common.PubKey
+	TokenNetworkId        common.TokenNetworkID
+	ChannelId             common.ChannelID
+	Participant1          common.Address
+	Participant1Balance   common.TokenAmount
+	Participant2          common.Address
+	Participant2Balance   common.TokenAmount
+	Participant1Signature common.Signature
+	Participant1Address   common.Address
+	Participant1PublicKey common.PubKey
+	Participant2Signature common.Signature
+	Participant2Address   common.Address
+	Participant2PublicKey common.PubKey
 }
 
 type EventCooperativeSettleRequestSentFailed struct {
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	Reason                 string
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
+	Reason         string
 }
 
 type EventInvalidReceivedCooperativeSettleRequest struct {
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	Reason                 string
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
+	Reason         string
 }
 
 type EventInvalidReceivedCooperativeSettle struct {
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	Reason                 string
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
+	Reason         string
 }
 
 type EventInvalidReceivedTransferRefund struct {
-	PaymentIdentifier common.PaymentID
-	Reason            string
+	PaymentId common.PaymentID
+	Reason    string
 }
 
 type EventInvalidReceivedLockExpired struct {
@@ -209,8 +209,8 @@ type EventInvalidReceivedLockExpired struct {
 }
 
 type EventInvalidReceivedLockedTransfer struct {
-	PaymentIdentifier common.PaymentID
-	Reason            string
+	PaymentId common.PaymentID
+	Reason    string
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -236,19 +236,19 @@ type SendSecretReveal struct {
 //NOTE, need caculate SecretHash based on Secret when construct SendSecretReveal!
 type SendBalanceProof struct {
 	SendMessageEvent
-	PaymentIdentifier common.PaymentID
-	TokenAddress      common.TokenAddress
-	Secret            common.Secret
-	SecretHash        common.SecretHash
-	BalanceProof      *BalanceProofUnsignedState
+	PaymentId    common.PaymentID
+	TokenAddress common.TokenAddress
+	Secret       common.Secret
+	SecretHash   common.SecretHash
+	BalanceProof *BalanceProofUnsignedState
 }
 
 type SendSecretRequest struct {
 	SendMessageEvent
-	PaymentIdentifier common.PaymentID
-	Amount            common.TokenAmount
-	Expiration        common.BlockExpiration
-	SecretHash        common.SecretHash
+	PaymentId  common.PaymentID
+	Amount     common.TokenAmount
+	Expiration common.BlockExpiration
+	SecretHash common.SecretHash
 }
 
 //NOTE, 'balance_proof': self.transfer.balance_proof is skipped.
@@ -290,9 +290,9 @@ type EventUnexpectedSecretReveal struct {
 func RefundFromSendmediated(sendLockedTransferEvent *SendLockedTransfer) *SendRefundTransfer {
 	sendRefundTransfer := &SendRefundTransfer{
 		SendMessageEvent: SendMessageEvent{
-			Recipient:         sendLockedTransferEvent.Recipient,
-			ChannelIdentifier: sendLockedTransferEvent.ChannelIdentifier,
-			MessageIdentifier: sendLockedTransferEvent.MessageIdentifier,
+			Recipient: sendLockedTransferEvent.Recipient,
+			ChannelId: sendLockedTransferEvent.ChannelId,
+			MessageId: sendLockedTransferEvent.MessageId,
 		},
 		Transfer: sendLockedTransferEvent.Transfer,
 	}

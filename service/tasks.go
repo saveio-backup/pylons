@@ -1,4 +1,4 @@
-package channelservice
+package service
 
 import (
 	"time"
@@ -10,7 +10,7 @@ import (
 
 type AlarmTask struct {
 	callbacks []AlarmTaskCallback
-	chain     *network.BlockchainService
+	chain     *network.BlockChainService
 	chainId   int
 	stopEvent chan int
 	interval  int
@@ -18,7 +18,7 @@ type AlarmTask struct {
 
 type AlarmTaskCallback func()
 
-func NewAlarmTask(chain *network.BlockchainService) *AlarmTask {
+func NewAlarmTask(chain *network.BlockChainService) *AlarmTask {
 	self := new(AlarmTask)
 
 	self.chain = chain

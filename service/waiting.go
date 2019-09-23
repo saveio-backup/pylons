@@ -1,4 +1,4 @@
-package channelservice
+package service
 
 import (
 	"container/list"
@@ -174,7 +174,7 @@ func WaitForSettleAllChannels(channel *ChannelService, retryTimeout float32) {
 		common.PaymentNetworkID{}, common.TokenAddress{})
 
 	channelIds := list.New()
-	for k := range tokenNetworkState.ChannelIdentifiersToChannels {
+	for k := range tokenNetworkState.ChannelsMap {
 		channelIds.PushBack(k)
 	}
 
@@ -200,7 +200,7 @@ func WaitForhealthy(channel *ChannelService, nodeAddress common.Address, retryTi
 	return
 }
 
-func WaitForTransferSuccess(channel *ChannelService, paymentIdentifier common.PaymentID,
+func WaitForTransferSuccess(channel *ChannelService, paymentId common.PaymentID,
 	amount common.PaymentAmount, retryTimeout float32) {
 
 	found := false
@@ -209,7 +209,7 @@ func WaitForTransferSuccess(channel *ChannelService, paymentIdentifier common.Pa
 
 		for e := stateEvents.Front(); e != nil; e = e.Next() {
 			if event, ok := e.Value.(*transfer.EventPaymentReceivedSuccess); ok {
-				if event.Identifier == paymentIdentifier && common.PaymentAmount(event.Amount) == amount {
+				if event.Identifier == paymentId && common.PaymentAmount(event.Amount) == amount {
 					found = true
 					break
 				}

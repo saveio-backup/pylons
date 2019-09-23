@@ -50,35 +50,35 @@ func NewTransport(channelService ChannelServiceInterface) *Transport {
 }
 
 // messages first be queued, only can be send when Delivered for previous msssage is received
-func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Message) error {
+func (this *Transport) SendAsync(queueId *transfer.QueueId, msg proto.Message) error {
 	var err error
 	var msgID *messages.MessageID
 
 	switch msg.(type) {
 	case *messages.DirectTransfer:
-		msgID = (msg.(*messages.DirectTransfer)).MessageIdentifier
+		msgID = (msg.(*messages.DirectTransfer)).MessageId
 	case *messages.Processed:
-		msgID = (msg.(*messages.Processed)).MessageIdentifier
+		msgID = (msg.(*messages.Processed)).MessageId
 	case *messages.LockedTransfer:
-		msgID = (msg.(*messages.LockedTransfer)).BaseMessage.MessageIdentifier
+		msgID = (msg.(*messages.LockedTransfer)).BaseMessage.MessageId
 	case *messages.SecretRequest:
-		msgID = (msg.(*messages.SecretRequest)).MessageIdentifier
+		msgID = (msg.(*messages.SecretRequest)).MessageId
 	case *messages.RevealSecret:
-		msgID = (msg.(*messages.RevealSecret)).MessageIdentifier
+		msgID = (msg.(*messages.RevealSecret)).MessageId
 	case *messages.RefundTransfer:
-		msgID = (msg.(*messages.RefundTransfer)).Refund.BaseMessage.MessageIdentifier
-	case *messages.Secret:
-		msgID = (msg.(*messages.Secret)).MessageIdentifier
+		msgID = (msg.(*messages.RefundTransfer)).Refund.BaseMessage.MessageId
+	case *messages.BalanceProof:
+		msgID = (msg.(*messages.BalanceProof)).MessageId
 	case *messages.LockExpired:
-		msgID = (msg.(*messages.LockExpired)).MessageIdentifier
+		msgID = (msg.(*messages.LockExpired)).MessageId
 	case *messages.WithdrawRequest:
-		msgID = (msg.(*messages.WithdrawRequest)).MessageIdentifier
+		msgID = (msg.(*messages.WithdrawRequest)).MessageId
 	case *messages.Withdraw:
-		msgID = (msg.(*messages.Withdraw)).MessageIdentifier
+		msgID = (msg.(*messages.Withdraw)).MessageId
 	case *messages.CooperativeSettleRequest:
-		msgID = (msg.(*messages.CooperativeSettleRequest)).MessageIdentifier
+		msgID = (msg.(*messages.CooperativeSettleRequest)).MessageId
 	case *messages.CooperativeSettle:
-		msgID = (msg.(*messages.CooperativeSettle)).MessageIdentifier
+		msgID = (msg.(*messages.CooperativeSettle)).MessageId
 	default:
 		err = fmt.Errorf("[SendAsync] Unknown message type to send async: %s", reflect.TypeOf(msg).String())
 		log.Error("[SendAsync] error: ", err.Error())
@@ -96,7 +96,7 @@ func (this *Transport) SendAsync(queueId *transfer.QueueIdentifier, msg proto.Me
 	return err
 }
 
-func (this *Transport) GetQueue(queueId *transfer.QueueIdentifier) *Queue {
+func (this *Transport) GetQueue(queueId *transfer.QueueId) *Queue {
 	q, ok := this.messageQueues.Load(*queueId)
 	if !ok {
 		q = this.InitQueue(queueId)
@@ -104,7 +104,7 @@ func (this *Transport) GetQueue(queueId *transfer.QueueIdentifier) *Queue {
 	return q.(*Queue)
 }
 
-func (this *Transport) InitQueue(queueId *transfer.QueueIdentifier) *Queue {
+func (this *Transport) InitQueue(queueId *transfer.QueueId) *Queue {
 	q := NewQueue(uint32(common.Config.MaxMsgQueue))
 	this.messageQueues.Store(*queueId, q)
 
@@ -113,7 +113,7 @@ func (this *Transport) InitQueue(queueId *transfer.QueueIdentifier) *Queue {
 	return q
 }
 
-func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueIdentifier) {
+func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueId) {
 	var interval time.Duration = 3
 	var retryTimes = 0
 
@@ -199,7 +199,7 @@ func (this *Transport) Stop() {
 	log.Debug("transport stopped")
 }
 
-func (this *Transport) CheckIfNeedRemove(queueId *transfer.QueueIdentifier, item *QueueItem) bool {
+func (this *Transport) CheckIfNeedRemove(queueId *transfer.QueueId, item *QueueItem) bool {
 	messageId := common.MessageID(item.messageId.MessageId)
 	queues := this.ChannelService.GetAllMessageQueues()
 
@@ -208,7 +208,7 @@ func (this *Transport) CheckIfNeedRemove(queueId *transfer.QueueIdentifier, item
 		// check if messageid in queue
 		for _, event := range events {
 			message := transfer.GetSenderMessageEvent(event)
-			if message.MessageIdentifier == messageId {
+			if message.MessageId == messageId {
 				return false
 			}
 		}
@@ -216,7 +216,7 @@ func (this *Transport) CheckIfNeedRemove(queueId *transfer.QueueIdentifier, item
 	return true
 }
 
-func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueIdentifier) error {
+func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueId) error {
 	item, ok := queue.Peek()
 	if !ok {
 		return fmt.Errorf("Error peeking from queue. ")
@@ -322,7 +322,7 @@ func (this *Transport) GetHostAddr(walletAddr common.Address) (string, error) {
 }
 
 func (this *Transport) StartHealthCheck(walletAddr common.Address) error {
-	log.Infof("[StartHealthCheck] walletAddr: %s", common.ToBase58(walletAddr))
+	log.Debugf("[StartHealthCheck] walletAddr: %s", common.ToBase58(walletAddr))
 
 	var err error
 	var nodeNetAddr string
@@ -348,7 +348,7 @@ func (this *Transport) StartHealthCheck(walletAddr common.Address) error {
 }
 
 func (this *Transport) Receive(message proto.Message, from string) {
-	log.Info("[NetComponent] Receive: ", reflect.TypeOf(message).String(), " From: ", from)
+	//log.Info("[NetComponent] Receive: ", reflect.TypeOf(message).String(), " From: ", from)
 
 	switch message.(type) {
 	case *messages.Delivered:
@@ -370,51 +370,51 @@ func (this *Transport) ReceiveMessage(message proto.Message, fromNetAddr string)
 	case *messages.DirectTransfer:
 		msg := message.(*messages.DirectTransfer)
 		senderWallerAddr = messages.ConvertAddress(msg.EnvelopeMessage.Signature.Sender)
-		msgID = msg.MessageIdentifier
+		msgID = msg.MessageId
 	case *messages.Processed:
 		msg := message.(*messages.Processed)
 		senderWallerAddr = messages.ConvertAddress(msg.Signature.Sender)
-		msgID = msg.MessageIdentifier
+		msgID = msg.MessageId
 	case *messages.LockedTransfer:
 		msg := message.(*messages.LockedTransfer)
 		senderWallerAddr = messages.ConvertAddress(msg.BaseMessage.EnvelopeMessage.Signature.Sender)
-		msgID = msg.BaseMessage.MessageIdentifier
+		msgID = msg.BaseMessage.MessageId
 	case *messages.LockExpired:
 		msg := message.(*messages.LockExpired)
 		senderWallerAddr = messages.ConvertAddress(msg.EnvelopeMessage.Signature.Sender)
-		msgID = msg.MessageIdentifier
+		msgID = msg.MessageId
 	case *messages.RefundTransfer:
 		msg := message.(*messages.RefundTransfer)
 		senderWallerAddr = messages.ConvertAddress(msg.Refund.BaseMessage.EnvelopeMessage.Signature.Sender)
-		msgID = msg.Refund.BaseMessage.MessageIdentifier
+		msgID = msg.Refund.BaseMessage.MessageId
 	case *messages.SecretRequest:
 		msg := message.(*messages.SecretRequest)
 		senderWallerAddr = messages.ConvertAddress(msg.Signature.Sender)
-		msgID = msg.MessageIdentifier
+		msgID = msg.MessageId
 	case *messages.RevealSecret:
 		msg := message.(*messages.RevealSecret)
 		senderWallerAddr = messages.ConvertAddress(msg.Signature.Sender)
-		msgID = msg.MessageIdentifier
-	case *messages.Secret:
-		msg := message.(*messages.Secret)
+		msgID = msg.MessageId
+	case *messages.BalanceProof:
+		msg := message.(*messages.BalanceProof)
 		senderWallerAddr = messages.ConvertAddress(msg.EnvelopeMessage.Signature.Sender)
-		msgID = msg.MessageIdentifier
+		msgID = msg.MessageId
 	case *messages.WithdrawRequest:
 		msg := message.(*messages.WithdrawRequest)
 		senderWallerAddr = messages.ConvertAddress(msg.Participant)
-		msgID = msg.MessageIdentifier
+		msgID = msg.MessageId
 	case *messages.Withdraw:
 		msg := message.(*messages.Withdraw)
 		senderWallerAddr = messages.ConvertAddress(msg.PartnerSignature.Sender)
-		msgID = msg.MessageIdentifier
+		msgID = msg.MessageId
 	case *messages.CooperativeSettleRequest:
 		msg := message.(*messages.CooperativeSettleRequest)
 		senderWallerAddr = messages.ConvertAddress(msg.Participant1Signature.Sender)
-		msgID = msg.MessageIdentifier
+		msgID = msg.MessageId
 	case *messages.CooperativeSettle:
 		msg := message.(*messages.CooperativeSettle)
 		senderWallerAddr = messages.ConvertAddress(msg.Participant2Signature.Sender)
-		msgID = msg.MessageIdentifier
+		msgID = msg.MessageId
 	default:
 		log.Warn("[ReceiveMessage] unknown Msg type: ", reflect.TypeOf(message).String())
 		return
@@ -423,14 +423,14 @@ func (this *Transport) ReceiveMessage(message proto.Message, fromNetAddr string)
 	log.Debugf("[ReceiveMessage] %s msgId: %d fromNetAddr: %s fromWalletAddr: %s", reflect.TypeOf(message).String(),
 		msgID.MessageId, fromNetAddr, common.ToBase58(senderWallerAddr))
 	deliveredMessage := &messages.Delivered{
-		DeliveredMessageIdentifier: msgID,
+		DeliveredMessageId: msgID,
 	}
 
 	//var nodeNetAddress string
 	err := this.ChannelService.Sign(deliveredMessage)
 	if err == nil {
 		log.Debugf("[SendDeliver] (%v) MessageId: %d to:  %s", reflect.TypeOf(message).String(),
-			deliveredMessage.DeliveredMessageIdentifier.MessageId, fromNetAddr)
+			deliveredMessage.DeliveredMessageId.MessageId, fromNetAddr)
 
 		senderNetAddr, err := this.GetHostAddr(senderWallerAddr)
 		if err != nil {
@@ -439,7 +439,7 @@ func (this *Transport) ReceiveMessage(message proto.Message, fromNetAddr string)
 
 		if err = client.P2pSend(senderNetAddr, deliveredMessage); err != nil {
 			log.Errorf("[SendDeliver] (%v) MessageId: %d to: %s error: %s",
-				reflect.TypeOf(message).String(), deliveredMessage.DeliveredMessageIdentifier.MessageId,
+				reflect.TypeOf(message).String(), deliveredMessage.DeliveredMessageId.MessageId,
 				senderNetAddr, err.Error())
 		}
 	} else {
@@ -459,13 +459,13 @@ func (this *Transport) ReceiveDelivered(message proto.Message, from string) {
 	//	return true
 	//}
 	msg := message.(*messages.Delivered)
-	msgId := common.MessageID(msg.DeliveredMessageIdentifier.MessageId)
+	msgId := common.MessageID(msg.DeliveredMessageId.MessageId)
 	queue, ok := this.addressQueueMap.Load(msgId)
 	if !ok {
 		log.Debugf("[ReceiveDelivered] from: %s Time: %s msgId: %v\n", from, time.Now().String(), msgId)
-		log.Error("[ReceiveDelivered] msg.DeliveredMessageIdentifier is not in addressQueueMap")
+		log.Error("[ReceiveDelivered] msg.DeliveredMessageId is not in addressQueueMap")
 		return
 	}
 	log.Debugf("[ReceiveDelivered] from: %s Time: %s msgId: %v, queue: %p\n", from, time.Now().String(), msgId, queue)
-	queue.(*Queue).DeliverChan <- msg.DeliveredMessageIdentifier
+	queue.(*Queue).DeliverChan <- msg.DeliveredMessageId
 }

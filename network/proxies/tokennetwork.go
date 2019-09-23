@@ -2,6 +2,7 @@ package proxies
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"strconv"
 	"sync"
@@ -14,11 +15,12 @@ import (
 	chnsdk "github.com/saveio/themis-go-sdk/channel"
 	comm "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
+	"github.com/saveio/themis/crypto/keypair"
 	"github.com/saveio/themis/smartcontract/service/native/micropayment"
 )
 
 type ChannelData struct {
-	ChannelIdentifier common.ChannelID
+	ChannelId         common.ChannelID
 	SettleBlockHeight common.BlockHeight
 	State             int
 }
@@ -30,7 +32,7 @@ type ParticipantDetails struct {
 	isCloser     bool
 	BalanceHash  common.BalanceHash
 	Nonce        common.Nonce
-	Locksroot    common.Locksroot
+	LocksRoot    common.LocksRoot
 	LockedAmount common.TokenAmount
 }
 
@@ -99,7 +101,7 @@ func (self *TokenNetwork) TokenAddress() common.Address {
 }
 
 func (self *TokenNetwork) NewNettingChannel(partner common.Address, settleTimeout int) common.ChannelID {
-	var channelIdentifier common.ChannelID
+	var channelId common.ChannelID
 
 	if bytes.Compare(self.nodeAddress[:], partner[:]) == 0 {
 		log.Errorf("The other peer must not have the same address as the client.")
@@ -139,14 +141,16 @@ func (self *TokenNetwork) NewNettingChannel(partner common.Address, settleTimeou
 	channelCreated := self.channelExistsAndNotSettled(self.nodeAddress, partner, 0)
 	if channelCreated == true {
 		channelDetail := self.detailChannel(self.nodeAddress, partner, 0)
-		channelIdentifier = channelDetail.ChannelIdentifier
+		channelId = channelDetail.ChannelId
 	}
 
-	return channelIdentifier
+	return channelId
 }
 
 func (self *TokenNetwork) newNettingChannel(partner common.Address, settleTimeout int) ([]byte, error) {
-	hash, err := self.ChannelClient.OpenChannel(comm.Address(self.nodeAddress), comm.Address(partner), uint64(settleTimeout))
+	pubKey := keypair.SerializePublicKey(self.ChannelClient.DefAcc.PublicKey)
+	log.Infof("[newNettingChannel] PubKey: %s", hex.EncodeToString(pubKey))
+	hash, err := self.ChannelClient.OpenChannel(comm.Address(self.nodeAddress), pubKey, comm.Address(partner), uint64(settleTimeout))
 	regAddr := common.ToBase58(self.nodeAddress)
 	patAddr := common.ToBase58(partner)
 	if err != nil {
@@ -156,26 +160,26 @@ func (self *TokenNetwork) newNettingChannel(partner common.Address, settleTimeou
 	return hash, nil
 }
 
-func (self *TokenNetwork) inspectChannelIdentifier(participant1 common.Address,
+func (self *TokenNetwork) inspectChannelId(participant1 common.Address,
 	participant2 common.Address, caller string,
-	channelIdentifier common.ChannelID) common.ChannelID {
-	// need getChannelIdentifier api
-	// result := self.callAndCheckResult("getChannelIdentifier", participant1, participant2)
+	channelId common.ChannelID) common.ChannelID {
+	// need getChannelId api
+	// result := self.callAndCheckResult("getChannelId", participant1, participant2)
 	// return result.(common.ChannelID)
 	id, err := self.ChannelClient.GetChannelIdentifier(comm.Address(participant1), comm.Address(participant2))
 	if err != nil {
-		log.Errorf("Get channelIdentifier err:%s", err)
+		log.Errorf("Get channelId err:%s", err)
 		return 0
 	}
 	return common.ChannelID(id)
 }
 
 func (self *TokenNetwork) channelExistsAndNotSettled(participant1 common.Address,
-	participant2 common.Address, channelIdentifier common.ChannelID) bool {
+	participant2 common.Address, channelId common.ChannelID) bool {
 
 	var existsAndNotSettled bool
 
-	channelState := self.getChannelState(participant1, participant2, channelIdentifier)
+	channelState := self.getChannelState(participant1, participant2, channelId)
 
 	if channelState > micropayment.NonExistent && channelState < micropayment.Settled {
 		existsAndNotSettled = true
@@ -184,9 +188,9 @@ func (self *TokenNetwork) channelExistsAndNotSettled(participant1 common.Address
 	return existsAndNotSettled
 }
 
-func (self *TokenNetwork) detailParticipant(channelIdentifier common.ChannelID,
+func (self *TokenNetwork) detailParticipant(channelId common.ChannelID,
 	participant common.Address, partner common.Address) *ParticipantDetails {
-	info, err := self.ChannelClient.GetChannelParticipantInfo(uint64(channelIdentifier), comm.Address(participant), comm.Address(partner))
+	info, err := self.ChannelClient.GetChannelParticipantInfo(uint64(channelId), comm.Address(participant), comm.Address(partner))
 	if err != nil {
 		log.Errorf("GetChannelParticipantInfo err:%s", err)
 		return nil
@@ -205,7 +209,7 @@ func (self *TokenNetwork) detailParticipant(channelIdentifier common.ChannelID,
 		}
 	}
 
-	var locksroot common.Locksroot
+	var locksRoot common.LocksRoot
 
 	if len(info.LocksRoot) != 0 && len(info.LocksRoot) != constants.HashLen {
 		log.Errorf("GetChannelParticipantInfo: length error for balance hash")
@@ -214,7 +218,7 @@ func (self *TokenNetwork) detailParticipant(channelIdentifier common.ChannelID,
 
 	if len(info.LocksRoot) == constants.HashLen {
 		for index, value := range info.LocksRoot {
-			locksroot[index] = value
+			locksRoot[index] = value
 		}
 	}
 	result := &ParticipantDetails{
@@ -224,31 +228,31 @@ func (self *TokenNetwork) detailParticipant(channelIdentifier common.ChannelID,
 		isCloser:     info.IsCloser,
 		BalanceHash:  balanceHash,
 		Nonce:        common.Nonce(info.Nonce),
-		Locksroot:    locksroot,
+		LocksRoot:    locksRoot,
 		LockedAmount: common.TokenAmount(info.LockedAmount),
 
 		// TODO: this two field is missing
-		// Locksroot:    ,
+		// locksRoot:    ,
 		// LockedAmount: ,
 	}
 	return result
 }
 
 func (self *TokenNetwork) detailChannel(participant1 common.Address,
-	participant2 common.Address, channelIdentifier common.ChannelID) *ChannelData {
+	participant2 common.Address, channelId common.ChannelID) *ChannelData {
 
-	if channelIdentifier == 0 {
-		channelIdentifier = self.inspectChannelIdentifier(participant1, participant2,
-			"detailChannel", channelIdentifier)
+	if channelId == 0 {
+		channelId = self.inspectChannelId(participant1, participant2,
+			"detailChannel", channelId)
 	}
 
-	info, err := self.ChannelClient.GetChannelInfo(uint64(channelIdentifier), comm.Address(participant1), comm.Address(participant2))
+	info, err := self.ChannelClient.GetChannelInfo(uint64(channelId), comm.Address(participant1), comm.Address(participant2))
 	if err != nil {
 		log.Errorf("GetChannelInfo err:%s", err)
 		return nil
 	}
 	channelData := &ChannelData{
-		ChannelIdentifier: channelIdentifier,
+		ChannelId:         channelId,
 		SettleBlockHeight: common.BlockHeight(info.SettleBlockHeight),
 		State:             int(info.ChannelState),
 	}
@@ -256,7 +260,7 @@ func (self *TokenNetwork) detailChannel(participant1 common.Address,
 }
 
 func (self *TokenNetwork) DetailParticipants(participant1 common.Address,
-	participant2 common.Address, channelIdentifier common.ChannelID) *ParticipantsDetails {
+	participant2 common.Address, channelId common.ChannelID) *ParticipantsDetails {
 
 	if self.nodeAddress != participant1 && self.nodeAddress != participant2 {
 		return nil
@@ -266,15 +270,15 @@ func (self *TokenNetwork) DetailParticipants(participant1 common.Address,
 		participant1, participant2 = participant2, participant1
 	}
 
-	// only query when there channel id is 0, after channel is settled, inspectChannelIdentifier returns 0
+	// only query when there channel id is 0, after channel is settled, inspectChannelId returns 0
 	// but we need to get the correct info for unlock when channel id is provided correctly
-	if channelIdentifier == 0 {
-		channelIdentifier = self.inspectChannelIdentifier(participant1, participant2,
-			"detailParticipants", channelIdentifier)
+	if channelId == 0 {
+		channelId = self.inspectChannelId(participant1, participant2,
+			"detailParticipants", channelId)
 	}
 
-	ourData := self.detailParticipant(channelIdentifier, participant1, participant2)
-	partnerData := self.detailParticipant(channelIdentifier, participant2, participant1)
+	ourData := self.detailParticipant(channelId, participant1, participant2)
+	partnerData := self.detailParticipant(channelId, participant2, participant1)
 
 	participantsDetails := new(ParticipantsDetails)
 	participantsDetails.OurDetails = ourData
@@ -283,7 +287,7 @@ func (self *TokenNetwork) DetailParticipants(participant1 common.Address,
 }
 
 func (self *TokenNetwork) detail(participant1 common.Address,
-	participant2 common.Address, channelIdentifier common.ChannelID) *ChannelDetails {
+	participant2 common.Address, channelId common.ChannelID) *ChannelDetails {
 
 	if self.nodeAddress != participant1 && self.nodeAddress != participant2 {
 		return nil
@@ -293,8 +297,8 @@ func (self *TokenNetwork) detail(participant1 common.Address,
 		participant1, participant2 = participant2, participant1
 	}
 
-	channelData := self.detailChannel(participant1, participant2, channelIdentifier)
-	participantsData := self.DetailParticipants(participant1, participant2, channelIdentifier)
+	channelData := self.detailChannel(participant1, participant2, channelId)
+	participantsData := self.DetailParticipants(participant1, participant2, channelId)
 
 	channelDetails := new(ChannelDetails)
 	id, err := self.ChainClient.GetNetworkId()
@@ -310,33 +314,33 @@ func (self *TokenNetwork) detail(participant1 common.Address,
 }
 
 func (self *TokenNetwork) ChannelIsOpened(participant1 common.Address,
-	participant2 common.Address, channelIdentifier common.ChannelID) bool {
+	participant2 common.Address, channelId common.ChannelID) bool {
 
-	channelState := self.getChannelState(participant1, participant2, channelIdentifier)
+	channelState := self.getChannelState(participant1, participant2, channelId)
 	return channelState == micropayment.Opened
 }
 
 func (self *TokenNetwork) ChannelIsClosed(participant1 common.Address,
-	participant2 common.Address, channelIdentifier common.ChannelID) bool {
+	participant2 common.Address, channelId common.ChannelID) bool {
 
-	channelState := self.getChannelState(participant1, participant2, channelIdentifier)
+	channelState := self.getChannelState(participant1, participant2, channelId)
 	return channelState == micropayment.Closed
 }
 
 func (self *TokenNetwork) ChannelIsSettled(participant1 common.Address,
-	participant2 common.Address, channelIdentifier common.ChannelID) bool {
+	participant2 common.Address, channelId common.ChannelID) bool {
 
-	channelState := self.getChannelState(participant1, participant2, channelIdentifier)
+	channelState := self.getChannelState(participant1, participant2, channelId)
 	return channelState == micropayment.Settled
 }
 
 func (self *TokenNetwork) ClosingAddress(participant1 common.Address,
-	participant2 common.Address, channelIdentifier common.ChannelID) common.Address {
+	participant2 common.Address, channelId common.ChannelID) common.Address {
 
 	var result common.Address
 
-	channelData := self.detailChannel(participant1, participant2, channelIdentifier)
-	participantsData := self.DetailParticipants(participant1, participant2, channelData.ChannelIdentifier)
+	channelData := self.detailChannel(participant1, participant2, channelId)
+	participantsData := self.DetailParticipants(participant1, participant2, channelData.ChannelId)
 
 	if participantsData.OurDetails.isCloser {
 		return participantsData.OurDetails.Address
@@ -349,13 +353,13 @@ func (self *TokenNetwork) ClosingAddress(participant1 common.Address,
 }
 
 func (self *TokenNetwork) CanTransfer(participant1 common.Address,
-	participant2 common.Address, channelIdentifier common.ChannelID) bool {
+	participant2 common.Address, channelId common.ChannelID) bool {
 
-	if self.ChannelIsOpened(participant1, participant2, channelIdentifier) == false {
+	if self.ChannelIsOpened(participant1, participant2, channelId) == false {
 		return false
 	}
 
-	details := self.detailParticipant(channelIdentifier, participant1, participant2)
+	details := self.detailParticipant(channelId, participant1, participant2)
 	if details.Deposit > 0 {
 		return true
 	} else {
@@ -376,12 +380,12 @@ func (self *TokenNetwork) GetGasBalance() (common.TokenAmount, error) {
 	return currentBalance, nil
 }
 
-func (self *TokenNetwork) SetTotalDeposit(channelIdentifier common.ChannelID,
+func (self *TokenNetwork) SetTotalDeposit(channelId common.ChannelID,
 	totalDeposit common.TokenAmount, partner common.Address) error {
 
 	var opLock *sync.Mutex
 
-	if !self.CheckForOutdatedChannel(self.nodeAddress, partner, channelIdentifier) {
+	if !self.CheckForOutdatedChannel(self.nodeAddress, partner, channelId) {
 		return errors.New("channel outdated")
 	}
 
@@ -393,7 +397,7 @@ func (self *TokenNetwork) SetTotalDeposit(channelIdentifier common.ChannelID,
 	self.depositLock.Lock()
 	defer self.depositLock.Unlock()
 
-	detail := self.detailParticipant(channelIdentifier, self.nodeAddress, partner)
+	detail := self.detailParticipant(channelId, self.nodeAddress, partner)
 
 	currentDeposit := detail.Deposit
 	amountToDeposit := totalDeposit - currentDeposit
@@ -415,7 +419,7 @@ func (self *TokenNetwork) SetTotalDeposit(channelIdentifier common.ChannelID,
 		return errors.New("current balance not enough")
 	}
 
-	txHash, err := self.ChannelClient.SetTotalDeposit(uint64(channelIdentifier), comm.Address(self.nodeAddress), comm.Address(partner), uint64(totalDeposit))
+	txHash, err := self.ChannelClient.SetTotalDeposit(uint64(channelId), comm.Address(self.nodeAddress), comm.Address(partner), uint64(totalDeposit))
 	if err != nil {
 		log.Errorf("SetTotalDeposit err:%s", err)
 		return err
@@ -424,7 +428,7 @@ func (self *TokenNetwork) SetTotalDeposit(channelIdentifier common.ChannelID,
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("SetTotalDeposit  WaitForGenerateBlock err:%s", err)
-		ret, nerr := self.checkChannelStateForDeposit(self.nodeAddress, partner, channelIdentifier, totalDeposit)
+		ret, nerr := self.checkChannelStateForDeposit(self.nodeAddress, partner, channelId, totalDeposit)
 		if !ret {
 			return nerr
 		}
@@ -434,17 +438,17 @@ func (self *TokenNetwork) SetTotalDeposit(channelIdentifier common.ChannelID,
 	return nil
 }
 
-func (self *TokenNetwork) Close(channelIdentifier common.ChannelID, partner common.Address,
+func (self *TokenNetwork) Close(channelId common.ChannelID, partner common.Address,
 	balanceHash common.BalanceHash, nonce common.Nonce, additionalHash common.AdditionalHash,
 	signature common.Signature, partnerPubKey common.PubKey) {
 
 	var opLock *sync.Mutex
 
-	if self.CheckForOutdatedChannel(self.nodeAddress, partner, channelIdentifier) == false {
+	if self.CheckForOutdatedChannel(self.nodeAddress, partner, channelId) == false {
 		return
 	}
 
-	if self.checkChannelStateForClose(self.nodeAddress, partner, channelIdentifier) == false {
+	if self.checkChannelStateForClose(self.nodeAddress, partner, channelId) == false {
 		return
 	}
 
@@ -452,7 +456,7 @@ func (self *TokenNetwork) Close(channelIdentifier common.ChannelID, partner comm
 	opLock.Lock()
 	defer opLock.Unlock()
 
-	txHash, err := self.ChannelClient.CloseChannel(uint64(channelIdentifier), comm.Address(self.nodeAddress), comm.Address(partner), balanceHash[:], uint64(nonce), []byte(additionalHash), []byte(signature), []byte(partnerPubKey))
+	txHash, err := self.ChannelClient.CloseChannel(uint64(channelId), comm.Address(self.nodeAddress), comm.Address(partner), balanceHash[:], uint64(nonce), []byte(additionalHash), []byte(signature), []byte(partnerPubKey))
 	if err != nil {
 		log.Errorf("CloseChannel err:%s", err)
 		return
@@ -462,7 +466,7 @@ func (self *TokenNetwork) Close(channelIdentifier common.ChannelID, partner comm
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("CloseChannel  WaitForGenerateBlock err:%s", err)
-		self.checkChannelStateForClose(self.nodeAddress, partner, channelIdentifier)
+		self.checkChannelStateForClose(self.nodeAddress, partner, channelId)
 
 		return
 	}
@@ -470,16 +474,16 @@ func (self *TokenNetwork) Close(channelIdentifier common.ChannelID, partner comm
 	return
 }
 
-func (self *TokenNetwork) updateTransfer(channelIdentifier common.ChannelID, partner common.Address,
+func (self *TokenNetwork) updateTransfer(channelId common.ChannelID, partner common.Address,
 	balanceHash common.BalanceHash, nonce common.Nonce, additionalHash common.AdditionalHash,
 	closingSignature common.Signature, nonClosingSignature common.Signature, closePubKey common.PubKey, nonClosePubKey common.PubKey) {
 
-	if self.CheckForOutdatedChannel(self.nodeAddress, partner, channelIdentifier) == false {
+	if self.CheckForOutdatedChannel(self.nodeAddress, partner, channelId) == false {
 		return
 	}
 
 	// need pubkey
-	txHash, err := self.ChannelClient.UpdateNonClosingBalanceProof(uint64(channelIdentifier), comm.Address(partner), comm.Address(self.nodeAddress), balanceHash[:], uint64(nonce), []byte(additionalHash), []byte(closingSignature), []byte(nonClosingSignature), closePubKey, nonClosePubKey)
+	txHash, err := self.ChannelClient.UpdateNonClosingBalanceProof(uint64(channelId), comm.Address(partner), comm.Address(self.nodeAddress), balanceHash[:], uint64(nonce), []byte(additionalHash), []byte(closingSignature), []byte(nonClosingSignature), closePubKey, nonClosePubKey)
 	if err != nil {
 		log.Errorf("UpdateNonClosingBalanceProof err:%s", err)
 		return
@@ -488,7 +492,7 @@ func (self *TokenNetwork) updateTransfer(channelIdentifier common.ChannelID, par
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("UpdateNonClosingBalanceProof  WaitForGenerateBlock err:%s", err)
-		channelClosed := self.ChannelIsClosed(self.nodeAddress, partner, channelIdentifier)
+		channelClosed := self.ChannelIsClosed(self.nodeAddress, partner, channelId)
 		if channelClosed == false {
 			return
 		}
@@ -498,12 +502,12 @@ func (self *TokenNetwork) updateTransfer(channelIdentifier common.ChannelID, par
 	return
 }
 
-func (self *TokenNetwork) withDraw(channelIdentifier common.ChannelID, partner common.Address,
+func (self *TokenNetwork) withDraw(channelId common.ChannelID, partner common.Address,
 	totalWithdraw common.TokenAmount, partnerSignature common.Signature, partnerPubKey common.PubKey, signature common.Signature, pubKey common.PubKey) error {
 
 	var opLock *sync.Mutex
 
-	if self.CheckForOutdatedChannel(self.nodeAddress, partner, channelIdentifier) == false {
+	if self.CheckForOutdatedChannel(self.nodeAddress, partner, channelId) == false {
 		return errors.New("channel out dated")
 	}
 
@@ -511,7 +515,7 @@ func (self *TokenNetwork) withDraw(channelIdentifier common.ChannelID, partner c
 	opLock.Lock()
 	defer opLock.Unlock()
 
-	txHash, err := self.ChannelClient.SetTotalWithdraw(uint64(channelIdentifier), comm.Address(self.nodeAddress), comm.Address(partner), uint64(totalWithdraw), []byte(signature), pubKey, []byte(partnerSignature), partnerPubKey)
+	txHash, err := self.ChannelClient.SetTotalWithdraw(uint64(channelId), comm.Address(self.nodeAddress), comm.Address(partner), uint64(totalWithdraw), []byte(signature), pubKey, []byte(partnerSignature), partnerPubKey)
 	if err != nil {
 		log.Errorf("SetTotoalWithdraw err:%s", err)
 		return err
@@ -520,7 +524,7 @@ func (self *TokenNetwork) withDraw(channelIdentifier common.ChannelID, partner c
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("SetTotoalWithdraw WaitForGenerateBlock err:%s", err)
-		self.checkChannelStateForWithdraw(self.nodeAddress, partner, channelIdentifier, totalWithdraw)
+		self.checkChannelStateForWithdraw(self.nodeAddress, partner, channelId, totalWithdraw)
 
 		return err
 	}
@@ -528,13 +532,13 @@ func (self *TokenNetwork) withDraw(channelIdentifier common.ChannelID, partner c
 	return nil
 }
 
-func (self *TokenNetwork) cooperativeSettle(channelIdentifier common.ChannelID, participant1 common.Address,
+func (self *TokenNetwork) cooperativeSettle(channelId common.ChannelID, participant1 common.Address,
 	participant1Balance common.TokenAmount, participant2 common.Address, participant2Balance common.TokenAmount,
 	participant1Signature common.Signature, participant1PubKey common.PubKey, participant2Signature common.Signature, participant2PubKey common.PubKey) error {
 
 	var opLock *sync.Mutex
 
-	if self.CheckForOutdatedChannel(self.nodeAddress, participant2, channelIdentifier) == false {
+	if self.CheckForOutdatedChannel(self.nodeAddress, participant2, channelId) == false {
 		return errors.New("channel out dated")
 	}
 
@@ -542,7 +546,7 @@ func (self *TokenNetwork) cooperativeSettle(channelIdentifier common.ChannelID, 
 	opLock.Lock()
 	defer opLock.Unlock()
 
-	txHash, err := self.ChannelClient.CooperativeSettle(uint64(channelIdentifier), comm.Address(participant1), uint64(participant1Balance),
+	txHash, err := self.ChannelClient.CooperativeSettle(uint64(channelId), comm.Address(participant1), uint64(participant1Balance),
 		comm.Address(participant2), uint64(participant2Balance), []byte(participant1Signature), participant1PubKey, []byte(participant2Signature), participant2PubKey)
 	if err != nil {
 		log.Errorf("CooperativeSettle err:%s", err)
@@ -557,7 +561,7 @@ func (self *TokenNetwork) cooperativeSettle(channelIdentifier common.ChannelID, 
 
 	return nil
 }
-func (self *TokenNetwork) unlock(channelIdentifier common.ChannelID, partner common.Address,
+func (self *TokenNetwork) unlock(channelId common.ChannelID, partner common.Address,
 	merkleTreeLeaves []*transfer.HashTimeLockState) {
 
 	if len(merkleTreeLeaves) == 0 {
@@ -570,7 +574,7 @@ func (self *TokenNetwork) unlock(channelIdentifier common.ChannelID, partner com
 		leavesPacked = append(leavesPacked, lock.PackData()...)
 	}
 
-	txHash, err := self.ChannelClient.Unlock(uint64(channelIdentifier), comm.Address(self.nodeAddress), comm.Address(partner), leavesPacked)
+	txHash, err := self.ChannelClient.Unlock(uint64(channelId), comm.Address(self.nodeAddress), comm.Address(partner), leavesPacked)
 	if err != nil {
 		log.Errorf("Unlock err:%s", err)
 		return
@@ -586,7 +590,7 @@ func (self *TokenNetwork) unlock(channelIdentifier common.ChannelID, partner com
 		var receiptOrNone bool
 
 		if receiptOrNone {
-			channelSettled := self.ChannelIsSettled(self.nodeAddress, partner, channelIdentifier)
+			channelSettled := self.ChannelIsSettled(self.nodeAddress, partner, channelId)
 			if channelSettled == false {
 				return
 			}
@@ -596,13 +600,13 @@ func (self *TokenNetwork) unlock(channelIdentifier common.ChannelID, partner com
 	return
 }
 
-func (self *TokenNetwork) settle(channelIdentifier common.ChannelID, transferredAmount common.TokenAmount,
-	lockedAmount common.TokenAmount, locksRoot common.Locksroot, partner common.Address,
-	partnerTransferredAmount common.TokenAmount, partnerLockedAmount common.TokenAmount, partnerLocksroot common.Locksroot) {
+func (self *TokenNetwork) settle(channelId common.ChannelID, transferredAmount common.TokenAmount,
+	lockedAmount common.TokenAmount, locksRoot common.LocksRoot, partner common.Address,
+	partnerTransferredAmount common.TokenAmount, partnerLockedAmount common.TokenAmount, partnerLocksroot common.LocksRoot) {
 
 	var opLock *sync.Mutex
 
-	if self.CheckForOutdatedChannel(self.nodeAddress, partner, channelIdentifier) == false {
+	if self.CheckForOutdatedChannel(self.nodeAddress, partner, channelId) == false {
 		return
 	}
 
@@ -619,13 +623,13 @@ func (self *TokenNetwork) settle(channelIdentifier common.ChannelID, transferred
 	var locksRootSlice []byte
 	var partnerLocksrootSlice []byte
 
-	if common.LocksrootEmpty(locksRoot) {
+	if common.LocksRootEmpty(locksRoot) {
 		locksRootSlice = nil
 	} else {
 		locksRootSlice = locksRoot[:]
 	}
 
-	if common.LocksrootEmpty(partnerLocksroot) {
+	if common.LocksRootEmpty(partnerLocksroot) {
 		partnerLocksrootSlice = nil
 	} else {
 		partnerLocksrootSlice = partnerLocksroot[:]
@@ -633,7 +637,7 @@ func (self *TokenNetwork) settle(channelIdentifier common.ChannelID, transferred
 
 	if ourBpIsLarger {
 
-		txHash, err = self.ChannelClient.SettleChannel(uint64(channelIdentifier),
+		txHash, err = self.ChannelClient.SettleChannel(uint64(channelId),
 			comm.Address(partner),
 			uint64(partnerTransferredAmount),
 			uint64(partnerLockedAmount),
@@ -646,7 +650,7 @@ func (self *TokenNetwork) settle(channelIdentifier common.ChannelID, transferred
 
 	} else {
 
-		txHash, err = self.ChannelClient.SettleChannel(uint64(channelIdentifier),
+		txHash, err = self.ChannelClient.SettleChannel(uint64(channelId),
 			comm.Address(self.nodeAddress),
 			uint64(transferredAmount),
 			uint64(lockedAmount),
@@ -666,7 +670,7 @@ func (self *TokenNetwork) settle(channelIdentifier common.ChannelID, transferred
 	_, err = self.ChainClient.PollForTxConfirmed(time.Minute, txHash)
 	if err != nil {
 		log.Errorf("SettleChannel  WaitForGenerateBlock err:%s", err)
-		self.checkChannelStateForSettle(self.nodeAddress, partner, channelIdentifier)
+		self.checkChannelStateForSettle(self.nodeAddress, partner, channelId)
 		return
 	}
 
@@ -689,11 +693,11 @@ func (self *TokenNetwork) settle(channelIdentifier common.ChannelID, transferred
 // }
 
 func (self *TokenNetwork) CheckForOutdatedChannel(participant1 common.Address, participant2 common.Address,
-	channelIdentifier common.ChannelID) bool {
+	channelId common.ChannelID) bool {
 	onchainChannelDetails := self.detailChannel(participant1, participant2, 0)
-	onchainChannelIdentifier := onchainChannelDetails.ChannelIdentifier
-	if onchainChannelIdentifier != channelIdentifier {
-		log.Debugf("onchainId %d channelId: %d", onchainChannelIdentifier, channelIdentifier)
+	onchainChannelId := onchainChannelDetails.ChannelId
+	if onchainChannelId != channelId {
+		log.Debugf("onchainId %d channelId: %d", onchainChannelId, channelId)
 		return false
 	} else {
 		return true
@@ -701,9 +705,9 @@ func (self *TokenNetwork) CheckForOutdatedChannel(participant1 common.Address, p
 }
 
 func (self *TokenNetwork) getChannelState(participant1 common.Address,
-	participant2 common.Address, channelIdentifier common.ChannelID) int {
+	participant2 common.Address, channelId common.ChannelID) int {
 
-	channelDate := self.detailChannel(participant1, participant2, channelIdentifier)
+	channelDate := self.detailChannel(participant1, participant2, channelId)
 	if channelDate != nil {
 		return channelDate.State
 	}
@@ -713,9 +717,9 @@ func (self *TokenNetwork) getChannelState(participant1 common.Address,
 }
 
 func (self *TokenNetwork) checkChannelStateForClose(participant1 common.Address,
-	participant2 common.Address, channelIdentifier common.ChannelID) bool {
+	participant2 common.Address, channelId common.ChannelID) bool {
 
-	channelState := self.getChannelState(participant1, participant2, channelIdentifier)
+	channelState := self.getChannelState(participant1, participant2, channelId)
 	if channelState == micropayment.NonExistent || channelState == micropayment.Removed {
 		return false
 	} else if channelState == micropayment.Settled {
@@ -728,13 +732,13 @@ func (self *TokenNetwork) checkChannelStateForClose(participant1 common.Address,
 }
 
 func (self *TokenNetwork) checkChannelStateForDeposit(participant1 common.Address,
-	participant2 common.Address, channelIdentifier common.ChannelID,
+	participant2 common.Address, channelId common.ChannelID,
 	depositAmount common.TokenAmount) (bool, error) {
 
 	participantDetails := self.DetailParticipants(participant1, participant2,
-		channelIdentifier)
+		channelId)
 
-	channelState := self.getChannelState(self.nodeAddress, participant2, channelIdentifier)
+	channelState := self.getChannelState(self.nodeAddress, participant2, channelId)
 	if channelState == micropayment.NonExistent || channelState == micropayment.Removed {
 		return false, errors.New("channel does not exist")
 	} else if channelState == micropayment.Settled {
@@ -749,17 +753,17 @@ func (self *TokenNetwork) checkChannelStateForDeposit(participant1 common.Addres
 }
 
 func (self *TokenNetwork) checkChannelStateForWithdraw(participant1 common.Address,
-	participant2 common.Address, channelIdentifier common.ChannelID,
+	participant2 common.Address, channelId common.ChannelID,
 	withdrawAmount common.TokenAmount) bool {
 
 	participantDetails := self.DetailParticipants(participant1, participant2,
-		channelIdentifier)
+		channelId)
 
 	if participantDetails.OurDetails.Withdrawn > withdrawAmount {
 		return false
 	}
 
-	channelState := self.getChannelState(participant1, participant2, channelIdentifier)
+	channelState := self.getChannelState(participant1, participant2, channelId)
 	if channelState == micropayment.NonExistent || channelState == micropayment.Removed {
 		return false
 	} else if channelState == micropayment.Settled {
@@ -772,9 +776,9 @@ func (self *TokenNetwork) checkChannelStateForWithdraw(participant1 common.Addre
 }
 
 func (self *TokenNetwork) checkChannelStateForSettle(participant1 common.Address,
-	participant2 common.Address, channelIdentifier common.ChannelID) bool {
+	participant2 common.Address, channelId common.ChannelID) bool {
 
-	channelData := self.detailChannel(participant1, participant2, channelIdentifier)
+	channelData := self.detailChannel(participant1, participant2, channelId)
 	if channelData.State == micropayment.Settled {
 		return false
 	} else if channelData.State == micropayment.Removed {

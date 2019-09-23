@@ -1,4 +1,4 @@
-package channelservice
+package service
 
 import (
 	"container/list"
@@ -9,20 +9,20 @@ import (
 )
 
 type ConnectionManager struct {
-	funds                  common.TokenAmount
-	initialChannelTarget   int
-	joinableFundsTarget    float32
-	channel                *ChannelService
-	registryAddress        common.Address
-	tokenNetworkIdentifier common.TokenNetworkID
-	tokenAddress           common.TokenAddress
+	funds                common.TokenAmount
+	initialChannelTarget int
+	joinableFundsTarget  float32
+	channel              *ChannelService
+	registryAddress      common.Address
+	tokenNetworkId       common.TokenNetworkID
+	tokenAddress         common.TokenAddress
 
 	lock sync.Mutex
 
 	wg sync.WaitGroup
 }
 
-func NewConnectionManager(channel *ChannelService, tokenNetworkIdentifier common.TokenNetworkID) *ConnectionManager {
+func NewConnectionManager(channel *ChannelService, tokenNetworkId common.TokenNetworkID) *ConnectionManager {
 	self := new(ConnectionManager)
 
 	self.funds = 0
@@ -31,12 +31,12 @@ func NewConnectionManager(channel *ChannelService, tokenNetworkIdentifier common
 	self.channel = channel
 
 	chainState := channel.StateFromChannel()
-	tokenNetworkState := transfer.GetTokenNetworkByIdentifier(chainState, tokenNetworkIdentifier)
-	tokenNetworkRegistry := transfer.GetTokenNetworkRegistryByTokenNetworkIdentifier(
-		chainState, tokenNetworkIdentifier)
+	tokenNetworkState := transfer.GetTokenNetworkByIdentifier(chainState, tokenNetworkId)
+	tokenNetworkRegistry := transfer.GetTokenNetworkRegistryByTokenNetworkId(
+		chainState, tokenNetworkId)
 
 	self.registryAddress = tokenNetworkRegistry.GetAddress()
-	self.tokenNetworkIdentifier = tokenNetworkIdentifier
+	self.tokenNetworkId = tokenNetworkId
 	self.tokenAddress = tokenNetworkState.GetTokenAddress()
 
 	return self

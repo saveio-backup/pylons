@@ -1,4 +1,4 @@
-package channelservice
+package service
 
 import (
 	"reflect"
@@ -26,7 +26,7 @@ func (self *MessageHandler) OnMessage(channelSrv *ChannelService, message interf
 		self.HandleMessageSecretRequest(channelSrv, msg)
 	case *messages.RevealSecret:
 		self.HandleMessageRevealSecret(channelSrv, msg)
-	case *messages.Secret:
+	case *messages.BalanceProof:
 		self.HandleMessageSecret(channelSrv, msg)
 	case *messages.LockExpired:
 		self.HandleMessageLockExpired(channelSrv, msg)
@@ -48,18 +48,18 @@ func (self *MessageHandler) OnMessage(channelSrv *ChannelService, message interf
 }
 
 func (self *MessageHandler) HandleMessageDirectTransfer(channel *ChannelService, message *messages.DirectTransfer) {
-	var tokenNetworkIdentifier common.TokenNetworkID
+	var tokenNetworkId common.TokenNetworkID
 
-	copy(tokenNetworkIdentifier[:], message.EnvelopeMessage.TokenNetworkAddress.TokenNetworkAddress[:20])
+	copy(tokenNetworkId[:], message.EnvelopeMessage.TokenNetworkAddress.TokenNetworkAddress[:20])
 	//todo check
 
 	//balanceProof := BalanceProofFromEnvelope(message.EnvelopeMessage, message.Pack())
 	balanceProof := BalanceProofFromEnvelope(message.EnvelopeMessage, message.Pack())
 	directTransfer := &transfer.ReceiveTransferDirect{
 		AuthenticatedSenderStateChange: transfer.AuthenticatedSenderStateChange{Sender: balanceProof.Sender},
-		TokenNetworkIdentifier:         tokenNetworkIdentifier,
-		MessageIdentifier:              common.MessageID(message.MessageIdentifier.MessageId),
-		PaymentIdentifier:              common.PaymentID(message.PaymentIdentifier.PaymentId),
+		TokenNetworkId:                 tokenNetworkId,
+		MessageId:                      common.MessageID(message.MessageId.MessageId),
+		PaymentId:                      common.PaymentID(message.PaymentId.PaymentId),
 		BalanceProof:                   balanceProof,
 	}
 
@@ -72,7 +72,7 @@ func (self *MessageHandler) HandleMessageProcessed(channel *ChannelService, mess
 		AuthenticatedSenderStateChange: transfer.AuthenticatedSenderStateChange{
 			Sender: messages.ConvertAddress(message.Signature.Sender),
 		},
-		MessageIdentifier: common.MessageID(message.MessageIdentifier.MessageId),
+		MessageId: common.MessageID(message.MessageId.MessageId),
 	}
 
 	channel.HandleStateChange(processed)
@@ -83,7 +83,7 @@ func (self *MessageHandler) HandleMessageDelivered(channel *ChannelService, mess
 		AuthenticatedSenderStateChange: transfer.AuthenticatedSenderStateChange{
 			Sender: messages.ConvertAddress(message.Signature.Sender),
 		},
-		MessageIdentifier: common.MessageID(message.DeliveredMessageIdentifier.MessageId),
+		MessageId: common.MessageID(message.DeliveredMessageId.MessageId),
 	}
 
 	channel.HandleStateChange(delivered)
@@ -97,12 +97,12 @@ func (self *MessageHandler) HandleMessageSecretRequest(channel *ChannelService,
 	copy(sender[:], message.Signature.Sender.Address)
 
 	secretRequest := &transfer.ReceiveSecretRequest{
-		PaymentIdentifier: common.PaymentID(message.PaymentIdentifier.PaymentId),
-		Amount:            common.PaymentAmount(message.Amount.TokenAmount),
-		Expiration:        common.BlockExpiration(message.Expiration.BlockExpiration),
-		SecretHash:        common.SecretHash(secretHash),
-		Sender:            sender,
-		MessageIdentifier: common.MessageID(message.MessageIdentifier.MessageId),
+		PaymentId:  common.PaymentID(message.PaymentId.PaymentId),
+		Amount:     common.PaymentAmount(message.Amount.TokenAmount),
+		Expiration: common.BlockExpiration(message.Expiration.BlockExpiration),
+		SecretHash: common.SecretHash(secretHash),
+		Sender:     sender,
+		MessageId:  common.MessageID(message.MessageId.MessageId),
 	}
 	channel.HandleStateChange(secretRequest)
 }
@@ -111,14 +111,14 @@ func (self *MessageHandler) HandleMessageRevealSecret(channel *ChannelService, m
 	var sender [20]byte
 	copy(sender[:], message.Signature.Sender.Address)
 	stateChange := &transfer.ReceiveSecretReveal{
-		Secret:            message.Secret.Secret,
-		Sender:            sender,
-		MessageIdentifier: common.MessageID(message.MessageIdentifier.MessageId),
+		Secret:    message.Secret.Secret,
+		Sender:    sender,
+		MessageId: common.MessageID(message.MessageId.MessageId),
 	}
 	channel.HandleStateChange(stateChange)
 }
 
-func (self *MessageHandler) HandleMessageSecret(channel *ChannelService, message *messages.Secret) {
+func (self *MessageHandler) HandleMessageSecret(channel *ChannelService, message *messages.BalanceProof) {
 	var sender [20]byte
 	copy(sender[:], message.EnvelopeMessage.Signature.Sender.Address)
 	secretHash := common.GetHash(message.Secret.Secret)
@@ -127,10 +127,10 @@ func (self *MessageHandler) HandleMessageSecret(channel *ChannelService, message
 		AuthenticatedSenderStateChange: transfer.AuthenticatedSenderStateChange{
 			Sender: sender,
 		},
-		MessageIdentifier: common.MessageID(message.MessageIdentifier.MessageId),
-		Secret:            message.Secret.Secret,
-		SecretHash:        secretHash,
-		BalanceProof:      balanceProof,
+		MessageId:    common.MessageID(message.MessageId.MessageId),
+		Secret:       message.Secret.Secret,
+		SecretHash:   secretHash,
+		BalanceProof: balanceProof,
 	}
 	channel.HandleStateChange(stateChange)
 }
@@ -140,9 +140,9 @@ func (self *MessageHandler) HandleMessageLockExpired(channel *ChannelService, me
 	copy(secretHash[:], message.SecretHash.SecretHash)
 	balanceProof := BalanceProofFromEnvelope(message.EnvelopeMessage, message.Pack())
 	stateChange := &transfer.ReceiveLockExpired{
-		BalanceProof:      balanceProof,
-		SecretHash:        secretHash,
-		MessageIdentifier: common.MessageID(message.MessageIdentifier.MessageId),
+		BalanceProof: balanceProof,
+		SecretHash:   secretHash,
+		MessageId:    common.MessageID(message.MessageId.MessageId),
 	}
 	channel.HandleStateChange(stateChange)
 }
@@ -195,32 +195,32 @@ func (self *MessageHandler) HandleMessageLockedTransfer(channel *ChannelService,
 }
 
 func (self *MessageHandler) HandleMessageWithdrawRequest(channel *ChannelService, message *messages.WithdrawRequest) {
-	var tokenNetworkIdentifier common.TokenNetworkID
+	var tokenNetworkId common.TokenNetworkID
 
-	copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
+	copy(tokenNetworkId[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
 
 	stateChange := &transfer.ReceiveWithdrawRequest{
-		TokenNetworkIdentifier: tokenNetworkIdentifier,
-		MessageIdentifier:      common.MessageID(message.MessageIdentifier.MessageId),
-		ChannelIdentifier:      common.ChannelID(message.ChannelIdentifier.ChannelId),
-		Participant:            messages.ConvertAddress(message.Participant),
-		TotalWithdraw:          common.TokenAmount(message.WithdrawAmount.TokenAmount),
-		ParticipantSignature:   message.ParticipantSignature.Signature,
-		ParticipantAddress:     messages.ConvertAddress(message.ParticipantSignature.Sender),
-		ParticipantPublicKey:   message.ParticipantSignature.Publickey,
+		TokenNetworkId:       tokenNetworkId,
+		MessageId:            common.MessageID(message.MessageId.MessageId),
+		ChannelId:            common.ChannelID(message.ChannelId.ChannelId),
+		Participant:          messages.ConvertAddress(message.Participant),
+		TotalWithdraw:        common.TokenAmount(message.WithdrawAmount.TokenAmount),
+		ParticipantSignature: message.ParticipantSignature.Signature,
+		ParticipantAddress:   messages.ConvertAddress(message.ParticipantSignature.Sender),
+		ParticipantPublicKey: message.ParticipantSignature.Publickey,
 	}
 	channel.HandleStateChange(stateChange)
 }
 
 func (self *MessageHandler) HandleMessageWithdraw(channel *ChannelService, message *messages.Withdraw) {
-	var tokenNetworkIdentifier common.TokenNetworkID
+	var tokenNetworkId common.TokenNetworkID
 
-	channelId := common.ChannelID(message.ChannelIdentifier.ChannelId)
+	channelId := common.ChannelID(message.ChannelId.ChannelId)
 
-	copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
+	copy(tokenNetworkId[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
 
-	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(channel.StateFromChannel(),
-		tokenNetworkIdentifier, channelId)
+	channelState := transfer.GetChannelStateByTokenNetworkId(channel.StateFromChannel(),
+		tokenNetworkId, channelId)
 	if channelState == nil {
 		return
 	}
@@ -230,13 +230,13 @@ func (self *MessageHandler) HandleMessageWithdraw(channel *ChannelService, messa
 	if withdrawTx != nil {
 		stateChange := &transfer.ReceiveWithdraw{
 			ReceiveWithdrawRequest: transfer.ReceiveWithdrawRequest{
-				TokenNetworkIdentifier: tokenNetworkIdentifier,
-				ChannelIdentifier:      channelId,
-				Participant:            messages.ConvertAddress(message.Participant),
-				TotalWithdraw:          common.TokenAmount(message.WithdrawAmount.TokenAmount),
-				ParticipantSignature:   message.ParticipantSignature.Signature,
-				ParticipantAddress:     messages.ConvertAddress(message.ParticipantSignature.Sender),
-				ParticipantPublicKey:   message.ParticipantSignature.Publickey,
+				TokenNetworkId:       tokenNetworkId,
+				ChannelId:            channelId,
+				Participant:          messages.ConvertAddress(message.Participant),
+				TotalWithdraw:        common.TokenAmount(message.WithdrawAmount.TokenAmount),
+				ParticipantSignature: message.ParticipantSignature.Signature,
+				ParticipantAddress:   messages.ConvertAddress(message.ParticipantSignature.Sender),
+				ParticipantPublicKey: message.ParticipantSignature.Publickey,
 			},
 			PartnerSignature: message.PartnerSignature.Signature,
 			PartnerAddress:   messages.ConvertAddress(message.PartnerSignature.Sender),
@@ -247,35 +247,35 @@ func (self *MessageHandler) HandleMessageWithdraw(channel *ChannelService, messa
 }
 
 func (self *MessageHandler) HandleMessageCooperativeSettleRequest(channel *ChannelService, message *messages.CooperativeSettleRequest) {
-	var tokenNetworkIdentifier common.TokenNetworkID
+	var tokenNetworkId common.TokenNetworkID
 
-	copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
+	copy(tokenNetworkId[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
 
 	stateChange := &transfer.ReceiveCooperativeSettleRequest{
-		TokenNetworkIdentifier: tokenNetworkIdentifier,
-		MessageIdentifier:      common.MessageID(message.MessageIdentifier.MessageId),
-		ChannelIdentifier:      common.ChannelID(message.ChannelIdentifier.ChannelId),
-		Participant1:           messages.ConvertAddress(message.Participant1),
-		Participant1Balance:    common.TokenAmount(message.Participant1Balance.TokenAmount),
-		Participant2:           messages.ConvertAddress(message.Participant2),
-		Participant2Balance:    common.TokenAmount(message.Participant2Balance.TokenAmount),
-		Participant1Signature:  message.Participant1Signature.Signature,
-		Participant1Address:    messages.ConvertAddress(message.Participant1Signature.Sender),
-		Participant1PublicKey:  message.Participant1Signature.Publickey,
+		TokenNetworkId:        tokenNetworkId,
+		MessageId:             common.MessageID(message.MessageId.MessageId),
+		ChannelId:             common.ChannelID(message.ChannelId.ChannelId),
+		Participant1:          messages.ConvertAddress(message.Participant1),
+		Participant1Balance:   common.TokenAmount(message.Participant1Balance.TokenAmount),
+		Participant2:          messages.ConvertAddress(message.Participant2),
+		Participant2Balance:   common.TokenAmount(message.Participant2Balance.TokenAmount),
+		Participant1Signature: message.Participant1Signature.Signature,
+		Participant1Address:   messages.ConvertAddress(message.Participant1Signature.Sender),
+		Participant1PublicKey: message.Participant1Signature.Publickey,
 	}
 	channel.HandleStateChange(stateChange)
 }
 
 func (self *MessageHandler) HandleMessageCooperativeSettle(channel *ChannelService, message *messages.CooperativeSettle) {
-	var tokenNetworkIdentifier common.TokenNetworkID
+	var tokenNetworkId common.TokenNetworkID
 
-	channelId := common.ChannelID(message.ChannelIdentifier.ChannelId)
+	channelId := common.ChannelID(message.ChannelId.ChannelId)
 
-	copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
+	copy(tokenNetworkId[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
 
 	// ne need to check here?
-	channelState := transfer.GetChannelStateByTokenNetworkIdentifier(channel.StateFromChannel(),
-		tokenNetworkIdentifier, channelId)
+	channelState := transfer.GetChannelStateByTokenNetworkId(channel.StateFromChannel(),
+		tokenNetworkId, channelId)
 	if channelState == nil {
 		return
 	}
@@ -286,51 +286,51 @@ func (self *MessageHandler) HandleMessageCooperativeSettle(channel *ChannelServi
 	//}
 
 	stateChange := &transfer.ReceiveCooperativeSettle{
-		TokenNetworkIdentifier: tokenNetworkIdentifier,
-		MessageIdentifier:      common.MessageID(message.MessageIdentifier.MessageId),
-		ChannelIdentifier:      common.ChannelID(message.ChannelIdentifier.ChannelId),
-		Participant1:           messages.ConvertAddress(message.Participant1),
-		Participant1Balance:    common.TokenAmount(message.Participant1Balance.TokenAmount),
-		Participant2:           messages.ConvertAddress(message.Participant2),
-		Participant2Balance:    common.TokenAmount(message.Participant2Balance.TokenAmount),
-		Participant1Signature:  message.Participant1Signature.Signature,
-		Participant1Address:    messages.ConvertAddress(message.Participant1Signature.Sender),
-		Participant1PublicKey:  message.Participant1Signature.Publickey,
-		Participant2Signature:  message.Participant2Signature.Signature,
-		Participant2Address:    messages.ConvertAddress(message.Participant2Signature.Sender),
-		Participant2PublicKey:  message.Participant2Signature.Publickey,
+		TokenNetworkId:        tokenNetworkId,
+		MessageId:             common.MessageID(message.MessageId.MessageId),
+		ChannelId:             common.ChannelID(message.ChannelId.ChannelId),
+		Participant1:          messages.ConvertAddress(message.Participant1),
+		Participant1Balance:   common.TokenAmount(message.Participant1Balance.TokenAmount),
+		Participant2:          messages.ConvertAddress(message.Participant2),
+		Participant2Balance:   common.TokenAmount(message.Participant2Balance.TokenAmount),
+		Participant1Signature: message.Participant1Signature.Signature,
+		Participant1Address:   messages.ConvertAddress(message.Participant1Signature.Sender),
+		Participant1PublicKey: message.Participant1Signature.Publickey,
+		Participant2Signature: message.Participant2Signature.Signature,
+		Participant2Address:   messages.ConvertAddress(message.Participant2Signature.Sender),
+		Participant2PublicKey: message.Participant2Signature.Publickey,
 	}
 	channel.HandleStateChange(stateChange)
 }
 
 func BalanceProofFromEnvelope(message *messages.EnvelopeMessage, dataToSign []byte) *transfer.BalanceProofSignedState {
-	var tokenNetworkIdentifier common.TokenNetworkID
+	var tokenNetworkId common.TokenNetworkID
 	var messageHash common.Keccak256
-	var locksRoot common.Locksroot
+	var locksRoot common.LocksRoot
 
-	tmpLocksRoot := message.Locksroot.Locksroot
+	tmpLocksRoot := message.LocksRoot.LocksRoot
 	copy(locksRoot[:], tmpLocksRoot[:32])
 
 	log.Debug("[BalanceProofFromEnvelope]: ", locksRoot)
 	tmpMessageHash := common.GetHash(dataToSign)
 	copy(messageHash[:], tmpMessageHash[:32])
-	copy(tokenNetworkIdentifier[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
+	copy(tokenNetworkId[:], message.TokenNetworkAddress.TokenNetworkAddress[:20])
 	if message.Signature == nil {
 		log.Warn("BalanceProofFromEnvelope message.Signature is nil")
 	}
 	log.Debug("[BalanceProofFromEnvelope] lockedAmount: ", message.LockedAmount.TokenAmount)
 	balanceProof := &transfer.BalanceProofSignedState{
-		Nonce:                  common.Nonce(message.Nonce),
-		TransferredAmount:      common.TokenAmount(message.TransferredAmount.TokenAmount),
-		LockedAmount:           common.TokenAmount(message.LockedAmount.TokenAmount),
-		TokenNetworkIdentifier: tokenNetworkIdentifier,
-		ChannelIdentifier:      common.ChannelID(message.ChannelIdentifier.ChannelId),
-		MessageHash:            messageHash,
-		Signature:              message.Signature.Signature,
-		Sender:                 messages.ConvertAddress(message.Signature.Sender),
-		ChainId:                common.ChainID(message.ChainId.ChainId),
-		PublicKey:              message.Signature.Publickey,
-		LocksRoot:              locksRoot,
+		Nonce:             common.Nonce(message.Nonce),
+		TransferredAmount: common.TokenAmount(message.TransferredAmount.TokenAmount),
+		LockedAmount:      common.TokenAmount(message.LockedAmount.TokenAmount),
+		TokenNetworkId:    tokenNetworkId,
+		ChannelId:         common.ChannelID(message.ChannelId.ChannelId),
+		MessageHash:       messageHash,
+		Signature:         message.Signature.Signature,
+		Sender:            messages.ConvertAddress(message.Signature.Sender),
+		ChainId:           common.ChainID(message.ChainId.ChainId),
+		PublicKey:         message.Signature.Publickey,
+		LocksRoot:         locksRoot,
 	}
 
 	balanceProof.BalanceHash = transfer.HashBalanceData(balanceProof.TransferredAmount,
@@ -361,13 +361,14 @@ func LockedTransferSignedFromMessage(message *messages.LockedTransfer) *transfer
 	copy(targetAddress[:], message.Target.Address[:20])
 
 	transferState := &transfer.LockedTransferSignedState{
-		MessageIdentifier: common.MessageID(message.BaseMessage.MessageIdentifier.MessageId),
-		PaymentIdentifier: common.PaymentID(message.BaseMessage.PaymentIdentifier.PaymentId),
-		Token:             tokenAddress,
-		BalanceProof:      balanceProof,
-		Lock:              lock,
-		Initiator:         initAddress,
-		Target:            targetAddress,
+		MessageId:    common.MessageID(message.BaseMessage.MessageId.MessageId),
+		PaymentId:    common.PaymentID(message.BaseMessage.PaymentId.PaymentId),
+		Token:        tokenAddress,
+		BalanceProof: balanceProof,
+		Lock:         lock,
+		Initiator:    initAddress,
+		Target:       targetAddress,
+		EncSecret:    common.EncSecret(message.EncSecret.EncSecret),
 	}
 	return transferState
 }

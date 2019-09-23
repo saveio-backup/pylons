@@ -11,42 +11,42 @@ type Block struct {
 }
 
 type ActionCancelPayment struct {
-	PaymentIdentifier common.PaymentID
+	PaymentId common.PaymentID
 }
 
 type ActionChannelClose struct {
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
 }
 
 type ActionCancelTransfer struct {
-	TransferIdentifier common.TransferID
+	TransferId common.TransferID
 }
 
 type ActionTransferDirect struct {
-	TokenNetworkIdentifier common.TokenNetworkID
-	ReceiverAddress        common.Address
-	PaymentIdentifier      common.PaymentID
-	Amount                 common.TokenAmount
+	TokenNetworkId  common.TokenNetworkID
+	ReceiverAddress common.Address
+	PaymentId       common.PaymentID
+	Amount          common.TokenAmount
 }
 
 type ActionWithdraw struct {
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	Participant            common.Address
-	Partner                common.Address
-	TotalWithdraw          common.TokenAmount
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
+	Participant    common.Address
+	Partner        common.Address
+	TotalWithdraw  common.TokenAmount
 }
 
 type ReceiveWithdrawRequest struct {
-	TokenNetworkIdentifier common.TokenNetworkID
-	MessageIdentifier      common.MessageID
-	ChannelIdentifier      common.ChannelID
-	Participant            common.Address
-	TotalWithdraw          common.TokenAmount
-	ParticipantSignature   common.Signature
-	ParticipantAddress     common.Address
-	ParticipantPublicKey   common.PubKey
+	TokenNetworkId       common.TokenNetworkID
+	MessageId            common.MessageID
+	ChannelId            common.ChannelID
+	Participant          common.Address
+	TotalWithdraw        common.TokenAmount
+	ParticipantSignature common.Signature
+	ParticipantAddress   common.Address
+	ParticipantPublicKey common.PubKey
 }
 
 type ReceiveWithdraw struct {
@@ -58,66 +58,66 @@ type ReceiveWithdraw struct {
 
 type ContractReceiveChannelWithdraw struct {
 	ContractReceiveStateChange
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	Participant            common.Address
-	TotalWithdraw          common.TokenAmount
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
+	Participant    common.Address
+	TotalWithdraw  common.TokenAmount
 }
 
 type ActionCooperativeSettle struct {
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
 }
 
 type ReceiveCooperativeSettleRequest struct {
-	TokenNetworkIdentifier common.TokenNetworkID
-	MessageIdentifier      common.MessageID
-	ChannelIdentifier      common.ChannelID
-	Participant1           common.Address
-	Participant1Balance    common.TokenAmount
-	Participant2           common.Address
-	Participant2Balance    common.TokenAmount
-	Participant1Signature  common.Signature
-	Participant1Address    common.Address
-	Participant1PublicKey  common.PubKey
+	TokenNetworkId        common.TokenNetworkID
+	MessageId             common.MessageID
+	ChannelId             common.ChannelID
+	Participant1          common.Address
+	Participant1Balance   common.TokenAmount
+	Participant2          common.Address
+	Participant2Balance   common.TokenAmount
+	Participant1Signature common.Signature
+	Participant1Address   common.Address
+	Participant1PublicKey common.PubKey
 }
 
 type ReceiveCooperativeSettle struct {
-	TokenNetworkIdentifier common.TokenNetworkID
-	MessageIdentifier      common.MessageID
-	ChannelIdentifier      common.ChannelID
-	Participant1           common.Address
-	Participant1Balance    common.TokenAmount
-	Participant2           common.Address
-	Participant2Balance    common.TokenAmount
-	Participant1Signature  common.Signature
-	Participant1Address    common.Address
-	Participant1PublicKey  common.PubKey
-	Participant2Signature  common.Signature
-	Participant2Address    common.Address
-	Participant2PublicKey  common.PubKey
+	TokenNetworkId        common.TokenNetworkID
+	MessageId             common.MessageID
+	ChannelId             common.ChannelID
+	Participant1          common.Address
+	Participant1Balance   common.TokenAmount
+	Participant2          common.Address
+	Participant2Balance   common.TokenAmount
+	Participant1Signature common.Signature
+	Participant1Address   common.Address
+	Participant1PublicKey common.PubKey
+	Participant2Signature common.Signature
+	Participant2Address   common.Address
+	Participant2PublicKey common.PubKey
 }
 
 type ContractReceiveChannelCooperativeSettled struct {
 	ContractReceiveStateChange
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	Participant1Amount     common.TokenAmount
-	Participant2Amount     common.TokenAmount
+	TokenNetworkId     common.TokenNetworkID
+	ChannelId          common.ChannelID
+	Participant1Amount common.TokenAmount
+	Participant2Amount common.TokenAmount
 }
 
 type ContractReceiveChannelNew struct {
 	ContractReceiveStateChange
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelState           *NettingChannelState
-	ChannelIdentifier      common.ChannelID
+	TokenNetworkId common.TokenNetworkID
+	ChannelState   *NettingChannelState
+	ChannelId      common.ChannelID
 }
 
 type ContractReceiveChannelClosed struct {
 	ContractReceiveStateChange
-	TransactionFrom        common.Address
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
+	TransactionFrom common.Address
+	TokenNetworkId  common.TokenNetworkID
+	ChannelId       common.ChannelID
 }
 
 type ActionInitChain struct {
@@ -127,21 +127,21 @@ type ActionInitChain struct {
 }
 
 type ActionNewTokenNetwork struct {
-	PaymentNetworkIdentifier common.PaymentNetworkID
-	TokenNetwork             *TokenNetworkState
+	PaymentNetworkId common.PaymentNetworkID
+	TokenNetwork     *TokenNetworkState
 }
 
 type ContractReceiveChannelNewBalance struct {
 	ContractReceiveStateChange
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	DepositTransaction     TransactionChannelNewBalance
+	TokenNetworkId     common.TokenNetworkID
+	ChannelId          common.ChannelID
+	DepositTransaction TransactionChannelNewBalance
 }
 
 type ContractReceiveChannelSettled struct {
 	ContractReceiveStateChange
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
 }
 
 type ActionLeaveAllNetworks struct {
@@ -159,8 +159,8 @@ type ContractReceiveNewPaymentNetwork struct {
 
 type ContractReceiveNewTokenNetwork struct {
 	ContractReceiveStateChange
-	PaymentNetworkIdentifier common.PaymentNetworkID
-	TokenNetwork             *TokenNetworkState
+	PaymentNetworkId common.PaymentNetworkID
+	TokenNetwork     *TokenNetworkState
 }
 
 type ContractReceiveSecretReveal struct {
@@ -172,59 +172,59 @@ type ContractReceiveSecretReveal struct {
 
 type ContractReceiveChannelBatchUnlock struct {
 	ContractReceiveStateChange
-	TokenNetworkIdentifier common.TokenNetworkID
-	Participant            common.Address
-	Partner                common.Address
-	Locksroot              common.Locksroot
-	UnlockedAmount         common.TokenAmount
-	ReturnedTokens         common.TokenAmount
+	TokenNetworkId common.TokenNetworkID
+	Participant    common.Address
+	Partner        common.Address
+	LocksRoot      common.LocksRoot
+	UnlockedAmount common.TokenAmount
+	ReturnedTokens common.TokenAmount
 }
 
 type ContractReceiveRouteNew struct {
 	ContractReceiveStateChange
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	Participant1           common.Address
-	Participant2           common.Address
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
+	Participant1   common.Address
+	Participant2   common.Address
 }
 
 type ContractReceiveRouteClosed struct {
 	ContractReceiveStateChange
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
 }
 
 type ContractReceiveUpdateTransfer struct {
 	ContractReceiveStateChange
-	TokenNetworkIdentifier common.TokenNetworkID
-	ChannelIdentifier      common.ChannelID
-	Nonce                  common.Nonce
+	TokenNetworkId common.TokenNetworkID
+	ChannelId      common.ChannelID
+	Nonce          common.Nonce
 }
 
 type ReceiveTransferDirect struct {
 	AuthenticatedSenderStateChange
-	TokenNetworkIdentifier common.TokenNetworkID
-	MessageIdentifier      common.MessageID
-	PaymentIdentifier      common.PaymentID
-	BalanceProof           *BalanceProofSignedState
+	TokenNetworkId common.TokenNetworkID
+	MessageId      common.MessageID
+	PaymentId      common.PaymentID
+	BalanceProof   *BalanceProofSignedState
 }
 
 type ReceiveUnlock struct {
 	AuthenticatedSenderStateChange
-	MessageIdentifier common.MessageID
-	Secret            common.Secret
-	SecretHash        common.SecretHash
-	BalanceProof      *BalanceProofSignedState
+	MessageId    common.MessageID
+	Secret       common.Secret
+	SecretHash   common.SecretHash
+	BalanceProof *BalanceProofSignedState
 }
 
 type ReceiveDelivered struct {
 	AuthenticatedSenderStateChange
-	MessageIdentifier common.MessageID
+	MessageId common.MessageID
 }
 
 type ReceiveProcessed struct {
 	AuthenticatedSenderStateChange
-	MessageIdentifier common.MessageID
+	MessageId common.MessageID
 }
 
 //------------------------------------------------
@@ -253,31 +253,31 @@ type ActionInitTarget struct {
 }
 
 type ActionCancelRoute struct {
-	RegistryAddress   common.Address
-	ChannelIdentifier common.ChannelID
-	Routes            []RouteState
+	RegistryAddress common.Address
+	ChannelId       common.ChannelID
+	Routes          []RouteState
 }
 
 type ReceiveLockExpired struct {
-	BalanceProof      *BalanceProofSignedState
-	SecretHash        common.SecretHash
-	MessageIdentifier common.MessageID
+	BalanceProof *BalanceProofSignedState
+	SecretHash   common.SecretHash
+	MessageId    common.MessageID
 }
 
 type ReceiveSecretRequest struct {
-	PaymentIdentifier common.PaymentID
-	Amount            common.PaymentAmount
-	Expiration        common.BlockExpiration
-	SecretHash        common.SecretHash
-	Sender            common.Address
-	MessageIdentifier common.MessageID
+	PaymentId  common.PaymentID
+	Amount     common.PaymentAmount
+	Expiration common.BlockExpiration
+	SecretHash common.SecretHash
+	Sender     common.Address
+	MessageId  common.MessageID
 }
 
 //Need calculte Secret hash when construct this struct.
 type ReceiveSecretReveal struct {
-	Secret            common.Secret
-	Sender            common.Address
-	MessageIdentifier common.MessageID
+	Secret    common.Secret
+	Sender    common.Address
+	MessageId common.MessageID
 }
 
 //Need calculte Secret hash when construct this struct.

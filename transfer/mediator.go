@@ -126,7 +126,7 @@ func MdIsChannelUsable(candidateChannelState *NettingChannelState, transferAmoun
 func MdIsSendTransferAlmostEqual(send *LockedTransferUnsignedState, received *LockedTransferSignedState) bool {
 	//""" True if both transfers are for the same mediated transfer. """
 	//# The only thing that may change is the direction of the transfer
-	ret := send.PaymentIdentifier == received.PaymentIdentifier &&
+	ret := send.PaymentId == received.PaymentId &&
 		send.Token == received.Token &&
 		send.Lock.Amount == received.Lock.Amount &&
 		send.Lock.Expiration == received.Lock.Expiration &&
@@ -177,16 +177,16 @@ func MdFilterUsedRoutes(transfersPair []*MediationPairState, routes []RouteState
 	channelIdToRoute := make(map[common.ChannelID]RouteState)
 	for i := 0; i < len(routes); i++ {
 		r := routes[i]
-		channelIdToRoute[r.ChannelIdentifier] = r
+		channelIdToRoute[r.ChannelId] = r
 	}
 
 	for i := 0; i < len(transfersPair); i++ {
 		pair := transfersPair[i]
-		payerChannelId := pair.PayerTransfer.BalanceProof.ChannelIdentifier
+		payerChannelId := pair.PayerTransfer.BalanceProof.ChannelId
 		if _, exist := channelIdToRoute[payerChannelId]; exist {
 			delete(channelIdToRoute, payerChannelId)
 		}
-		payeeChannelId := pair.PayeeTransfer.BalanceProof.ChannelIdentifier
+		payeeChannelId := pair.PayeeTransfer.BalanceProof.ChannelId
 		if _, exist := channelIdToRoute[payeeChannelId]; exist {
 			delete(channelIdToRoute, payeeChannelId)
 		}
@@ -201,15 +201,15 @@ func MdFilterUsedRoutes(transfersPair []*MediationPairState, routes []RouteState
 func GetPayeeChannel(channelsMap map[common.ChannelID]*NettingChannelState,
 	transferPair *MediationPairState) *NettingChannelState {
 
-	payeeChannelIdentifier := transferPair.PayeeTransfer.BalanceProof.ChannelIdentifier
-	return channelsMap[payeeChannelIdentifier]
+	payeeChannelId := transferPair.PayeeTransfer.BalanceProof.ChannelId
+	return channelsMap[payeeChannelId]
 }
 
 func GetPayerChannel(channelsMap map[common.ChannelID]*NettingChannelState,
 	transferPair *MediationPairState) *NettingChannelState {
 
-	payerChannelIdentifier := transferPair.PayerTransfer.BalanceProof.ChannelIdentifier
-	return channelsMap[payerChannelIdentifier]
+	payerChannelId := transferPair.PayerTransfer.BalanceProof.ChannelId
+	return channelsMap[payerChannelId]
 }
 
 func GetPendingTransferPairs(transfersPair []*MediationPairState) []*MediationPairState {
@@ -346,8 +346,8 @@ func clearIfFinalized(iteration *TransitionResult,
 
 	if state.WaitingTransfer != nil {
 		waitingTransfer := state.WaitingTransfer.Transfer
-		waitingChannelIdentifier := waitingTransfer.BalanceProof.ChannelIdentifier
-		waitingChannel := channelsMap[waitingChannelIdentifier]
+		waitingChannelId := waitingTransfer.BalanceProof.ChannelId
+		waitingChannel := channelsMap[waitingChannelId]
 
 		if waitingChannel != nil && IsLockPending(waitingChannel.PartnerState, secretHash) {
 			return iteration
@@ -377,7 +377,7 @@ func nextChannelFromRoutes(availableRoutes []RouteState,
 			Returns: The next route.
 	*/
 	for _, route := range availableRoutes {
-		channelState := channelsMap[route.ChannelIdentifier]
+		channelState := channelsMap[route.ChannelId]
 
 		addr := common.ToBase58(route.NodeAddress)
 		if channelState == nil {
@@ -430,10 +430,10 @@ func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRout
 			return nil, nil, fmt.Errorf("[forwardTransferPair] payeeChannel.TokenAddress != payerTransfer.Token")
 		}
 
-		messageIdentifier := common.GetMsgID()
-		lockedTransferEvent := sendLockedTransfer(
-			payeeChannel, payerTransfer.Initiator, payerTransfer.Target, common.PaymentAmount(payerTransfer.Lock.Amount),
-			messageIdentifier, payerTransfer.PaymentIdentifier, common.BlockExpiration(payerTransfer.Lock.Expiration),
+		messageId := common.GetMsgID()
+		lockedTransferEvent := sendLockedTransfer(payeeChannel, payerTransfer.Initiator, payerTransfer.Target,
+			common.PaymentAmount(payerTransfer.Lock.Amount), messageId, payerTransfer.PaymentId,
+			common.BlockExpiration(payerTransfer.Lock.Expiration), payerTransfer.EncSecret,
 			common.SecretHash(payerTransfer.Lock.SecretHash))
 		if lockedTransferEvent == nil {
 			return nil, nil, fmt.Errorf("[forwardTransferPair] lockedTransferEvent == nil")
@@ -492,11 +492,10 @@ func backwardTransferPair(backwardChannel *NettingChannelState, payerTransfer *L
 	//# Ensure the refund transfer's lock has a safe expiration, otherwise don't
 	//# do anything and wait for the received lock to expire.
 	if MdIsChannelUsable(backwardChannel, common.PaymentAmount(lock.Amount), lockTimeout) {
-		messageIdentifier := common.GetMsgID()
-		refundTransfer, _ := sendRefundTransfer(backwardChannel, payerTransfer.Initiator,
-			payerTransfer.Target, common.PaymentAmount(lock.Amount),
-			messageIdentifier, payerTransfer.PaymentIdentifier,
-			common.BlockExpiration(lock.Expiration), common.SecretHash(lock.SecretHash))
+		messageId := common.GetMsgID()
+		refundTransfer, _ := sendRefundTransfer(backwardChannel, payerTransfer.Initiator, payerTransfer.Target,
+			common.PaymentAmount(lock.Amount), messageId, payerTransfer.PaymentId,
+			common.BlockExpiration(lock.Expiration), payerTransfer.EncSecret, common.SecretHash(lock.SecretHash))
 
 		transferPair = &MediationPairState{
 			PayerTransfer: payerTransfer,
@@ -519,13 +518,13 @@ func setOffChainSecret(state *MediatorTransferState,
 	state.Secret = secret
 
 	for _, pair := range state.TransfersPair {
-		payerChannel := channelsMap[pair.PayerTransfer.BalanceProof.ChannelIdentifier]
+		payerChannel := channelsMap[pair.PayerTransfer.BalanceProof.ChannelId]
 
 		if payerChannel != nil {
 			RegisterOffChainSecret(payerChannel, secret, secretHash)
 		}
 
-		payeeChannel, exist := channelsMap[pair.PayeeTransfer.BalanceProof.ChannelIdentifier]
+		payeeChannel, exist := channelsMap[pair.PayeeTransfer.BalanceProof.ChannelId]
 		if exist {
 			RegisterOffChainSecret(payeeChannel, secret, secretHash)
 		}
@@ -540,7 +539,7 @@ func setOffChainSecret(state *MediatorTransferState,
 	//# has sent another transfer which reached the target (meaning someone along
 	//# the path will lose tokens).
 	if state.WaitingTransfer != nil {
-		payerChannel := channelsMap[state.WaitingTransfer.Transfer.BalanceProof.ChannelIdentifier]
+		payerChannel := channelsMap[state.WaitingTransfer.Transfer.BalanceProof.ChannelId]
 
 		if payerChannel != nil {
 			RegisterOffChainSecret(payerChannel, secret, secretHash)
@@ -566,12 +565,12 @@ func setOnChainSecret(state *MediatorTransferState,
 	state.Secret = secret
 
 	for _, pair := range state.TransfersPair {
-		payerChannel := channelsMap[pair.PayerTransfer.BalanceProof.ChannelIdentifier]
+		payerChannel := channelsMap[pair.PayerTransfer.BalanceProof.ChannelId]
 		if payerChannel != nil {
 			RegisterOnChainSecret(payerChannel, secret, secretHash, blockNumber, true)
 		}
 
-		payeeChannel := channelsMap[pair.PayeeTransfer.BalanceProof.ChannelIdentifier]
+		payeeChannel := channelsMap[pair.PayeeTransfer.BalanceProof.ChannelId]
 		if payeeChannel != nil {
 			RegisterOnChainSecret(payeeChannel, secret, secretHash, blockNumber, true)
 		}
@@ -581,7 +580,7 @@ func setOnChainSecret(state *MediatorTransferState,
 	//# on-chain if there is a waiting transfer.
 
 	if state.WaitingTransfer != nil {
-		payerChannel := channelsMap[state.WaitingTransfer.Transfer.BalanceProof.ChannelIdentifier]
+		payerChannel := channelsMap[state.WaitingTransfer.Transfer.BalanceProof.ChannelId]
 		if payerChannel != nil {
 			RegisterOnChainSecret(payerChannel, secret, secretHash, blockNumber, true)
 		}
@@ -615,7 +614,7 @@ func eventsForExpiredPairs(channelsMap map[common.ChannelID]*NettingChannelState
 	var events []Event
 	for _, pair := range pendingTransfersPairs {
 		payerBalanceProof := pair.PayerTransfer.BalanceProof
-		payerChannel := channelsMap[payerBalanceProof.ChannelIdentifier]
+		payerChannel := channelsMap[payerBalanceProof.ChannelId]
 		if payerChannel == nil {
 			continue
 		}
@@ -641,7 +640,7 @@ func eventsForExpiredPairs(channelsMap map[common.ChannelID]*NettingChannelState
 
 			pair.PayerState = "payer_expired"
 			unlockClaimFailed := &EventUnlockClaimFailed{
-				Identifier: pair.PayerTransfer.PaymentIdentifier,
+				Identifier: pair.PayerTransfer.PaymentId,
 				SecretHash: common.SecretHash(pair.PayerTransfer.Lock.SecretHash),
 				Reason:     "lock expired",
 			}
@@ -652,7 +651,7 @@ func eventsForExpiredPairs(channelsMap map[common.ChannelID]*NettingChannelState
 	if waitingTransfer != nil && waitingTransfer.State != "expired" {
 		waitingTransfer.State = "expired"
 		unlockClaimFailed := &EventUnlockClaimFailed{
-			Identifier: waitingTransfer.Transfer.PaymentIdentifier,
+			Identifier: waitingTransfer.Transfer.PaymentId,
 			SecretHash: common.SecretHash(waitingTransfer.Transfer.Lock.SecretHash),
 			Reason:     "lock expired",
 		}
@@ -726,14 +725,14 @@ func eventsForSecretReveal(transfersPair []*MediationPairState, payerChannelId c
 
 		if shouldSendSecret {
 			log.Debug("[eventsForSecretReveal] shouldSendSecret")
-			messageIdentifier := common.GetMsgID()
+			messageId := common.GetMsgID()
 			pair.PayerState = "payer_secret_revealed"
 			payerTransfer := pair.PayerTransfer
 			revealSecret := &SendSecretReveal{
 				SendMessageEvent: SendMessageEvent{
-					Recipient:         common.Address(payerTransfer.BalanceProof.Sender),
-					ChannelIdentifier: ChannelIdentifierGlobalQueue,
-					MessageIdentifier: messageIdentifier,
+					Recipient: common.Address(payerTransfer.BalanceProof.Sender),
+					ChannelId: ChannelIdGlobalQueue,
+					MessageId: messageId,
 				},
 				Secret: secret,
 			}
@@ -794,12 +793,12 @@ func eventsForBalanceProof(channelsMap map[common.ChannelID]*NettingChannelState
 			//payeeChannel = payeeChannel.(*NettingChannelState)
 			pair.PayeeState = "payee_balance_proof"
 
-			messageIdentifier := common.GetMsgID()
-			unlockLock := SendUnlock(payeeChannel, messageIdentifier,
-				pair.PayeeTransfer.PaymentIdentifier, secret, secrethash)
+			messageId := common.GetMsgID()
+			unlockLock := SendUnlock(payeeChannel, messageId,
+				pair.PayeeTransfer.PaymentId, secret, secrethash)
 
 			unlockSuccess := &EventUnlockSuccess{
-				Identifier: pair.PayerTransfer.PaymentIdentifier,
+				Identifier: pair.PayerTransfer.PaymentId,
 				SecretHash: common.SecretHash(pair.PayerTransfer.Lock.SecretHash),
 			}
 			events = append(events, unlockLock)
@@ -809,8 +808,8 @@ func eventsForBalanceProof(channelsMap map[common.ChannelID]*NettingChannelState
 	return events, nil
 }
 
-func EventsForOnChainSecretReveal(channelState *NettingChannelState,
-	secret common.Secret, expiration common.BlockExpiration) []Event {
+func EventsForOnChainSecretReveal(channelState *NettingChannelState, secret common.Secret,
+	expiration common.BlockExpiration) []Event {
 	var events []Event
 	cs := GetStatus(channelState)
 	if cs == ChannelStateClosed || cs == ChannelStateOpened ||
@@ -826,7 +825,7 @@ func EventsForOnChainSecretReveal(channelState *NettingChannelState,
 	return events
 }
 
-func eventsForOnChainSecretRevealIfDangerzone(channelmap map[common.ChannelID]*NettingChannelState,
+func eventsForOnChainSecretRevealIfDangerzone(channelsMap map[common.ChannelID]*NettingChannelState,
 	secretHash common.SecretHash, transfersPair []*MediationPairState,
 	blockNumber common.BlockHeight) []Event {
 	//""" Reveal the secret on-chain if the lock enters the unsafe region and the
@@ -836,7 +835,7 @@ func eventsForOnChainSecretRevealIfDangerzone(channelmap map[common.ChannelID]*N
 
 	var allPayerChannels []*NettingChannelState
 	for _, pair := range transfersPair {
-		channelState := GetPayerChannel(channelmap, pair)
+		channelState := GetPayerChannel(channelsMap, pair)
 		if channelState != nil {
 			allPayerChannels = append(allPayerChannels, channelState)
 		}
@@ -851,7 +850,7 @@ func eventsForOnChainSecretRevealIfDangerzone(channelmap map[common.ChannelID]*N
 	//# transaction.
 
 	for _, pair := range GetPendingTransferPairs(transfersPair) {
-		payerChannel := GetPayerChannel(channelmap, pair)
+		payerChannel := GetPayerChannel(channelsMap, pair)
 		if payerChannel == nil {
 			continue
 		}
@@ -876,7 +875,7 @@ func eventsForOnChainSecretRevealIfDangerzone(channelmap map[common.ChannelID]*N
 	return events
 }
 
-func eventsForOnChainSecretRevealIfClosed(channelmap map[common.ChannelID]*NettingChannelState,
+func eventsForOnChainSecretRevealIfClosed(channelsMap map[common.ChannelID]*NettingChannelState,
 	transfersPair []*MediationPairState, secret common.Secret,
 	secretHash common.SecretHash) []Event {
 
@@ -895,7 +894,7 @@ func eventsForOnChainSecretRevealIfClosed(channelmap map[common.ChannelID]*Netti
 	var transactionSent bool
 	var allPayerChannels []*NettingChannelState
 	for _, pair := range transfersPair {
-		channelState := GetPayerChannel(channelmap, pair)
+		channelState := GetPayerChannel(channelsMap, pair)
 		if channelState != nil {
 			allPayerChannels = append(allPayerChannels, channelState)
 		}
@@ -907,7 +906,7 @@ func eventsForOnChainSecretRevealIfClosed(channelmap map[common.ChannelID]*Netti
 	//# the transfers which have a pair.
 
 	for _, pendingPair := range GetPendingTransferPairs(transfersPair) {
-		payerChannel := GetPayerChannel(channelmap, pendingPair)
+		payerChannel := GetPayerChannel(channelsMap, pendingPair)
 		//# Don't register the secret on-chain if the channel is open or settled
 		if payerChannel != nil && GetStatus(payerChannel) == ChannelStateClosed {
 			pendingPair.PayerState = "payer_waiting_secret_reveal"
@@ -936,8 +935,8 @@ func eventsToRemoveExpiredLocks(mediatorState *MediatorTransferState,
 	var events []Event
 	for _, transferPair := range mediatorState.TransfersPair {
 		balanceProof := transferPair.PayeeTransfer.BalanceProof
-		channelIdentifier := balanceProof.ChannelIdentifier
-		channelState := channelsMap[channelIdentifier]
+		channelId := balanceProof.ChannelId
+		channelState := channelsMap[channelId]
 		if channelState == nil {
 			continue
 		}
@@ -975,7 +974,7 @@ func eventsToRemoveExpiredLocks(mediatorState *MediatorTransferState,
 				events = append(events, expiredLockEvents...)
 
 				unlockFailed := &EventUnlockFailed{
-					Identifier: transferPair.PayeeTransfer.PaymentIdentifier,
+					Identifier: transferPair.PayeeTransfer.PaymentId,
 					SecretHash: common.SecretHash(transferPair.PayeeTransfer.Lock.SecretHash),
 					Reason:     "lock expired",
 				}
@@ -1095,7 +1094,7 @@ func HandleInitMediator(stateChange *ActionInitMediator, channelsMap map[common.
 	routes := stateChange.Routes
 	fromRoute := stateChange.FromRoute
 	fromTransfer := stateChange.FromTransfer
-	payerChannel := channelsMap[fromRoute.ChannelIdentifier]
+	payerChannel := channelsMap[fromRoute.ChannelId]
 
 	//# There is no corresponding channel for the message, ignore it
 	if payerChannel == nil {
@@ -1205,8 +1204,8 @@ func MdHandleRefundTransfer(mediatorState *MediatorTransferState, mediatorStateC
 
 		payeeTransfer := transferPair.PayeeTransfer
 		payerTransfer := mediatorStateChange.Transfer
-		channelIdentifier := payerTransfer.BalanceProof.ChannelIdentifier
-		payerChannel := channelsMap[channelIdentifier]
+		channelId := payerTransfer.BalanceProof.ChannelId
+		payerChannel := channelsMap[channelId]
 
 		if payerChannel != nil {
 			return &TransitionResult{NewState: mediatorState, Events: nil}
@@ -1246,14 +1245,14 @@ func handleOffChainSecretReveal(mediatorState *MediatorTransferState, mediatorSt
 	transferPair := mediatorState.TransfersPair[pairLen-1]
 
 	payerTransfer := transferPair.PayerTransfer
-	payerChannelId := payerTransfer.BalanceProof.ChannelIdentifier
+	payerChannelId := payerTransfer.BalanceProof.ChannelId
 	payerChannel := channelsMap[payerChannelId]
 	if payerChannel == nil {
 		return &TransitionResult{NewState: mediatorState, Events: nil}, nil
 	}
 
 	//payeeTransfer := transferPair.PayeeTransfer
-	//payeeChannelId := payeeTransfer.BalanceProof.ChannelIdentifier
+	//payeeChannelId := payeeTransfer.BalanceProof.ChannelId
 
 	hasPayerTransferExpired := TransferExpired(transferPair.PayerTransfer,
 		payerChannel, blockNumber)
@@ -1268,9 +1267,9 @@ func handleOffChainSecretReveal(mediatorState *MediatorTransferState, mediatorSt
 
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
-				Recipient:         common.Address(mediatorStateChange.Sender),
-				ChannelIdentifier: ChannelIdentifierGlobalQueue,
-				MessageIdentifier: mediatorStateChange.MessageIdentifier,
+				Recipient: common.Address(mediatorStateChange.Sender),
+				ChannelId: ChannelIdGlobalQueue,
+				MessageId: mediatorStateChange.MessageId,
 			},
 		}
 		iteration.Events = append(iteration.Events, sendProcessed)
@@ -1319,11 +1318,11 @@ func handleUnlock(mediatorState *MediatorTransferState, stateChange *ReceiveUnlo
 	//""" Handle a ReceiveUnlock state change. """
 	var events []Event
 	balanceProofSender := stateChange.BalanceProof.Sender
-	channelIdentifier := stateChange.BalanceProof.ChannelIdentifier
+	channelId := stateChange.BalanceProof.ChannelId
 
 	for _, pair := range mediatorState.TransfersPair {
 		if pair.PayerTransfer.BalanceProof.Sender == balanceProofSender {
-			channelState := channelsMap[channelIdentifier]
+			channelState := channelsMap[channelId]
 
 			if channelState != nil {
 				isValid, channelEvents, _ := HandleUnlock(channelState, stateChange)
@@ -1331,7 +1330,7 @@ func handleUnlock(mediatorState *MediatorTransferState, stateChange *ReceiveUnlo
 				events = append(events, channelEvents...)
 				if isValid {
 					unlock := &EventUnlockClaimSuccess{
-						Identifier: pair.PayeeTransfer.PaymentIdentifier,
+						Identifier: pair.PayeeTransfer.PaymentId,
 						SecretHash: common.SecretHash(pair.PayeeTransfer.Lock.SecretHash),
 					}
 					events = append(events, unlock)
@@ -1352,7 +1351,7 @@ func handleLockExpired(mediatorState *MediatorTransferState, stateChange *Receiv
 	var events []Event
 	for _, transferPair := range mediatorState.TransfersPair {
 		balanceProof := transferPair.PayerTransfer.BalanceProof
-		channelState := channelsMap[balanceProof.ChannelIdentifier]
+		channelState := channelsMap[balanceProof.ChannelId]
 
 		if channelState == nil {
 			return &TransitionResult{NewState: mediatorState, Events: nil}
@@ -1373,7 +1372,7 @@ func handleLockExpired(mediatorState *MediatorTransferState, stateChange *Receiv
 	}
 
 	if mediatorState.WaitingTransfer != nil {
-		waitingChannel := channelsMap[mediatorState.WaitingTransfer.Transfer.BalanceProof.ChannelIdentifier]
+		waitingChannel := channelsMap[mediatorState.WaitingTransfer.Transfer.BalanceProof.ChannelId]
 
 		if waitingChannel != nil {
 			result := handleReceiveLockExpired(

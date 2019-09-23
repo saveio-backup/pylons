@@ -41,7 +41,7 @@ type ChannelID uint32
 
 type ChannelState int
 
-type Locksroot [constants.HashLen]byte
+type LocksRoot [constants.HashLen]byte
 
 type LockHash [constants.HashLen]byte
 
@@ -77,6 +77,7 @@ type TransferID []byte
 
 type Secret []byte
 
+type EncSecret []byte
 type SecretHash [constants.HashLen]byte
 
 type SecretRegistryAddress [constants.AddrLen]byte

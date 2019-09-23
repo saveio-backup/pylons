@@ -16,7 +16,7 @@ func RefundTransferMatchesReceived(refundTransfer *LockedTransferSignedState,
 		return false
 	}
 
-	if receivedTransfer.PaymentIdentifier == refundTransfer.PaymentIdentifier &&
+	if receivedTransfer.PaymentId == refundTransfer.PaymentId &&
 		receivedTransfer.Lock.Amount == refundTransfer.Lock.Amount &&
 		receivedTransfer.Lock.SecretHash == refundTransfer.Lock.SecretHash &&
 		receivedTransfer.Target == common.Address(refundTransfer.Target) &&
@@ -53,7 +53,7 @@ func ImEventsForCancelCurrentRoute(transferDescription *TransferDescriptionWithS
 	var events []Event
 
 	unlockFailed := EventUnlockFailed{
-		Identifier: transferDescription.PaymentIdentifier,
+		Identifier: transferDescription.PaymentId,
 		SecretHash: transferDescription.SecretHash,
 		Reason:     string("route was canceled")}
 	events = append(events, unlockFailed)
@@ -66,7 +66,7 @@ func ImCancelCurrentRoute(paymentState *InitiatorPaymentState) []Event {
 	}
 
 	transferDescription := paymentState.Initiator.TransferDescription
-	paymentState.CancelledChannels = append(paymentState.CancelledChannels, paymentState.Initiator.ChannelIdentifier)
+	paymentState.CancelledChannels = append(paymentState.CancelledChannels, paymentState.Initiator.ChannelId)
 	paymentState.Initiator = nil
 
 	return ImEventsForCancelCurrentRoute(transferDescription)
@@ -75,8 +75,8 @@ func ImCancelCurrentRoute(paymentState *InitiatorPaymentState) []Event {
 func ImHandleBlock(paymentState *InitiatorPaymentState, stateChange *Block,
 	channelIdToChannels map[common.ChannelID]*NettingChannelState) *TransitionResult {
 
-	channelIdentifier := paymentState.Initiator.ChannelIdentifier
-	channelState := channelIdToChannels[channelIdentifier]
+	channelId := paymentState.Initiator.ChannelId
+	channelState := channelIdToChannels[channelId]
 	if channelState == nil {
 		return &TransitionResult{NewState: paymentState, Events: nil}
 	}
@@ -146,11 +146,11 @@ func ImHandleCancelPayment(paymentState *InitiatorPaymentState, channelState *Ne
 		cancelEvents := ImCancelCurrentRoute(paymentState)
 
 		cancel := &EventPaymentSentFailed{
-			PaymentNetworkIdentifier: channelState.PaymentNetworkIdentifier,
-			TokenNetworkIdentifier:   channelState.TokenNetworkIdentifier,
-			Identifier:               transferDescription.PaymentIdentifier,
-			Target:                   common.Address(transferDescription.Target),
-			Reason:                   string("user canceld payment"),
+			PaymentNetworkId: channelState.PaymentNetworkId,
+			TokenNetworkId:   channelState.TokenNetworkId,
+			Identifier:       transferDescription.PaymentId,
+			Target:           common.Address(transferDescription.Target),
+			Reason:           string("user canceld payment"),
 		}
 
 		cancelEvents = append(cancelEvents, cancel)
@@ -166,8 +166,8 @@ func ImHandleTransferRefundCancelRoute(paymentState *InitiatorPaymentState,
 	stateChange *ReceiveTransferRefundCancelRoute, channelIdToChannels map[common.ChannelID]*NettingChannelState,
 	blockNumber common.BlockHeight) *TransitionResult {
 
-	channelIdentifier := paymentState.Initiator.ChannelIdentifier
-	channelState := channelIdToChannels[channelIdentifier]
+	channelId := paymentState.Initiator.ChannelId
+	channelState := channelIdToChannels[channelId]
 	refundTransfer := stateChange.Transfer
 	originalTransfer := paymentState.Initiator.Transfer
 
@@ -188,14 +188,14 @@ func ImHandleTransferRefundCancelRoute(paymentState *InitiatorPaymentState,
 		if err == nil {
 			oldDescription := paymentState.Initiator.TransferDescription
 			transferDescription := &TransferDescriptionWithSecretState{
-				PaymentNetworkIdentifier: oldDescription.PaymentNetworkIdentifier,
-				PaymentIdentifier:        oldDescription.PaymentIdentifier,
-				Amount:                   oldDescription.Amount,
-				TokenNetworkIdentifier:   oldDescription.TokenNetworkIdentifier,
-				Initiator:                oldDescription.Initiator,
-				Target:                   oldDescription.Target,
-				Secret:                   stateChange.Secret,
-				SecretHash:               sha256.Sum256(stateChange.Secret[:]),
+				PaymentNetworkId: oldDescription.PaymentNetworkId,
+				PaymentId:        oldDescription.PaymentId,
+				Amount:           oldDescription.Amount,
+				TokenNetworkId:   oldDescription.TokenNetworkId,
+				Initiator:        oldDescription.Initiator,
+				Target:           oldDescription.Target,
+				Secret:           stateChange.Secret,
+				SecretHash:       sha256.Sum256(stateChange.Secret[:]),
 			}
 			paymentState.Initiator.TransferDescription = transferDescription
 
@@ -228,8 +228,8 @@ func ImHandleLockExpired(paymentState *InitiatorPaymentState, stateChange *Recei
 	//
 	//Related issue: https://github.com/raiden-network/raiden/issues/3183
 	//"""
-	channelIdentifier := paymentState.Initiator.ChannelIdentifier
-	channelState := channelIdToChannels[channelIdentifier]
+	channelId := paymentState.Initiator.ChannelId
+	channelState := channelIdToChannels[channelId]
 	secretHash := paymentState.Initiator.Transfer.Lock.SecretHash
 	result := handleReceiveLockExpired(channelState, stateChange, blockNumber)
 
@@ -238,7 +238,7 @@ func ImHandleLockExpired(paymentState *InitiatorPaymentState, stateChange *Recei
 	if state != nil {
 		transfer := paymentState.Initiator.Transfer
 		unlockFailed := &EventUnlockClaimFailed{
-			Identifier: transfer.PaymentIdentifier,
+			Identifier: transfer.PaymentId,
 			SecretHash: common.SecretHash(transfer.Lock.SecretHash),
 			Reason:     "Lock expired",
 		}
@@ -250,8 +250,8 @@ func ImHandleLockExpired(paymentState *InitiatorPaymentState, stateChange *Recei
 func ImHandleOffchainSecretReveal(paymentState *InitiatorPaymentState, stateChange *ReceiveSecretReveal,
 	channelIdToChannels map[common.ChannelID]*NettingChannelState) *TransitionResult {
 
-	channelIdentifier := paymentState.Initiator.ChannelIdentifier
-	channelState := channelIdToChannels[channelIdentifier]
+	channelId := paymentState.Initiator.ChannelId
+	channelState := channelIdToChannels[channelId]
 	subIteration := InitHandleOffChainSecretReveal(paymentState.Initiator, stateChange, channelState)
 	return ImIterationFromSub(paymentState, subIteration)
 }
@@ -259,8 +259,8 @@ func ImHandleOffchainSecretReveal(paymentState *InitiatorPaymentState, stateChan
 func ImHandleOnChainSecretReveal(paymentState *InitiatorPaymentState, stateChange *ContractReceiveSecretReveal,
 	channelIdToChannels map[common.ChannelID]*NettingChannelState) *TransitionResult {
 
-	channelIdentifier := paymentState.Initiator.ChannelIdentifier
-	channelState := channelIdToChannels[channelIdentifier]
+	channelId := paymentState.Initiator.ChannelId
+	channelState := channelIdToChannels[channelId]
 
 	subIteration := InitHandleOnChainSecretReveal(paymentState.Initiator, stateChange, channelState)
 	iteration := ImIterationFromSub(paymentState, subIteration)
@@ -282,8 +282,8 @@ func ImStateTransition(paymentState *InitiatorPaymentState, stateChange interfac
 		iteration = ImHandleInit(paymentState, actionInitInitiator, channelIdToChannels, blockNumber)
 	case *ReceiveSecretRequest:
 		receiveSecretRequest, _ := stateChange.(*ReceiveSecretRequest)
-		channelIdentifier := paymentState.Initiator.ChannelIdentifier
-		channelState := channelIdToChannels[channelIdentifier]
+		channelId := paymentState.Initiator.ChannelId
+		channelState := channelIdToChannels[channelId]
 		subIteration := HandleSecretRequest(paymentState.Initiator, receiveSecretRequest, channelState)
 		iteration = ImIterationFromSub(paymentState, subIteration)
 	case *ActionCancelRoute:
@@ -294,8 +294,8 @@ func ImStateTransition(paymentState *InitiatorPaymentState, stateChange interfac
 		iteration = ImHandleTransferRefundCancelRoute(paymentState, receiveTransferRefundCancelRoute,
 			channelIdToChannels, blockNumber)
 	case *ActionCancelPayment:
-		channelIdentifier := paymentState.Initiator.ChannelIdentifier
-		channelState := channelIdToChannels[channelIdentifier]
+		channelId := paymentState.Initiator.ChannelId
+		channelState := channelIdToChannels[channelId]
 		iteration = ImHandleCancelPayment(paymentState, channelState)
 	case *ReceiveSecretReveal:
 		receiveSecretReveal, _ := stateChange.(*ReceiveSecretReveal)

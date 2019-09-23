@@ -4,7 +4,9 @@ import (
 	"crypto/sha256"
 	"reflect"
 
+	"fmt"
 	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/network/secretcrypt"
 	"github.com/saveio/themis/common/log"
 )
 
@@ -28,49 +30,80 @@ func TgEventsForOnChainSecretReveal(targetState *TargetTransferState, channelSta
 	return nil
 }
 
-func TgHandleInitTarget(stateChange *ActionInitTarget, channelState *NettingChannelState,
+func HandleInitTarget(stateChange *ActionInitTarget, channelState *NettingChannelState,
 	blockNumber common.BlockHeight) *TransitionResult {
+	//	if safeToWait == true {
+	//		messageId := common.GetMsgID()
+	//		recipient := transfer.Initiator
+	//		secretRequest := &SendSecretRequest{
+	//			SendMessageEvent: SendMessageEvent{
+	//				Recipient:         common.Address(recipient),
+	//				ChannelId: ChannelIdGlobalQueue,
+	//				MessageId: messageId,
+	//			},
+	//			PaymentId: transfer.PaymentId,
+	//			Amount:            transfer.Lock.Amount,
+	//			Expiration:        common.BlockExpiration(transfer.Lock.Expiration),
+	//			SecretHash:        common.SecretHash(transfer.Lock.SecretHash),
+	//		}
+	//		channelEvents = append(channelEvents, secretRequest)
+	//	}
+	//
+	//	iteration = TransitionResult{NewState: targetState, Events: channelEvents}
 
 	var iteration TransitionResult
-
 	transfer := stateChange.Transfer
-	route := stateChange.Route
+	transferRoute := stateChange.Route
 
 	channelEvents, err := HandleReceiveLockedTransfer(channelState, transfer)
 	if err == nil {
-		log.Debug("[TgHandleInitTarget] HandleReceiveLockedTransfer err == nil")
-		targetState := &TargetTransferState{Route: route, Transfer: transfer}
+		log.Debug("[HandleInitTarget] HandleReceiveLockedTransfer err == nil")
+		targetState := &TargetTransferState{Route: transferRoute, Transfer: transfer}
 		safeToWait, _ := MdIsSafeToWait(common.BlockExpiration(transfer.Lock.Expiration),
 			channelState.RevealTimeout, blockNumber)
 		if safeToWait == true {
-			messageIdentifier := common.GetMsgID()
-			recipient := transfer.Initiator
-			secretRequest := &SendSecretRequest{
-				SendMessageEvent: SendMessageEvent{
-					Recipient:         common.Address(recipient),
-					ChannelIdentifier: ChannelIdentifierGlobalQueue,
-					MessageIdentifier: messageIdentifier,
-				},
-				PaymentIdentifier: transfer.PaymentIdentifier,
-				Amount:            transfer.Lock.Amount,
-				Expiration:        common.BlockExpiration(transfer.Lock.Expiration),
-				SecretHash:        common.SecretHash(transfer.Lock.SecretHash),
+			secret, err := secretcrypt.SecretCryptService.DecryptSecret(stateChange.Transfer.EncSecret)
+			if err == nil {
+				secretHash := common.GetHash(secret)
+				if common.Keccak256(secretHash) == targetState.Transfer.Lock.SecretHash {
+					if !TransferExpired(targetState.Transfer, channelState, blockNumber) {
+						RegisterOffChainSecret(channelState, secret, secretHash)
+
+						targetState.State = "reveal_secret"
+						comSecret := common.Secret(secret)
+						targetState.Secret = &comSecret
+
+						reveal := &SendSecretReveal{
+							SendMessageEvent: SendMessageEvent{
+								Recipient: targetState.Route.NodeAddress,
+								ChannelId: targetState.Route.ChannelId,
+								MessageId: common.GetMsgID(),
+							},
+							Secret: comSecret,
+						}
+						channelEvents = append(channelEvents, reveal)
+						return &TransitionResult{NewState: targetState, Events: channelEvents}
+					} else {
+						err = fmt.Errorf("[TgHandleInitTarget] transfer is expired")
+					}
+				} else {
+					err = fmt.Errorf("[TgHandleInitTarget] Secret is invalid")
+				}
 			}
-			channelEvents = append(channelEvents, secretRequest)
+		} else {
+			err = fmt.Errorf("[TgHandleInitTarget] not safe to wait ")
 		}
-
-		iteration = TransitionResult{NewState: targetState, Events: channelEvents}
-	} else {
-		log.Error("[TgHandleInitTarget] HandleReceiveLockedTransfer Err: ", err.Error())
-		unlockFailed := &EventUnlockClaimFailed{
-			Identifier: transfer.PaymentIdentifier,
-			SecretHash: common.SecretHash(transfer.Lock.SecretHash),
-			Reason:     err.Error()}
-
-		channelEvents = append(channelEvents, unlockFailed)
-		iteration = TransitionResult{NewState: nil, Events: channelEvents}
 	}
 
+	log.Error("[TgHandleInitTarget] HandleReceiveLockedTransfer Err: ", err.Error())
+	unlockFailed := &EventUnlockClaimFailed{
+		Identifier: transfer.PaymentId,
+		SecretHash: common.SecretHash(transfer.Lock.SecretHash),
+		Reason:     err.Error(),
+	}
+
+	channelEvents = append(channelEvents, unlockFailed)
+	iteration = TransitionResult{NewState: nil, Events: channelEvents}
 	return &iteration
 }
 
@@ -92,26 +125,26 @@ func TgHandleOffChainSecretReveal(targetState *TargetTransferState, stateChange 
 		//addr := common2.Address(recipient)
 		//fmt.Println("[TgHandleOffChainSecretReveal] recipient: ", addr.ToBase58())
 
-		messageIdentifier := common.GetMsgID()
+		messageId := common.GetMsgID()
 		reveal := &SendSecretReveal{
 			SendMessageEvent: SendMessageEvent{
 				Recipient: common.Address(route.NodeAddress),
 				//check route channelId
-				ChannelIdentifier: route.ChannelIdentifier,
-				MessageIdentifier: messageIdentifier,
+				ChannelId: route.ChannelId,
+				MessageId: messageId,
 			},
 			Secret: stateChange.Secret,
 		}
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
-				Recipient:         common.Address(stateChange.Sender),
-				ChannelIdentifier: ChannelIdentifierGlobalQueue,
-				MessageIdentifier: stateChange.MessageIdentifier,
+				Recipient: common.Address(stateChange.Sender),
+				ChannelId: ChannelIdGlobalQueue,
+				MessageId: stateChange.MessageId,
 			},
 		}
 		recipient := common.ToBase58(route.NodeAddress)
 		sender := common.ToBase58(stateChange.Sender)
-		log.Debugf("recipient: %s route.channelId :%d    sender:%s", recipient, route.ChannelIdentifier, sender)
+		log.Debugf("recipient: %s route.channelId :%d    sender:%s", recipient, route.ChannelId, sender)
 		events = append(events, sendProcessed)
 		events = append(events, reveal)
 
@@ -144,15 +177,15 @@ func TgHandleUnlock(targetState *TargetTransferState, stateChange *ReceiveUnlock
 	if isValid {
 		transfer := targetState.Transfer
 		paymentReceivedSuccess := &EventPaymentReceivedSuccess{
-			PaymentNetworkIdentifier: channelState.PaymentNetworkIdentifier,
-			TokenNetworkIdentifier:   channelState.TokenNetworkIdentifier,
-			Identifier:               transfer.PaymentIdentifier,
-			Amount:                   transfer.Lock.Amount,
-			Initiator:                transfer.Initiator,
+			PaymentNetworkId: channelState.PaymentNetworkId,
+			TokenNetworkId:   channelState.TokenNetworkId,
+			Identifier:       transfer.PaymentId,
+			Amount:           transfer.Lock.Amount,
+			Initiator:        transfer.Initiator,
 		}
 
 		unlockSuccess := &EventUnlockClaimSuccess{
-			Identifier: transfer.PaymentIdentifier,
+			Identifier: transfer.PaymentId,
 			SecretHash: common.SecretHash(transfer.Lock.SecretHash),
 		}
 
@@ -178,7 +211,7 @@ func TgHandleBlock(targetState *TargetTransferState, channelState *NettingChanne
 
 	if lockHasExpired && targetState.State != "expired" {
 		failed := &EventUnlockClaimFailed{
-			Identifier: transfer.PaymentIdentifier,
+			Identifier: transfer.PaymentId,
 			SecretHash: common.SecretHash(transfer.Lock.SecretHash),
 			Reason:     "lock expired",
 		}
@@ -200,7 +233,7 @@ func TgHandleLockExpired(targetState *TargetTransferState, stateChange *ReceiveL
 	if GetLock(partnerState, common.SecretHash(targetState.Transfer.Lock.SecretHash)) != nil {
 		transfer := targetState.Transfer
 		unlockFailed := &EventUnlockClaimFailed{
-			Identifier: transfer.PaymentIdentifier,
+			Identifier: transfer.PaymentId,
 			SecretHash: common.SecretHash(transfer.Lock.SecretHash),
 			Reason:     "Lock expired",
 		}
@@ -232,7 +265,7 @@ func TgStateTransition(targetState *TargetTransferState, stateChange interface{}
 	case *ActionInitTarget:
 		if targetState == nil {
 			actionInitTarget, _ := stateChange.(*ActionInitTarget)
-			iteration = TgHandleInitTarget(actionInitTarget, channelState, blockNumber)
+			iteration = HandleInitTarget(actionInitTarget, channelState, blockNumber)
 		}
 	case *Block:
 		block, _ := stateChange.(*Block)
