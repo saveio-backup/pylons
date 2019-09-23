@@ -12,11 +12,13 @@ import (
 	"github.com/saveio/themis/core/types"
 	"github.com/saveio/themis/crypto/encrypt"
 	"github.com/saveio/themis/crypto/keypair"
+	"sync"
 )
 
 type SecretCrypt struct {
 	account *account.Account
 	channel *chnSdk.Channel
+	pubKeyTmp *sync.Map
 }
 
 var SecretCryptService *SecretCrypt
@@ -26,15 +28,27 @@ func NewSecretCryptService(acc *account.Account, chn *chnSdk.Channel) *SecretCry
 		account: acc,
 		channel: chn,
 	}
+	SecretCryptService.pubKeyTmp = new(sync.Map)
 	return SecretCryptService
 }
 
 func (this *SecretCrypt) EncryptSecret(target common.Address, secret common.Secret) (common.EncSecret, error) {
 	//log.Infof("[EncryptSecret] Secret: %s", hex.EncodeToString(secret))
-	pubKey, err := this.channel.GetNodePubKey(comm.Address(target))
-	if err != nil || len(pubKey) == 0 {
-		log.Errorf("[EncryptSecret] GetNodePubKey error: %s", err.Error())
-		return nil, fmt.Errorf("[EncryptSecret] GetNodePubKey error: %s", err.Error())
+	var err error
+	var exist bool
+	var pubKey []byte
+	var key interface{}
+
+	if key, exist = this.pubKeyTmp.Load(target); !exist {
+		log.Debugf("[EncryptSecret] GetNodePubKey target: %s", common.ToBase58(target))
+		pubKey, err = this.channel.GetNodePubKey(comm.Address(target))
+		if err != nil || len(pubKey) == 0 {
+			log.Errorf("[EncryptSecret] GetNodePubKey error: %s", err.Error())
+			return nil, fmt.Errorf("[EncryptSecret] GetNodePubKey error: %s", err.Error())
+		}
+		this.pubKeyTmp.Store(target, pubKey)
+	} else {
+		pubKey = key.([]byte)
 	}
 
 	//log.Infof("[EncryptSecret] Target PublicKey: %s", hex.EncodeToString(pubKey))
