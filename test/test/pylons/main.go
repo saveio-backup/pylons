@@ -25,6 +25,7 @@ import (
 )
 
 var mate = flag.String("mate", "", "node which open channel with")
+var closeMate = flag.String("close", "", "close channel")
 var deposit = flag.Int("deposit", 10000, "deposit count")
 var transferTo = flag.String("transferTo", "", "transfer asset to")
 var transferAmount = flag.Int("amount", 1000, "test transfer amount")
@@ -119,6 +120,16 @@ func main() {
 	log.Info("StartPylons")
 	StartPylons()
 
+	allChannels, err := ch_actor.GetAllChannels()
+	if err != nil {
+		log.Error("[GetAllChannels] error: ", err.Error())
+	}
+
+	log.Info("[Show All Channels: ]")
+	for _, channel := range allChannels.Channels {
+		log.Infof("[Channel]: Address: %s, ChannelId: %d", channel.Address, channel.ChannelId)
+	}
+
 	if *mate != "" {
 		log.Infof("[OpenChannel] Open Channel with %s", *mate)
 		mateAddr, _ := common.FromBase58(*mate)
@@ -128,7 +139,7 @@ func main() {
 			return
 		}
 		if channelId != 0 {
-			depositAmount := common.TokenAmount(*deposit * 1000000000)
+			depositAmount := common.TokenAmount(*deposit * 1000)
 			log.Infof("[SetTotalChannelDeposit] start to deposit %d token to channel %d", depositAmount, channelId)
 			err = ch_actor.SetTotalChannelDeposit(tokenAddress, mateAddr, depositAmount)
 			if err != nil {
@@ -146,6 +157,19 @@ func main() {
 		}
 		go currentBalance(channelActor.GetChannelService(), mateAddr)
 	}
+
+	if *closeMate != "" {
+		log.Infof("[CloseChannel] Close Channel with %s", *closeMate)
+		mateAddr, _ := common.FromBase58(*closeMate)
+		ok, err := ch_actor.CloseChannel(mateAddr)
+		if err != nil {
+			log.Error("[CloseChannel] error: ", err.Error())
+		}
+		if ok {
+			log.Info("[CloseChannel] successful")
+		}
+	}
+
 	go receivePayment()
 
 	waitToExit()

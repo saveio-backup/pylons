@@ -382,6 +382,9 @@ func ListChannelStateForTokenNetwork(chainState *ChainState, paymentNetworkId co
 	var result *list.List
 
 	tokenNetworkState := GetTokenNetworkByTokenAddress(chainState, paymentNetworkId, tokenAddress)
+	//for addr := range tokenNetworkState.PartnerAddressesToChannels {
+	//	log.Info(common.ToBase58(addr))
+	//}
 
 	if tokenNetworkState != nil {
 		result = flattenChannelStates(tokenNetworkState.PartnerAddressesToChannels)
@@ -426,19 +429,15 @@ func FilterChannelsByPartnerAddress(chainState *ChainState, paymentNetworkId com
 
 	result := list.New()
 
-	tokenNetworkState := GetTokenNetworkByTokenAddress(chainState, paymentNetworkId,
-		tokenAddress)
+	tokenNetworkState := GetTokenNetworkByTokenAddress(chainState, paymentNetworkId, tokenAddress)
 
 	excludeStates := make(map[string]int)
 	excludeStates[ChannelStateUnusable] = 0
 
 	for e := partnerAddresses.Front(); e != nil; e = e.Next() {
 		partner := e.Value.(common.Address)
-		states := FilterChannelsByStatus(
-			tokenNetworkState.PartnerAddressesToChannels[partner],
-			excludeStates)
-
-		if states != nil {
+		states := FilterChannelsByStatus(tokenNetworkState.PartnerAddressesToChannels[partner], excludeStates)
+		if states != nil && states.Len() != 0 {
 			result.PushBack(states.Back().Value.(*NettingChannelState))
 		}
 	}
@@ -460,8 +459,7 @@ func FilterChannelsByStatus(channelStates map[common.ChannelID]*NettingChannelSt
 
 	for _, v := range channelStates {
 		result := GetStatus(v)
-		_, exist := excludeStates[result]
-		if !exist {
+		if _, exist := excludeStates[result]; !exist {
 			states.PushBack(v)
 		}
 	}

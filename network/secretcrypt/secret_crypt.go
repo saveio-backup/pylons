@@ -16,8 +16,8 @@ import (
 )
 
 type SecretCrypt struct {
-	account *account.Account
-	channel *chnSdk.Channel
+	account   *account.Account
+	channel   *chnSdk.Channel
 	pubKeyTmp *sync.Map
 }
 

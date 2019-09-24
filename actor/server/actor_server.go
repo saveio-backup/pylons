@@ -5,14 +5,13 @@ import (
 
 	"github.com/ontio/ontology-eventbus/actor"
 	oc "github.com/saveio/pylons"
-	p2p_act "github.com/saveio/pylons/actor/client"
+	p2pAct "github.com/saveio/pylons/actor/client"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/service"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis-go-sdk/usdt"
 	"github.com/saveio/themis/account"
 	"github.com/saveio/themis/cmd/utils"
-	cmdutils "github.com/saveio/themis/cmd/utils"
 	com "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
 )
@@ -222,7 +221,7 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 			msg.Ret.Done <- true
 		}()
 
-	case *p2p_act.RecvMsg:
+	case *p2pAct.RecvMsg:
 		go func() {
 			this.chSrv.Service.Transport.Receive(msg.Message, msg.From)
 			msg.Ret.Err = nil
@@ -286,7 +285,7 @@ func getChannelsInfoRespFromChannelsInfo(channelInfos []*service.ChannelInfo) *C
 	}
 
 	resp.Balance = totalBalance
-	resp.BalanceFormat = cmdutils.FormatUsdt(totalBalance)
+	resp.BalanceFormat = utils.FormatUsdt(totalBalance)
 	resp.Channels = infos
 	return resp
 }
