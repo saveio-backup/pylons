@@ -3,17 +3,17 @@
 
 package messages
 
-import (
-	bytes "bytes"
-	fmt "fmt"
-	_ "github.com/gogo/protobuf/gogoproto"
-	proto "github.com/golang/protobuf/proto"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-	reflect "reflect"
-	strings "strings"
-)
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
+import _ "github.com/gogo/protobuf/gogoproto"
+
+import bytes "bytes"
+
+import strings "strings"
+import reflect "reflect"
+
+import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -37,7 +37,7 @@ type ChainID struct {
 func (m *ChainID) Reset()      { *m = ChainID{} }
 func (*ChainID) ProtoMessage() {}
 func (*ChainID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{0}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{0}
 }
 func (m *ChainID) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -54,8 +54,8 @@ func (m *ChainID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *ChainID) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ChainID.Merge(m, src)
+func (dst *ChainID) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ChainID.Merge(dst, src)
 }
 func (m *ChainID) XXX_Size() int {
 	return m.Size()
@@ -83,7 +83,7 @@ type TokenAmount struct {
 func (m *TokenAmount) Reset()      { *m = TokenAmount{} }
 func (*TokenAmount) ProtoMessage() {}
 func (*TokenAmount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{1}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{1}
 }
 func (m *TokenAmount) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -100,8 +100,8 @@ func (m *TokenAmount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
-func (m *TokenAmount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TokenAmount.Merge(m, src)
+func (dst *TokenAmount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TokenAmount.Merge(dst, src)
 }
 func (m *TokenAmount) XXX_Size() int {
 	return m.Size()
@@ -129,7 +129,7 @@ type LocksRoot struct {
 func (m *LocksRoot) Reset()      { *m = LocksRoot{} }
 func (*LocksRoot) ProtoMessage() {}
 func (*LocksRoot) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{2}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{2}
 }
 func (m *LocksRoot) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -146,8 +146,8 @@ func (m *LocksRoot) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *LocksRoot) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LocksRoot.Merge(m, src)
+func (dst *LocksRoot) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LocksRoot.Merge(dst, src)
 }
 func (m *LocksRoot) XXX_Size() int {
 	return m.Size()
@@ -175,7 +175,7 @@ type ChannelID struct {
 func (m *ChannelID) Reset()      { *m = ChannelID{} }
 func (*ChannelID) ProtoMessage() {}
 func (*ChannelID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{3}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{3}
 }
 func (m *ChannelID) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -192,8 +192,8 @@ func (m *ChannelID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *ChannelID) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ChannelID.Merge(m, src)
+func (dst *ChannelID) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ChannelID.Merge(dst, src)
 }
 func (m *ChannelID) XXX_Size() int {
 	return m.Size()
@@ -221,7 +221,7 @@ type TokenNetworkAddress struct {
 func (m *TokenNetworkAddress) Reset()      { *m = TokenNetworkAddress{} }
 func (*TokenNetworkAddress) ProtoMessage() {}
 func (*TokenNetworkAddress) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{4}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{4}
 }
 func (m *TokenNetworkAddress) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -238,8 +238,8 @@ func (m *TokenNetworkAddress) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
-func (m *TokenNetworkAddress) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TokenNetworkAddress.Merge(m, src)
+func (dst *TokenNetworkAddress) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TokenNetworkAddress.Merge(dst, src)
 }
 func (m *TokenNetworkAddress) XXX_Size() int {
 	return m.Size()
@@ -267,7 +267,7 @@ type MessageID struct {
 func (m *MessageID) Reset()      { *m = MessageID{} }
 func (*MessageID) ProtoMessage() {}
 func (*MessageID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{5}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{5}
 }
 func (m *MessageID) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -284,8 +284,8 @@ func (m *MessageID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *MessageID) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MessageID.Merge(m, src)
+func (dst *MessageID) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MessageID.Merge(dst, src)
 }
 func (m *MessageID) XXX_Size() int {
 	return m.Size()
@@ -313,7 +313,7 @@ type PaymentID struct {
 func (m *PaymentID) Reset()      { *m = PaymentID{} }
 func (*PaymentID) ProtoMessage() {}
 func (*PaymentID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{6}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{6}
 }
 func (m *PaymentID) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -330,8 +330,8 @@ func (m *PaymentID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *PaymentID) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PaymentID.Merge(m, src)
+func (dst *PaymentID) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PaymentID.Merge(dst, src)
 }
 func (m *PaymentID) XXX_Size() int {
 	return m.Size()
@@ -359,7 +359,7 @@ type PaymentAmount struct {
 func (m *PaymentAmount) Reset()      { *m = PaymentAmount{} }
 func (*PaymentAmount) ProtoMessage() {}
 func (*PaymentAmount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{7}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{7}
 }
 func (m *PaymentAmount) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -376,8 +376,8 @@ func (m *PaymentAmount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-func (m *PaymentAmount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PaymentAmount.Merge(m, src)
+func (dst *PaymentAmount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PaymentAmount.Merge(dst, src)
 }
 func (m *PaymentAmount) XXX_Size() int {
 	return m.Size()
@@ -405,7 +405,7 @@ type SecretHash struct {
 func (m *SecretHash) Reset()      { *m = SecretHash{} }
 func (*SecretHash) ProtoMessage() {}
 func (*SecretHash) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{8}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{8}
 }
 func (m *SecretHash) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -422,8 +422,8 @@ func (m *SecretHash) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *SecretHash) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SecretHash.Merge(m, src)
+func (dst *SecretHash) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SecretHash.Merge(dst, src)
 }
 func (m *SecretHash) XXX_Size() int {
 	return m.Size()
@@ -451,7 +451,7 @@ type BlockExpiration struct {
 func (m *BlockExpiration) Reset()      { *m = BlockExpiration{} }
 func (*BlockExpiration) ProtoMessage() {}
 func (*BlockExpiration) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{9}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{9}
 }
 func (m *BlockExpiration) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -468,8 +468,8 @@ func (m *BlockExpiration) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-func (m *BlockExpiration) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BlockExpiration.Merge(m, src)
+func (dst *BlockExpiration) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BlockExpiration.Merge(dst, src)
 }
 func (m *BlockExpiration) XXX_Size() int {
 	return m.Size()
@@ -497,7 +497,7 @@ type SecretType struct {
 func (m *SecretType) Reset()      { *m = SecretType{} }
 func (*SecretType) ProtoMessage() {}
 func (*SecretType) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{10}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{10}
 }
 func (m *SecretType) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -514,8 +514,8 @@ func (m *SecretType) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *SecretType) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SecretType.Merge(m, src)
+func (dst *SecretType) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SecretType.Merge(dst, src)
 }
 func (m *SecretType) XXX_Size() int {
 	return m.Size()
@@ -543,7 +543,7 @@ type EncSecret struct {
 func (m *EncSecret) Reset()      { *m = EncSecret{} }
 func (*EncSecret) ProtoMessage() {}
 func (*EncSecret) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{11}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{11}
 }
 func (m *EncSecret) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -560,8 +560,8 @@ func (m *EncSecret) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *EncSecret) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EncSecret.Merge(m, src)
+func (dst *EncSecret) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EncSecret.Merge(dst, src)
 }
 func (m *EncSecret) XXX_Size() int {
 	return m.Size()
@@ -589,7 +589,7 @@ type Address struct {
 func (m *Address) Reset()      { *m = Address{} }
 func (*Address) ProtoMessage() {}
 func (*Address) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{12}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{12}
 }
 func (m *Address) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -606,8 +606,8 @@ func (m *Address) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Address) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Address.Merge(m, src)
+func (dst *Address) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Address.Merge(dst, src)
 }
 func (m *Address) XXX_Size() int {
 	return m.Size()
@@ -626,9 +626,9 @@ func (m *Address) GetAddress() []byte {
 }
 
 type HashTimeLock struct {
-	Amount               *PaymentAmount   `protobuf:"bytes,1,opt,name=amount,proto3" json:"amount,omitempty"`
-	Expiration           *BlockExpiration `protobuf:"bytes,2,opt,name=expiration,proto3" json:"expiration,omitempty"`
-	SecretHash           *SecretHash      `protobuf:"bytes,3,opt,name=secret_hash,json=secretHash,proto3" json:"secret_hash,omitempty"`
+	Amount               *PaymentAmount   `protobuf:"bytes,1,opt,name=amount" json:"amount,omitempty"`
+	Expiration           *BlockExpiration `protobuf:"bytes,2,opt,name=expiration" json:"expiration,omitempty"`
+	SecretHash           *SecretHash      `protobuf:"bytes,3,opt,name=secret_hash,json=secretHash" json:"secret_hash,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
 	XXX_unrecognized     []byte           `json:"-"`
 	XXX_sizecache        int32            `json:"-"`
@@ -637,7 +637,7 @@ type HashTimeLock struct {
 func (m *HashTimeLock) Reset()      { *m = HashTimeLock{} }
 func (*HashTimeLock) ProtoMessage() {}
 func (*HashTimeLock) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{13}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{13}
 }
 func (m *HashTimeLock) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -654,8 +654,8 @@ func (m *HashTimeLock) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *HashTimeLock) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_HashTimeLock.Merge(m, src)
+func (dst *HashTimeLock) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HashTimeLock.Merge(dst, src)
 }
 func (m *HashTimeLock) XXX_Size() int {
 	return m.Size()
@@ -691,7 +691,7 @@ func (m *HashTimeLock) GetSecretHash() *SecretHash {
 // SignedMessage(Message)
 type SignedMessage struct {
 	Signature            []byte   `protobuf:"bytes,1,opt,name=signature,proto3" json:"signature,omitempty"`
-	Sender               *Address `protobuf:"bytes,2,opt,name=sender,proto3" json:"sender,omitempty"`
+	Sender               *Address `protobuf:"bytes,2,opt,name=sender" json:"sender,omitempty"`
 	Publickey            []byte   `protobuf:"bytes,3,opt,name=publickey,proto3" json:"publickey,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -701,7 +701,7 @@ type SignedMessage struct {
 func (m *SignedMessage) Reset()      { *m = SignedMessage{} }
 func (*SignedMessage) ProtoMessage() {}
 func (*SignedMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{14}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{14}
 }
 func (m *SignedMessage) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -718,8 +718,8 @@ func (m *SignedMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-func (m *SignedMessage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SignedMessage.Merge(m, src)
+func (dst *SignedMessage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SignedMessage.Merge(dst, src)
 }
 func (m *SignedMessage) XXX_Size() int {
 	return m.Size()
@@ -752,16 +752,16 @@ func (m *SignedMessage) GetPublickey() []byte {
 }
 
 // EnvelopeMessage(SignedMessage)
-//!!! check data to sign
+// !!! check data to sign
 type EnvelopeMessage struct {
-	ChainId              *ChainID             `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	ChainId              *ChainID             `protobuf:"bytes,1,opt,name=chain_id,json=chainId" json:"chain_id,omitempty"`
 	Nonce                uint64               `protobuf:"varint,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	TransferredAmount    *TokenAmount         `protobuf:"bytes,3,opt,name=transferred_amount,json=transferredAmount,proto3" json:"transferred_amount,omitempty"`
-	LockedAmount         *TokenAmount         `protobuf:"bytes,4,opt,name=locked_amount,json=lockedAmount,proto3" json:"locked_amount,omitempty"`
-	LocksRoot            *LocksRoot           `protobuf:"bytes,5,opt,name=locks_root,json=locksRoot,proto3" json:"locks_root,omitempty"`
-	ChannelId            *ChannelID           `protobuf:"bytes,6,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
-	TokenNetworkAddress  *TokenNetworkAddress `protobuf:"bytes,7,opt,name=token_network_address,json=tokenNetworkAddress,proto3" json:"token_network_address,omitempty"`
-	Signature            *SignedMessage       `protobuf:"bytes,8,opt,name=signature,proto3" json:"signature,omitempty"`
+	TransferredAmount    *TokenAmount         `protobuf:"bytes,3,opt,name=transferred_amount,json=transferredAmount" json:"transferred_amount,omitempty"`
+	LockedAmount         *TokenAmount         `protobuf:"bytes,4,opt,name=locked_amount,json=lockedAmount" json:"locked_amount,omitempty"`
+	LocksRoot            *LocksRoot           `protobuf:"bytes,5,opt,name=locks_root,json=locksRoot" json:"locks_root,omitempty"`
+	ChannelId            *ChannelID           `protobuf:"bytes,6,opt,name=channel_id,json=channelId" json:"channel_id,omitempty"`
+	TokenNetworkAddress  *TokenNetworkAddress `protobuf:"bytes,7,opt,name=token_network_address,json=tokenNetworkAddress" json:"token_network_address,omitempty"`
+	Signature            *SignedMessage       `protobuf:"bytes,8,opt,name=signature" json:"signature,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
 	XXX_sizecache        int32                `json:"-"`
@@ -770,7 +770,7 @@ type EnvelopeMessage struct {
 func (m *EnvelopeMessage) Reset()      { *m = EnvelopeMessage{} }
 func (*EnvelopeMessage) ProtoMessage() {}
 func (*EnvelopeMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{15}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{15}
 }
 func (m *EnvelopeMessage) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -787,8 +787,8 @@ func (m *EnvelopeMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-func (m *EnvelopeMessage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EnvelopeMessage.Merge(m, src)
+func (dst *EnvelopeMessage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EnvelopeMessage.Merge(dst, src)
 }
 func (m *EnvelopeMessage) XXX_Size() int {
 	return m.Size()
@@ -855,10 +855,10 @@ func (m *EnvelopeMessage) GetSignature() *SignedMessage {
 	return nil
 }
 
-//Processed(SignedMessage)
+// Processed(SignedMessage)
 type Processed struct {
-	MessageId            *MessageID     `protobuf:"bytes,1,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	Signature            *SignedMessage `protobuf:"bytes,2,opt,name=signature,proto3" json:"signature,omitempty"`
+	MessageId            *MessageID     `protobuf:"bytes,1,opt,name=message_id,json=messageId" json:"message_id,omitempty"`
+	Signature            *SignedMessage `protobuf:"bytes,2,opt,name=signature" json:"signature,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
 	XXX_sizecache        int32          `json:"-"`
@@ -867,7 +867,7 @@ type Processed struct {
 func (m *Processed) Reset()      { *m = Processed{} }
 func (*Processed) ProtoMessage() {}
 func (*Processed) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{16}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{16}
 }
 func (m *Processed) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -884,8 +884,8 @@ func (m *Processed) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Processed) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Processed.Merge(m, src)
+func (dst *Processed) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Processed.Merge(dst, src)
 }
 func (m *Processed) XXX_Size() int {
 	return m.Size()
@@ -910,10 +910,10 @@ func (m *Processed) GetSignature() *SignedMessage {
 	return nil
 }
 
-//Delivered(SignedMessage)
+// Delivered(SignedMessage)
 type Delivered struct {
-	DeliveredMessageId   *MessageID     `protobuf:"bytes,1,opt,name=delivered_message_id,json=deliveredMessageId,proto3" json:"delivered_message_id,omitempty"`
-	Signature            *SignedMessage `protobuf:"bytes,2,opt,name=signature,proto3" json:"signature,omitempty"`
+	DeliveredMessageId   *MessageID     `protobuf:"bytes,1,opt,name=delivered_message_id,json=deliveredMessageId" json:"delivered_message_id,omitempty"`
+	Signature            *SignedMessage `protobuf:"bytes,2,opt,name=signature" json:"signature,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
 	XXX_sizecache        int32          `json:"-"`
@@ -922,7 +922,7 @@ type Delivered struct {
 func (m *Delivered) Reset()      { *m = Delivered{} }
 func (*Delivered) ProtoMessage() {}
 func (*Delivered) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{17}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{17}
 }
 func (m *Delivered) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -939,8 +939,8 @@ func (m *Delivered) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Delivered) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Delivered.Merge(m, src)
+func (dst *Delivered) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Delivered.Merge(dst, src)
 }
 func (m *Delivered) XXX_Size() int {
 	return m.Size()
@@ -965,14 +965,14 @@ func (m *Delivered) GetSignature() *SignedMessage {
 	return nil
 }
 
-//SecretRequest(SignedMessage)
+// SecretRequest(SignedMessage)
 type SecretRequest struct {
-	MessageId            *MessageID       `protobuf:"bytes,1,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	PaymentId            *PaymentID       `protobuf:"bytes,2,opt,name=payment_id,json=paymentId,proto3" json:"payment_id,omitempty"`
-	SecretHash           *SecretHash      `protobuf:"bytes,3,opt,name=secret_hash,json=secretHash,proto3" json:"secret_hash,omitempty"`
-	Amount               *TokenAmount     `protobuf:"bytes,4,opt,name=amount,proto3" json:"amount,omitempty"`
-	Expiration           *BlockExpiration `protobuf:"bytes,5,opt,name=expiration,proto3" json:"expiration,omitempty"`
-	Signature            *SignedMessage   `protobuf:"bytes,6,opt,name=signature,proto3" json:"signature,omitempty"`
+	MessageId            *MessageID       `protobuf:"bytes,1,opt,name=message_id,json=messageId" json:"message_id,omitempty"`
+	PaymentId            *PaymentID       `protobuf:"bytes,2,opt,name=payment_id,json=paymentId" json:"payment_id,omitempty"`
+	SecretHash           *SecretHash      `protobuf:"bytes,3,opt,name=secret_hash,json=secretHash" json:"secret_hash,omitempty"`
+	Amount               *TokenAmount     `protobuf:"bytes,4,opt,name=amount" json:"amount,omitempty"`
+	Expiration           *BlockExpiration `protobuf:"bytes,5,opt,name=expiration" json:"expiration,omitempty"`
+	Signature            *SignedMessage   `protobuf:"bytes,6,opt,name=signature" json:"signature,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
 	XXX_unrecognized     []byte           `json:"-"`
 	XXX_sizecache        int32            `json:"-"`
@@ -981,7 +981,7 @@ type SecretRequest struct {
 func (m *SecretRequest) Reset()      { *m = SecretRequest{} }
 func (*SecretRequest) ProtoMessage() {}
 func (*SecretRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{18}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{18}
 }
 func (m *SecretRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -998,8 +998,8 @@ func (m *SecretRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-func (m *SecretRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SecretRequest.Merge(m, src)
+func (dst *SecretRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SecretRequest.Merge(dst, src)
 }
 func (m *SecretRequest) XXX_Size() int {
 	return m.Size()
@@ -1054,10 +1054,10 @@ func (m *SecretRequest) GetSignature() *SignedMessage {
 
 // Secret(EnvelopeMessage)
 type BalanceProof struct {
-	EnvelopeMessage      *EnvelopeMessage `protobuf:"bytes,1,opt,name=envelope_message,json=envelopeMessage,proto3" json:"envelope_message,omitempty"`
-	MessageId            *MessageID       `protobuf:"bytes,2,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	PaymentId            *PaymentID       `protobuf:"bytes,3,opt,name=payment_id,json=paymentId,proto3" json:"payment_id,omitempty"`
-	Secret               *SecretType      `protobuf:"bytes,4,opt,name=secret,proto3" json:"secret,omitempty"`
+	EnvelopeMessage      *EnvelopeMessage `protobuf:"bytes,1,opt,name=envelope_message,json=envelopeMessage" json:"envelope_message,omitempty"`
+	MessageId            *MessageID       `protobuf:"bytes,2,opt,name=message_id,json=messageId" json:"message_id,omitempty"`
+	PaymentId            *PaymentID       `protobuf:"bytes,3,opt,name=payment_id,json=paymentId" json:"payment_id,omitempty"`
+	Secret               *SecretType      `protobuf:"bytes,4,opt,name=secret" json:"secret,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
 	XXX_unrecognized     []byte           `json:"-"`
 	XXX_sizecache        int32            `json:"-"`
@@ -1066,7 +1066,7 @@ type BalanceProof struct {
 func (m *BalanceProof) Reset()      { *m = BalanceProof{} }
 func (*BalanceProof) ProtoMessage() {}
 func (*BalanceProof) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{19}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{19}
 }
 func (m *BalanceProof) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1083,8 +1083,8 @@ func (m *BalanceProof) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *BalanceProof) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BalanceProof.Merge(m, src)
+func (dst *BalanceProof) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BalanceProof.Merge(dst, src)
 }
 func (m *BalanceProof) XXX_Size() int {
 	return m.Size()
@@ -1125,9 +1125,9 @@ func (m *BalanceProof) GetSecret() *SecretType {
 
 // RevealSecret(SignedMessage)
 type RevealSecret struct {
-	MessageId            *MessageID     `protobuf:"bytes,1,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	Secret               *SecretType    `protobuf:"bytes,2,opt,name=secret,proto3" json:"secret,omitempty"`
-	Signature            *SignedMessage `protobuf:"bytes,6,opt,name=signature,proto3" json:"signature,omitempty"`
+	MessageId            *MessageID     `protobuf:"bytes,1,opt,name=message_id,json=messageId" json:"message_id,omitempty"`
+	Secret               *SecretType    `protobuf:"bytes,2,opt,name=secret" json:"secret,omitempty"`
+	Signature            *SignedMessage `protobuf:"bytes,6,opt,name=signature" json:"signature,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
 	XXX_sizecache        int32          `json:"-"`
@@ -1136,7 +1136,7 @@ type RevealSecret struct {
 func (m *RevealSecret) Reset()      { *m = RevealSecret{} }
 func (*RevealSecret) ProtoMessage() {}
 func (*RevealSecret) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{20}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{20}
 }
 func (m *RevealSecret) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1153,8 +1153,8 @@ func (m *RevealSecret) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *RevealSecret) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RevealSecret.Merge(m, src)
+func (dst *RevealSecret) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RevealSecret.Merge(dst, src)
 }
 func (m *RevealSecret) XXX_Size() int {
 	return m.Size()
@@ -1188,11 +1188,11 @@ func (m *RevealSecret) GetSignature() *SignedMessage {
 
 // DirectTransfer(EnvelopeMessage)
 type DirectTransfer struct {
-	EnvelopeMessage      *EnvelopeMessage `protobuf:"bytes,1,opt,name=envelope_message,json=envelopeMessage,proto3" json:"envelope_message,omitempty"`
-	MessageId            *MessageID       `protobuf:"bytes,2,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	PaymentId            *PaymentID       `protobuf:"bytes,3,opt,name=payment_id,json=paymentId,proto3" json:"payment_id,omitempty"`
-	Token                *Address         `protobuf:"bytes,4,opt,name=token,proto3" json:"token,omitempty"`
-	Recipient            *Address         `protobuf:"bytes,5,opt,name=recipient,proto3" json:"recipient,omitempty"`
+	EnvelopeMessage      *EnvelopeMessage `protobuf:"bytes,1,opt,name=envelope_message,json=envelopeMessage" json:"envelope_message,omitempty"`
+	MessageId            *MessageID       `protobuf:"bytes,2,opt,name=message_id,json=messageId" json:"message_id,omitempty"`
+	PaymentId            *PaymentID       `protobuf:"bytes,3,opt,name=payment_id,json=paymentId" json:"payment_id,omitempty"`
+	Token                *Address         `protobuf:"bytes,4,opt,name=token" json:"token,omitempty"`
+	Recipient            *Address         `protobuf:"bytes,5,opt,name=recipient" json:"recipient,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
 	XXX_unrecognized     []byte           `json:"-"`
 	XXX_sizecache        int32            `json:"-"`
@@ -1201,7 +1201,7 @@ type DirectTransfer struct {
 func (m *DirectTransfer) Reset()      { *m = DirectTransfer{} }
 func (*DirectTransfer) ProtoMessage() {}
 func (*DirectTransfer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{21}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{21}
 }
 func (m *DirectTransfer) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1218,8 +1218,8 @@ func (m *DirectTransfer) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-func (m *DirectTransfer) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DirectTransfer.Merge(m, src)
+func (dst *DirectTransfer) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DirectTransfer.Merge(dst, src)
 }
 func (m *DirectTransfer) XXX_Size() int {
 	return m.Size()
@@ -1267,12 +1267,12 @@ func (m *DirectTransfer) GetRecipient() *Address {
 
 // LockedTransferBase(EnvelopeMessage)
 type LockedTransferBase struct {
-	EnvelopeMessage      *EnvelopeMessage `protobuf:"bytes,1,opt,name=envelope_message,json=envelopeMessage,proto3" json:"envelope_message,omitempty"`
-	MessageId            *MessageID       `protobuf:"bytes,2,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	PaymentId            *PaymentID       `protobuf:"bytes,3,opt,name=payment_id,json=paymentId,proto3" json:"payment_id,omitempty"`
-	Token                *Address         `protobuf:"bytes,4,opt,name=token,proto3" json:"token,omitempty"`
-	Recipient            *Address         `protobuf:"bytes,5,opt,name=recipient,proto3" json:"recipient,omitempty"`
-	Lock                 *HashTimeLock    `protobuf:"bytes,6,opt,name=lock,proto3" json:"lock,omitempty"`
+	EnvelopeMessage      *EnvelopeMessage `protobuf:"bytes,1,opt,name=envelope_message,json=envelopeMessage" json:"envelope_message,omitempty"`
+	MessageId            *MessageID       `protobuf:"bytes,2,opt,name=message_id,json=messageId" json:"message_id,omitempty"`
+	PaymentId            *PaymentID       `protobuf:"bytes,3,opt,name=payment_id,json=paymentId" json:"payment_id,omitempty"`
+	Token                *Address         `protobuf:"bytes,4,opt,name=token" json:"token,omitempty"`
+	Recipient            *Address         `protobuf:"bytes,5,opt,name=recipient" json:"recipient,omitempty"`
+	Lock                 *HashTimeLock    `protobuf:"bytes,6,opt,name=lock" json:"lock,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
 	XXX_unrecognized     []byte           `json:"-"`
 	XXX_sizecache        int32            `json:"-"`
@@ -1281,7 +1281,7 @@ type LockedTransferBase struct {
 func (m *LockedTransferBase) Reset()      { *m = LockedTransferBase{} }
 func (*LockedTransferBase) ProtoMessage() {}
 func (*LockedTransferBase) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{22}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{22}
 }
 func (m *LockedTransferBase) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1298,8 +1298,8 @@ func (m *LockedTransferBase) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
-func (m *LockedTransferBase) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LockedTransferBase.Merge(m, src)
+func (dst *LockedTransferBase) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LockedTransferBase.Merge(dst, src)
 }
 func (m *LockedTransferBase) XXX_Size() int {
 	return m.Size()
@@ -1354,10 +1354,10 @@ func (m *LockedTransferBase) GetLock() *HashTimeLock {
 
 // LockedTransfer(LockedTransferBase)
 type LockedTransfer struct {
-	BaseMessage          *LockedTransferBase `protobuf:"bytes,1,opt,name=base_message,json=baseMessage,proto3" json:"base_message,omitempty"`
-	Initiator            *Address            `protobuf:"bytes,2,opt,name=initiator,proto3" json:"initiator,omitempty"`
-	Target               *Address            `protobuf:"bytes,3,opt,name=target,proto3" json:"target,omitempty"`
-	EncSecret            *EncSecret          `protobuf:"bytes,4,opt,name=enc_secret,json=encSecret,proto3" json:"enc_secret,omitempty"`
+	BaseMessage          *LockedTransferBase `protobuf:"bytes,1,opt,name=base_message,json=baseMessage" json:"base_message,omitempty"`
+	Initiator            *Address            `protobuf:"bytes,2,opt,name=initiator" json:"initiator,omitempty"`
+	Target               *Address            `protobuf:"bytes,3,opt,name=target" json:"target,omitempty"`
+	EncSecret            *EncSecret          `protobuf:"bytes,4,opt,name=enc_secret,json=encSecret" json:"enc_secret,omitempty"`
 	Fee                  uint32              `protobuf:"varint,5,opt,name=fee,proto3" json:"fee,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
 	XXX_unrecognized     []byte              `json:"-"`
@@ -1367,7 +1367,7 @@ type LockedTransfer struct {
 func (m *LockedTransfer) Reset()      { *m = LockedTransfer{} }
 func (*LockedTransfer) ProtoMessage() {}
 func (*LockedTransfer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{23}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{23}
 }
 func (m *LockedTransfer) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1384,8 +1384,8 @@ func (m *LockedTransfer) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-func (m *LockedTransfer) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LockedTransfer.Merge(m, src)
+func (dst *LockedTransfer) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LockedTransfer.Merge(dst, src)
 }
 func (m *LockedTransfer) XXX_Size() int {
 	return m.Size()
@@ -1433,7 +1433,7 @@ func (m *LockedTransfer) GetFee() uint32 {
 
 // RefundTransfer(LockedTransfer)
 type RefundTransfer struct {
-	Refund               *LockedTransfer `protobuf:"bytes,1,opt,name=refund,proto3" json:"refund,omitempty"`
+	Refund               *LockedTransfer `protobuf:"bytes,1,opt,name=refund" json:"refund,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
 	XXX_unrecognized     []byte          `json:"-"`
 	XXX_sizecache        int32           `json:"-"`
@@ -1442,7 +1442,7 @@ type RefundTransfer struct {
 func (m *RefundTransfer) Reset()      { *m = RefundTransfer{} }
 func (*RefundTransfer) ProtoMessage() {}
 func (*RefundTransfer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{24}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{24}
 }
 func (m *RefundTransfer) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1459,8 +1459,8 @@ func (m *RefundTransfer) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-func (m *RefundTransfer) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RefundTransfer.Merge(m, src)
+func (dst *RefundTransfer) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RefundTransfer.Merge(dst, src)
 }
 func (m *RefundTransfer) XXX_Size() int {
 	return m.Size()
@@ -1480,10 +1480,10 @@ func (m *RefundTransfer) GetRefund() *LockedTransfer {
 
 // LockExpired(EnvelopeMessage)
 type LockExpired struct {
-	EnvelopeMessage      *EnvelopeMessage `protobuf:"bytes,1,opt,name=envelope_message,json=envelopeMessage,proto3" json:"envelope_message,omitempty"`
-	MessageId            *MessageID       `protobuf:"bytes,2,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	Recipient            *Address         `protobuf:"bytes,3,opt,name=recipient,proto3" json:"recipient,omitempty"`
-	SecretHash           *SecretHash      `protobuf:"bytes,4,opt,name=secret_hash,json=secretHash,proto3" json:"secret_hash,omitempty"`
+	EnvelopeMessage      *EnvelopeMessage `protobuf:"bytes,1,opt,name=envelope_message,json=envelopeMessage" json:"envelope_message,omitempty"`
+	MessageId            *MessageID       `protobuf:"bytes,2,opt,name=message_id,json=messageId" json:"message_id,omitempty"`
+	Recipient            *Address         `protobuf:"bytes,3,opt,name=recipient" json:"recipient,omitempty"`
+	SecretHash           *SecretHash      `protobuf:"bytes,4,opt,name=secret_hash,json=secretHash" json:"secret_hash,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
 	XXX_unrecognized     []byte           `json:"-"`
 	XXX_sizecache        int32            `json:"-"`
@@ -1492,7 +1492,7 @@ type LockExpired struct {
 func (m *LockExpired) Reset()      { *m = LockExpired{} }
 func (*LockExpired) ProtoMessage() {}
 func (*LockExpired) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{25}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{25}
 }
 func (m *LockExpired) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1509,8 +1509,8 @@ func (m *LockExpired) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
-func (m *LockExpired) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LockExpired.Merge(m, src)
+func (dst *LockExpired) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LockExpired.Merge(dst, src)
 }
 func (m *LockExpired) XXX_Size() int {
 	return m.Size()
@@ -1550,12 +1550,12 @@ func (m *LockExpired) GetSecretHash() *SecretHash {
 }
 
 type WithdrawRequest struct {
-	TokenNetworkAddress  *TokenNetworkAddress `protobuf:"bytes,1,opt,name=token_network_address,json=tokenNetworkAddress,proto3" json:"token_network_address,omitempty"`
-	MessageId            *MessageID           `protobuf:"bytes,2,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	ChannelId            *ChannelID           `protobuf:"bytes,3,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
-	Participant          *Address             `protobuf:"bytes,4,opt,name=participant,proto3" json:"participant,omitempty"`
-	WithdrawAmount       *TokenAmount         `protobuf:"bytes,5,opt,name=withdraw_amount,json=withdrawAmount,proto3" json:"withdraw_amount,omitempty"`
-	ParticipantSignature *SignedMessage       `protobuf:"bytes,6,opt,name=participant_signature,json=participantSignature,proto3" json:"participant_signature,omitempty"`
+	TokenNetworkAddress  *TokenNetworkAddress `protobuf:"bytes,1,opt,name=token_network_address,json=tokenNetworkAddress" json:"token_network_address,omitempty"`
+	MessageId            *MessageID           `protobuf:"bytes,2,opt,name=message_id,json=messageId" json:"message_id,omitempty"`
+	ChannelId            *ChannelID           `protobuf:"bytes,3,opt,name=channel_id,json=channelId" json:"channel_id,omitempty"`
+	Participant          *Address             `protobuf:"bytes,4,opt,name=participant" json:"participant,omitempty"`
+	WithdrawAmount       *TokenAmount         `protobuf:"bytes,5,opt,name=withdraw_amount,json=withdrawAmount" json:"withdraw_amount,omitempty"`
+	ParticipantSignature *SignedMessage       `protobuf:"bytes,6,opt,name=participant_signature,json=participantSignature" json:"participant_signature,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
 	XXX_sizecache        int32                `json:"-"`
@@ -1564,7 +1564,7 @@ type WithdrawRequest struct {
 func (m *WithdrawRequest) Reset()      { *m = WithdrawRequest{} }
 func (*WithdrawRequest) ProtoMessage() {}
 func (*WithdrawRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{26}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{26}
 }
 func (m *WithdrawRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1581,8 +1581,8 @@ func (m *WithdrawRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-func (m *WithdrawRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_WithdrawRequest.Merge(m, src)
+func (dst *WithdrawRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WithdrawRequest.Merge(dst, src)
 }
 func (m *WithdrawRequest) XXX_Size() int {
 	return m.Size()
@@ -1636,13 +1636,13 @@ func (m *WithdrawRequest) GetParticipantSignature() *SignedMessage {
 }
 
 type Withdraw struct {
-	TokenNetworkAddress  *TokenNetworkAddress `protobuf:"bytes,1,opt,name=token_network_address,json=tokenNetworkAddress,proto3" json:"token_network_address,omitempty"`
-	MessageId            *MessageID           `protobuf:"bytes,2,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	ChannelId            *ChannelID           `protobuf:"bytes,3,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
-	Participant          *Address             `protobuf:"bytes,4,opt,name=participant,proto3" json:"participant,omitempty"`
-	WithdrawAmount       *TokenAmount         `protobuf:"bytes,5,opt,name=withdraw_amount,json=withdrawAmount,proto3" json:"withdraw_amount,omitempty"`
-	ParticipantSignature *SignedMessage       `protobuf:"bytes,6,opt,name=participant_signature,json=participantSignature,proto3" json:"participant_signature,omitempty"`
-	PartnerSignature     *SignedMessage       `protobuf:"bytes,7,opt,name=partner_signature,json=partnerSignature,proto3" json:"partner_signature,omitempty"`
+	TokenNetworkAddress  *TokenNetworkAddress `protobuf:"bytes,1,opt,name=token_network_address,json=tokenNetworkAddress" json:"token_network_address,omitempty"`
+	MessageId            *MessageID           `protobuf:"bytes,2,opt,name=message_id,json=messageId" json:"message_id,omitempty"`
+	ChannelId            *ChannelID           `protobuf:"bytes,3,opt,name=channel_id,json=channelId" json:"channel_id,omitempty"`
+	Participant          *Address             `protobuf:"bytes,4,opt,name=participant" json:"participant,omitempty"`
+	WithdrawAmount       *TokenAmount         `protobuf:"bytes,5,opt,name=withdraw_amount,json=withdrawAmount" json:"withdraw_amount,omitempty"`
+	ParticipantSignature *SignedMessage       `protobuf:"bytes,6,opt,name=participant_signature,json=participantSignature" json:"participant_signature,omitempty"`
+	PartnerSignature     *SignedMessage       `protobuf:"bytes,7,opt,name=partner_signature,json=partnerSignature" json:"partner_signature,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
 	XXX_sizecache        int32                `json:"-"`
@@ -1651,7 +1651,7 @@ type Withdraw struct {
 func (m *Withdraw) Reset()      { *m = Withdraw{} }
 func (*Withdraw) ProtoMessage() {}
 func (*Withdraw) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{27}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{27}
 }
 func (m *Withdraw) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1668,8 +1668,8 @@ func (m *Withdraw) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Withdraw) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Withdraw.Merge(m, src)
+func (dst *Withdraw) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Withdraw.Merge(dst, src)
 }
 func (m *Withdraw) XXX_Size() int {
 	return m.Size()
@@ -1730,14 +1730,14 @@ func (m *Withdraw) GetPartnerSignature() *SignedMessage {
 }
 
 type CooperativeSettleRequest struct {
-	TokenNetworkAddress   *TokenNetworkAddress `protobuf:"bytes,1,opt,name=token_network_address,json=tokenNetworkAddress,proto3" json:"token_network_address,omitempty"`
-	MessageId             *MessageID           `protobuf:"bytes,2,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	ChannelId             *ChannelID           `protobuf:"bytes,3,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
-	Participant1          *Address             `protobuf:"bytes,4,opt,name=participant1,proto3" json:"participant1,omitempty"`
-	Participant1Balance   *TokenAmount         `protobuf:"bytes,5,opt,name=participant1_balance,json=participant1Balance,proto3" json:"participant1_balance,omitempty"`
-	Participant2          *Address             `protobuf:"bytes,6,opt,name=participant2,proto3" json:"participant2,omitempty"`
-	Participant2Balance   *TokenAmount         `protobuf:"bytes,7,opt,name=participant2_balance,json=participant2Balance,proto3" json:"participant2_balance,omitempty"`
-	Participant1Signature *SignedMessage       `protobuf:"bytes,8,opt,name=participant1_signature,json=participant1Signature,proto3" json:"participant1_signature,omitempty"`
+	TokenNetworkAddress   *TokenNetworkAddress `protobuf:"bytes,1,opt,name=token_network_address,json=tokenNetworkAddress" json:"token_network_address,omitempty"`
+	MessageId             *MessageID           `protobuf:"bytes,2,opt,name=message_id,json=messageId" json:"message_id,omitempty"`
+	ChannelId             *ChannelID           `protobuf:"bytes,3,opt,name=channel_id,json=channelId" json:"channel_id,omitempty"`
+	Participant1          *Address             `protobuf:"bytes,4,opt,name=participant1" json:"participant1,omitempty"`
+	Participant1Balance   *TokenAmount         `protobuf:"bytes,5,opt,name=participant1_balance,json=participant1Balance" json:"participant1_balance,omitempty"`
+	Participant2          *Address             `protobuf:"bytes,6,opt,name=participant2" json:"participant2,omitempty"`
+	Participant2Balance   *TokenAmount         `protobuf:"bytes,7,opt,name=participant2_balance,json=participant2Balance" json:"participant2_balance,omitempty"`
+	Participant1Signature *SignedMessage       `protobuf:"bytes,8,opt,name=participant1_signature,json=participant1Signature" json:"participant1_signature,omitempty"`
 	XXX_NoUnkeyedLiteral  struct{}             `json:"-"`
 	XXX_unrecognized      []byte               `json:"-"`
 	XXX_sizecache         int32                `json:"-"`
@@ -1746,7 +1746,7 @@ type CooperativeSettleRequest struct {
 func (m *CooperativeSettleRequest) Reset()      { *m = CooperativeSettleRequest{} }
 func (*CooperativeSettleRequest) ProtoMessage() {}
 func (*CooperativeSettleRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{28}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{28}
 }
 func (m *CooperativeSettleRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1763,8 +1763,8 @@ func (m *CooperativeSettleRequest) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *CooperativeSettleRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CooperativeSettleRequest.Merge(m, src)
+func (dst *CooperativeSettleRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CooperativeSettleRequest.Merge(dst, src)
 }
 func (m *CooperativeSettleRequest) XXX_Size() int {
 	return m.Size()
@@ -1832,15 +1832,15 @@ func (m *CooperativeSettleRequest) GetParticipant1Signature() *SignedMessage {
 }
 
 type CooperativeSettle struct {
-	TokenNetworkAddress   *TokenNetworkAddress `protobuf:"bytes,1,opt,name=token_network_address,json=tokenNetworkAddress,proto3" json:"token_network_address,omitempty"`
-	MessageId             *MessageID           `protobuf:"bytes,2,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	ChannelId             *ChannelID           `protobuf:"bytes,3,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
-	Participant1          *Address             `protobuf:"bytes,4,opt,name=participant1,proto3" json:"participant1,omitempty"`
-	Participant1Balance   *TokenAmount         `protobuf:"bytes,5,opt,name=participant1_balance,json=participant1Balance,proto3" json:"participant1_balance,omitempty"`
-	Participant2          *Address             `protobuf:"bytes,6,opt,name=participant2,proto3" json:"participant2,omitempty"`
-	Participant2Balance   *TokenAmount         `protobuf:"bytes,7,opt,name=participant2_balance,json=participant2Balance,proto3" json:"participant2_balance,omitempty"`
-	Participant1Signature *SignedMessage       `protobuf:"bytes,8,opt,name=participant1_signature,json=participant1Signature,proto3" json:"participant1_signature,omitempty"`
-	Participant2Signature *SignedMessage       `protobuf:"bytes,9,opt,name=participant2_signature,json=participant2Signature,proto3" json:"participant2_signature,omitempty"`
+	TokenNetworkAddress   *TokenNetworkAddress `protobuf:"bytes,1,opt,name=token_network_address,json=tokenNetworkAddress" json:"token_network_address,omitempty"`
+	MessageId             *MessageID           `protobuf:"bytes,2,opt,name=message_id,json=messageId" json:"message_id,omitempty"`
+	ChannelId             *ChannelID           `protobuf:"bytes,3,opt,name=channel_id,json=channelId" json:"channel_id,omitempty"`
+	Participant1          *Address             `protobuf:"bytes,4,opt,name=participant1" json:"participant1,omitempty"`
+	Participant1Balance   *TokenAmount         `protobuf:"bytes,5,opt,name=participant1_balance,json=participant1Balance" json:"participant1_balance,omitempty"`
+	Participant2          *Address             `protobuf:"bytes,6,opt,name=participant2" json:"participant2,omitempty"`
+	Participant2Balance   *TokenAmount         `protobuf:"bytes,7,opt,name=participant2_balance,json=participant2Balance" json:"participant2_balance,omitempty"`
+	Participant1Signature *SignedMessage       `protobuf:"bytes,8,opt,name=participant1_signature,json=participant1Signature" json:"participant1_signature,omitempty"`
+	Participant2Signature *SignedMessage       `protobuf:"bytes,9,opt,name=participant2_signature,json=participant2Signature" json:"participant2_signature,omitempty"`
 	XXX_NoUnkeyedLiteral  struct{}             `json:"-"`
 	XXX_unrecognized      []byte               `json:"-"`
 	XXX_sizecache         int32                `json:"-"`
@@ -1849,7 +1849,7 @@ type CooperativeSettle struct {
 func (m *CooperativeSettle) Reset()      { *m = CooperativeSettle{} }
 func (*CooperativeSettle) ProtoMessage() {}
 func (*CooperativeSettle) Descriptor() ([]byte, []int) {
-	return fileDescriptor_bb17ef3f514bfe54, []int{29}
+	return fileDescriptor_stream_99ad9bcf0115d5db, []int{29}
 }
 func (m *CooperativeSettle) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1866,8 +1866,8 @@ func (m *CooperativeSettle) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
-func (m *CooperativeSettle) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CooperativeSettle.Merge(m, src)
+func (dst *CooperativeSettle) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CooperativeSettle.Merge(dst, src)
 }
 func (m *CooperativeSettle) XXX_Size() int {
 	return m.Size()
@@ -1973,93 +1973,6 @@ func init() {
 	proto.RegisterType((*CooperativeSettleRequest)(nil), "messages.CooperativeSettleRequest")
 	proto.RegisterType((*CooperativeSettle)(nil), "messages.CooperativeSettle")
 }
-
-func init() { proto.RegisterFile("stream.proto", fileDescriptor_bb17ef3f514bfe54) }
-
-var fileDescriptor_bb17ef3f514bfe54 = []byte{
-	// 1270 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x58, 0x4f, 0x6f, 0x1b, 0x45,
-	0x14, 0xef, 0xda, 0x8e, 0x1d, 0x3f, 0xdb, 0x71, 0x32, 0xf9, 0x43, 0x8a, 0x5a, 0x03, 0x4b, 0x10,
-	0xb4, 0x6a, 0x93, 0xc6, 0x55, 0x90, 0x40, 0x08, 0xd4, 0xc4, 0x91, 0x6a, 0x29, 0xad, 0xd2, 0x4d,
-	0x24, 0x8e, 0xd6, 0x7a, 0xf7, 0xc5, 0x5e, 0xc5, 0xd9, 0x35, 0xbb, 0x63, 0x87, 0xdc, 0xb8, 0x72,
-	0xe2, 0xda, 0x6f, 0x50, 0xae, 0x7c, 0x8b, 0x72, 0x01, 0x8e, 0x1c, 0x9b, 0x70, 0xe3, 0x42, 0x25,
-	0xbe, 0x00, 0x9a, 0xdd, 0x99, 0xdd, 0x99, 0xad, 0xe3, 0x1a, 0x73, 0xa8, 0xa8, 0x72, 0xf3, 0xcc,
-	0xfe, 0xde, 0xbc, 0x37, 0xbf, 0xf7, 0xe6, 0xf7, 0x5e, 0x02, 0xe5, 0x80, 0xfa, 0x68, 0x9e, 0xac,
-	0xf7, 0x7d, 0x8f, 0x7a, 0x64, 0xf6, 0x04, 0x83, 0xc0, 0xec, 0x60, 0xf0, 0xae, 0xde, 0xf1, 0x3a,
-	0xde, 0x46, 0xb8, 0xdb, 0x1e, 0x1c, 0x6d, 0xb0, 0x55, 0xb8, 0x08, 0x7f, 0x45, 0x68, 0x7d, 0x0d,
-	0x0a, 0x3b, 0x5d, 0xd3, 0x71, 0x9b, 0x0d, 0x72, 0x1d, 0x66, 0x2d, 0xf6, 0xb3, 0xe5, 0xd8, 0xab,
-	0xda, 0xfb, 0xda, 0x27, 0x39, 0xa3, 0x10, 0xae, 0x9b, 0xb6, 0x7e, 0x0f, 0x4a, 0x87, 0xde, 0x31,
-	0xba, 0x0f, 0x4e, 0xbc, 0x81, 0x4b, 0xc9, 0x07, 0x50, 0xa6, 0x6c, 0xd9, 0x32, 0xc3, 0x35, 0x47,
-	0x97, 0x68, 0x02, 0xd1, 0x6f, 0x43, 0x71, 0xcf, 0xb3, 0x8e, 0x03, 0xc3, 0xf3, 0x28, 0xb9, 0x09,
-	0xd0, 0x63, 0x8b, 0x96, 0xef, 0x79, 0x11, 0xba, 0x6c, 0x14, 0x7b, 0xe2, 0x33, 0xc3, 0xee, 0x74,
-	0x4d, 0xd7, 0xc5, 0x5e, 0xb3, 0xc1, 0xb0, 0x56, 0xb4, 0x48, 0xe2, 0x28, 0xf2, 0x9d, 0xa6, 0xad,
-	0x37, 0x61, 0x31, 0x8c, 0xe4, 0x31, 0xd2, 0x53, 0xcf, 0x3f, 0x7e, 0x60, 0xdb, 0x3e, 0x06, 0x01,
-	0xa9, 0xc3, 0x72, 0x14, 0x91, 0x1b, 0xed, 0xb7, 0xcc, 0xe8, 0x03, 0x77, 0xb6, 0x48, 0x5f, 0xb5,
-	0x61, 0x6e, 0x1f, 0x45, 0x54, 0x45, 0x6e, 0x39, 0x6f, 0x92, 0x5b, 0xbe, 0xd3, 0xb4, 0x19, 0x76,
-	0xdf, 0x3c, 0x3b, 0x41, 0x97, 0x46, 0xd8, 0x7e, 0xb4, 0x90, 0xb0, 0x7c, 0xa7, 0x69, 0xeb, 0x9f,
-	0x42, 0x85, 0x63, 0x39, 0x5d, 0x1f, 0xc1, 0x9c, 0xc0, 0x2b, 0x84, 0x55, 0xfa, 0x32, 0x4c, 0xbf,
-	0x0b, 0x70, 0x80, 0x96, 0x8f, 0xf4, 0xa1, 0x19, 0x74, 0xc9, 0x7b, 0x50, 0x0a, 0xc2, 0x55, 0xab,
-	0x6b, 0x06, 0x5d, 0x7e, 0x0f, 0x08, 0x62, 0x80, 0xfe, 0x05, 0x54, 0xb7, 0x19, 0x87, 0xbb, 0xdf,
-	0xf6, 0x1d, 0xdf, 0xa4, 0x8e, 0xe7, 0x92, 0x5b, 0x30, 0xdf, 0x66, 0x5b, 0x2d, 0x8c, 0xf7, 0xb8,
-	0xab, 0x6a, 0x5b, 0x85, 0xea, 0x6b, 0xc2, 0xd9, 0xe1, 0x59, 0x1f, 0xc9, 0x0a, 0xe4, 0xa3, 0x93,
-	0xb9, 0x1f, 0xbe, 0x62, 0xd7, 0xde, 0x75, 0xad, 0x08, 0xc8, 0xae, 0x8d, 0xae, 0xd5, 0x52, 0x80,
-	0x45, 0x14, 0x9f, 0xf5, 0x0f, 0xa1, 0x20, 0xb2, 0xb1, 0x0a, 0x05, 0x95, 0x7f, 0xb1, 0xd4, 0x7f,
-	0xd2, 0xa0, 0xcc, 0xa2, 0x3f, 0x74, 0x4e, 0x90, 0xd5, 0x07, 0xd9, 0x80, 0xbc, 0xc4, 0x49, 0xa9,
-	0xfe, 0xce, 0xba, 0x28, 0xdf, 0x75, 0x85, 0x44, 0x83, 0xc3, 0xc8, 0x67, 0x00, 0xd2, 0xed, 0x32,
-	0xa1, 0xd1, 0xf5, 0xc4, 0x28, 0x45, 0x89, 0x21, 0x81, 0xc9, 0x96, 0x4a, 0x69, 0x36, 0xb4, 0x5d,
-	0x4a, 0x6c, 0x13, 0xf6, 0x15, 0xa2, 0x87, 0x50, 0x39, 0x70, 0x3a, 0x2e, 0xda, 0xbc, 0x5a, 0xc8,
-	0x0d, 0x28, 0x06, 0x4e, 0xc7, 0x35, 0xe9, 0xc0, 0x47, 0xc1, 0x43, 0xbc, 0x41, 0x6e, 0x31, 0x2e,
-	0x5d, 0x1b, 0x7d, 0x1e, 0xdc, 0x42, 0xe2, 0x80, 0xf3, 0x63, 0x70, 0x00, 0x3b, 0xa8, 0x3f, 0x68,
-	0xf7, 0x1c, 0xeb, 0x18, 0xcf, 0xc2, 0x70, 0xca, 0x46, 0xb2, 0xa1, 0xff, 0x9c, 0x85, 0xea, 0xae,
-	0x3b, 0xc4, 0x9e, 0xd7, 0x47, 0xe1, 0xfa, 0x4e, 0xea, 0x8d, 0x2a, 0xc7, 0xf3, 0x87, 0x1c, 0x3f,
-	0x5b, 0xb2, 0x04, 0x33, 0xae, 0xe7, 0x5a, 0x18, 0x46, 0x92, 0x33, 0xa2, 0x05, 0x69, 0x00, 0xa1,
-	0xbe, 0xe9, 0x06, 0x47, 0xe8, 0xfb, 0x68, 0x8b, 0x92, 0x8c, 0xd8, 0x58, 0x4e, 0x4e, 0x93, 0x1e,
-	0xbc, 0xb1, 0x20, 0x19, 0xf0, 0xa2, 0xfe, 0x1c, 0x2a, 0x8c, 0xea, 0xe4, 0x80, 0xdc, 0xb8, 0x03,
-	0xca, 0x11, 0x96, 0xdb, 0xd6, 0x15, 0x3d, 0x98, 0x09, 0x0d, 0x17, 0x13, 0xc3, 0x58, 0x38, 0x24,
-	0x91, 0x60, 0x36, 0x92, 0x2e, 0xe4, 0xd3, 0x36, 0xb1, 0x80, 0x48, 0x62, 0x41, 0x9e, 0x5c, 0xa6,
-	0x0a, 0x85, 0xd0, 0xfc, 0x66, 0x2a, 0x56, 0x55, 0x1f, 0x46, 0x8a, 0x06, 0xd9, 0x92, 0x73, 0x3f,
-	0x9b, 0x2e, 0x59, 0xa5, 0x4e, 0xa4, 0xa2, 0xd0, 0x87, 0x50, 0xdc, 0xf7, 0x3d, 0x0b, 0x83, 0x00,
-	0x6d, 0x76, 0x95, 0x94, 0xd6, 0x28, 0x57, 0x89, 0x45, 0x49, 0x12, 0x20, 0xd5, 0x6f, 0x66, 0x62,
-	0xbf, 0xdf, 0x6b, 0x50, 0x6c, 0x60, 0xcf, 0x19, 0xa2, 0x8f, 0x36, 0xd9, 0x85, 0x25, 0x5b, 0x2c,
-	0x5a, 0x93, 0x85, 0x40, 0x62, 0x83, 0x47, 0xff, 0x35, 0x96, 0x5f, 0x33, 0x50, 0x89, 0x9e, 0x98,
-	0x81, 0xdf, 0x0c, 0x30, 0xa0, 0x53, 0x11, 0x51, 0x57, 0xc4, 0x37, 0x93, 0xb6, 0x89, 0x55, 0x5a,
-	0x52, 0xe4, 0x29, 0x1f, 0x3e, 0xb9, 0x1b, 0x6b, 0xd3, 0xd8, 0xda, 0x1e, 0xad, 0x4c, 0x33, 0xff,
-	0x4e, 0x99, 0x24, 0x46, 0xf3, 0x13, 0x33, 0xfa, 0xa7, 0x06, 0xe5, 0x6d, 0xb3, 0x67, 0xba, 0x16,
-	0xee, 0xfb, 0x9e, 0x77, 0x44, 0x1a, 0x30, 0x8f, 0x5c, 0x31, 0x44, 0x7e, 0x39, 0xad, 0x52, 0x20,
-	0x29, 0x4d, 0x31, 0xaa, 0x98, 0x12, 0x19, 0x35, 0x2d, 0x99, 0x29, 0xd2, 0x92, 0x9d, 0x28, 0x2d,
-	0x77, 0xe2, 0xae, 0x93, 0x1b, 0x9d, 0x11, 0xd6, 0x9b, 0xe2, 0x5e, 0xf4, 0x4c, 0x83, 0xb2, 0x81,
-	0x43, 0x34, 0x7b, 0xbc, 0x1f, 0x4d, 0x53, 0x3d, 0x89, 0xcb, 0xcc, 0xeb, 0x5d, 0x4e, 0x9b, 0x96,
-	0xa7, 0x19, 0x98, 0x6b, 0x38, 0x3e, 0x5a, 0xf4, 0x90, 0xcb, 0xe6, 0xff, 0x2c, 0x31, 0x1f, 0xc3,
-	0x4c, 0xa8, 0x7d, 0x3c, 0x2f, 0x23, 0x3a, 0x58, 0xf4, 0x9d, 0x6c, 0x40, 0xd1, 0x47, 0xcb, 0xe9,
-	0x3b, 0xe8, 0x0a, 0x1d, 0x1f, 0x01, 0x4e, 0x30, 0xfa, 0xf3, 0x0c, 0x90, 0xbd, 0xb0, 0x15, 0x08,
-	0x6a, 0xb6, 0xcd, 0x00, 0xaf, 0xe8, 0x89, 0x30, 0xe4, 0x36, 0xe4, 0x98, 0x4a, 0xf0, 0x5a, 0x5b,
-	0x49, 0xb0, 0xf2, 0xcc, 0x64, 0x84, 0x18, 0xfd, 0x6f, 0x0d, 0xe6, 0x54, 0x2a, 0xc9, 0x57, 0x50,
-	0x6e, 0x9b, 0x41, 0x9a, 0xc2, 0x1b, 0x6a, 0x67, 0x55, 0xa9, 0x37, 0x4a, 0xcc, 0x42, 0x30, 0xb8,
-	0x01, 0x45, 0xc7, 0x75, 0xa8, 0x63, 0x52, 0x6f, 0xcc, 0xf8, 0x92, 0x60, 0xd8, 0xb0, 0x43, 0x4d,
-	0xbf, 0x83, 0x62, 0x7e, 0x18, 0x35, 0xec, 0x44, 0x00, 0xc6, 0xb4, 0x34, 0x3e, 0xe6, 0xd2, 0x4c,
-	0xc7, 0x73, 0xa6, 0x34, 0x53, 0x92, 0x79, 0xc8, 0x1e, 0x21, 0x86, 0xd4, 0x55, 0x0c, 0xf6, 0x53,
-	0xdf, 0x86, 0x39, 0x03, 0x8f, 0x06, 0x6e, 0x72, 0xe9, 0x7b, 0x90, 0xf7, 0xc3, 0x1d, 0x7e, 0xdd,
-	0xd5, 0xcb, 0xae, 0x6b, 0x70, 0x9c, 0xfe, 0x97, 0x06, 0xa5, 0x3d, 0x21, 0xc6, 0x68, 0xbf, 0xc1,
-	0xea, 0x53, 0x0a, 0x24, 0x3b, 0x41, 0x81, 0xa4, 0x3a, 0x59, 0x6e, 0xc2, 0x11, 0xf6, 0x87, 0x2c,
-	0x54, 0xbf, 0x76, 0x68, 0xd7, 0xf6, 0xcd, 0x53, 0xd1, 0x7c, 0x9f, 0x8c, 0xfb, 0x93, 0x69, 0xba,
-	0xe1, 0x68, 0xca, 0x07, 0x28, 0xcd, 0x75, 0xd9, 0x89, 0xe6, 0xba, 0xfb, 0x50, 0xea, 0x9b, 0x3e,
-	0x75, 0x2c, 0xa7, 0x6f, 0xc6, 0xdd, 0x79, 0x04, 0x71, 0x32, 0x8a, 0x7c, 0x09, 0xd5, 0x53, 0x4e,
-	0x81, 0x18, 0x59, 0x67, 0xc6, 0xb5, 0xf5, 0x39, 0x81, 0xe6, 0x43, 0xeb, 0x1e, 0x2c, 0x4b, 0xc7,
-	0xb5, 0x26, 0x6e, 0x0c, 0x4b, 0x92, 0xd5, 0x41, 0xdc, 0x23, 0x7e, 0xc9, 0xc2, 0xac, 0xc8, 0xc8,
-	0x55, 0x2a, 0xde, 0x64, 0x2a, 0x48, 0x03, 0x16, 0xd8, 0xbe, 0x8b, 0xbe, 0x74, 0x52, 0x61, 0xfc,
-	0x49, 0xf3, 0xdc, 0x22, 0x49, 0xe8, 0xb3, 0x1c, 0xac, 0xee, 0x78, 0x5e, 0x1f, 0xd9, 0x48, 0x37,
-	0xc4, 0x03, 0xa4, 0xb4, 0x87, 0x6f, 0xc1, 0x5b, 0xdb, 0x82, 0xb2, 0xc4, 0xda, 0xe6, 0xe5, 0x19,
-	0x56, 0x60, 0xe4, 0x21, 0xc8, 0x64, 0x6f, 0xb6, 0xda, 0xd1, 0x98, 0x3a, 0x3e, 0xcf, 0x8b, 0xb2,
-	0x09, 0x1f, 0x6c, 0x53, 0x01, 0xd4, 0x79, 0x8e, 0x5f, 0x13, 0x40, 0x3d, 0x15, 0x40, 0x3d, 0x0e,
-	0xa0, 0x30, 0x69, 0x00, 0x75, 0x11, 0xc0, 0x63, 0x58, 0x51, 0xae, 0x32, 0xf1, 0xdf, 0x7f, 0x72,
-	0x91, 0x6e, 0x26, 0x95, 0xf2, 0x32, 0x07, 0x0b, 0xaf, 0x54, 0xca, 0x55, 0x89, 0x5c, 0x95, 0x48,
-	0x22, 0x49, 0xea, 0x79, 0x75, 0xe9, 0xbc, 0xe2, 0xe4, 0xe7, 0xd5, 0xe3, 0xf3, 0xb6, 0xd7, 0x7e,
-	0x3f, 0xaf, 0x5d, 0x7b, 0x71, 0x5e, 0xd3, 0x5e, 0x9e, 0xd7, 0xb4, 0xef, 0x2e, 0x6a, 0xda, 0x8f,
-	0x17, 0x35, 0xed, 0xf9, 0x45, 0x4d, 0xfb, 0xed, 0xa2, 0xa6, 0xbd, 0xb8, 0xa8, 0x69, 0x4f, 0xff,
-	0xa8, 0x5d, 0x6b, 0xe7, 0xc3, 0x7f, 0x09, 0xdf, 0xff, 0x27, 0x00, 0x00, 0xff, 0xff, 0x75, 0x51,
-	0xdc, 0xd4, 0x50, 0x16, 0x00, 0x00,
-}
-
 func (this *ChainID) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
@@ -5232,9 +5145,9 @@ func (m *HashTimeLock) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Amount.Size()))
-		n1, err1 := m.Amount.MarshalTo(dAtA[i:])
-		if err1 != nil {
-			return 0, err1
+		n1, err := m.Amount.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n1
 	}
@@ -5242,9 +5155,9 @@ func (m *HashTimeLock) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Expiration.Size()))
-		n2, err2 := m.Expiration.MarshalTo(dAtA[i:])
-		if err2 != nil {
-			return 0, err2
+		n2, err := m.Expiration.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n2
 	}
@@ -5252,9 +5165,9 @@ func (m *HashTimeLock) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.SecretHash.Size()))
-		n3, err3 := m.SecretHash.MarshalTo(dAtA[i:])
-		if err3 != nil {
-			return 0, err3
+		n3, err := m.SecretHash.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n3
 	}
@@ -5289,9 +5202,9 @@ func (m *SignedMessage) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Sender.Size()))
-		n4, err4 := m.Sender.MarshalTo(dAtA[i:])
-		if err4 != nil {
-			return 0, err4
+		n4, err := m.Sender.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n4
 	}
@@ -5326,9 +5239,9 @@ func (m *EnvelopeMessage) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.ChainId.Size()))
-		n5, err5 := m.ChainId.MarshalTo(dAtA[i:])
-		if err5 != nil {
-			return 0, err5
+		n5, err := m.ChainId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n5
 	}
@@ -5341,9 +5254,9 @@ func (m *EnvelopeMessage) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.TransferredAmount.Size()))
-		n6, err6 := m.TransferredAmount.MarshalTo(dAtA[i:])
-		if err6 != nil {
-			return 0, err6
+		n6, err := m.TransferredAmount.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n6
 	}
@@ -5351,9 +5264,9 @@ func (m *EnvelopeMessage) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.LockedAmount.Size()))
-		n7, err7 := m.LockedAmount.MarshalTo(dAtA[i:])
-		if err7 != nil {
-			return 0, err7
+		n7, err := m.LockedAmount.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n7
 	}
@@ -5361,9 +5274,9 @@ func (m *EnvelopeMessage) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.LocksRoot.Size()))
-		n8, err8 := m.LocksRoot.MarshalTo(dAtA[i:])
-		if err8 != nil {
-			return 0, err8
+		n8, err := m.LocksRoot.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n8
 	}
@@ -5371,9 +5284,9 @@ func (m *EnvelopeMessage) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x32
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.ChannelId.Size()))
-		n9, err9 := m.ChannelId.MarshalTo(dAtA[i:])
-		if err9 != nil {
-			return 0, err9
+		n9, err := m.ChannelId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n9
 	}
@@ -5381,9 +5294,9 @@ func (m *EnvelopeMessage) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x3a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.TokenNetworkAddress.Size()))
-		n10, err10 := m.TokenNetworkAddress.MarshalTo(dAtA[i:])
-		if err10 != nil {
-			return 0, err10
+		n10, err := m.TokenNetworkAddress.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n10
 	}
@@ -5391,9 +5304,9 @@ func (m *EnvelopeMessage) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x42
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Signature.Size()))
-		n11, err11 := m.Signature.MarshalTo(dAtA[i:])
-		if err11 != nil {
-			return 0, err11
+		n11, err := m.Signature.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n11
 	}
@@ -5422,9 +5335,9 @@ func (m *Processed) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.MessageId.Size()))
-		n12, err12 := m.MessageId.MarshalTo(dAtA[i:])
-		if err12 != nil {
-			return 0, err12
+		n12, err := m.MessageId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n12
 	}
@@ -5432,9 +5345,9 @@ func (m *Processed) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Signature.Size()))
-		n13, err13 := m.Signature.MarshalTo(dAtA[i:])
-		if err13 != nil {
-			return 0, err13
+		n13, err := m.Signature.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n13
 	}
@@ -5463,9 +5376,9 @@ func (m *Delivered) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.DeliveredMessageId.Size()))
-		n14, err14 := m.DeliveredMessageId.MarshalTo(dAtA[i:])
-		if err14 != nil {
-			return 0, err14
+		n14, err := m.DeliveredMessageId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n14
 	}
@@ -5473,9 +5386,9 @@ func (m *Delivered) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Signature.Size()))
-		n15, err15 := m.Signature.MarshalTo(dAtA[i:])
-		if err15 != nil {
-			return 0, err15
+		n15, err := m.Signature.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n15
 	}
@@ -5504,9 +5417,9 @@ func (m *SecretRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.MessageId.Size()))
-		n16, err16 := m.MessageId.MarshalTo(dAtA[i:])
-		if err16 != nil {
-			return 0, err16
+		n16, err := m.MessageId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n16
 	}
@@ -5514,9 +5427,9 @@ func (m *SecretRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.PaymentId.Size()))
-		n17, err17 := m.PaymentId.MarshalTo(dAtA[i:])
-		if err17 != nil {
-			return 0, err17
+		n17, err := m.PaymentId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n17
 	}
@@ -5524,9 +5437,9 @@ func (m *SecretRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.SecretHash.Size()))
-		n18, err18 := m.SecretHash.MarshalTo(dAtA[i:])
-		if err18 != nil {
-			return 0, err18
+		n18, err := m.SecretHash.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n18
 	}
@@ -5534,9 +5447,9 @@ func (m *SecretRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Amount.Size()))
-		n19, err19 := m.Amount.MarshalTo(dAtA[i:])
-		if err19 != nil {
-			return 0, err19
+		n19, err := m.Amount.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n19
 	}
@@ -5544,9 +5457,9 @@ func (m *SecretRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Expiration.Size()))
-		n20, err20 := m.Expiration.MarshalTo(dAtA[i:])
-		if err20 != nil {
-			return 0, err20
+		n20, err := m.Expiration.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n20
 	}
@@ -5554,9 +5467,9 @@ func (m *SecretRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x32
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Signature.Size()))
-		n21, err21 := m.Signature.MarshalTo(dAtA[i:])
-		if err21 != nil {
-			return 0, err21
+		n21, err := m.Signature.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n21
 	}
@@ -5585,9 +5498,9 @@ func (m *BalanceProof) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.EnvelopeMessage.Size()))
-		n22, err22 := m.EnvelopeMessage.MarshalTo(dAtA[i:])
-		if err22 != nil {
-			return 0, err22
+		n22, err := m.EnvelopeMessage.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n22
 	}
@@ -5595,9 +5508,9 @@ func (m *BalanceProof) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.MessageId.Size()))
-		n23, err23 := m.MessageId.MarshalTo(dAtA[i:])
-		if err23 != nil {
-			return 0, err23
+		n23, err := m.MessageId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n23
 	}
@@ -5605,9 +5518,9 @@ func (m *BalanceProof) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.PaymentId.Size()))
-		n24, err24 := m.PaymentId.MarshalTo(dAtA[i:])
-		if err24 != nil {
-			return 0, err24
+		n24, err := m.PaymentId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n24
 	}
@@ -5615,9 +5528,9 @@ func (m *BalanceProof) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Secret.Size()))
-		n25, err25 := m.Secret.MarshalTo(dAtA[i:])
-		if err25 != nil {
-			return 0, err25
+		n25, err := m.Secret.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n25
 	}
@@ -5646,9 +5559,9 @@ func (m *RevealSecret) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.MessageId.Size()))
-		n26, err26 := m.MessageId.MarshalTo(dAtA[i:])
-		if err26 != nil {
-			return 0, err26
+		n26, err := m.MessageId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n26
 	}
@@ -5656,9 +5569,9 @@ func (m *RevealSecret) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Secret.Size()))
-		n27, err27 := m.Secret.MarshalTo(dAtA[i:])
-		if err27 != nil {
-			return 0, err27
+		n27, err := m.Secret.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n27
 	}
@@ -5666,9 +5579,9 @@ func (m *RevealSecret) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x32
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Signature.Size()))
-		n28, err28 := m.Signature.MarshalTo(dAtA[i:])
-		if err28 != nil {
-			return 0, err28
+		n28, err := m.Signature.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n28
 	}
@@ -5697,9 +5610,9 @@ func (m *DirectTransfer) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.EnvelopeMessage.Size()))
-		n29, err29 := m.EnvelopeMessage.MarshalTo(dAtA[i:])
-		if err29 != nil {
-			return 0, err29
+		n29, err := m.EnvelopeMessage.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n29
 	}
@@ -5707,9 +5620,9 @@ func (m *DirectTransfer) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.MessageId.Size()))
-		n30, err30 := m.MessageId.MarshalTo(dAtA[i:])
-		if err30 != nil {
-			return 0, err30
+		n30, err := m.MessageId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n30
 	}
@@ -5717,9 +5630,9 @@ func (m *DirectTransfer) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.PaymentId.Size()))
-		n31, err31 := m.PaymentId.MarshalTo(dAtA[i:])
-		if err31 != nil {
-			return 0, err31
+		n31, err := m.PaymentId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n31
 	}
@@ -5727,9 +5640,9 @@ func (m *DirectTransfer) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Token.Size()))
-		n32, err32 := m.Token.MarshalTo(dAtA[i:])
-		if err32 != nil {
-			return 0, err32
+		n32, err := m.Token.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n32
 	}
@@ -5737,9 +5650,9 @@ func (m *DirectTransfer) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Recipient.Size()))
-		n33, err33 := m.Recipient.MarshalTo(dAtA[i:])
-		if err33 != nil {
-			return 0, err33
+		n33, err := m.Recipient.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n33
 	}
@@ -5768,9 +5681,9 @@ func (m *LockedTransferBase) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.EnvelopeMessage.Size()))
-		n34, err34 := m.EnvelopeMessage.MarshalTo(dAtA[i:])
-		if err34 != nil {
-			return 0, err34
+		n34, err := m.EnvelopeMessage.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n34
 	}
@@ -5778,9 +5691,9 @@ func (m *LockedTransferBase) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.MessageId.Size()))
-		n35, err35 := m.MessageId.MarshalTo(dAtA[i:])
-		if err35 != nil {
-			return 0, err35
+		n35, err := m.MessageId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n35
 	}
@@ -5788,9 +5701,9 @@ func (m *LockedTransferBase) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.PaymentId.Size()))
-		n36, err36 := m.PaymentId.MarshalTo(dAtA[i:])
-		if err36 != nil {
-			return 0, err36
+		n36, err := m.PaymentId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n36
 	}
@@ -5798,9 +5711,9 @@ func (m *LockedTransferBase) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Token.Size()))
-		n37, err37 := m.Token.MarshalTo(dAtA[i:])
-		if err37 != nil {
-			return 0, err37
+		n37, err := m.Token.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n37
 	}
@@ -5808,9 +5721,9 @@ func (m *LockedTransferBase) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Recipient.Size()))
-		n38, err38 := m.Recipient.MarshalTo(dAtA[i:])
-		if err38 != nil {
-			return 0, err38
+		n38, err := m.Recipient.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n38
 	}
@@ -5818,9 +5731,9 @@ func (m *LockedTransferBase) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x32
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Lock.Size()))
-		n39, err39 := m.Lock.MarshalTo(dAtA[i:])
-		if err39 != nil {
-			return 0, err39
+		n39, err := m.Lock.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n39
 	}
@@ -5849,9 +5762,9 @@ func (m *LockedTransfer) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.BaseMessage.Size()))
-		n40, err40 := m.BaseMessage.MarshalTo(dAtA[i:])
-		if err40 != nil {
-			return 0, err40
+		n40, err := m.BaseMessage.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n40
 	}
@@ -5859,9 +5772,9 @@ func (m *LockedTransfer) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Initiator.Size()))
-		n41, err41 := m.Initiator.MarshalTo(dAtA[i:])
-		if err41 != nil {
-			return 0, err41
+		n41, err := m.Initiator.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n41
 	}
@@ -5869,9 +5782,9 @@ func (m *LockedTransfer) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Target.Size()))
-		n42, err42 := m.Target.MarshalTo(dAtA[i:])
-		if err42 != nil {
-			return 0, err42
+		n42, err := m.Target.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n42
 	}
@@ -5879,9 +5792,9 @@ func (m *LockedTransfer) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.EncSecret.Size()))
-		n43, err43 := m.EncSecret.MarshalTo(dAtA[i:])
-		if err43 != nil {
-			return 0, err43
+		n43, err := m.EncSecret.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n43
 	}
@@ -5915,9 +5828,9 @@ func (m *RefundTransfer) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Refund.Size()))
-		n44, err44 := m.Refund.MarshalTo(dAtA[i:])
-		if err44 != nil {
-			return 0, err44
+		n44, err := m.Refund.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n44
 	}
@@ -5946,9 +5859,9 @@ func (m *LockExpired) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.EnvelopeMessage.Size()))
-		n45, err45 := m.EnvelopeMessage.MarshalTo(dAtA[i:])
-		if err45 != nil {
-			return 0, err45
+		n45, err := m.EnvelopeMessage.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n45
 	}
@@ -5956,9 +5869,9 @@ func (m *LockExpired) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.MessageId.Size()))
-		n46, err46 := m.MessageId.MarshalTo(dAtA[i:])
-		if err46 != nil {
-			return 0, err46
+		n46, err := m.MessageId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n46
 	}
@@ -5966,9 +5879,9 @@ func (m *LockExpired) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Recipient.Size()))
-		n47, err47 := m.Recipient.MarshalTo(dAtA[i:])
-		if err47 != nil {
-			return 0, err47
+		n47, err := m.Recipient.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n47
 	}
@@ -5976,9 +5889,9 @@ func (m *LockExpired) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.SecretHash.Size()))
-		n48, err48 := m.SecretHash.MarshalTo(dAtA[i:])
-		if err48 != nil {
-			return 0, err48
+		n48, err := m.SecretHash.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n48
 	}
@@ -6007,9 +5920,9 @@ func (m *WithdrawRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.TokenNetworkAddress.Size()))
-		n49, err49 := m.TokenNetworkAddress.MarshalTo(dAtA[i:])
-		if err49 != nil {
-			return 0, err49
+		n49, err := m.TokenNetworkAddress.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n49
 	}
@@ -6017,9 +5930,9 @@ func (m *WithdrawRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.MessageId.Size()))
-		n50, err50 := m.MessageId.MarshalTo(dAtA[i:])
-		if err50 != nil {
-			return 0, err50
+		n50, err := m.MessageId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n50
 	}
@@ -6027,9 +5940,9 @@ func (m *WithdrawRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.ChannelId.Size()))
-		n51, err51 := m.ChannelId.MarshalTo(dAtA[i:])
-		if err51 != nil {
-			return 0, err51
+		n51, err := m.ChannelId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n51
 	}
@@ -6037,9 +5950,9 @@ func (m *WithdrawRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Participant.Size()))
-		n52, err52 := m.Participant.MarshalTo(dAtA[i:])
-		if err52 != nil {
-			return 0, err52
+		n52, err := m.Participant.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n52
 	}
@@ -6047,9 +5960,9 @@ func (m *WithdrawRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.WithdrawAmount.Size()))
-		n53, err53 := m.WithdrawAmount.MarshalTo(dAtA[i:])
-		if err53 != nil {
-			return 0, err53
+		n53, err := m.WithdrawAmount.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n53
 	}
@@ -6057,9 +5970,9 @@ func (m *WithdrawRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x32
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.ParticipantSignature.Size()))
-		n54, err54 := m.ParticipantSignature.MarshalTo(dAtA[i:])
-		if err54 != nil {
-			return 0, err54
+		n54, err := m.ParticipantSignature.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n54
 	}
@@ -6088,9 +6001,9 @@ func (m *Withdraw) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.TokenNetworkAddress.Size()))
-		n55, err55 := m.TokenNetworkAddress.MarshalTo(dAtA[i:])
-		if err55 != nil {
-			return 0, err55
+		n55, err := m.TokenNetworkAddress.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n55
 	}
@@ -6098,9 +6011,9 @@ func (m *Withdraw) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.MessageId.Size()))
-		n56, err56 := m.MessageId.MarshalTo(dAtA[i:])
-		if err56 != nil {
-			return 0, err56
+		n56, err := m.MessageId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n56
 	}
@@ -6108,9 +6021,9 @@ func (m *Withdraw) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.ChannelId.Size()))
-		n57, err57 := m.ChannelId.MarshalTo(dAtA[i:])
-		if err57 != nil {
-			return 0, err57
+		n57, err := m.ChannelId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n57
 	}
@@ -6118,9 +6031,9 @@ func (m *Withdraw) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Participant.Size()))
-		n58, err58 := m.Participant.MarshalTo(dAtA[i:])
-		if err58 != nil {
-			return 0, err58
+		n58, err := m.Participant.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n58
 	}
@@ -6128,9 +6041,9 @@ func (m *Withdraw) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.WithdrawAmount.Size()))
-		n59, err59 := m.WithdrawAmount.MarshalTo(dAtA[i:])
-		if err59 != nil {
-			return 0, err59
+		n59, err := m.WithdrawAmount.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n59
 	}
@@ -6138,9 +6051,9 @@ func (m *Withdraw) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x32
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.ParticipantSignature.Size()))
-		n60, err60 := m.ParticipantSignature.MarshalTo(dAtA[i:])
-		if err60 != nil {
-			return 0, err60
+		n60, err := m.ParticipantSignature.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n60
 	}
@@ -6148,9 +6061,9 @@ func (m *Withdraw) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x3a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.PartnerSignature.Size()))
-		n61, err61 := m.PartnerSignature.MarshalTo(dAtA[i:])
-		if err61 != nil {
-			return 0, err61
+		n61, err := m.PartnerSignature.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n61
 	}
@@ -6179,9 +6092,9 @@ func (m *CooperativeSettleRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.TokenNetworkAddress.Size()))
-		n62, err62 := m.TokenNetworkAddress.MarshalTo(dAtA[i:])
-		if err62 != nil {
-			return 0, err62
+		n62, err := m.TokenNetworkAddress.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n62
 	}
@@ -6189,9 +6102,9 @@ func (m *CooperativeSettleRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.MessageId.Size()))
-		n63, err63 := m.MessageId.MarshalTo(dAtA[i:])
-		if err63 != nil {
-			return 0, err63
+		n63, err := m.MessageId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n63
 	}
@@ -6199,9 +6112,9 @@ func (m *CooperativeSettleRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.ChannelId.Size()))
-		n64, err64 := m.ChannelId.MarshalTo(dAtA[i:])
-		if err64 != nil {
-			return 0, err64
+		n64, err := m.ChannelId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n64
 	}
@@ -6209,9 +6122,9 @@ func (m *CooperativeSettleRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Participant1.Size()))
-		n65, err65 := m.Participant1.MarshalTo(dAtA[i:])
-		if err65 != nil {
-			return 0, err65
+		n65, err := m.Participant1.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n65
 	}
@@ -6219,9 +6132,9 @@ func (m *CooperativeSettleRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Participant1Balance.Size()))
-		n66, err66 := m.Participant1Balance.MarshalTo(dAtA[i:])
-		if err66 != nil {
-			return 0, err66
+		n66, err := m.Participant1Balance.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n66
 	}
@@ -6229,9 +6142,9 @@ func (m *CooperativeSettleRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x32
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Participant2.Size()))
-		n67, err67 := m.Participant2.MarshalTo(dAtA[i:])
-		if err67 != nil {
-			return 0, err67
+		n67, err := m.Participant2.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n67
 	}
@@ -6239,9 +6152,9 @@ func (m *CooperativeSettleRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x3a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Participant2Balance.Size()))
-		n68, err68 := m.Participant2Balance.MarshalTo(dAtA[i:])
-		if err68 != nil {
-			return 0, err68
+		n68, err := m.Participant2Balance.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n68
 	}
@@ -6249,9 +6162,9 @@ func (m *CooperativeSettleRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x42
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Participant1Signature.Size()))
-		n69, err69 := m.Participant1Signature.MarshalTo(dAtA[i:])
-		if err69 != nil {
-			return 0, err69
+		n69, err := m.Participant1Signature.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n69
 	}
@@ -6280,9 +6193,9 @@ func (m *CooperativeSettle) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.TokenNetworkAddress.Size()))
-		n70, err70 := m.TokenNetworkAddress.MarshalTo(dAtA[i:])
-		if err70 != nil {
-			return 0, err70
+		n70, err := m.TokenNetworkAddress.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n70
 	}
@@ -6290,9 +6203,9 @@ func (m *CooperativeSettle) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.MessageId.Size()))
-		n71, err71 := m.MessageId.MarshalTo(dAtA[i:])
-		if err71 != nil {
-			return 0, err71
+		n71, err := m.MessageId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n71
 	}
@@ -6300,9 +6213,9 @@ func (m *CooperativeSettle) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.ChannelId.Size()))
-		n72, err72 := m.ChannelId.MarshalTo(dAtA[i:])
-		if err72 != nil {
-			return 0, err72
+		n72, err := m.ChannelId.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n72
 	}
@@ -6310,9 +6223,9 @@ func (m *CooperativeSettle) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Participant1.Size()))
-		n73, err73 := m.Participant1.MarshalTo(dAtA[i:])
-		if err73 != nil {
-			return 0, err73
+		n73, err := m.Participant1.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n73
 	}
@@ -6320,9 +6233,9 @@ func (m *CooperativeSettle) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Participant1Balance.Size()))
-		n74, err74 := m.Participant1Balance.MarshalTo(dAtA[i:])
-		if err74 != nil {
-			return 0, err74
+		n74, err := m.Participant1Balance.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n74
 	}
@@ -6330,9 +6243,9 @@ func (m *CooperativeSettle) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x32
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Participant2.Size()))
-		n75, err75 := m.Participant2.MarshalTo(dAtA[i:])
-		if err75 != nil {
-			return 0, err75
+		n75, err := m.Participant2.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n75
 	}
@@ -6340,9 +6253,9 @@ func (m *CooperativeSettle) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x3a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Participant2Balance.Size()))
-		n76, err76 := m.Participant2Balance.MarshalTo(dAtA[i:])
-		if err76 != nil {
-			return 0, err76
+		n76, err := m.Participant2Balance.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n76
 	}
@@ -6350,9 +6263,9 @@ func (m *CooperativeSettle) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x42
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Participant1Signature.Size()))
-		n77, err77 := m.Participant1Signature.MarshalTo(dAtA[i:])
-		if err77 != nil {
-			return 0, err77
+		n77, err := m.Participant1Signature.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n77
 	}
@@ -6360,9 +6273,9 @@ func (m *CooperativeSettle) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x4a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.Participant2Signature.Size()))
-		n78, err78 := m.Participant2Signature.MarshalTo(dAtA[i:])
-		if err78 != nil {
-			return 0, err78
+		n78, err := m.Participant2Signature.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n78
 	}
@@ -6382,9 +6295,6 @@ func encodeVarintStream(dAtA []byte, offset int, v uint64) int {
 	return offset + 1
 }
 func (m *ChainID) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.ChainId != 0 {
@@ -6397,9 +6307,6 @@ func (m *ChainID) Size() (n int) {
 }
 
 func (m *TokenAmount) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.TokenAmount != 0 {
@@ -6412,9 +6319,6 @@ func (m *TokenAmount) Size() (n int) {
 }
 
 func (m *LocksRoot) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	l = len(m.LocksRoot)
@@ -6428,9 +6332,6 @@ func (m *LocksRoot) Size() (n int) {
 }
 
 func (m *ChannelID) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.ChannelId != 0 {
@@ -6443,9 +6344,6 @@ func (m *ChannelID) Size() (n int) {
 }
 
 func (m *TokenNetworkAddress) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	l = len(m.TokenNetworkAddress)
@@ -6459,9 +6357,6 @@ func (m *TokenNetworkAddress) Size() (n int) {
 }
 
 func (m *MessageID) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.MessageId != 0 {
@@ -6474,9 +6369,6 @@ func (m *MessageID) Size() (n int) {
 }
 
 func (m *PaymentID) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.PaymentId != 0 {
@@ -6489,9 +6381,6 @@ func (m *PaymentID) Size() (n int) {
 }
 
 func (m *PaymentAmount) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.PaymentAmount != 0 {
@@ -6504,9 +6393,6 @@ func (m *PaymentAmount) Size() (n int) {
 }
 
 func (m *SecretHash) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	l = len(m.SecretHash)
@@ -6520,9 +6406,6 @@ func (m *SecretHash) Size() (n int) {
 }
 
 func (m *BlockExpiration) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.BlockExpiration != 0 {
@@ -6535,9 +6418,6 @@ func (m *BlockExpiration) Size() (n int) {
 }
 
 func (m *SecretType) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	l = len(m.Secret)
@@ -6551,9 +6431,6 @@ func (m *SecretType) Size() (n int) {
 }
 
 func (m *EncSecret) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	l = len(m.EncSecret)
@@ -6567,9 +6444,6 @@ func (m *EncSecret) Size() (n int) {
 }
 
 func (m *Address) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	l = len(m.Address)
@@ -6583,9 +6457,6 @@ func (m *Address) Size() (n int) {
 }
 
 func (m *HashTimeLock) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.Amount != nil {
@@ -6607,9 +6478,6 @@ func (m *HashTimeLock) Size() (n int) {
 }
 
 func (m *SignedMessage) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	l = len(m.Signature)
@@ -6631,9 +6499,6 @@ func (m *SignedMessage) Size() (n int) {
 }
 
 func (m *EnvelopeMessage) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.ChainId != nil {
@@ -6674,9 +6539,6 @@ func (m *EnvelopeMessage) Size() (n int) {
 }
 
 func (m *Processed) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.MessageId != nil {
@@ -6694,9 +6556,6 @@ func (m *Processed) Size() (n int) {
 }
 
 func (m *Delivered) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.DeliveredMessageId != nil {
@@ -6714,9 +6573,6 @@ func (m *Delivered) Size() (n int) {
 }
 
 func (m *SecretRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.MessageId != nil {
@@ -6750,9 +6606,6 @@ func (m *SecretRequest) Size() (n int) {
 }
 
 func (m *BalanceProof) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.EnvelopeMessage != nil {
@@ -6778,9 +6631,6 @@ func (m *BalanceProof) Size() (n int) {
 }
 
 func (m *RevealSecret) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.MessageId != nil {
@@ -6802,9 +6652,6 @@ func (m *RevealSecret) Size() (n int) {
 }
 
 func (m *DirectTransfer) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.EnvelopeMessage != nil {
@@ -6834,9 +6681,6 @@ func (m *DirectTransfer) Size() (n int) {
 }
 
 func (m *LockedTransferBase) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.EnvelopeMessage != nil {
@@ -6870,9 +6714,6 @@ func (m *LockedTransferBase) Size() (n int) {
 }
 
 func (m *LockedTransfer) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.BaseMessage != nil {
@@ -6901,9 +6742,6 @@ func (m *LockedTransfer) Size() (n int) {
 }
 
 func (m *RefundTransfer) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.Refund != nil {
@@ -6917,9 +6755,6 @@ func (m *RefundTransfer) Size() (n int) {
 }
 
 func (m *LockExpired) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.EnvelopeMessage != nil {
@@ -6945,9 +6780,6 @@ func (m *LockExpired) Size() (n int) {
 }
 
 func (m *WithdrawRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.TokenNetworkAddress != nil {
@@ -6981,9 +6813,6 @@ func (m *WithdrawRequest) Size() (n int) {
 }
 
 func (m *Withdraw) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.TokenNetworkAddress != nil {
@@ -7021,9 +6850,6 @@ func (m *Withdraw) Size() (n int) {
 }
 
 func (m *CooperativeSettleRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.TokenNetworkAddress != nil {
@@ -7065,9 +6891,6 @@ func (m *CooperativeSettleRequest) Size() (n int) {
 }
 
 func (m *CooperativeSettle) Size() (n int) {
-	if m == nil {
-		return 0
-	}
 	var l int
 	_ = l
 	if m.TokenNetworkAddress != nil {
@@ -7113,7 +6936,14 @@ func (m *CooperativeSettle) Size() (n int) {
 }
 
 func sovStream(x uint64) (n int) {
-	return (math_bits.Len64(x|1) + 6) / 7
+	for {
+		n++
+		x >>= 7
+		if x == 0 {
+			break
+		}
+	}
+	return n
 }
 func sozStream(x uint64) (n int) {
 	return sovStream(uint64((x << 1) ^ uint64((int64(x) >> 63))))
@@ -7266,9 +7096,9 @@ func (this *HashTimeLock) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&HashTimeLock{`,
-		`Amount:` + strings.Replace(this.Amount.String(), "PaymentAmount", "PaymentAmount", 1) + `,`,
-		`Expiration:` + strings.Replace(this.Expiration.String(), "BlockExpiration", "BlockExpiration", 1) + `,`,
-		`SecretHash:` + strings.Replace(this.SecretHash.String(), "SecretHash", "SecretHash", 1) + `,`,
+		`Amount:` + strings.Replace(fmt.Sprintf("%v", this.Amount), "PaymentAmount", "PaymentAmount", 1) + `,`,
+		`Expiration:` + strings.Replace(fmt.Sprintf("%v", this.Expiration), "BlockExpiration", "BlockExpiration", 1) + `,`,
+		`SecretHash:` + strings.Replace(fmt.Sprintf("%v", this.SecretHash), "SecretHash", "SecretHash", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7280,7 +7110,7 @@ func (this *SignedMessage) String() string {
 	}
 	s := strings.Join([]string{`&SignedMessage{`,
 		`Signature:` + fmt.Sprintf("%v", this.Signature) + `,`,
-		`Sender:` + strings.Replace(this.Sender.String(), "Address", "Address", 1) + `,`,
+		`Sender:` + strings.Replace(fmt.Sprintf("%v", this.Sender), "Address", "Address", 1) + `,`,
 		`Publickey:` + fmt.Sprintf("%v", this.Publickey) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
@@ -7292,14 +7122,14 @@ func (this *EnvelopeMessage) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&EnvelopeMessage{`,
-		`ChainId:` + strings.Replace(this.ChainId.String(), "ChainID", "ChainID", 1) + `,`,
+		`ChainId:` + strings.Replace(fmt.Sprintf("%v", this.ChainId), "ChainID", "ChainID", 1) + `,`,
 		`Nonce:` + fmt.Sprintf("%v", this.Nonce) + `,`,
-		`TransferredAmount:` + strings.Replace(this.TransferredAmount.String(), "TokenAmount", "TokenAmount", 1) + `,`,
-		`LockedAmount:` + strings.Replace(this.LockedAmount.String(), "TokenAmount", "TokenAmount", 1) + `,`,
-		`LocksRoot:` + strings.Replace(this.LocksRoot.String(), "LocksRoot", "LocksRoot", 1) + `,`,
-		`ChannelId:` + strings.Replace(this.ChannelId.String(), "ChannelID", "ChannelID", 1) + `,`,
-		`TokenNetworkAddress:` + strings.Replace(this.TokenNetworkAddress.String(), "TokenNetworkAddress", "TokenNetworkAddress", 1) + `,`,
-		`Signature:` + strings.Replace(this.Signature.String(), "SignedMessage", "SignedMessage", 1) + `,`,
+		`TransferredAmount:` + strings.Replace(fmt.Sprintf("%v", this.TransferredAmount), "TokenAmount", "TokenAmount", 1) + `,`,
+		`LockedAmount:` + strings.Replace(fmt.Sprintf("%v", this.LockedAmount), "TokenAmount", "TokenAmount", 1) + `,`,
+		`LocksRoot:` + strings.Replace(fmt.Sprintf("%v", this.LocksRoot), "LocksRoot", "LocksRoot", 1) + `,`,
+		`ChannelId:` + strings.Replace(fmt.Sprintf("%v", this.ChannelId), "ChannelID", "ChannelID", 1) + `,`,
+		`TokenNetworkAddress:` + strings.Replace(fmt.Sprintf("%v", this.TokenNetworkAddress), "TokenNetworkAddress", "TokenNetworkAddress", 1) + `,`,
+		`Signature:` + strings.Replace(fmt.Sprintf("%v", this.Signature), "SignedMessage", "SignedMessage", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7310,8 +7140,8 @@ func (this *Processed) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Processed{`,
-		`MessageId:` + strings.Replace(this.MessageId.String(), "MessageID", "MessageID", 1) + `,`,
-		`Signature:` + strings.Replace(this.Signature.String(), "SignedMessage", "SignedMessage", 1) + `,`,
+		`MessageId:` + strings.Replace(fmt.Sprintf("%v", this.MessageId), "MessageID", "MessageID", 1) + `,`,
+		`Signature:` + strings.Replace(fmt.Sprintf("%v", this.Signature), "SignedMessage", "SignedMessage", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7322,8 +7152,8 @@ func (this *Delivered) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Delivered{`,
-		`DeliveredMessageId:` + strings.Replace(this.DeliveredMessageId.String(), "MessageID", "MessageID", 1) + `,`,
-		`Signature:` + strings.Replace(this.Signature.String(), "SignedMessage", "SignedMessage", 1) + `,`,
+		`DeliveredMessageId:` + strings.Replace(fmt.Sprintf("%v", this.DeliveredMessageId), "MessageID", "MessageID", 1) + `,`,
+		`Signature:` + strings.Replace(fmt.Sprintf("%v", this.Signature), "SignedMessage", "SignedMessage", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7334,12 +7164,12 @@ func (this *SecretRequest) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&SecretRequest{`,
-		`MessageId:` + strings.Replace(this.MessageId.String(), "MessageID", "MessageID", 1) + `,`,
-		`PaymentId:` + strings.Replace(this.PaymentId.String(), "PaymentID", "PaymentID", 1) + `,`,
-		`SecretHash:` + strings.Replace(this.SecretHash.String(), "SecretHash", "SecretHash", 1) + `,`,
-		`Amount:` + strings.Replace(this.Amount.String(), "TokenAmount", "TokenAmount", 1) + `,`,
-		`Expiration:` + strings.Replace(this.Expiration.String(), "BlockExpiration", "BlockExpiration", 1) + `,`,
-		`Signature:` + strings.Replace(this.Signature.String(), "SignedMessage", "SignedMessage", 1) + `,`,
+		`MessageId:` + strings.Replace(fmt.Sprintf("%v", this.MessageId), "MessageID", "MessageID", 1) + `,`,
+		`PaymentId:` + strings.Replace(fmt.Sprintf("%v", this.PaymentId), "PaymentID", "PaymentID", 1) + `,`,
+		`SecretHash:` + strings.Replace(fmt.Sprintf("%v", this.SecretHash), "SecretHash", "SecretHash", 1) + `,`,
+		`Amount:` + strings.Replace(fmt.Sprintf("%v", this.Amount), "TokenAmount", "TokenAmount", 1) + `,`,
+		`Expiration:` + strings.Replace(fmt.Sprintf("%v", this.Expiration), "BlockExpiration", "BlockExpiration", 1) + `,`,
+		`Signature:` + strings.Replace(fmt.Sprintf("%v", this.Signature), "SignedMessage", "SignedMessage", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7350,10 +7180,10 @@ func (this *BalanceProof) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&BalanceProof{`,
-		`EnvelopeMessage:` + strings.Replace(this.EnvelopeMessage.String(), "EnvelopeMessage", "EnvelopeMessage", 1) + `,`,
-		`MessageId:` + strings.Replace(this.MessageId.String(), "MessageID", "MessageID", 1) + `,`,
-		`PaymentId:` + strings.Replace(this.PaymentId.String(), "PaymentID", "PaymentID", 1) + `,`,
-		`Secret:` + strings.Replace(this.Secret.String(), "SecretType", "SecretType", 1) + `,`,
+		`EnvelopeMessage:` + strings.Replace(fmt.Sprintf("%v", this.EnvelopeMessage), "EnvelopeMessage", "EnvelopeMessage", 1) + `,`,
+		`MessageId:` + strings.Replace(fmt.Sprintf("%v", this.MessageId), "MessageID", "MessageID", 1) + `,`,
+		`PaymentId:` + strings.Replace(fmt.Sprintf("%v", this.PaymentId), "PaymentID", "PaymentID", 1) + `,`,
+		`Secret:` + strings.Replace(fmt.Sprintf("%v", this.Secret), "SecretType", "SecretType", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7364,9 +7194,9 @@ func (this *RevealSecret) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&RevealSecret{`,
-		`MessageId:` + strings.Replace(this.MessageId.String(), "MessageID", "MessageID", 1) + `,`,
-		`Secret:` + strings.Replace(this.Secret.String(), "SecretType", "SecretType", 1) + `,`,
-		`Signature:` + strings.Replace(this.Signature.String(), "SignedMessage", "SignedMessage", 1) + `,`,
+		`MessageId:` + strings.Replace(fmt.Sprintf("%v", this.MessageId), "MessageID", "MessageID", 1) + `,`,
+		`Secret:` + strings.Replace(fmt.Sprintf("%v", this.Secret), "SecretType", "SecretType", 1) + `,`,
+		`Signature:` + strings.Replace(fmt.Sprintf("%v", this.Signature), "SignedMessage", "SignedMessage", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7377,11 +7207,11 @@ func (this *DirectTransfer) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&DirectTransfer{`,
-		`EnvelopeMessage:` + strings.Replace(this.EnvelopeMessage.String(), "EnvelopeMessage", "EnvelopeMessage", 1) + `,`,
-		`MessageId:` + strings.Replace(this.MessageId.String(), "MessageID", "MessageID", 1) + `,`,
-		`PaymentId:` + strings.Replace(this.PaymentId.String(), "PaymentID", "PaymentID", 1) + `,`,
-		`Token:` + strings.Replace(this.Token.String(), "Address", "Address", 1) + `,`,
-		`Recipient:` + strings.Replace(this.Recipient.String(), "Address", "Address", 1) + `,`,
+		`EnvelopeMessage:` + strings.Replace(fmt.Sprintf("%v", this.EnvelopeMessage), "EnvelopeMessage", "EnvelopeMessage", 1) + `,`,
+		`MessageId:` + strings.Replace(fmt.Sprintf("%v", this.MessageId), "MessageID", "MessageID", 1) + `,`,
+		`PaymentId:` + strings.Replace(fmt.Sprintf("%v", this.PaymentId), "PaymentID", "PaymentID", 1) + `,`,
+		`Token:` + strings.Replace(fmt.Sprintf("%v", this.Token), "Address", "Address", 1) + `,`,
+		`Recipient:` + strings.Replace(fmt.Sprintf("%v", this.Recipient), "Address", "Address", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7392,12 +7222,12 @@ func (this *LockedTransferBase) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&LockedTransferBase{`,
-		`EnvelopeMessage:` + strings.Replace(this.EnvelopeMessage.String(), "EnvelopeMessage", "EnvelopeMessage", 1) + `,`,
-		`MessageId:` + strings.Replace(this.MessageId.String(), "MessageID", "MessageID", 1) + `,`,
-		`PaymentId:` + strings.Replace(this.PaymentId.String(), "PaymentID", "PaymentID", 1) + `,`,
-		`Token:` + strings.Replace(this.Token.String(), "Address", "Address", 1) + `,`,
-		`Recipient:` + strings.Replace(this.Recipient.String(), "Address", "Address", 1) + `,`,
-		`Lock:` + strings.Replace(this.Lock.String(), "HashTimeLock", "HashTimeLock", 1) + `,`,
+		`EnvelopeMessage:` + strings.Replace(fmt.Sprintf("%v", this.EnvelopeMessage), "EnvelopeMessage", "EnvelopeMessage", 1) + `,`,
+		`MessageId:` + strings.Replace(fmt.Sprintf("%v", this.MessageId), "MessageID", "MessageID", 1) + `,`,
+		`PaymentId:` + strings.Replace(fmt.Sprintf("%v", this.PaymentId), "PaymentID", "PaymentID", 1) + `,`,
+		`Token:` + strings.Replace(fmt.Sprintf("%v", this.Token), "Address", "Address", 1) + `,`,
+		`Recipient:` + strings.Replace(fmt.Sprintf("%v", this.Recipient), "Address", "Address", 1) + `,`,
+		`Lock:` + strings.Replace(fmt.Sprintf("%v", this.Lock), "HashTimeLock", "HashTimeLock", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7408,10 +7238,10 @@ func (this *LockedTransfer) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&LockedTransfer{`,
-		`BaseMessage:` + strings.Replace(this.BaseMessage.String(), "LockedTransferBase", "LockedTransferBase", 1) + `,`,
-		`Initiator:` + strings.Replace(this.Initiator.String(), "Address", "Address", 1) + `,`,
-		`Target:` + strings.Replace(this.Target.String(), "Address", "Address", 1) + `,`,
-		`EncSecret:` + strings.Replace(this.EncSecret.String(), "EncSecret", "EncSecret", 1) + `,`,
+		`BaseMessage:` + strings.Replace(fmt.Sprintf("%v", this.BaseMessage), "LockedTransferBase", "LockedTransferBase", 1) + `,`,
+		`Initiator:` + strings.Replace(fmt.Sprintf("%v", this.Initiator), "Address", "Address", 1) + `,`,
+		`Target:` + strings.Replace(fmt.Sprintf("%v", this.Target), "Address", "Address", 1) + `,`,
+		`EncSecret:` + strings.Replace(fmt.Sprintf("%v", this.EncSecret), "EncSecret", "EncSecret", 1) + `,`,
 		`Fee:` + fmt.Sprintf("%v", this.Fee) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
@@ -7423,7 +7253,7 @@ func (this *RefundTransfer) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&RefundTransfer{`,
-		`Refund:` + strings.Replace(this.Refund.String(), "LockedTransfer", "LockedTransfer", 1) + `,`,
+		`Refund:` + strings.Replace(fmt.Sprintf("%v", this.Refund), "LockedTransfer", "LockedTransfer", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7434,10 +7264,10 @@ func (this *LockExpired) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&LockExpired{`,
-		`EnvelopeMessage:` + strings.Replace(this.EnvelopeMessage.String(), "EnvelopeMessage", "EnvelopeMessage", 1) + `,`,
-		`MessageId:` + strings.Replace(this.MessageId.String(), "MessageID", "MessageID", 1) + `,`,
-		`Recipient:` + strings.Replace(this.Recipient.String(), "Address", "Address", 1) + `,`,
-		`SecretHash:` + strings.Replace(this.SecretHash.String(), "SecretHash", "SecretHash", 1) + `,`,
+		`EnvelopeMessage:` + strings.Replace(fmt.Sprintf("%v", this.EnvelopeMessage), "EnvelopeMessage", "EnvelopeMessage", 1) + `,`,
+		`MessageId:` + strings.Replace(fmt.Sprintf("%v", this.MessageId), "MessageID", "MessageID", 1) + `,`,
+		`Recipient:` + strings.Replace(fmt.Sprintf("%v", this.Recipient), "Address", "Address", 1) + `,`,
+		`SecretHash:` + strings.Replace(fmt.Sprintf("%v", this.SecretHash), "SecretHash", "SecretHash", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7448,12 +7278,12 @@ func (this *WithdrawRequest) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&WithdrawRequest{`,
-		`TokenNetworkAddress:` + strings.Replace(this.TokenNetworkAddress.String(), "TokenNetworkAddress", "TokenNetworkAddress", 1) + `,`,
-		`MessageId:` + strings.Replace(this.MessageId.String(), "MessageID", "MessageID", 1) + `,`,
-		`ChannelId:` + strings.Replace(this.ChannelId.String(), "ChannelID", "ChannelID", 1) + `,`,
-		`Participant:` + strings.Replace(this.Participant.String(), "Address", "Address", 1) + `,`,
-		`WithdrawAmount:` + strings.Replace(this.WithdrawAmount.String(), "TokenAmount", "TokenAmount", 1) + `,`,
-		`ParticipantSignature:` + strings.Replace(this.ParticipantSignature.String(), "SignedMessage", "SignedMessage", 1) + `,`,
+		`TokenNetworkAddress:` + strings.Replace(fmt.Sprintf("%v", this.TokenNetworkAddress), "TokenNetworkAddress", "TokenNetworkAddress", 1) + `,`,
+		`MessageId:` + strings.Replace(fmt.Sprintf("%v", this.MessageId), "MessageID", "MessageID", 1) + `,`,
+		`ChannelId:` + strings.Replace(fmt.Sprintf("%v", this.ChannelId), "ChannelID", "ChannelID", 1) + `,`,
+		`Participant:` + strings.Replace(fmt.Sprintf("%v", this.Participant), "Address", "Address", 1) + `,`,
+		`WithdrawAmount:` + strings.Replace(fmt.Sprintf("%v", this.WithdrawAmount), "TokenAmount", "TokenAmount", 1) + `,`,
+		`ParticipantSignature:` + strings.Replace(fmt.Sprintf("%v", this.ParticipantSignature), "SignedMessage", "SignedMessage", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7464,13 +7294,13 @@ func (this *Withdraw) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Withdraw{`,
-		`TokenNetworkAddress:` + strings.Replace(this.TokenNetworkAddress.String(), "TokenNetworkAddress", "TokenNetworkAddress", 1) + `,`,
-		`MessageId:` + strings.Replace(this.MessageId.String(), "MessageID", "MessageID", 1) + `,`,
-		`ChannelId:` + strings.Replace(this.ChannelId.String(), "ChannelID", "ChannelID", 1) + `,`,
-		`Participant:` + strings.Replace(this.Participant.String(), "Address", "Address", 1) + `,`,
-		`WithdrawAmount:` + strings.Replace(this.WithdrawAmount.String(), "TokenAmount", "TokenAmount", 1) + `,`,
-		`ParticipantSignature:` + strings.Replace(this.ParticipantSignature.String(), "SignedMessage", "SignedMessage", 1) + `,`,
-		`PartnerSignature:` + strings.Replace(this.PartnerSignature.String(), "SignedMessage", "SignedMessage", 1) + `,`,
+		`TokenNetworkAddress:` + strings.Replace(fmt.Sprintf("%v", this.TokenNetworkAddress), "TokenNetworkAddress", "TokenNetworkAddress", 1) + `,`,
+		`MessageId:` + strings.Replace(fmt.Sprintf("%v", this.MessageId), "MessageID", "MessageID", 1) + `,`,
+		`ChannelId:` + strings.Replace(fmt.Sprintf("%v", this.ChannelId), "ChannelID", "ChannelID", 1) + `,`,
+		`Participant:` + strings.Replace(fmt.Sprintf("%v", this.Participant), "Address", "Address", 1) + `,`,
+		`WithdrawAmount:` + strings.Replace(fmt.Sprintf("%v", this.WithdrawAmount), "TokenAmount", "TokenAmount", 1) + `,`,
+		`ParticipantSignature:` + strings.Replace(fmt.Sprintf("%v", this.ParticipantSignature), "SignedMessage", "SignedMessage", 1) + `,`,
+		`PartnerSignature:` + strings.Replace(fmt.Sprintf("%v", this.PartnerSignature), "SignedMessage", "SignedMessage", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7481,14 +7311,14 @@ func (this *CooperativeSettleRequest) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&CooperativeSettleRequest{`,
-		`TokenNetworkAddress:` + strings.Replace(this.TokenNetworkAddress.String(), "TokenNetworkAddress", "TokenNetworkAddress", 1) + `,`,
-		`MessageId:` + strings.Replace(this.MessageId.String(), "MessageID", "MessageID", 1) + `,`,
-		`ChannelId:` + strings.Replace(this.ChannelId.String(), "ChannelID", "ChannelID", 1) + `,`,
-		`Participant1:` + strings.Replace(this.Participant1.String(), "Address", "Address", 1) + `,`,
-		`Participant1Balance:` + strings.Replace(this.Participant1Balance.String(), "TokenAmount", "TokenAmount", 1) + `,`,
-		`Participant2:` + strings.Replace(this.Participant2.String(), "Address", "Address", 1) + `,`,
-		`Participant2Balance:` + strings.Replace(this.Participant2Balance.String(), "TokenAmount", "TokenAmount", 1) + `,`,
-		`Participant1Signature:` + strings.Replace(this.Participant1Signature.String(), "SignedMessage", "SignedMessage", 1) + `,`,
+		`TokenNetworkAddress:` + strings.Replace(fmt.Sprintf("%v", this.TokenNetworkAddress), "TokenNetworkAddress", "TokenNetworkAddress", 1) + `,`,
+		`MessageId:` + strings.Replace(fmt.Sprintf("%v", this.MessageId), "MessageID", "MessageID", 1) + `,`,
+		`ChannelId:` + strings.Replace(fmt.Sprintf("%v", this.ChannelId), "ChannelID", "ChannelID", 1) + `,`,
+		`Participant1:` + strings.Replace(fmt.Sprintf("%v", this.Participant1), "Address", "Address", 1) + `,`,
+		`Participant1Balance:` + strings.Replace(fmt.Sprintf("%v", this.Participant1Balance), "TokenAmount", "TokenAmount", 1) + `,`,
+		`Participant2:` + strings.Replace(fmt.Sprintf("%v", this.Participant2), "Address", "Address", 1) + `,`,
+		`Participant2Balance:` + strings.Replace(fmt.Sprintf("%v", this.Participant2Balance), "TokenAmount", "TokenAmount", 1) + `,`,
+		`Participant1Signature:` + strings.Replace(fmt.Sprintf("%v", this.Participant1Signature), "SignedMessage", "SignedMessage", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7499,15 +7329,15 @@ func (this *CooperativeSettle) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&CooperativeSettle{`,
-		`TokenNetworkAddress:` + strings.Replace(this.TokenNetworkAddress.String(), "TokenNetworkAddress", "TokenNetworkAddress", 1) + `,`,
-		`MessageId:` + strings.Replace(this.MessageId.String(), "MessageID", "MessageID", 1) + `,`,
-		`ChannelId:` + strings.Replace(this.ChannelId.String(), "ChannelID", "ChannelID", 1) + `,`,
-		`Participant1:` + strings.Replace(this.Participant1.String(), "Address", "Address", 1) + `,`,
-		`Participant1Balance:` + strings.Replace(this.Participant1Balance.String(), "TokenAmount", "TokenAmount", 1) + `,`,
-		`Participant2:` + strings.Replace(this.Participant2.String(), "Address", "Address", 1) + `,`,
-		`Participant2Balance:` + strings.Replace(this.Participant2Balance.String(), "TokenAmount", "TokenAmount", 1) + `,`,
-		`Participant1Signature:` + strings.Replace(this.Participant1Signature.String(), "SignedMessage", "SignedMessage", 1) + `,`,
-		`Participant2Signature:` + strings.Replace(this.Participant2Signature.String(), "SignedMessage", "SignedMessage", 1) + `,`,
+		`TokenNetworkAddress:` + strings.Replace(fmt.Sprintf("%v", this.TokenNetworkAddress), "TokenNetworkAddress", "TokenNetworkAddress", 1) + `,`,
+		`MessageId:` + strings.Replace(fmt.Sprintf("%v", this.MessageId), "MessageID", "MessageID", 1) + `,`,
+		`ChannelId:` + strings.Replace(fmt.Sprintf("%v", this.ChannelId), "ChannelID", "ChannelID", 1) + `,`,
+		`Participant1:` + strings.Replace(fmt.Sprintf("%v", this.Participant1), "Address", "Address", 1) + `,`,
+		`Participant1Balance:` + strings.Replace(fmt.Sprintf("%v", this.Participant1Balance), "TokenAmount", "TokenAmount", 1) + `,`,
+		`Participant2:` + strings.Replace(fmt.Sprintf("%v", this.Participant2), "Address", "Address", 1) + `,`,
+		`Participant2Balance:` + strings.Replace(fmt.Sprintf("%v", this.Participant2Balance), "TokenAmount", "TokenAmount", 1) + `,`,
+		`Participant1Signature:` + strings.Replace(fmt.Sprintf("%v", this.Participant1Signature), "SignedMessage", "SignedMessage", 1) + `,`,
+		`Participant2Signature:` + strings.Replace(fmt.Sprintf("%v", this.Participant2Signature), "SignedMessage", "SignedMessage", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -7536,7 +7366,7 @@ func (m *ChainID) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -7564,7 +7394,7 @@ func (m *ChainID) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.ChainId |= uint64(b&0x7F) << shift
+				m.ChainId |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -7576,9 +7406,6 @@ func (m *ChainID) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -7609,7 +7436,7 @@ func (m *TokenAmount) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -7637,7 +7464,7 @@ func (m *TokenAmount) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.TokenAmount |= uint64(b&0x7F) << shift
+				m.TokenAmount |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -7649,9 +7476,6 @@ func (m *TokenAmount) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -7682,7 +7506,7 @@ func (m *LocksRoot) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -7710,7 +7534,7 @@ func (m *LocksRoot) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				byteLen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -7719,9 +7543,6 @@ func (m *LocksRoot) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -7737,9 +7558,6 @@ func (m *LocksRoot) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -7770,7 +7588,7 @@ func (m *ChannelID) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -7798,7 +7616,7 @@ func (m *ChannelID) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.ChannelId |= uint64(b&0x7F) << shift
+				m.ChannelId |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -7810,9 +7628,6 @@ func (m *ChannelID) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -7843,7 +7658,7 @@ func (m *TokenNetworkAddress) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -7871,7 +7686,7 @@ func (m *TokenNetworkAddress) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				byteLen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -7880,9 +7695,6 @@ func (m *TokenNetworkAddress) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -7898,9 +7710,6 @@ func (m *TokenNetworkAddress) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -7931,7 +7740,7 @@ func (m *MessageID) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -7959,7 +7768,7 @@ func (m *MessageID) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.MessageId |= uint64(b&0x7F) << shift
+				m.MessageId |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -7971,9 +7780,6 @@ func (m *MessageID) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -8004,7 +7810,7 @@ func (m *PaymentID) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -8032,7 +7838,7 @@ func (m *PaymentID) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.PaymentId |= uint64(b&0x7F) << shift
+				m.PaymentId |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8044,9 +7850,6 @@ func (m *PaymentID) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -8077,7 +7880,7 @@ func (m *PaymentAmount) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -8105,7 +7908,7 @@ func (m *PaymentAmount) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.PaymentAmount |= uint64(b&0x7F) << shift
+				m.PaymentAmount |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8117,9 +7920,6 @@ func (m *PaymentAmount) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -8150,7 +7950,7 @@ func (m *SecretHash) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -8178,7 +7978,7 @@ func (m *SecretHash) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				byteLen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8187,9 +7987,6 @@ func (m *SecretHash) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -8205,9 +8002,6 @@ func (m *SecretHash) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -8238,7 +8032,7 @@ func (m *BlockExpiration) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -8266,7 +8060,7 @@ func (m *BlockExpiration) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.BlockExpiration |= uint64(b&0x7F) << shift
+				m.BlockExpiration |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8278,9 +8072,6 @@ func (m *BlockExpiration) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -8311,7 +8102,7 @@ func (m *SecretType) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -8339,7 +8130,7 @@ func (m *SecretType) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				byteLen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8348,9 +8139,6 @@ func (m *SecretType) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -8366,9 +8154,6 @@ func (m *SecretType) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -8399,7 +8184,7 @@ func (m *EncSecret) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -8427,7 +8212,7 @@ func (m *EncSecret) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				byteLen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8436,9 +8221,6 @@ func (m *EncSecret) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -8454,9 +8236,6 @@ func (m *EncSecret) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -8487,7 +8266,7 @@ func (m *Address) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -8515,7 +8294,7 @@ func (m *Address) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				byteLen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8524,9 +8303,6 @@ func (m *Address) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -8542,9 +8318,6 @@ func (m *Address) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -8575,7 +8348,7 @@ func (m *HashTimeLock) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -8603,7 +8376,7 @@ func (m *HashTimeLock) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8612,9 +8385,6 @@ func (m *HashTimeLock) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -8639,7 +8409,7 @@ func (m *HashTimeLock) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8648,9 +8418,6 @@ func (m *HashTimeLock) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -8675,7 +8442,7 @@ func (m *HashTimeLock) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8684,9 +8451,6 @@ func (m *HashTimeLock) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -8704,9 +8468,6 @@ func (m *HashTimeLock) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -8737,7 +8498,7 @@ func (m *SignedMessage) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -8765,7 +8526,7 @@ func (m *SignedMessage) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				byteLen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8774,9 +8535,6 @@ func (m *SignedMessage) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -8799,7 +8557,7 @@ func (m *SignedMessage) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8808,9 +8566,6 @@ func (m *SignedMessage) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -8835,7 +8590,7 @@ func (m *SignedMessage) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				byteLen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8844,9 +8599,6 @@ func (m *SignedMessage) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -8862,9 +8614,6 @@ func (m *SignedMessage) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -8895,7 +8644,7 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -8923,7 +8672,7 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8932,9 +8681,6 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -8959,7 +8705,7 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Nonce |= uint64(b&0x7F) << shift
+				m.Nonce |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8978,7 +8724,7 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -8987,9 +8733,6 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9014,7 +8757,7 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9023,9 +8766,6 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9050,7 +8790,7 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9059,9 +8799,6 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9086,7 +8823,7 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9095,9 +8832,6 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9122,7 +8856,7 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9131,9 +8865,6 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9158,7 +8889,7 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9167,9 +8898,6 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9187,9 +8915,6 @@ func (m *EnvelopeMessage) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -9220,7 +8945,7 @@ func (m *Processed) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -9248,7 +8973,7 @@ func (m *Processed) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9257,9 +8982,6 @@ func (m *Processed) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9284,7 +9006,7 @@ func (m *Processed) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9293,9 +9015,6 @@ func (m *Processed) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9313,9 +9032,6 @@ func (m *Processed) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -9346,7 +9062,7 @@ func (m *Delivered) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -9374,7 +9090,7 @@ func (m *Delivered) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9383,9 +9099,6 @@ func (m *Delivered) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9410,7 +9123,7 @@ func (m *Delivered) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9419,9 +9132,6 @@ func (m *Delivered) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9439,9 +9149,6 @@ func (m *Delivered) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -9472,7 +9179,7 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -9500,7 +9207,7 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9509,9 +9216,6 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9536,7 +9240,7 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9545,9 +9249,6 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9572,7 +9273,7 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9581,9 +9282,6 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9608,7 +9306,7 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9617,9 +9315,6 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9644,7 +9339,7 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9653,9 +9348,6 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9680,7 +9372,7 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9689,9 +9381,6 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9709,9 +9398,6 @@ func (m *SecretRequest) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -9742,7 +9428,7 @@ func (m *BalanceProof) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -9770,7 +9456,7 @@ func (m *BalanceProof) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9779,9 +9465,6 @@ func (m *BalanceProof) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9806,7 +9489,7 @@ func (m *BalanceProof) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9815,9 +9498,6 @@ func (m *BalanceProof) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9842,7 +9522,7 @@ func (m *BalanceProof) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9851,9 +9531,6 @@ func (m *BalanceProof) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9878,7 +9555,7 @@ func (m *BalanceProof) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9887,9 +9564,6 @@ func (m *BalanceProof) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -9907,9 +9581,6 @@ func (m *BalanceProof) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -9940,7 +9611,7 @@ func (m *RevealSecret) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -9968,7 +9639,7 @@ func (m *RevealSecret) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9977,9 +9648,6 @@ func (m *RevealSecret) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10004,7 +9672,7 @@ func (m *RevealSecret) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10013,9 +9681,6 @@ func (m *RevealSecret) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10040,7 +9705,7 @@ func (m *RevealSecret) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10049,9 +9714,6 @@ func (m *RevealSecret) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10069,9 +9731,6 @@ func (m *RevealSecret) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -10102,7 +9761,7 @@ func (m *DirectTransfer) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -10130,7 +9789,7 @@ func (m *DirectTransfer) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10139,9 +9798,6 @@ func (m *DirectTransfer) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10166,7 +9822,7 @@ func (m *DirectTransfer) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10175,9 +9831,6 @@ func (m *DirectTransfer) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10202,7 +9855,7 @@ func (m *DirectTransfer) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10211,9 +9864,6 @@ func (m *DirectTransfer) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10238,7 +9888,7 @@ func (m *DirectTransfer) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10247,9 +9897,6 @@ func (m *DirectTransfer) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10274,7 +9921,7 @@ func (m *DirectTransfer) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10283,9 +9930,6 @@ func (m *DirectTransfer) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10303,9 +9947,6 @@ func (m *DirectTransfer) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -10336,7 +9977,7 @@ func (m *LockedTransferBase) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -10364,7 +10005,7 @@ func (m *LockedTransferBase) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10373,9 +10014,6 @@ func (m *LockedTransferBase) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10400,7 +10038,7 @@ func (m *LockedTransferBase) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10409,9 +10047,6 @@ func (m *LockedTransferBase) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10436,7 +10071,7 @@ func (m *LockedTransferBase) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10445,9 +10080,6 @@ func (m *LockedTransferBase) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10472,7 +10104,7 @@ func (m *LockedTransferBase) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10481,9 +10113,6 @@ func (m *LockedTransferBase) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10508,7 +10137,7 @@ func (m *LockedTransferBase) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10517,9 +10146,6 @@ func (m *LockedTransferBase) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10544,7 +10170,7 @@ func (m *LockedTransferBase) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10553,9 +10179,6 @@ func (m *LockedTransferBase) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10573,9 +10196,6 @@ func (m *LockedTransferBase) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -10606,7 +10226,7 @@ func (m *LockedTransfer) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -10634,7 +10254,7 @@ func (m *LockedTransfer) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10643,9 +10263,6 @@ func (m *LockedTransfer) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10670,7 +10287,7 @@ func (m *LockedTransfer) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10679,9 +10296,6 @@ func (m *LockedTransfer) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10706,7 +10320,7 @@ func (m *LockedTransfer) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10715,9 +10329,6 @@ func (m *LockedTransfer) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10742,7 +10353,7 @@ func (m *LockedTransfer) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10751,9 +10362,6 @@ func (m *LockedTransfer) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10778,7 +10386,7 @@ func (m *LockedTransfer) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Fee |= uint32(b&0x7F) << shift
+				m.Fee |= (uint32(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10790,9 +10398,6 @@ func (m *LockedTransfer) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -10823,7 +10428,7 @@ func (m *RefundTransfer) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -10851,7 +10456,7 @@ func (m *RefundTransfer) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10860,9 +10465,6 @@ func (m *RefundTransfer) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10880,9 +10482,6 @@ func (m *RefundTransfer) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -10913,7 +10512,7 @@ func (m *LockExpired) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -10941,7 +10540,7 @@ func (m *LockExpired) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10950,9 +10549,6 @@ func (m *LockExpired) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -10977,7 +10573,7 @@ func (m *LockExpired) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -10986,9 +10582,6 @@ func (m *LockExpired) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11013,7 +10606,7 @@ func (m *LockExpired) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11022,9 +10615,6 @@ func (m *LockExpired) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11049,7 +10639,7 @@ func (m *LockExpired) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11058,9 +10648,6 @@ func (m *LockExpired) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11078,9 +10665,6 @@ func (m *LockExpired) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -11111,7 +10695,7 @@ func (m *WithdrawRequest) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -11139,7 +10723,7 @@ func (m *WithdrawRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11148,9 +10732,6 @@ func (m *WithdrawRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11175,7 +10756,7 @@ func (m *WithdrawRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11184,9 +10765,6 @@ func (m *WithdrawRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11211,7 +10789,7 @@ func (m *WithdrawRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11220,9 +10798,6 @@ func (m *WithdrawRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11247,7 +10822,7 @@ func (m *WithdrawRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11256,9 +10831,6 @@ func (m *WithdrawRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11283,7 +10855,7 @@ func (m *WithdrawRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11292,9 +10864,6 @@ func (m *WithdrawRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11319,7 +10888,7 @@ func (m *WithdrawRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11328,9 +10897,6 @@ func (m *WithdrawRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11348,9 +10914,6 @@ func (m *WithdrawRequest) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -11381,7 +10944,7 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -11409,7 +10972,7 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11418,9 +10981,6 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11445,7 +11005,7 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11454,9 +11014,6 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11481,7 +11038,7 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11490,9 +11047,6 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11517,7 +11071,7 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11526,9 +11080,6 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11553,7 +11104,7 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11562,9 +11113,6 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11589,7 +11137,7 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11598,9 +11146,6 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11625,7 +11170,7 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11634,9 +11179,6 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11654,9 +11196,6 @@ func (m *Withdraw) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -11687,7 +11226,7 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -11715,7 +11254,7 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11724,9 +11263,6 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11751,7 +11287,7 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11760,9 +11296,6 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11787,7 +11320,7 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11796,9 +11329,6 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11823,7 +11353,7 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11832,9 +11362,6 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11859,7 +11386,7 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11868,9 +11395,6 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11895,7 +11419,7 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11904,9 +11428,6 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11931,7 +11452,7 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11940,9 +11461,6 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11967,7 +11485,7 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -11976,9 +11494,6 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -11996,9 +11511,6 @@ func (m *CooperativeSettleRequest) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -12029,7 +11541,7 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -12057,7 +11569,7 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -12066,9 +11578,6 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -12093,7 +11602,7 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -12102,9 +11611,6 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -12129,7 +11635,7 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -12138,9 +11644,6 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -12165,7 +11668,7 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -12174,9 +11677,6 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -12201,7 +11701,7 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -12210,9 +11710,6 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -12237,7 +11734,7 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -12246,9 +11743,6 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -12273,7 +11767,7 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -12282,9 +11776,6 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -12309,7 +11800,7 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -12318,9 +11809,6 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -12345,7 +11833,7 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -12354,9 +11842,6 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthStream
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthStream
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -12374,9 +11859,6 @@ func (m *CooperativeSettle) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthStream
 			}
 			if (iNdEx + skippy) > l {
@@ -12446,11 +11928,8 @@ func skipStream(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			if length < 0 {
-				return 0, ErrInvalidLengthStream
-			}
 			iNdEx += length
-			if iNdEx < 0 {
+			if length < 0 {
 				return 0, ErrInvalidLengthStream
 			}
 			return iNdEx, nil
@@ -12481,9 +11960,6 @@ func skipStream(dAtA []byte) (n int, err error) {
 					return 0, err
 				}
 				iNdEx = start + next
-				if iNdEx < 0 {
-					return 0, ErrInvalidLengthStream
-				}
 			}
 			return iNdEx, nil
 		case 4:
@@ -12502,3 +11978,89 @@ var (
 	ErrInvalidLengthStream = fmt.Errorf("proto: negative length found during unmarshaling")
 	ErrIntOverflowStream   = fmt.Errorf("proto: integer overflow")
 )
+
+func init() { proto.RegisterFile("stream.proto", fileDescriptor_stream_99ad9bcf0115d5db) }
+
+var fileDescriptor_stream_99ad9bcf0115d5db = []byte{
+	// 1270 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x58, 0x4f, 0x6f, 0x1b, 0x45,
+	0x14, 0xef, 0xda, 0x8e, 0x1d, 0x3f, 0xdb, 0x71, 0x32, 0xf9, 0x43, 0x8a, 0x5a, 0x03, 0x4b, 0x10,
+	0xb4, 0x6a, 0x93, 0xc6, 0x55, 0x90, 0x40, 0x08, 0xd4, 0xc4, 0x91, 0x6a, 0x29, 0xad, 0xd2, 0x4d,
+	0x24, 0x8e, 0xd6, 0x7a, 0xf7, 0xc5, 0x5e, 0xc5, 0xd9, 0x35, 0xbb, 0x63, 0x87, 0xdc, 0xb8, 0x72,
+	0xe2, 0xda, 0x6f, 0x50, 0xae, 0x7c, 0x8b, 0x72, 0x01, 0x8e, 0x1c, 0x9b, 0x70, 0xe3, 0x42, 0x25,
+	0xbe, 0x00, 0x9a, 0xdd, 0x99, 0xdd, 0x99, 0xad, 0xe3, 0x1a, 0x73, 0xa8, 0xa8, 0x72, 0xf3, 0xcc,
+	0xfe, 0xde, 0xbc, 0x37, 0xbf, 0xf7, 0xe6, 0xf7, 0x5e, 0x02, 0xe5, 0x80, 0xfa, 0x68, 0x9e, 0xac,
+	0xf7, 0x7d, 0x8f, 0x7a, 0x64, 0xf6, 0x04, 0x83, 0xc0, 0xec, 0x60, 0xf0, 0xae, 0xde, 0xf1, 0x3a,
+	0xde, 0x46, 0xb8, 0xdb, 0x1e, 0x1c, 0x6d, 0xb0, 0x55, 0xb8, 0x08, 0x7f, 0x45, 0x68, 0x7d, 0x0d,
+	0x0a, 0x3b, 0x5d, 0xd3, 0x71, 0x9b, 0x0d, 0x72, 0x1d, 0x66, 0x2d, 0xf6, 0xb3, 0xe5, 0xd8, 0xab,
+	0xda, 0xfb, 0xda, 0x27, 0x39, 0xa3, 0x10, 0xae, 0x9b, 0xb6, 0x7e, 0x0f, 0x4a, 0x87, 0xde, 0x31,
+	0xba, 0x0f, 0x4e, 0xbc, 0x81, 0x4b, 0xc9, 0x07, 0x50, 0xa6, 0x6c, 0xd9, 0x32, 0xc3, 0x35, 0x47,
+	0x97, 0x68, 0x02, 0xd1, 0x6f, 0x43, 0x71, 0xcf, 0xb3, 0x8e, 0x03, 0xc3, 0xf3, 0x28, 0xb9, 0x09,
+	0xd0, 0x63, 0x8b, 0x96, 0xef, 0x79, 0x11, 0xba, 0x6c, 0x14, 0x7b, 0xe2, 0x33, 0xc3, 0xee, 0x74,
+	0x4d, 0xd7, 0xc5, 0x5e, 0xb3, 0xc1, 0xb0, 0x56, 0xb4, 0x48, 0xe2, 0x28, 0xf2, 0x9d, 0xa6, 0xad,
+	0x37, 0x61, 0x31, 0x8c, 0xe4, 0x31, 0xd2, 0x53, 0xcf, 0x3f, 0x7e, 0x60, 0xdb, 0x3e, 0x06, 0x01,
+	0xa9, 0xc3, 0x72, 0x14, 0x91, 0x1b, 0xed, 0xb7, 0xcc, 0xe8, 0x03, 0x77, 0xb6, 0x48, 0x5f, 0xb5,
+	0x61, 0x6e, 0x1f, 0x45, 0x54, 0x45, 0x6e, 0x39, 0x6f, 0x92, 0x5b, 0xbe, 0xd3, 0xb4, 0x19, 0x76,
+	0xdf, 0x3c, 0x3b, 0x41, 0x97, 0x46, 0xd8, 0x7e, 0xb4, 0x90, 0xb0, 0x7c, 0xa7, 0x69, 0xeb, 0x9f,
+	0x42, 0x85, 0x63, 0x39, 0x5d, 0x1f, 0xc1, 0x9c, 0xc0, 0x2b, 0x84, 0x55, 0xfa, 0x32, 0x4c, 0xbf,
+	0x0b, 0x70, 0x80, 0x96, 0x8f, 0xf4, 0xa1, 0x19, 0x74, 0xc9, 0x7b, 0x50, 0x0a, 0xc2, 0x55, 0xab,
+	0x6b, 0x06, 0x5d, 0x7e, 0x0f, 0x08, 0x62, 0x80, 0xfe, 0x05, 0x54, 0xb7, 0x19, 0x87, 0xbb, 0xdf,
+	0xf6, 0x1d, 0xdf, 0xa4, 0x8e, 0xe7, 0x92, 0x5b, 0x30, 0xdf, 0x66, 0x5b, 0x2d, 0x8c, 0xf7, 0xb8,
+	0xab, 0x6a, 0x5b, 0x85, 0xea, 0x6b, 0xc2, 0xd9, 0xe1, 0x59, 0x1f, 0xc9, 0x0a, 0xe4, 0xa3, 0x93,
+	0xb9, 0x1f, 0xbe, 0x62, 0xd7, 0xde, 0x75, 0xad, 0x08, 0xc8, 0xae, 0x8d, 0xae, 0xd5, 0x52, 0x80,
+	0x45, 0x14, 0x9f, 0xf5, 0x0f, 0xa1, 0x20, 0xb2, 0xb1, 0x0a, 0x05, 0x95, 0x7f, 0xb1, 0xd4, 0x7f,
+	0xd2, 0xa0, 0xcc, 0xa2, 0x3f, 0x74, 0x4e, 0x90, 0xd5, 0x07, 0xd9, 0x80, 0xbc, 0xc4, 0x49, 0xa9,
+	0xfe, 0xce, 0xba, 0x28, 0xdf, 0x75, 0x85, 0x44, 0x83, 0xc3, 0xc8, 0x67, 0x00, 0xd2, 0xed, 0x32,
+	0xa1, 0xd1, 0xf5, 0xc4, 0x28, 0x45, 0x89, 0x21, 0x81, 0xc9, 0x96, 0x4a, 0x69, 0x36, 0xb4, 0x5d,
+	0x4a, 0x6c, 0x13, 0xf6, 0x15, 0xa2, 0x87, 0x50, 0x39, 0x70, 0x3a, 0x2e, 0xda, 0xbc, 0x5a, 0xc8,
+	0x0d, 0x28, 0x06, 0x4e, 0xc7, 0x35, 0xe9, 0xc0, 0x47, 0xc1, 0x43, 0xbc, 0x41, 0x6e, 0x31, 0x2e,
+	0x5d, 0x1b, 0x7d, 0x1e, 0xdc, 0x42, 0xe2, 0x80, 0xf3, 0x63, 0x70, 0x00, 0x3b, 0xa8, 0x3f, 0x68,
+	0xf7, 0x1c, 0xeb, 0x18, 0xcf, 0xc2, 0x70, 0xca, 0x46, 0xb2, 0xa1, 0xff, 0x9c, 0x85, 0xea, 0xae,
+	0x3b, 0xc4, 0x9e, 0xd7, 0x47, 0xe1, 0xfa, 0x4e, 0xea, 0x8d, 0x2a, 0xc7, 0xf3, 0x87, 0x1c, 0x3f,
+	0x5b, 0xb2, 0x04, 0x33, 0xae, 0xe7, 0x5a, 0x18, 0x46, 0x92, 0x33, 0xa2, 0x05, 0x69, 0x00, 0xa1,
+	0xbe, 0xe9, 0x06, 0x47, 0xe8, 0xfb, 0x68, 0x8b, 0x92, 0x8c, 0xd8, 0x58, 0x4e, 0x4e, 0x93, 0x1e,
+	0xbc, 0xb1, 0x20, 0x19, 0xf0, 0xa2, 0xfe, 0x1c, 0x2a, 0x8c, 0xea, 0xe4, 0x80, 0xdc, 0xb8, 0x03,
+	0xca, 0x11, 0x96, 0xdb, 0xd6, 0x15, 0x3d, 0x98, 0x09, 0x0d, 0x17, 0x13, 0xc3, 0x58, 0x38, 0x24,
+	0x91, 0x60, 0x36, 0x92, 0x2e, 0xe4, 0xd3, 0x36, 0xb1, 0x80, 0x48, 0x62, 0x41, 0x9e, 0x5c, 0xa6,
+	0x0a, 0x85, 0xd0, 0xfc, 0x66, 0x2a, 0x56, 0x55, 0x1f, 0x46, 0x8a, 0x06, 0xd9, 0x92, 0x73, 0x3f,
+	0x9b, 0x2e, 0x59, 0xa5, 0x4e, 0xa4, 0xa2, 0xd0, 0x87, 0x50, 0xdc, 0xf7, 0x3d, 0x0b, 0x83, 0x00,
+	0x6d, 0x76, 0x95, 0x94, 0xd6, 0x28, 0x57, 0x89, 0x45, 0x49, 0x12, 0x20, 0xd5, 0x6f, 0x66, 0x62,
+	0xbf, 0xdf, 0x6b, 0x50, 0x6c, 0x60, 0xcf, 0x19, 0xa2, 0x8f, 0x36, 0xd9, 0x85, 0x25, 0x5b, 0x2c,
+	0x5a, 0x93, 0x85, 0x40, 0x62, 0x83, 0x47, 0xff, 0x35, 0x96, 0x5f, 0x33, 0x50, 0x89, 0x9e, 0x98,
+	0x81, 0xdf, 0x0c, 0x30, 0xa0, 0x53, 0x11, 0x51, 0x57, 0xc4, 0x37, 0x93, 0xb6, 0x89, 0x55, 0x5a,
+	0x52, 0xe4, 0x29, 0x1f, 0x3e, 0xb9, 0x1b, 0x6b, 0xd3, 0xd8, 0xda, 0x1e, 0xad, 0x4c, 0x33, 0xff,
+	0x4e, 0x99, 0x24, 0x46, 0xf3, 0x13, 0x33, 0xfa, 0xa7, 0x06, 0xe5, 0x6d, 0xb3, 0x67, 0xba, 0x16,
+	0xee, 0xfb, 0x9e, 0x77, 0x44, 0x1a, 0x30, 0x8f, 0x5c, 0x31, 0x44, 0x7e, 0x39, 0xad, 0x52, 0x20,
+	0x29, 0x4d, 0x31, 0xaa, 0x98, 0x12, 0x19, 0x35, 0x2d, 0x99, 0x29, 0xd2, 0x92, 0x9d, 0x28, 0x2d,
+	0x77, 0xe2, 0xae, 0x93, 0x1b, 0x9d, 0x11, 0xd6, 0x9b, 0xe2, 0x5e, 0xf4, 0x4c, 0x83, 0xb2, 0x81,
+	0x43, 0x34, 0x7b, 0xbc, 0x1f, 0x4d, 0x53, 0x3d, 0x89, 0xcb, 0xcc, 0xeb, 0x5d, 0x4e, 0x9b, 0x96,
+	0xa7, 0x19, 0x98, 0x6b, 0x38, 0x3e, 0x5a, 0xf4, 0x90, 0xcb, 0xe6, 0xff, 0x2c, 0x31, 0x1f, 0xc3,
+	0x4c, 0xa8, 0x7d, 0x3c, 0x2f, 0x23, 0x3a, 0x58, 0xf4, 0x9d, 0x6c, 0x40, 0xd1, 0x47, 0xcb, 0xe9,
+	0x3b, 0xe8, 0x0a, 0x1d, 0x1f, 0x01, 0x4e, 0x30, 0xfa, 0xf3, 0x0c, 0x90, 0xbd, 0xb0, 0x15, 0x08,
+	0x6a, 0xb6, 0xcd, 0x00, 0xaf, 0xe8, 0x89, 0x30, 0xe4, 0x36, 0xe4, 0x98, 0x4a, 0xf0, 0x5a, 0x5b,
+	0x49, 0xb0, 0xf2, 0xcc, 0x64, 0x84, 0x18, 0xfd, 0x6f, 0x0d, 0xe6, 0x54, 0x2a, 0xc9, 0x57, 0x50,
+	0x6e, 0x9b, 0x41, 0x9a, 0xc2, 0x1b, 0x6a, 0x67, 0x55, 0xa9, 0x37, 0x4a, 0xcc, 0x42, 0x30, 0xb8,
+	0x01, 0x45, 0xc7, 0x75, 0xa8, 0x63, 0x52, 0x6f, 0xcc, 0xf8, 0x92, 0x60, 0xd8, 0xb0, 0x43, 0x4d,
+	0xbf, 0x83, 0x62, 0x7e, 0x18, 0x35, 0xec, 0x44, 0x00, 0xc6, 0xb4, 0x34, 0x3e, 0xe6, 0xd2, 0x4c,
+	0xc7, 0x73, 0xa6, 0x34, 0x53, 0x92, 0x79, 0xc8, 0x1e, 0x21, 0x86, 0xd4, 0x55, 0x0c, 0xf6, 0x53,
+	0xdf, 0x86, 0x39, 0x03, 0x8f, 0x06, 0x6e, 0x72, 0xe9, 0x7b, 0x90, 0xf7, 0xc3, 0x1d, 0x7e, 0xdd,
+	0xd5, 0xcb, 0xae, 0x6b, 0x70, 0x9c, 0xfe, 0x97, 0x06, 0xa5, 0x3d, 0x21, 0xc6, 0x68, 0xbf, 0xc1,
+	0xea, 0x53, 0x0a, 0x24, 0x3b, 0x41, 0x81, 0xa4, 0x3a, 0x59, 0x6e, 0xc2, 0x11, 0xf6, 0x87, 0x2c,
+	0x54, 0xbf, 0x76, 0x68, 0xd7, 0xf6, 0xcd, 0x53, 0xd1, 0x7c, 0x9f, 0x8c, 0xfb, 0x93, 0x69, 0xba,
+	0xe1, 0x68, 0xca, 0x07, 0x28, 0xcd, 0x75, 0xd9, 0x89, 0xe6, 0xba, 0xfb, 0x50, 0xea, 0x9b, 0x3e,
+	0x75, 0x2c, 0xa7, 0x6f, 0xc6, 0xdd, 0x79, 0x04, 0x71, 0x32, 0x8a, 0x7c, 0x09, 0xd5, 0x53, 0x4e,
+	0x81, 0x18, 0x59, 0x67, 0xc6, 0xb5, 0xf5, 0x39, 0x81, 0xe6, 0x43, 0xeb, 0x1e, 0x2c, 0x4b, 0xc7,
+	0xb5, 0x26, 0x6e, 0x0c, 0x4b, 0x92, 0xd5, 0x41, 0xdc, 0x23, 0x7e, 0xc9, 0xc2, 0xac, 0xc8, 0xc8,
+	0x55, 0x2a, 0xde, 0x64, 0x2a, 0x48, 0x03, 0x16, 0xd8, 0xbe, 0x8b, 0xbe, 0x74, 0x52, 0x61, 0xfc,
+	0x49, 0xf3, 0xdc, 0x22, 0x49, 0xe8, 0xb3, 0x1c, 0xac, 0xee, 0x78, 0x5e, 0x1f, 0xd9, 0x48, 0x37,
+	0xc4, 0x03, 0xa4, 0xb4, 0x87, 0x6f, 0xc1, 0x5b, 0xdb, 0x82, 0xb2, 0xc4, 0xda, 0xe6, 0xe5, 0x19,
+	0x56, 0x60, 0xe4, 0x21, 0xc8, 0x64, 0x6f, 0xb6, 0xda, 0xd1, 0x98, 0x3a, 0x3e, 0xcf, 0x8b, 0xb2,
+	0x09, 0x1f, 0x6c, 0x53, 0x01, 0xd4, 0x79, 0x8e, 0x5f, 0x13, 0x40, 0x3d, 0x15, 0x40, 0x3d, 0x0e,
+	0xa0, 0x30, 0x69, 0x00, 0x75, 0x11, 0xc0, 0x63, 0x58, 0x51, 0xae, 0x32, 0xf1, 0xdf, 0x7f, 0x72,
+	0x91, 0x6e, 0x26, 0x95, 0xf2, 0x32, 0x07, 0x0b, 0xaf, 0x54, 0xca, 0x55, 0x89, 0x5c, 0x95, 0x48,
+	0x22, 0x49, 0xea, 0x79, 0x75, 0xe9, 0xbc, 0xe2, 0xe4, 0xe7, 0xd5, 0xe3, 0xf3, 0xb6, 0xd7, 0x7e,
+	0x3f, 0xaf, 0x5d, 0x7b, 0x71, 0x5e, 0xd3, 0x5e, 0x9e, 0xd7, 0xb4, 0xef, 0x2e, 0x6a, 0xda, 0x8f,
+	0x17, 0x35, 0xed, 0xf9, 0x45, 0x4d, 0xfb, 0xed, 0xa2, 0xa6, 0xbd, 0xb8, 0xa8, 0x69, 0x4f, 0xff,
+	0xa8, 0x5d, 0x6b, 0xe7, 0xc3, 0x7f, 0x09, 0xdf, 0xff, 0x27, 0x00, 0x00, 0xff, 0xff, 0x75, 0x51,
+	0xdc, 0xd4, 0x50, 0x16, 0x00, 0x00,
+}
