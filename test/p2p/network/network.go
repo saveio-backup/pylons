@@ -20,6 +20,7 @@ import (
 	"github.com/saveio/dsp-go-sdk/network/common"
 	"github.com/saveio/dsp-go-sdk/network/message/pb"
 	dspmsg "github.com/saveio/dsp-go-sdk/network/message/pb"
+	"github.com/saveio/pylons/actor/msg_opcode"
 	act "github.com/saveio/pylons/actor/server"
 	"github.com/saveio/pylons/network/transport/messages"
 	test "github.com/saveio/pylons/test/test/config"
@@ -27,45 +28,6 @@ import (
 )
 
 var once sync.Once
-
-const (
-	OpCodeProcessed opcode.Opcode = 1000 + iota
-	OpCodeDelivered
-	OpCodeSecretRequest
-	OpCodeRevealSecret
-	OpCodeSecretMsg
-	OpCodeDirectTransfer
-	OpCodeLockedTransfer
-	OpCodeRefundTransfer
-	OpCodeLockExpired
-	OpCodeWithdrawRequest
-	OpCodeWithdraw
-	OpCodeCooperativeSettleRequest
-	OpCodeCooperativeSettle
-)
-
-// TODO: remove this
-const (
-	TempOpCodeRegistry   = 1013
-	TempOpCodeUnRegistry = 1014
-	TempOpCodeTorrent    = 1015
-)
-
-var opCodes = map[opcode.Opcode]proto.Message{
-	OpCodeProcessed:                &messages.Processed{},
-	OpCodeDelivered:                &messages.Delivered{},
-	OpCodeSecretRequest:            &messages.SecretRequest{},
-	OpCodeRevealSecret:             &messages.RevealSecret{},
-	OpCodeSecretMsg:                &messages.BalanceProof{},
-	OpCodeDirectTransfer:           &messages.DirectTransfer{},
-	OpCodeLockedTransfer:           &messages.LockedTransfer{},
-	OpCodeRefundTransfer:           &messages.RefundTransfer{},
-	OpCodeLockExpired:              &messages.LockExpired{},
-	OpCodeWithdrawRequest:          &messages.WithdrawRequest{},
-	OpCodeWithdraw:                 &messages.Withdraw{},
-	OpCodeCooperativeSettleRequest: &messages.CooperativeSettleRequest{},
-	OpCodeCooperativeSettle:        &messages.CooperativeSettle{},
-}
 
 type Network struct {
 	P2p                   *network.Network
@@ -196,7 +158,7 @@ func (this *Network) Start(address string) error {
 		return err
 	}
 	once.Do(func() {
-		for k, v := range opCodes {
+		for k, v := range msg_opcode.OpCodes {
 			err := opcode.RegisterMessageType(k, v)
 			if err != nil {
 				log.Errorf("register messages failed %v", k)
