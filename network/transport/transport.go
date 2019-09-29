@@ -114,7 +114,7 @@ func (this *Transport) InitQueue(queueId *transfer.QueueId) *Queue {
 }
 
 func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueId) {
-	var interval time.Duration = 3
+	var interval time.Duration = 10
 	var retryTimes = 0
 
 	t := time.NewTimer(interval * time.Second)

@@ -12,7 +12,7 @@ import (
 
 const (
 	defaultMinTimeOut = 1500
-	defaultMaxTimeOut = 24000
+	defaultMaxTimeOut = 60000
 )
 
 func StartPylons() error {
