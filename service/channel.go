@@ -743,9 +743,7 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 	patAddr := common.ToBase58(partnerAddress)
 	if id != 0 {
 		if err = self.Transport.StartHealthCheck(partnerAddress); err != nil {
-			err = fmt.Errorf("[OpenChannel] StartHealthCheck error:%s", err.Error())
-			log.Errorf("[OpenChannel] error: %s", err.Error())
-			return 0, err
+			log.Warnf("[OpenChannel] StartHealthCheck warn: %s", err.Error())
 		}
 		log.Infof("channel between %s and %s already setup, id: %d", regAddr, patAddr, id)
 		return common.ChannelID(id), nil
@@ -761,9 +759,7 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 
 	log.Infof("[OpenChannel] try to connect :%s", common.ToBase58(partnerAddress))
 	if err = self.Transport.StartHealthCheck(partnerAddress); err != nil {
-		err = fmt.Errorf("[OpenChannel] StartHealthCheck error:%s", err.Error())
-		log.Errorf("[OpenChannel] error: %s", err.Error())
-		return 0, err
+		log.Warnf("[OpenChannel] StartHealthCheck warn: %s", err.Error())
 	}
 
 	tokenNetwork := self.chain.NewTokenNetwork(common.Address(usdt.USDT_CONTRACT_ADDRESS))
