@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -22,11 +23,14 @@ func StartPylons() error {
 	}
 	startPylonsReq := &StartPylonsReq{Ret: ret}
 	ChannelServerPid.Tell(startPylonsReq)
-	if err := waitForCallDone(startPylonsReq.Ret.Done, "StartPylons", defaultMaxTimeOut); err != nil {
-		return err
-	} else {
-		return startPylonsReq.Ret.Err
+	done, ok := <-startPylonsReq.Ret.Done
+	if !ok {
+		return errors.New("start pylons channel is closed")
 	}
+	if !done {
+		return fmt.Errorf("start pylons failed: %s", startPylonsReq.Ret.Err)
+	}
+	return nil
 }
 
 func StopPylons() error {
