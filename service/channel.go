@@ -121,7 +121,11 @@ func NewChannelService(chain *network.BlockChainService, queryStartBlock common.
 
 	customDBPath, _ := config["database_path"]
 	self.setDBPath(customDBPath, networkId)
-	self.initDB()
+	if err = self.initDB(); err != nil {
+		log.Errorf("initDB error: %s", err.Error())
+		return nil
+	}
+
 	return self
 }
 
@@ -217,6 +221,17 @@ func (self *ChannelService) initDB() error {
 	} else {
 		chainState := self.StateFromChannel()
 		lastLogBlockHeight = transfer.GetBlockHeight(chainState)
+
+		chainBlockHeight, err := self.chain.BlockHeight()
+		if err != nil {
+			log.Errorf("get chainBlockHeight failed: %s", err.Error())
+			return fmt.Errorf("get chainBlockHeight failed: %s", err.Error())
+		}
+		if lastLogBlockHeight > chainBlockHeight {
+			log.Errorf("error: lastLogBlockHeight > chainBlockHeight")
+			return fmt.Errorf("error: lastLogBlockHeight > chainBlockHeight")
+		}
+
 		err = self.checkAddressIntegrity(chainState)
 		if err != nil {
 			log.Errorf("check address integrity failed: %s", err)
