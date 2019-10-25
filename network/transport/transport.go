@@ -28,7 +28,8 @@ type ChannelServiceInterface interface {
 }
 
 type Transport struct {
-	messageQueues       *sync.Map
+	queueLock           *sync.Mutex
+	messageQueues       map[transfer.QueueId]*Queue
 	addressQueueMap     *sync.Map
 	kill                chan struct{}
 	getHostAddrCallback func(address common.Address) (string, error)
@@ -42,8 +43,9 @@ type QueueItem struct {
 
 func NewTransport(channelService ChannelServiceInterface) *Transport {
 	return &Transport{
+		queueLock:       new(sync.Mutex),
 		kill:            make(chan struct{}),
-		messageQueues:   new(sync.Map),
+		messageQueues:   make(map[transfer.QueueId]*Queue),
 		addressQueueMap: new(sync.Map),
 		ChannelService:  channelService,
 	}
@@ -97,19 +99,12 @@ func (this *Transport) SendAsync(queueId *transfer.QueueId, msg proto.Message) e
 }
 
 func (this *Transport) GetQueue(queueId *transfer.QueueId) *Queue {
-	q, ok := this.messageQueues.Load(*queueId)
+	this.queueLock.Lock()
+	defer this.queueLock.Unlock()
+	q, ok := this.messageQueues[*queueId]
 	if !ok {
-		q = this.InitQueue(queueId)
+		q = this.initQueue(queueId)
 	}
-	return q.(*Queue)
-}
-
-func (this *Transport) InitQueue(queueId *transfer.QueueId) *Queue {
-	q := NewQueue(uint32(common.Config.MaxMsgQueue))
-	this.messageQueues.Store(*queueId, q)
-
-	// queueId cannot be pointer type otherwise it might be updated outside QueueSend
-	go this.QueueSend(q, *queueId)
 	return q
 }
 
@@ -468,4 +463,13 @@ func (this *Transport) ReceiveDelivered(message proto.Message, from string) {
 	}
 	log.Debugf("[ReceiveDelivered] from: %s Time: %s msgId: %v, queue: %p\n", from, time.Now().String(), msgId, queue)
 	queue.(*Queue).DeliverChan <- msg.DeliveredMessageId
+}
+
+func (this *Transport) initQueue(queueId *transfer.QueueId) *Queue {
+	q := NewQueue(uint32(common.Config.MaxMsgQueue))
+	this.messageQueues[*queueId] = q
+
+	// queueId cannot be pointer type otherwise it might be updated outside QueueSend
+	go this.QueueSend(q, *queueId)
+	return q
 }

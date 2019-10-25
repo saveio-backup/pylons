@@ -29,7 +29,7 @@ func NewQueue(cap uint32) *Queue {
 		capacity:    cap,
 		length:      0,
 		DataCh:      make(chan struct{}, 1),
-		DeliverChan: make(chan *messages.MessageID),
+		DeliverChan: make(chan *messages.MessageID, 1),
 	}
 	return q
 }
