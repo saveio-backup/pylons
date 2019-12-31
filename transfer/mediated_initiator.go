@@ -59,6 +59,7 @@ func InitHandleBlock(initiatorState *InitiatorTransferState, stateChange *Block,
 	lockHasExpired, _ := IsLockExpired(channelState.OurState, lockedLock, stateChange.BlockHeight, lockExpirationThreshold)
 
 	if lockHasExpired {
+		log.Debugf("expiration: %d, blockHeight: %d, confirmBlockCount: %d", lockedLock.Expiration, stateChange.BlockHeight, common.Config.ConfirmBlockCount)
 		expiredLockEvents := EventsForExpiredLock(channelState, lockedLock)
 		transferDescription := initiatorState.TransferDescription
 		// TODO: When we introduce multiple transfers per payment this needs to be

@@ -519,6 +519,7 @@ func (self *ChannelService) CallbackNewBlock() {
 				self.HandleStateChange(block)
 				self.lastFilterBlock = common.BlockHeight(i)
 			}
+			log.Infof("[CallbackNewBlock] FastSync end, From: %d, To: %d", bgnBlockHeight, endBlockHeight)
 		}
 		if self.firstRun == false {
 			self.UpdateRouteMap()

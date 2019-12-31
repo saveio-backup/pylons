@@ -233,7 +233,7 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueId) erro
 		return errors.New("no valid address to send message")
 	}
 
-	log.Debugf("[PeekAndSend] address: %s msgId: %v, queue: %p\n", address, msgId, queue)
+	log.Debugf("[PeekAndSend] address: %s msgId: %v, queue: %p, len: %d\n", address, msgId, queue, queue.Len())
 
 	this.addressQueueMap.LoadOrStore(msgId, queue)
 	if err = client.P2pSend(address, msg); err != nil {
