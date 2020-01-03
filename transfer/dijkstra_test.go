@@ -1,16 +1,15 @@
 package transfer
 
 import (
+	"fmt"
+	"sync"
 	"testing"
 
-	"fmt"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
-	chainComm "github.com/saveio/themis/common"
 )
 
 func TestSPT(t *testing.T) {
-	nodes := make(map[common.Address]int64)
 	names := []string{
 		"AGeTrARjozPVLhuzMxZq36THMtvsrZNAHq",
 		"AYMnqA65pJFKAbbpD8hi5gdNDBmeFBy5hS",
@@ -18,48 +17,54 @@ func TestSPT(t *testing.T) {
 		"AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng",
 		"AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ",
 	}
-	for _, n := range names {
-		addr, _ := chainComm.AddressFromBase58(n)
-		nodes[common.Address(addr)] = 0
+	alias := make(map[common.Address]string)
+	nodes := new(sync.Map)
+	edges := new(sync.Map)
+	for k, n := range names {
+		addr, _ := common.FromBase58(n)
+		nodes.Store(addr, 1)
+		name := fmt.Sprintf("%s%d", "node", k)
+		alias[addr] = name
+		//fmt.Println("alias[addr] = ", alias[addr])
 	}
-	fmt.Println(nodes)
-
-	edges := make(map[common.EdgeId]int64)
-
+	for k, en := range alias {
+		fmt.Printf("%s --- %s \n", common.ToBase58(k), en)
+	}
 	edgeNames := make([][]string, 0)
-	edgeNames = append(edgeNames, []string{"AGeTrARjozPVLhuzMxZq36THMtvsrZNAHq", "AYMnqA65pJFKAbbpD8hi5gdNDBmeFBy5hS"})
-	edgeNames = append(edgeNames, []string{"AYMnqA65pJFKAbbpD8hi5gdNDBmeFBy5hS", "AGeTrARjozPVLhuzMxZq36THMtvsrZNAHq"})
-	edgeNames = append(edgeNames, []string{"AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf", "AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng"})
-	edgeNames = append(edgeNames, []string{"AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng", "AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf"})
-	edgeNames = append(edgeNames, []string{"AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ", "AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf"})
-	edgeNames = append(edgeNames, []string{"AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf", "AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ"})
+	edgeNames = append(edgeNames, []string{names[0], names[1]})
+	edgeNames = append(edgeNames, []string{names[1], names[0]})
+	edgeNames = append(edgeNames, []string{names[0], names[2]})
+	edgeNames = append(edgeNames, []string{names[2], names[0]})
+	edgeNames = append(edgeNames, []string{names[2], names[3]})
+	edgeNames = append(edgeNames, []string{names[3], names[2]})
+	edgeNames = append(edgeNames, []string{names[4], names[2]})
+	edgeNames = append(edgeNames, []string{names[2], names[4]})
 
 	for _, en := range edgeNames {
 		NodeA := en[0]
 		NodeB := en[1]
-		addrA, _ := chainComm.AddressFromBase58(NodeA)
-		addrB, _ := chainComm.AddressFromBase58(NodeB)
+		addrA, _ := common.FromBase58(NodeA)
+		addrB, _ := common.FromBase58(NodeB)
 
 		var nodeANodeB common.EdgeId
 		copy(nodeANodeB[:constants.AddrLen], addrA[:])
 		copy(nodeANodeB[constants.AddrLen:], addrB[:])
-		edges[nodeANodeB] = 1
-
-		var nodeBNodeA common.EdgeId
-		copy(nodeBNodeA[:constants.AddrLen], addrB[:])
-		copy(nodeBNodeA[constants.AddrLen:], addrA[:])
-		edges[nodeBNodeA] = 1
+		edges.Store(nodeANodeB, int64(1))
+		fmt.Printf("add edge:%s-%s\n", alias[addrA], alias[addrB])
 	}
-	fmt.Println(edges)
 
-	toAddress, err := chainComm.AddressFromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
+	toAddress, err := common.FromBase58("AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ")
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	top := NewTopology(nodes, edges)
-	fmt.Println("TOP: ", top)
+	//fmt.Println("TOP: ", top)
 	spt := top.GetShortPath(common.Address(toAddress))
-	fmt.Println("SPT:", spt)
-
+	fmt.Printf("path to %s:\n", alias[toAddress])
+	for index := 0; index < len(spt); index++ {
+		for _, v := range spt[index] {
+			fmt.Printf("%s ", alias[v])
+		}
+		fmt.Println()
+	}
 }
