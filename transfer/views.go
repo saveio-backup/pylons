@@ -221,8 +221,11 @@ func GetChannelStateByTokenNetworkAndPartner(chainState *ChainState, tokenNetwor
 
 	if tokenNetworkState != nil {
 		states := FilterChannelsByStatus(tokenNetworkState.PartnerAddressesToChannels[partnerAddress], excludeStates)
-		if states != nil {
-			channelState = states.Back().Value.(*NettingChannelState)
+		if states != nil && states.Back() != nil {
+			var ok bool
+			if channelState, ok = states.Back().Value.(*NettingChannelState); ok {
+				return channelState
+			}
 		}
 	}
 
