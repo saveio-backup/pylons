@@ -235,7 +235,7 @@ func (self *ChannelService) initDB() error {
 		}
 		if lastLogBlockHeight > chainBlockHeight {
 			log.Errorf("error: lastLogBlockHeight > chainBlockHeight")
-			return fmt.Errorf("error: lastLogBlockHeight > chainBlockHeight")
+			// return fmt.Errorf("error: lastLogBlockHeight > chainBlockHeight")
 		}
 
 		err = self.checkAddressIntegrity(chainState)
