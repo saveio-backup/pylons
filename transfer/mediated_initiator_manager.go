@@ -96,7 +96,7 @@ func ImHandleInit(paymentState *InitiatorPaymentState, stateChange *ActionInitIn
 
 	if paymentState == nil {
 		subIteration := InitTryNewRoute(nil, channelIdToChannels,
-			stateChange.Routes, stateChange.TransferDescription, blockNumber)
+			stateChange.Routes, stateChange.TransferDescription, blockNumber, true)
 
 		events = subIteration.Events
 		if !IsStateNil(subIteration.NewState) {
@@ -124,7 +124,7 @@ func ImHandleCancelRoute(paymentState *InitiatorPaymentState, stateChange *Actio
 		}
 		//msg := "The previous transfer must be cancelled prior to trying a new route"
 		subIteration := InitTryNewRoute(nil, channelIdToChannels, stateChange.Routes,
-			transferDescription, blockNumber)
+			transferDescription, blockNumber, false)
 		events = append(events, cancelEvents...)
 		events = append(events, subIteration.Events...)
 

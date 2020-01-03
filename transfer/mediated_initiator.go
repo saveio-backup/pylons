@@ -123,9 +123,13 @@ func InitNextChannelFromRoutes(availableRoutes []RouteState,
 func InitTryNewRoute(oldInitiatorState *InitiatorTransferState,
 	channelIdToChannels map[common.ChannelID]*NettingChannelState,
 	availableRoutes []RouteState, transferDescription *TransferDescriptionWithSecretState,
-	blockNumber common.BlockHeight) *TransitionResult {
+	blockNumber common.BlockHeight, init bool) *TransitionResult {
 
-	channelState := InitNextChannelFromRoutes(availableRoutes, channelIdToChannels, transferDescription.Amount)
+	var channelState *NettingChannelState
+	// FIXME: add new route to task
+	if init {
+		channelState = InitNextChannelFromRoutes(availableRoutes, channelIdToChannels, transferDescription.Amount)
+	}
 	var events []Event
 	var initiatorState *InitiatorTransferState
 
