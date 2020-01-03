@@ -132,7 +132,7 @@ func GetLock(endState *NettingChannelEndState, secretHash common.SecretHash) *Ha
 func LockExistsInEitherChannelSide(channelState *NettingChannelState, secretHash common.SecretHash) bool {
 	//"""Check if the lock with `secrethash` exists in either our state or the partner's state"""
 	lock := GetLock(channelState.OurState, secretHash)
-	if lock != nil {
+	if lock == nil {
 		lock = GetLock(channelState.PartnerState, secretHash)
 	}
 	return lock != nil

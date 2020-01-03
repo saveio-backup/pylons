@@ -121,7 +121,7 @@ func subDispatchToPaymentTask(chainState *ChainState, stateChange StateChange,
 		}
 
 		if subIteration != nil && IsStateNil(subIteration.NewState) {
-			log.Debug("[subDispatchToPaymentTask] delete SecretHashesToTask")
+			log.Debug("[subDispatchToPaymentTask] delete SecretHashesToTask %v", secretHash)
 			delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
 		}
 	} else {
@@ -214,7 +214,7 @@ func subDispatchMediatorTask(chainState *ChainState, stateChange StateChange,
 			chainState.PaymentMapping.SecretHashesToTask[secretHash] = subTask
 			log.Debug("[subDispatchMediatorTask] iteration.NewState")
 		} else if _, ok := chainState.PaymentMapping.SecretHashesToTask[secretHash]; ok {
-			log.Debug("[subDispatchMediatorTask] delete SecretHashesToTask")
+			log.Debug("[subDispatchMediatorTask] delete SecretHashesToTask %v", secretHash)
 			delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
 		}
 	}
@@ -264,7 +264,7 @@ func subDispatchTargetTask(chainState *ChainState, stateChange StateChange,
 				}
 				chainState.PaymentMapping.SecretHashesToTask[secretHash] = subTask
 			} else if _, ok := chainState.PaymentMapping.SecretHashesToTask[secretHash]; ok {
-				log.Debug("[subDispatchTargetTask] delete SecretHashesToTask")
+				log.Debug("[subDispatchTargetTask] delete SecretHashesToTask %v", secretHash)
 				delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
 			}
 		}
