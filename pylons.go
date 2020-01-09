@@ -82,6 +82,9 @@ func NewChannelService(channelConfig *ChannelConfig, account *account.Account) (
 	service := service.NewChannelService(blockChainService, common.BlockHeight(startBlock),
 		common.Address(utils.MicroPayContractAddress), new(service.MessageHandler), option)
 	log.Info("channel service created, use account ", blockChainService.GetAccount().Address.ToBase58())
+	if service == nil {
+		return nil, fmt.Errorf("[NewChannelService] error")
+	}
 
 	channel := &Channel{Config: channelConfig, Service: service}
 	return channel, nil

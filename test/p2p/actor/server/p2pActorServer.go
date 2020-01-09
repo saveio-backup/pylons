@@ -121,7 +121,7 @@ func (this *P2PActor) Receive(ctx actor.Context) {
 		}()
 	case *dspact.RequestWithRetryReq:
 		go func() {
-			ret, err := this.dspNet.RequestWithRetry(msg.Data, msg.Address, msg.Retry)
+			ret, err := this.dspNet.RequestWithRetry(msg.Data, msg.Address, msg.Retry, msg.Timeout)
 			msg.Response <- &dspact.RequestWithRetryResp{Data: ret, Error: err}
 		}()
 	default:

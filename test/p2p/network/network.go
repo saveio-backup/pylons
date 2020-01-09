@@ -121,6 +121,7 @@ func (this *Network) Start(address string) error {
 	}
 
 	builder.SetAddress(address)
+	builder.SetListenAddr(address)
 	// add msg receiver
 	component := new(NetComponent)
 	component.Net = this
@@ -373,11 +374,11 @@ func (this *Network) Request(msg proto.Message, peer string) (proto.Message, err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(common.REQUEST_MSG_TIMEOUT)*time.Second)
 	defer cancel()
-	return client.Request(ctx, msg)
+	return client.Request(ctx, msg, time.Duration(30)*time.Second)
 }
 
 // RequestWithRetry. send msg to peer and wait for response synchronously
-func (this *Network) RequestWithRetry(msg proto.Message, peer string, retry int) (proto.Message, error) {
+func (this *Network) RequestWithRetry(msg proto.Message, peer string, retry int, timeout int) (proto.Message, error) {
 	client := this.P2p.GetPeerClient(peer)
 	if client == nil {
 		return nil, fmt.Errorf("get peer client is nil %s", peer)
@@ -388,7 +389,7 @@ func (this *Network) RequestWithRetry(msg proto.Message, peer string, retry int)
 		log.Debugf("send request msg to %s with retry %d", peer, i)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(common.REQUEST_MSG_TIMEOUT)*time.Second)
 		defer cancel()
-		res, err = client.Request(ctx, msg)
+		res, err = client.Request(ctx, msg, time.Duration(timeout)*time.Second)
 		if err == nil || err.Error() != "context deadline exceeded" {
 			break
 		}
