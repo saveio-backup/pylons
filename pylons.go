@@ -79,11 +79,11 @@ func NewChannelService(channelConfig *ChannelConfig, account *account.Account) (
 		log.Infof("[NewChannelService] SetMaxBlockDelay blockDelay: %d", blockDelay)
 	}
 
-	service := service.NewChannelService(blockChainService, common.BlockHeight(startBlock),
+	service, err := service.NewChannelService(blockChainService, common.BlockHeight(startBlock),
 		common.Address(utils.MicroPayContractAddress), new(service.MessageHandler), option)
 	log.Info("channel service created, use account ", blockChainService.GetAccount().Address.ToBase58())
-	if service == nil {
-		return nil, fmt.Errorf("[NewChannelService] error")
+	if err != nil {
+		return nil, fmt.Errorf("[NewChannelService] NewChannelService error: %s", err.Error())
 	}
 
 	channel := &Channel{Config: channelConfig, Service: service}

@@ -85,11 +85,11 @@ func (self *PaymentStatus) Match(paymentType common.PaymentType, tokenNetworkId 
 }
 
 func NewChannelService(chain *network.BlockChainService, queryStartBlock common.BlockHeight,
-	microPayAddress common.Address, messageHandler *MessageHandler, config map[string]string) *ChannelService {
+	microPayAddress common.Address, messageHandler *MessageHandler, config map[string]string) (*ChannelService, error) {
 	var err error
 	if chain == nil {
 		log.Error("error in create new channel service: chain service not available")
-		return nil
+		return nil, fmt.Errorf("error in create new channel service: chain service not available")
 	}
 	self := new(ChannelService)
 
@@ -115,7 +115,7 @@ func NewChannelService(chain *network.BlockChainService, queryStartBlock common.
 	networkId, err := self.chain.ChainClient.GetNetworkId()
 	if err != nil {
 		log.Error("get network id failed:", err)
-		return nil
+		return nil, fmt.Errorf("get network id failed: %s", err)
 	}
 	log.Debug("[NewChannelService], NetworkId: ", networkId)
 
@@ -123,10 +123,10 @@ func NewChannelService(chain *network.BlockChainService, queryStartBlock common.
 	self.setDBPath(customDBPath, networkId)
 	if err = self.initDB(); err != nil {
 		log.Errorf("initDB error: %s", err.Error())
-		return nil
+		return nil, fmt.Errorf("initDB error: %s", err.Error())
 	}
 
-	return self
+	return self, nil
 }
 
 func (self *ChannelService) setDBPath(customDBPath string, dbId uint32) {
@@ -192,6 +192,12 @@ func (self *ChannelService) initDB() error {
 	self.isRestoreFinish = true
 
 	if self.Wal.StateManager.CurrentState == nil {
+		pubKey, err := self.chain.ChannelClient.GetNodePubKey(self.Account.Address)
+		if err == nil && len(pubKey) != 0 {
+			log.Errorf("chain has record with this wallet address, but local db was not found")
+			return fmt.Errorf("chain has record with this wallet address, but local db was not found")
+		}
+
 		var stateChange transfer.StateChange
 		networkId, err := self.chain.ChainClient.GetNetworkId()
 		if err != nil {

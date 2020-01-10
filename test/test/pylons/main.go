@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"flag"
 	"math/rand"
 	"os"
@@ -34,16 +35,16 @@ var transferType = flag.Int("type", 0, "transferType [0: MediaTransfer; 1: Direc
 var tokenAddress = common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 var channelActor *ch_actor.ChannelActorServer
 
-func StartPylons() {
+func StartPylons() error {
 	wallet, err := wallet.OpenWallet("./wallet.dat")
 	if err != nil {
 		log.Error("Wallet.Open error:%s\n", err)
-		return
+		return fmt.Errorf("Wallet.Open error:%s\n", err)
 	}
 	account, err := wallet.GetDefaultAccount([]byte("pwd"))
 	if err != nil {
 		log.Error("GetDefaultAccount error:%s\n", err)
-		return
+		return fmt.Errorf("GetDefaultAccount error:%s\n", err)
 	}
 
 	var walletAddr common.Address
@@ -52,7 +53,7 @@ func StartPylons() {
 	listenAddr, err := tc.GetHostAddrCallBack(walletAddr)
 	if err != nil {
 		log.Errorf("GetHostAddrCallBack error:%s\n", err.Error())
-		return
+		return fmt.Errorf("GetHostAddrCallBack error:%s\n", err.Error())
 	}
 	var NodeConfig = &ch.ChannelConfig{
 		ClientType:    tc.Parameters.BaseConfig.ChainClientType,
@@ -65,12 +66,12 @@ func StartPylons() {
 	channelActor, err = ch_actor.NewChannelActor(NodeConfig, account)
 	if err != nil {
 		log.Fatal(err)
-		return
+		return err
 	}
 	err = channelActor.SyncBlockData()
 	if err != nil {
 		log.Fatal(err)
-		return
+		return err
 	}
 
 	//start p2p
@@ -85,14 +86,14 @@ func StartPylons() {
 	err = channelP2p.Start(listenAddr)
 	if err != nil {
 		log.Fatal(err)
-		return
+		return err
 	}
 
 	//bind p2p and p2p actor
 	p2pActor, err := p2p_actor.NewP2PActor()
 	if err != nil {
 		log.Fatal(err)
-		return
+		return err
 	}
 	p2pActor.SetChannelNetwork(channelP2p)
 
@@ -101,16 +102,17 @@ func StartPylons() {
 
 	if err = ch_actor.SetGetHostAddrCallback(tc.GetHostAddrCallBack); err != nil {
 		log.Fatal(err)
-		return
+		return err
 	}
 
 	//start channel service
 	err = ch_actor.StartPylons()
 	if err != nil {
 		log.Fatal(err)
-		return
+		return err
 	}
 	time.Sleep(time.Second)
+	return nil
 }
 
 func main() {
@@ -118,11 +120,15 @@ func main() {
 	log.Init(log.PATH, log.Stdout)
 
 	log.Info("StartPylons")
-	StartPylons()
+	if err := StartPylons(); err != nil {
+		log.Error("[StartPylons] error: ", err.Error())
+		return
+	}
 
 	allChannels, err := ch_actor.GetAllChannels()
 	if err != nil {
 		log.Error("[GetAllChannels] error: ", err.Error())
+		return
 	}
 
 	log.Info("[Show All Channels: ]")
@@ -164,9 +170,11 @@ func main() {
 		ok, err := ch_actor.CloseChannel(mateAddr)
 		if err != nil {
 			log.Error("[CloseChannel] error: ", err.Error())
+			return
 		}
 		if ok {
 			log.Info("[CloseChannel] successful")
+			return
 		}
 	}
 
