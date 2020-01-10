@@ -33,6 +33,12 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 
 	top := transfer.NewTopology(nodes, edges)
 	spt := top.GetShortPath(fromAddress)
+	for _, sp := range spt {
+		for _, node := range sp {
+			fmt.Printf("%s ", common.ToBase58(node))
+		}
+		fmt.Println()
+	}
 	sptLen := len(spt)
 	if len(spt) == 0 {
 		log.Errorf("[GetBestRoutes] spt is nil")
@@ -47,7 +53,7 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 		sp := spt[i]
 		spLen := len(sp)
 		if sp[spLen-1] == toAddress {
-			partAddr = sp[0]
+			partAddr = sp[1]
 			networkState := channelSrv.GetNodeNetworkState(partAddr)
 			if networkState == transfer.NetworkReachable {
 				channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(),

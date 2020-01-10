@@ -8,8 +8,8 @@ import (
 
 // Topology represents a network topology
 type Topology struct {
-	nodes map[common.Address]int
-	edges map[common.Address]map[common.Address]int
+	nodes map[common.Address]int64
+	edges map[common.Address]map[common.Address]int64
 	sp    ShortPathTree
 }
 
@@ -29,12 +29,12 @@ type ShortPathTree [][]common.Address
 // NewTopology creates a new topology
 func NewTopology(nodes *sync.Map, edges *sync.Map) *Topology {
 	t := &Topology{
-		nodes: make(map[common.Address]int),
-		edges: make(map[common.Address]map[common.Address]int),
+		nodes: make(map[common.Address]int64),
+		edges: make(map[common.Address]map[common.Address]int64),
 	}
 
 	nodes.Range(func(key, value interface{}) bool {
-		t.nodes[key.(common.Address)] = value.(int)
+		t.nodes[key.(common.Address)] = value.(int64)
 		return true
 	})
 
@@ -42,10 +42,10 @@ func NewTopology(nodes *sync.Map, edges *sync.Map) *Topology {
 		addr1 := key.(common.EdgeId).GetAddr1()
 		addr2 := key.(common.EdgeId).GetAddr2()
 		if _, ok := t.edges[addr1]; !ok {
-			t.edges[addr1] = make(map[common.Address]int)
+			t.edges[addr1] = make(map[common.Address]int64)
 		}
 
-		t.edges[addr1][addr2] = value.(int)
+		t.edges[addr1][addr2] = value.(int64)
 		return true
 	})
 	return t
@@ -69,7 +69,7 @@ func (self *Topology) searchPath(node common.Address, path []common.Address) {
 	}
 	self.sp = append(self.sp, path)
 	for n := range self.edges[node] {
-		//fmt.Printf("int node %s loop\n", common.ToBase58(node))
+		//fmt.Printf("int64 node %s loop\n", common.ToBase58(node))
 		walked := false
 		for _, v := range path {
 			if n == v {
