@@ -83,6 +83,10 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		}()
 	case *SetGetHostAddrCallbackReq:
 		go func() {
+			if this.chSrv == nil || this.chSrv.Service == nil {
+				msg.Ret.Done <- false
+				return
+			}
 			this.chSrv.Service.SetHostAddrCallBack(msg.GetHostAddrCallback)
 			msg.Ret.Err = nil
 			msg.Ret.Done <- true
