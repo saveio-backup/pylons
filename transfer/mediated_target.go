@@ -16,12 +16,10 @@ func TgEventsForOnChainSecretReveal(targetState *TargetTransferState, channelSta
 	transfer := targetState.Transfer
 	expiration := common.BlockExpiration(transfer.Lock.Expiration)
 
-	safeToWait, _ := MdIsSafeToWait(expiration, channelState.RevealTimeout, blockNumber)
-
+	err := MdIsSafeToWait(expiration, channelState.RevealTimeout, blockNumber)
 	secretKnownOffChain := IsSecretKnownOffChain(channelState.PartnerState, common.SecretHash(transfer.Lock.SecretHash))
-
 	hasOnchainRevealStarted := targetState.State == "onchain_secret_reveal"
-	if !safeToWait && secretKnownOffChain && !hasOnchainRevealStarted {
+	if err != nil && secretKnownOffChain && !hasOnchainRevealStarted {
 		targetState.State = "onchain_secret_reveal"
 		secret := GetSecret(channelState.PartnerState, common.SecretHash(transfer.Lock.SecretHash))
 		return EventsForOnChainSecretReveal(channelState, secret, expiration)
@@ -59,9 +57,8 @@ func HandleInitTarget(stateChange *ActionInitTarget, channelState *NettingChanne
 	if err == nil {
 		log.Debug("[HandleInitTarget] HandleReceiveLockedTransfer err == nil")
 		targetState := &TargetTransferState{Route: transferRoute, Transfer: transfer}
-		safeToWait, _ := MdIsSafeToWait(common.BlockExpiration(transfer.Lock.Expiration),
-			channelState.RevealTimeout, blockNumber)
-		if safeToWait == true {
+		err = MdIsSafeToWait(common.BlockExpiration(transfer.Lock.Expiration), channelState.RevealTimeout, blockNumber)
+		if err == nil {
 			secret, err := secretcrypt.SecretCryptService.DecryptSecret(stateChange.Transfer.EncSecret)
 			if err == nil {
 				secretHash := common.GetHash(secret)
@@ -101,7 +98,6 @@ func HandleInitTarget(stateChange *ActionInitTarget, channelState *NettingChanne
 		SecretHash: common.SecretHash(transfer.Lock.SecretHash),
 		Reason:     err.Error(),
 	}
-
 	channelEvents = append(channelEvents, unlockFailed)
 	iteration = TransitionResult{NewState: nil, Events: channelEvents}
 	return &iteration

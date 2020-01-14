@@ -3,10 +3,9 @@ package transport
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"sync"
 	"time"
-
-	"reflect"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/saveio/carrier/network"

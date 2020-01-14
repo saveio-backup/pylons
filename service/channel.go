@@ -1165,8 +1165,8 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 }
 
 func (self *ChannelService) InitiatorInit(paymentId common.PaymentID, transferAmount common.TokenAmount,
-	secret common.Secret, TokenNetworkId common.TokenNetworkID,
-	targetAddress common.Address, encSecret common.EncSecret) (*transfer.ActionInitInitiator, error) {
+	secret common.Secret, TokenNetworkId common.TokenNetworkID, targetAddress common.Address,
+	encSecret common.EncSecret) (*transfer.ActionInitInitiator, error) {
 	if 0 == bytes.Compare(secret, common.EmptySecretHash[:]) {
 		return nil, fmt.Errorf("Should never end up initiating transfer with Secret 0x0 ")
 	}

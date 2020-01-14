@@ -1135,7 +1135,7 @@ func sendLockedTransfer(channelState *NettingChannelState, initiator common.Addr
 func sendRefundTransfer(channelState *NettingChannelState, initiator common.Address,
 	target common.Address, amount common.PaymentAmount, messageId common.MessageID,
 	paymentId common.PaymentID, expiration common.BlockExpiration,
-	sencSecret common.EncSecret, secretHash common.SecretHash) (*SendRefundTransfer, error) {
+	encSecret common.EncSecret, secretHash common.SecretHash) (*SendRefundTransfer, error) {
 
 	if _, ok := channelState.PartnerState.SecretHashesToLockedLocks[secretHash]; !ok {
 		return nil, fmt.Errorf("Refunds are only valid for *known and pending* transfers ")
@@ -1143,7 +1143,7 @@ func sendRefundTransfer(channelState *NettingChannelState, initiator common.Addr
 
 	sendMediatedTransfer, merkleTree, err := createSendLockedTransfer(
 		channelState, initiator, target, amount, messageId, paymentId,
-		expiration, sencSecret, secretHash)
+		expiration, encSecret, secretHash)
 	if err != nil {
 		log.Error("[sendRefundTransfer] createSendLockedTransfer error: %s", err.Error())
 		return nil, err
@@ -1221,6 +1221,7 @@ func createSendExpiredLock(senderEndState *NettingChannelEndState, lockedLock *H
 	updatedLockedAmount := common.TokenAmount(lockedAmount) - lockedLock.Amount
 
 	if balanceProof == nil {
+		log.Errorf("createSendExpiredLock error: balanceProof is nil!")
 		//there should be a balance proof because a lock is expiring
 		return nil, nil
 	}
@@ -1228,6 +1229,7 @@ func createSendExpiredLock(senderEndState *NettingChannelEndState, lockedLock *H
 
 	merkleTree := computeMerkleTreeWithout(senderEndState.MerkleTree, lockedLock.LockHash)
 	if merkleTree == nil {
+		log.Errorf("computeMerkleTreeWithout error: merkleTree is nil!")
 		return nil, nil
 	}
 
@@ -1261,10 +1263,8 @@ func createSendExpiredLock(senderEndState *NettingChannelEndState, lockedLock *H
 
 func EventsForExpiredLock(channelState *NettingChannelState, lockedLock *HashTimeLockState) []Event {
 	var lockExpired []Event
-	sendLockExpired, merkleTree := createSendExpiredLock(
-		channelState.OurState, lockedLock, channelState.ChainId,
-		channelState.TokenNetworkId,
-		channelState.Identifier, channelState.PartnerState.Address,
+	sendLockExpired, merkleTree := createSendExpiredLock(channelState.OurState, lockedLock, channelState.ChainId,
+		channelState.TokenNetworkId, channelState.Identifier, channelState.PartnerState.Address,
 	)
 
 	if sendLockExpired != nil {

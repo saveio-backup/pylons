@@ -57,25 +57,25 @@ func MdIsLockValid(expiration common.BlockExpiration, blockNumber common.BlockHe
 }
 
 func MdIsSafeToWait(lockExpiration common.BlockExpiration, revealTimeout common.BlockTimeout,
-	blockNumber common.BlockHeight) (bool, error) {
+	blockNumber common.BlockHeight) error {
 	var err error
 	//NOTE, need ensure lock_expiration > reveal_timeout
 	if common.BlockHeight(lockExpiration) < blockNumber {
 		err = fmt.Errorf("lock has expired, lockExpiration %d, blockNumber %d", lockExpiration, blockNumber)
 		log.Warnf(err.Error())
-		return false, err
+		return err
 	}
 
 	lockTimeout := common.BlockHeight(lockExpiration) - blockNumber
 	if common.BlockTimeout(lockTimeout) > revealTimeout {
 		log.Debugf("lock timeout is safe. LockExpiration %d, blockNumber %d, revealTimeout %d",
 			lockExpiration, blockNumber, revealTimeout)
-		return true, nil
+		return nil
 	}
 	err = fmt.Errorf(`lock timeout is unsafe. timeout must be larger than %d,
 		but it is %d. expiration:%d block number: %d`, revealTimeout, lockTimeout, lockExpiration, blockNumber)
 	log.Debugf(err.Error())
-	return false, err
+	return err
 
 }
 
@@ -775,16 +775,18 @@ func eventsForBalanceProof(channelsMap map[common.ChannelID]*NettingChannelState
 		//# on-chain unlock may fail. If the lock is nearing it's expiration
 		//# block, then on-chain unlock should be done, and if successful it can
 		//# be unlocked off-chain.
-		isSafeToSendBalanceProof := false
-		if payerChannel != nil {
-			isSafeToSendBalanceProof, _ = MdIsSafeToWait(common.BlockExpiration(pair.PayerTransfer.Lock.Expiration),
-				payerChannel.RevealTimeout, blockNumber)
+
+		if payerChannel == nil {
+			continue
 		}
 
-		shouldSendBalanceProofToPayee := payeeChannelOpen && payeeKnowsSecret &&
-			!payeePayed && isSafeToSendBalanceProof
+		err := MdIsSafeToWait(common.BlockExpiration(pair.PayerTransfer.Lock.Expiration),
+			payerChannel.RevealTimeout, blockNumber)
+		if err != nil {
+			continue
+		}
 
-		if shouldSendBalanceProofToPayee {
+		if payeeChannelOpen && payeeKnowsSecret && !payeePayed {
 			//# At this point we are sure that payee_channel exists due to the
 			//# payee_channel_open check above. So let mypy know about this
 			if payeeChannel == nil {
@@ -856,10 +858,10 @@ func eventsForOnChainSecretRevealIfDangerzone(channelsMap map[common.ChannelID]*
 		}
 		lock := pair.PayerTransfer.Lock
 
-		safeToWait, _ := MdIsSafeToWait(common.BlockExpiration(lock.Expiration), payerChannel.RevealTimeout, blockNumber)
+		err := MdIsSafeToWait(common.BlockExpiration(lock.Expiration), payerChannel.RevealTimeout, blockNumber)
 		secretKnown := IsSecretKnown(payerChannel.PartnerState, common.SecretHash(pair.PayerTransfer.Lock.SecretHash))
 
-		if !safeToWait && secretKnown {
+		if err != nil && secretKnown {
 			pair.PayerState = "payer_waiting_secret_reveal"
 
 			if !transactionSent {

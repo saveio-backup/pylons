@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -117,7 +117,8 @@ func StartPylons() error {
 
 func main() {
 	flag.Parse()
-	log.Init(log.PATH, log.Stdout)
+	log.InitLog(log.DebugLog, log.PATH, log.Stdout)
+	log.SetModuleLevel("carrier", log.ErrorLog)
 
 	log.Info("StartPylons")
 	if err := StartPylons(); err != nil {
@@ -225,7 +226,7 @@ func MediaLoopTest(amount int, target common.Address, times int) {
 			log.Error("[loopTest] media transfer failed")
 			break
 		} else {
-			//log.Info("[loopTest] media transfer successfully")
+			log.Info("[loopTest] media transfer successfully")
 		}
 	}
 	chInt <- 0
