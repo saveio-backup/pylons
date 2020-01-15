@@ -224,7 +224,6 @@ func MediaLoopTest(amount int, target common.Address, times int) {
 		}
 		if !ret {
 			log.Error("[loopTest] media transfer failed")
-			break
 		} else {
 			log.Info("[loopTest] media transfer successfully")
 		}
@@ -289,7 +288,7 @@ func receivePayment() {
 		select {
 		case msg = <-notificationChannel:
 			addr := common.ToBase58(common.Address(msg.Initiator))
-			log.Infof("[ReceivePayment] Initiator: %v, Amount: %v Times: %v", addr, msg.Amount, i)
+			fmt.Printf("[ReceivePayment] Initiator: %v, Amount: %v Times: %v\n", addr, msg.Amount, i)
 		}
 	}
 }

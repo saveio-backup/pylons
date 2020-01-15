@@ -1068,9 +1068,6 @@ func (self *ChannelService) CheckPayRoute(mediaAddr common.Address, targetAddr c
 	if state := self.Transport.GetNodeNetworkState(mediaAddr); state != transfer.NetworkReachable {
 		return false, fmt.Errorf("[CheckPayRoute] MediaNetworkState(%s) status is not reachable", common.ToBase58(mediaAddr))
 	}
-	if state := self.Transport.GetNodeNetworkState(targetAddr); state != transfer.NetworkReachable {
-		log.Warn("[CheckPayRoute] TargetNetworkState(%s) status is not reachable", common.ToBase58(targetAddr))
-	}
 	return true, nil
 }
 
@@ -1085,12 +1082,6 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	if amount <= 0 {
 		log.Error("amount negative:", amount)
 		return nil, fmt.Errorf("amount negative ")
-	}
-
-	//log.Infof("[MediaTransfer] try to connect :%s", common.ToBase58(target))
-	if err = self.Transport.StartHealthCheck(target); err != nil {
-		log.Errorf("[MediaTransfer] StartHealthCheck error: %s", err.Error())
-		return nil, err
 	}
 
 	chainState := self.StateFromChannel()
@@ -1123,18 +1114,6 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 		return paymentStatus.paymentDone, nil
 	}
 
-	asyncDone := make(chan bool)
-	paymentStatus = &PaymentStatus{
-		paymentType:    common.PAYMENT_MEDIATED,
-		paymentId:      paymentId,
-		amount:         amount,
-		TokenNetworkId: tokenNetworkId,
-		paymentDone:    asyncDone,
-	}
-
-	paymentStatus = self.RegisterPaymentStatus(target, paymentId, common.PAYMENT_MEDIATED,
-		amount, tokenNetworkId)
-
 	encSecret, err := secretcrypt.SecretCryptService.EncryptSecret(target, secret)
 	if err != nil {
 		log.Errorf("Encrypt secret error: %s", err.Error())
@@ -1157,6 +1136,16 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 		log.Errorf("[MediaTransfer] CheckPayRoute error: %s", err.Error())
 		return nil, err
 	}
+
+	asyncDone := make(chan bool)
+	paymentStatus = &PaymentStatus{
+		paymentType:    common.PAYMENT_MEDIATED,
+		paymentId:      paymentId,
+		amount:         amount,
+		TokenNetworkId: tokenNetworkId,
+		paymentDone:    asyncDone,
+	}
+	paymentStatus = self.RegisterPaymentStatus(target, paymentId, common.PAYMENT_MEDIATED, amount, tokenNetworkId)
 
 	//# Dispatch the state change even if there are no routes to create the
 	//# wal entry.
