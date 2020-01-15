@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
@@ -16,6 +17,7 @@ const (
 	defaultMaxTimeOut = 60000
 )
 
+var busMsgMutex sync.Mutex
 func StartPylons() error {
 	if ChannelServerPid == nil {
 		return fmt.Errorf("StartPylons error:  ChannelServerPid is nil")
@@ -438,6 +440,8 @@ func GetAllChannels() (*ChannelsInfoResp, error) {
 }
 
 func OnBusinessMessage(message proto.Message, from string) error {
+	busMsgMutex.Lock()
+	defer busMsgMutex.Unlock()
 	if ChannelServerPid == nil {
 		return fmt.Errorf("OnBusinessMessage error:  ChannelServerPid is nil")
 	}
