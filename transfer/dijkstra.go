@@ -27,25 +27,29 @@ const (
 type ShortPathTree [][]common.Address
 
 // NewTopology creates a new topology
-func NewTopology(nodes *sync.Map, edges *sync.Map) *Topology {
+func NewTopology(nodes *sync.Map, edges *sync.Map, previousAddr common.Address) *Topology {
 	t := &Topology{
 		nodes: make(map[common.Address]int64),
 		edges: make(map[common.Address]map[common.Address]int64),
 	}
 
 	nodes.Range(func(key, value interface{}) bool {
-		t.nodes[key.(common.Address)] = value.(int64)
+		tmpAddr := key.(common.Address)
+		if !common.AddressEqual(previousAddr, tmpAddr) {
+			t.nodes[tmpAddr] = value.(int64)
+		}
 		return true
 	})
 
 	edges.Range(func(key, value interface{}) bool {
 		addr1 := key.(common.EdgeId).GetAddr1()
 		addr2 := key.(common.EdgeId).GetAddr2()
-		if _, ok := t.edges[addr1]; !ok {
-			t.edges[addr1] = make(map[common.Address]int64)
+		if !common.AddressEqual(addr1, previousAddr) && !common.AddressEqual(addr2, previousAddr){
+			if _, ok := t.edges[addr1]; !ok {
+				t.edges[addr1] = make(map[common.Address]int64)
+			}
+			t.edges[addr1][addr2] = value.(int64)
 		}
-
-		t.edges[addr1][addr2] = value.(int64)
 		return true
 	})
 	return t

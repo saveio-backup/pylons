@@ -22,7 +22,7 @@ func TestSPT(t *testing.T) {
 	edges := new(sync.Map)
 	for k, n := range names {
 		addr, _ := common.FromBase58(n)
-		nodes.Store(addr, 1)
+		nodes.Store(addr, int64(1))
 		name := fmt.Sprintf("%s%d", "node", k)
 		alias[addr] = name
 		//fmt.Println("alias[addr] = ", alias[addr])
@@ -49,7 +49,7 @@ func TestSPT(t *testing.T) {
 		var nodeANodeB common.EdgeId
 		copy(nodeANodeB[:constants.AddrLen], addrA[:])
 		copy(nodeANodeB[constants.AddrLen:], addrB[:])
-		edges.Store(nodeANodeB, 1)
+		edges.Store(nodeANodeB, int64(1))
 		fmt.Printf("add edge:%s-%s\n", alias[addrA], alias[addrB])
 	}
 
@@ -57,7 +57,7 @@ func TestSPT(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	top := NewTopology(nodes, edges)
+	top := NewTopology(nodes, edges, common.Address{})
 	//fmt.Println("TOP: ", top)
 	spt := top.GetShortPath(common.Address(toAddress))
 	fmt.Printf("path to %s:\n", alias[toAddress])
@@ -84,7 +84,7 @@ func TestDijWithSubnet(t *testing.T) {
 	edges := new(sync.Map)
 	for k, n := range names {
 		addr, _ := common.FromBase58(n)
-		nodes.Store(addr, 1)
+		nodes.Store(addr, int64(1))
 		name := fmt.Sprintf("%s%d", "node", k)
 		alias[addr] = name
 		//fmt.Println("alias[addr] = ", alias[addr])
@@ -117,7 +117,7 @@ func TestDijWithSubnet(t *testing.T) {
 		var nodeANodeB common.EdgeId
 		copy(nodeANodeB[:constants.AddrLen], addrA[:])
 		copy(nodeANodeB[constants.AddrLen:], addrB[:])
-		edges.Store(nodeANodeB, 1)
+		edges.Store(nodeANodeB, int64(1))
 		fmt.Printf("add edge:%s-%s\n", alias[addrA], alias[addrB])
 	}
 
@@ -125,7 +125,7 @@ func TestDijWithSubnet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	top := NewTopology(nodes, edges)
+	top := NewTopology(nodes, edges, common.Address{})
 	spt := top.GetShortPath(common.Address(toAddress))
 	fmt.Printf("path to %s:\n", alias[toAddress])
 	for index := 0; index < len(spt); index++ {
@@ -150,7 +150,7 @@ func TestDijWith2hops(t *testing.T) {
 	edges := new(sync.Map)
 	for k, n := range names {
 		addr, _ := common.FromBase58(n)
-		nodes.Store(addr, 1)
+		nodes.Store(addr, int64(1))
 		name := fmt.Sprintf("%s%d", "node", k)
 		alias[addr] = name
 		//fmt.Println("alias[addr] = ", alias[addr])
@@ -183,7 +183,7 @@ func TestDijWith2hops(t *testing.T) {
 		var nodeANodeB common.EdgeId
 		copy(nodeANodeB[:constants.AddrLen], addrA[:])
 		copy(nodeANodeB[constants.AddrLen:], addrB[:])
-		edges.Store(nodeANodeB, 1)
+		edges.Store(nodeANodeB, int64(1))
 		fmt.Printf("add edge:%s-%s\n", alias[addrA], alias[addrB])
 	}
 
@@ -191,7 +191,7 @@ func TestDijWith2hops(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	top := NewTopology(nodes, edges)
+	top := NewTopology(nodes, edges, common.Address{})
 	spt := top.GetShortPath(common.Address(toAddress))
 	fmt.Printf("path to %s:\n", alias[toAddress])
 	for index := 0; index < len(spt); index++ {
@@ -216,7 +216,7 @@ func TestDijWithCircle(t *testing.T) {
 	edges := new(sync.Map)
 	for k, n := range names {
 		addr, _ := common.FromBase58(n)
-		nodes.Store(addr, 1)
+		nodes.Store(addr, int64(1))
 		name := fmt.Sprintf("%s%d", "node", k)
 		alias[addr] = name
 		//fmt.Println("alias[addr] = ", alias[addr])
@@ -249,7 +249,7 @@ func TestDijWithCircle(t *testing.T) {
 		var nodeANodeB common.EdgeId
 		copy(nodeANodeB[:constants.AddrLen], addrA[:])
 		copy(nodeANodeB[constants.AddrLen:], addrB[:])
-		edges.Store(nodeANodeB, 1)
+		edges.Store(nodeANodeB, int64(1))
 		fmt.Printf("add edge:%s-%s\n", alias[addrA], alias[addrB])
 	}
 
@@ -257,7 +257,7 @@ func TestDijWithCircle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	top := NewTopology(nodes, edges)
+	top := NewTopology(nodes, edges, common.Address{})
 	spt := top.GetShortPath(common.Address(toAddress))
 	fmt.Printf("path to %s:\n", alias[toAddress])
 	for index := 0; index < len(spt); index++ {

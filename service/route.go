@@ -31,7 +31,7 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	edges := tokenNetwork.NetworkGraph.Edges
 	//log.Debug("[GetBestRoutes] edges", edges)
 
-	top := transfer.NewTopology(nodes, edges)
+	top := transfer.NewTopology(nodes, edges, previousAddress)
 	spt := top.GetShortPath(fromAddress)
 	//for _, sp := range spt {
 	//	for _, node := range sp {

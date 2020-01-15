@@ -1186,9 +1186,8 @@ func (self *ChannelService) InitiatorInit(paymentId common.PaymentID, transferAm
 		SecretHash:       secretHash,
 	}
 
-	var previousAddress common.Address
 	routes, err := GetBestRoutes(self, TokenNetworkId, self.address, targetAddress, transferAmount,
-		previousAddress)
+		common.Address{})
 	if err != nil {
 		return nil, err
 	}

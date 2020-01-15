@@ -152,7 +152,7 @@ func (self *MessageHandler) HandleMessageRefundTransfer(channel *ChannelService,
 	copy(tokenNetworkAddress[:], message.Refund.BaseMessage.Token.Address)
 
 	var previousAddress common.Address
-	copy(previousAddress[:], message.Refund.Initiator.Address)
+	copy(previousAddress[:], message.Refund.BaseMessage.EnvelopeMessage.Signature.Sender.Address)
 
 	fromTransfer := LockedTransferSignedFromMessage(message.Refund)
 	chainState := channel.StateFromChannel()
