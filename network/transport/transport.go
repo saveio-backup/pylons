@@ -346,9 +346,9 @@ func (this *Transport) Receive(message proto.Message, from string) {
 
 	switch message.(type) {
 	case *messages.Delivered:
-		go this.ReceiveDelivered(message, from)
+		this.ReceiveDelivered(message, from)
 	default:
-		go this.ReceiveMessage(message, from)
+		this.ReceiveMessage(message, from)
 	}
 }
 
