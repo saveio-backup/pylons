@@ -17,6 +17,9 @@ const (
 )
 
 func StartPylons() error {
+	if ChannelServerPid == nil {
+		return fmt.Errorf("StartPylons error:  ChannelServerPid is nil")
+	}
 	ret := &StartPylonsRet{
 		Done: make(chan bool, 1),
 		Err:  nil,
@@ -34,6 +37,9 @@ func StartPylons() error {
 }
 
 func StopPylons() error {
+	if ChannelServerPid == nil {
+		return fmt.Errorf("StopPylons error:  ChannelServerPid is nil")
+	}
 	ret := &StopPylonsRet{
 		Done: make(chan bool, 1),
 		Err:  nil,
@@ -48,6 +54,9 @@ func StopPylons() error {
 }
 
 func GetVersion() (string, error) {
+	if ChannelServerPid == nil {
+		return "", fmt.Errorf("GetVersion error:  ChannelServerPid is nil")
+	}
 	ret := &VersionRet{
 		Version: "",
 		Done:    make(chan bool, 1),
@@ -63,6 +72,9 @@ func GetVersion() (string, error) {
 }
 
 func GetHostAddr(walletAddr common.Address) (string, error) {
+	if ChannelServerPid == nil {
+		return "", fmt.Errorf("GetHostAddr error:  ChannelServerPid is nil")
+	}
 	ret := &GetHostAddrRet{
 		WalletAddr: common.EmptyAddress,
 		NetAddr:    "",
@@ -80,6 +92,9 @@ func GetHostAddr(walletAddr common.Address) (string, error) {
 }
 
 func SetGetHostAddrCallback(getHostAddrCallback GetHostAddrCallbackType) error {
+	if ChannelServerPid == nil {
+		return fmt.Errorf("SetGetHostAddrCallback error:  ChannelServerPid is nil")
+	}
 	ret := &SetGetHostAddrCallbackRet{
 		Done: make(chan bool, 1),
 		Err:  nil,
@@ -96,6 +111,9 @@ func SetGetHostAddrCallback(getHostAddrCallback GetHostAddrCallbackType) error {
 }
 
 func OpenChannel(tokenAddress common.TokenAddress, target common.Address) (common.ChannelID, error) {
+	if ChannelServerPid == nil {
+		return 0, fmt.Errorf("OpenChannel error:  ChannelServerPid is nil")
+	}
 	ret := &OpenChannelRet{
 		ChannelID: 0,
 		Done:      make(chan bool, 1),
@@ -113,6 +131,9 @@ func OpenChannel(tokenAddress common.TokenAddress, target common.Address) (commo
 
 func SetTotalChannelDeposit(tokenAddress common.TokenAddress, partnerAddress common.Address,
 	totalDeposit common.TokenAmount) error {
+	if ChannelServerPid == nil {
+		return fmt.Errorf("SetTotalChannelDeposit error:  ChannelServerPid is nil")
+	}
 	ret := &SetTotalChannelDepositRet{
 		Done: make(chan bool, 1),
 		Err:  nil,
@@ -133,6 +154,9 @@ func SetTotalChannelDeposit(tokenAddress common.TokenAddress, partnerAddress com
 }
 
 func DirectTransferAsync(target common.Address, amount common.TokenAmount, identifier common.PaymentID) (bool, error) {
+	if ChannelServerPid == nil {
+		return false, fmt.Errorf("DirectTransferAsync error:  ChannelServerPid is nil")
+	}
 	ret := &DirectTransferRet{
 		Success: false,
 		Done:    make(chan bool, 1),
@@ -155,6 +179,9 @@ func DirectTransferAsync(target common.Address, amount common.TokenAmount, ident
 
 func MediaTransfer(registryAddress common.PaymentNetworkID, tokenAddress common.TokenAddress, media common.Address,
 	target common.Address, amount common.TokenAmount, identifier common.PaymentID) (bool, error) {
+	if ChannelServerPid == nil {
+		return false, fmt.Errorf("MediaTransfer error:  ChannelServerPid is nil")
+	}
 	ret := &MediaTransferRet{
 		Success: false,
 		Done:    make(chan bool, 1),
@@ -179,6 +206,9 @@ func MediaTransfer(registryAddress common.PaymentNetworkID, tokenAddress common.
 }
 
 func CanTransfer(target common.Address, amount common.TokenAmount) (bool, error) {
+	if ChannelServerPid == nil {
+		return false, fmt.Errorf("CanTransfer error:  ChannelServerPid is nil")
+	}
 	ret := &CanTransferRet{
 		Result: false,
 		Done:   make(chan bool, 1),
@@ -196,6 +226,9 @@ func CanTransfer(target common.Address, amount common.TokenAmount) (bool, error)
 
 func WithDraw(tokenAddress common.TokenAddress, partnerAddress common.Address,
 	totalWithdraw common.TokenAmount) (bool, error) {
+	if ChannelServerPid == nil {
+		return false, fmt.Errorf("WithDraw error:  ChannelServerPid is nil")
+	}
 	ret := &WithdrawRet{
 		Success: false,
 		Done:    make(chan bool, 1),
@@ -216,6 +249,9 @@ func WithDraw(tokenAddress common.TokenAddress, partnerAddress common.Address,
 }
 
 func ChannelReachable(target common.Address) (bool, error) {
+	if ChannelServerPid == nil {
+		return false, fmt.Errorf("ChannelReachable error:  ChannelServerPid is nil")
+	}
 	ret := &ChannelReachableRet{
 		Result: false,
 		Done:   make(chan bool, 1),
@@ -232,6 +268,9 @@ func ChannelReachable(target common.Address) (bool, error) {
 }
 
 func CloseChannel(target common.Address) (bool, error) {
+	if ChannelServerPid == nil {
+		return false, fmt.Errorf("CloseChannel error:  ChannelServerPid is nil")
+	}
 	ret := &CloseChannelRet{
 		Result: false,
 		Done:   make(chan bool, 1),
@@ -248,6 +287,9 @@ func CloseChannel(target common.Address) (bool, error) {
 }
 
 func GetTotalDepositBalance(target common.Address) (uint64, error) {
+	if ChannelServerPid == nil {
+		return 0, fmt.Errorf("GetTotalDepositBalance error:  ChannelServerPid is nil")
+	}
 	ret := &GetTotalDepositBalanceRet{
 		Ret:  0,
 		Done: make(chan bool, 1),
@@ -264,6 +306,9 @@ func GetTotalDepositBalance(target common.Address) (uint64, error) {
 }
 
 func GetTotalWithdraw(target common.Address) (uint64, error) {
+	if ChannelServerPid == nil {
+		return 0, fmt.Errorf("GetTotalWithdraw error:  ChannelServerPid is nil")
+	}
 	ret := &GetTotalWithdrawRet{
 		Ret:  0,
 		Done: make(chan bool, 1),
@@ -280,6 +325,9 @@ func GetTotalWithdraw(target common.Address) (uint64, error) {
 }
 
 func GetAvailableBalance(partnerAddr common.Address) (uint64, error) {
+	if ChannelServerPid == nil {
+		return 0, fmt.Errorf("GetAvailableBalance error:  ChannelServerPid is nil")
+	}
 	ret := &GetAvailableBalanceRet{
 		Ret:  0,
 		Done: make(chan bool, 1),
@@ -296,6 +344,9 @@ func GetAvailableBalance(partnerAddr common.Address) (uint64, error) {
 }
 
 func GetCurrentBalance(partnerAddress common.Address) (uint64, error) {
+	if ChannelServerPid == nil {
+		return 0, fmt.Errorf("GetCurrentBalance error:  ChannelServerPid is nil")
+	}
 	ret := &GetCurrentBalanceRet{
 		Ret:  0,
 		Done: make(chan bool, 1),
@@ -312,6 +363,9 @@ func GetCurrentBalance(partnerAddress common.Address) (uint64, error) {
 }
 
 func CooperativeSettle(partnerAddress common.Address) error {
+	if ChannelServerPid == nil {
+		return fmt.Errorf("CooperativeSettle error:  ChannelServerPid is nil")
+	}
 	ret := &CooperativeSettleRet{
 		Done: make(chan bool, 1),
 		Err:  nil,
@@ -327,6 +381,9 @@ func CooperativeSettle(partnerAddress common.Address) error {
 }
 
 func GetUnitPrices(asset int32) (uint64, error) {
+	if ChannelServerPid == nil {
+		return 0, fmt.Errorf("GetUnitPrices error:  ChannelServerPid is nil")
+	}
 	ret := &GetUnitPricesRet{
 		Ret:  0,
 		Done: make(chan bool, 1),
@@ -343,6 +400,9 @@ func GetUnitPrices(asset int32) (uint64, error) {
 }
 
 func SetUnitPrices(asset int32, price uint64) error {
+	if ChannelServerPid == nil {
+		return fmt.Errorf("SetUnitPrices error:  ChannelServerPid is nil")
+	}
 	ret := &SetUnitPricesRet{
 		Ret:  false,
 		Done: make(chan bool, 1),
@@ -359,6 +419,9 @@ func SetUnitPrices(asset int32, price uint64) error {
 }
 
 func GetAllChannels() (*ChannelsInfoResp, error) {
+	if ChannelServerPid == nil {
+		return nil, fmt.Errorf("GetAllChannels error:  ChannelServerPid is nil")
+	}
 	ret := &GetAllChannelsRet{
 		Ret:  nil,
 		Done: make(chan bool, 1),
@@ -375,6 +438,9 @@ func GetAllChannels() (*ChannelsInfoResp, error) {
 }
 
 func OnBusinessMessage(message proto.Message, from string) error {
+	if ChannelServerPid == nil {
+		return fmt.Errorf("OnBusinessMessage error:  ChannelServerPid is nil")
+	}
 	ret := &p2p_act.RecvMsgRet{
 		Done: make(chan bool, 1),
 		Err:  nil,
@@ -390,6 +456,9 @@ func OnBusinessMessage(message proto.Message, from string) error {
 }
 
 func HealthyCheckNodeState(address common.Address) error {
+	if ChannelServerPid == nil {
+		return fmt.Errorf("HealthyCheckNodeState error:  ChannelServerPid is nil")
+	}
 	ret := &HealthyCheckNodeRet{
 		Done: make(chan bool, 1),
 		Err:  nil,
@@ -405,6 +474,9 @@ func HealthyCheckNodeState(address common.Address) error {
 }
 
 func RegisterReceiveNotification() (chan *transfer.EventPaymentReceivedSuccess, error) {
+	if ChannelServerPid == nil {
+		return nil, fmt.Errorf("RegisterReceiveNotification error:  ChannelServerPid is nil")
+	}
 	ret := &RegisterReceiveNotificationRet{
 		NotificationChannel: nil,
 		Done:                make(chan bool, 1),
@@ -421,6 +493,9 @@ func RegisterReceiveNotification() (chan *transfer.EventPaymentReceivedSuccess, 
 }
 
 func GetLastFilterBlockHeight() (uint32, error) {
+	if ChannelServerPid == nil {
+		return 0, fmt.Errorf("GetLastFilterBlockHeight error:  ChannelServerPid is nil")
+	}
 	ret := &LastFilterBlockHeightRet{
 		Height: 0,
 		Done:   make(chan bool, 1),
@@ -437,6 +512,9 @@ func GetLastFilterBlockHeight() (uint32, error) {
 }
 
 func GetPaymentResult(target common.Address, identifier common.PaymentID) (*PaymentResultResp, error) {
+	if ChannelServerPid == nil {
+		return nil, fmt.Errorf("GetPaymentResult error:  ChannelServerPid is nil")
+	}
 	ret := &GetPaymentResultRet{
 		Ret:  nil,
 		Done: make(chan bool, 1),

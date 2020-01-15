@@ -30,9 +30,11 @@ func NewChannelActor(config *oc.ChannelConfig, account *account.Account) (*Chann
 	channelActorServer.props = actor.FromProducer(func() actor.Actor { return channelActorServer })
 	channelActorServer.localPID, err = actor.SpawnNamed(channelActorServer.props, "channel_server")
 	if err != nil {
+		ChannelServerPid = nil
 		return nil, err
 	}
 	if channelActorServer.chSrv, err = oc.NewChannelService(config, account); err != nil {
+		ChannelServerPid = nil
 		return nil, err
 	}
 	ChannelServerPid = channelActorServer.localPID
