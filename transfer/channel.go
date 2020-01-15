@@ -934,14 +934,14 @@ func createSendLockedTransfer(channelState *NettingChannelState, initiator commo
 		Token:        token,
 		BalanceProof: balanceProof,
 		Lock:         lock,
-		Initiator:    common.Address(initiator),
-		Target:       common.Address(target),
+		Initiator:    initiator,
+		Target:       target,
 		EncSecret:    encSecret,
 	}
 
 	lockedTransfer := &SendLockedTransfer{
 		SendMessageEvent: SendMessageEvent{
-			Recipient: common.Address(recipient),
+			Recipient: recipient,
 			ChannelId: channelState.Identifier,
 			MessageId: messageId,
 		},

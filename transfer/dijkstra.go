@@ -44,7 +44,7 @@ func NewTopology(nodes *sync.Map, edges *sync.Map, previousAddr common.Address) 
 	edges.Range(func(key, value interface{}) bool {
 		addr1 := key.(common.EdgeId).GetAddr1()
 		addr2 := key.(common.EdgeId).GetAddr2()
-		if !common.AddressEqual(addr1, previousAddr) && !common.AddressEqual(addr2, previousAddr){
+		if !common.AddressEqual(addr1, previousAddr) && !common.AddressEqual(addr2, previousAddr) {
 			if _, ok := t.edges[addr1]; !ok {
 				t.edges[addr1] = make(map[common.Address]int64)
 			}

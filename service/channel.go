@@ -1236,7 +1236,7 @@ func (self *ChannelService) MediatorInit(lockedTransfer *messages.LockedTransfer
 
 	fromTransfer := LockedTransferSignedFromMessage(lockedTransfer)
 	routes, err := GetBestRoutes(self, fromTransfer.BalanceProof.TokenNetworkId,
-		self.address, common.Address(fromTransfer.Target), fromTransfer.Lock.Amount, initiatorAddr)
+		self.address, fromTransfer.Target, fromTransfer.Lock.Amount, initiatorAddr)
 	if err != nil {
 		log.Infof("[GetBestRoutes] error : %v", err)
 	}
@@ -1281,7 +1281,6 @@ func (self *ChannelService) GetEventsPaymentHistoryWithTimestamps(tokenAddress c
 		if EventFilterForPayments(event.WrappedEvent, TokenNetworkId, targetAddress) == true {
 			result.PushBack(event)
 		}
-
 	}
 	return result
 }

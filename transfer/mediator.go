@@ -436,7 +436,8 @@ func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRout
 			common.BlockExpiration(payerTransfer.Lock.Expiration), payerTransfer.EncSecret,
 			common.SecretHash(payerTransfer.Lock.SecretHash))
 		if lockedTransferEvent == nil {
-			return nil, nil, fmt.Errorf("[forwardTransferPair] lockedTransferEvent == nil")
+			log.Debug("[forwardTransferPair] lockedTransferEvent is nil")
+			return nil, nil, fmt.Errorf("[forwardTransferPair] lockedTransferEvent is nil")
 		}
 
 		transferPair = &MediationPairState{
@@ -446,20 +447,15 @@ func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRout
 			PayerState:    "payer_pending",
 			PayeeState:    "payee_pending",
 		}
-		if lockedTransferEvent == nil {
-			log.Debug("[forwardTransferPair] lockedTransferEvent == nil")
-		} else {
-			log.Debug("[forwardTransferPair] lockedTransferEvent != nil")
-		}
 		mediatedEvents = append(mediatedEvents, lockedTransferEvent)
 	} else {
-		log.Debug("[forwardTransferPair] payeeChannel == nil")
+		log.Debug("[forwardTransferPair] payeeChannel is nil")
 	}
 	return transferPair, mediatedEvents, nil
 }
 
 func backwardTransferPair(backwardChannel *NettingChannelState, payerTransfer *LockedTransferSignedState,
-	blockNumber common.BlockHeight) (*MediationPairState, []Event) {
+	blockNumber common.BlockHeight) (*MediationPairState, []Event, error) {
 	//	""" Sends a transfer backwards, allowing the previous hop to try a new
 	//	route.
 	//
@@ -493,9 +489,13 @@ func backwardTransferPair(backwardChannel *NettingChannelState, payerTransfer *L
 	//# do anything and wait for the received lock to expire.
 	if MdIsChannelUsable(backwardChannel, common.PaymentAmount(lock.Amount), lockTimeout) {
 		messageId := common.GetMsgID()
-		refundTransfer, _ := sendRefundTransfer(backwardChannel, payerTransfer.Initiator, payerTransfer.Target,
+		refundTransfer, err := sendRefundTransfer(backwardChannel, payerTransfer.Initiator, payerTransfer.Target,
 			common.PaymentAmount(lock.Amount), messageId, payerTransfer.PaymentId,
 			common.BlockExpiration(lock.Expiration), payerTransfer.EncSecret, common.SecretHash(lock.SecretHash))
+		if err != nil {
+			log.Error("[backwardTransferPair] sendRefundTransfer error: %s", err.Error())
+			return transferPair, events, fmt.Errorf("backwardTransferPair sendRefundTransfer error: %s", err.Error())
+		}
 
 		transferPair = &MediationPairState{
 			PayerTransfer: payerTransfer,
@@ -506,7 +506,7 @@ func backwardTransferPair(backwardChannel *NettingChannelState, payerTransfer *L
 		}
 		events = append(events, refundTransfer)
 	}
-	return transferPair, events
+	return transferPair, events, nil
 }
 
 func setOffChainSecret(state *MediatorTransferState,
@@ -1047,47 +1047,39 @@ func mediateTransfer(state *MediatorTransferState, possibleRoutes []RouteState,
 	//	addr := common2.Address(r.NodeAddress)
 	//	fmt.Println(addr.ToBase58())
 	//}
-
-	transferPair, mediatedEvents, err := forwardTransferPair(payerTransfer, availableRoutes,
-		channelsMap, blockNumber)
+	var events []Event
+	transferPair, forwardEvents, err := forwardTransferPair(payerTransfer, availableRoutes, channelsMap, blockNumber)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("mediateTransfer forwardTransferPair error: %s", err.Error())
 	}
-	if transferPair == nil {
-		log.Debug("[mediateTransfer] transferPair1 == nil")
-		if mediatedEvents != nil {
-			return nil, fmt.Errorf("transferPair == nil but mediatedEvents != nil")
-		}
+
+	if transferPair != nil && forwardEvents != nil {
+		events = append(events, forwardEvents...)
+		state.TransfersPair = append(state.TransfersPair, transferPair)
+	} else {
 		var originalChannel *NettingChannelState
 		if state.TransfersPair != nil {
-			originalPair := state.TransfersPair[0]
-			originalChannel = GetPayerChannel(channelsMap, originalPair)
+			originalChannel = GetPayerChannel(channelsMap, state.TransfersPair[0])
 		} else {
 			originalChannel = payerChannel
 		}
 
+		var backwardEvents []Event
 		if originalChannel != nil {
-			transferPair, mediatedEvents = backwardTransferPair(originalChannel, payerTransfer, blockNumber)
+			transferPair, backwardEvents, err = backwardTransferPair(originalChannel, payerTransfer, blockNumber)
 		} else {
 			transferPair = nil
-			mediatedEvents = nil
+			backwardEvents = nil
+		}
+
+		if transferPair != nil && backwardEvents != nil {
+			events = append(events, backwardEvents...)
+			state.TransfersPair = append(state.TransfersPair, transferPair)
+		} else {
+			state.WaitingTransfer = &WaitingTransferState{Transfer: payerTransfer}
 		}
 	}
-	if transferPair == nil {
-		log.Debug("[mediateTransfer] transferPair2 == nil")
-		//assert not mediated_events
-		if mediatedEvents != nil {
-			return nil, fmt.Errorf("transferPair == nil but mediatedEvents != nil")
-		}
-		mediatedEvents = nil
-		state.WaitingTransfer = &WaitingTransferState{Transfer: payerTransfer}
-	} else {
-		log.Debug("[mediateTransfer] transferPair != nil")
-		//# the list must be ordered from high to low expiration, expiration
-		//# handling depends on it
-		state.TransfersPair = append(state.TransfersPair, transferPair)
-	}
-	return &TransitionResult{NewState: state, Events: mediatedEvents}, nil
+	return &TransitionResult{NewState: state, Events: events}, nil
 }
 
 func HandleInitMediator(stateChange *ActionInitMediator, channelsMap map[common.ChannelID]*NettingChannelState,
@@ -1208,18 +1200,16 @@ func MdHandleRefundTransfer(mediatorState *MediatorTransferState, mediatorStateC
 		payerTransfer := mediatorStateChange.Transfer
 		channelId := payerTransfer.BalanceProof.ChannelId
 		payerChannel := channelsMap[channelId]
-
 		if payerChannel != nil {
 			return &TransitionResult{NewState: mediatorState, Events: nil}
 		}
-		channelEvents, err := handleRefundTransfer(payeeTransfer,
-			payerChannel, mediatorStateChange)
+		channelEvents, err := handleRefundTransfer(payeeTransfer, payerChannel, mediatorStateChange)
 		if err != nil {
 			return &TransitionResult{NewState: mediatorState, Events: channelEvents}
 		}
 
-		iteration, err = mediateTransfer(mediatorState, mediatorStateChange.Routes,
-			payerChannel, channelsMap, payerTransfer, blockNumber)
+		iteration, err = mediateTransfer(mediatorState, mediatorStateChange.Routes, payerChannel, channelsMap,
+			payerTransfer, blockNumber)
 
 		events = append(events, channelEvents...)
 		events = append(events, iteration.Events...)
