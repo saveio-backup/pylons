@@ -42,9 +42,13 @@ func (this *SecretCrypt) EncryptSecret(target common.Address, secret common.Secr
 	if key, exist = this.pubKeyTmp.Load(target); !exist {
 		log.Debugf("[EncryptSecret] GetNodePubKey target: %s", common.ToBase58(target))
 		pubKey, err = this.channel.GetNodePubKey(comm.Address(target))
-		if err != nil || len(pubKey) == 0 {
+		if err != nil {
 			log.Errorf("[EncryptSecret] GetNodePubKey error: %s", err.Error())
 			return nil, fmt.Errorf("[EncryptSecret] GetNodePubKey error: %s", err.Error())
+		}
+		if len(pubKey) == 0 {
+			log.Errorf("[EncryptSecret] GetNodePubKey error: pubKey length is zero")
+			return nil, fmt.Errorf("[EncryptSecret] GetNodePubKey error: pubKey length is zero")
 		}
 		this.pubKeyTmp.Store(target, pubKey)
 	} else {
