@@ -1249,6 +1249,8 @@ func createSendExpiredLock(senderEndState *NettingChannelEndState, lockedLock *H
 	balanceProof.BalanceHash = HashBalanceData(balanceProof.TransferredAmount,
 		balanceProof.LockedAmount, balanceProof.LocksRoot)
 
+	balanceProofEx.BalanceHash = balanceProof.BalanceHash
+
 	sendLockExpired := &SendLockExpired{
 		SendMessageEvent: SendMessageEvent{
 			Recipient: common.Address(recipient),
