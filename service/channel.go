@@ -243,10 +243,13 @@ func (self *ChannelService) initDB() error {
 			return err
 		}
 		log.Infof("Restored state from WAL,last log BlockHeight=%d", lastLogBlockHeight)
+		tokenNetwork := transfer.GetTokenNetworkByIdentifier(self.StateFromChannel(), common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
+		tokenNetwork.SetChainServiceConfig(self.chain.ChainServiceUrl, self.Account)
 	}
+
 	//set filter start block number
 	self.lastFilterBlock = lastLogBlockHeight
-	log.Info("db setup done")
+	log.Debug("db setup done")
 	return nil
 }
 
@@ -439,7 +442,6 @@ func (self *ChannelService) UpdateRouteMap() {
 			}
 		}
 	}
-	tokenNetwork.SetDnsClient(self.chain.ChainServiceUrl, self.Account)
 	tokenNetwork.UpdateAllDns()
 }
 
@@ -622,7 +624,9 @@ func (self *ChannelService) StateFromChannel() *transfer.ChainState {
 }
 
 func (self *ChannelService) InitializeTokenNetwork() {
-	tokenNetworkState := transfer.NewTokenNetworkState(self.address)
+	fmt.Printf("ChainServiceUrl: %v\n", self.chain.ChainServiceUrl)
+	fmt.Printf("Address: %v\n", self.Account.Address)
+	tokenNetworkState := transfer.NewTokenNetworkState(self.address, self.chain.ChainServiceUrl, self.Account)
 	tokenNetworkState.Address = common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 	tokenNetworkState.TokenAddress = common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 	newTokenNetwork := &transfer.ContractReceiveNewTokenNetwork{PaymentNetworkId: common.PaymentNetworkID(scUtils.MicroPayContractAddress),

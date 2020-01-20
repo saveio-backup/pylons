@@ -3,7 +3,7 @@ package transfer
 import (
 	"bytes"
 	"errors"
-	"os"
+	"fmt"
 	"sort"
 	"sync"
 
@@ -149,6 +149,8 @@ func DeepCopy(src State) *ChainState {
 			for tokenNetworkId, tokenNetworkState := range state.TokenIdentifiersToTokenNetworks {
 				var tokenNwState TokenNetworkState
 				tokenNwState.DnsClient = tokenNetworkState.DnsClient
+				tokenNwState.rpcServiceUrls = tokenNetworkState.rpcServiceUrls
+				tokenNwState.acc = tokenNetworkState.acc
 				tokenNwState.DnsAddrsMap = tokenNetworkState.DnsAddrsMap
 				tokenNwState.Address = tokenNetworkState.Address
 				tokenNwState.TokenAddress = tokenNetworkState.TokenAddress
@@ -220,6 +222,8 @@ type TokenNetworkGraph struct {
 
 type TokenNetworkState struct {
 	mutex                      sync.Mutex
+	rpcServiceUrls             []string
+	acc                        *account.Account
 	DnsClient                  *dns.Dns
 	DnsAddrsMap                map[common.Address]int64
 	Address                    common.TokenNetworkID
@@ -229,8 +233,11 @@ type TokenNetworkState struct {
 	PartnerAddressesToChannels map[common.Address]map[common.ChannelID]*NettingChannelState
 }
 
-func NewTokenNetworkState(localAddr common.Address) *TokenNetworkState {
+func NewTokenNetworkState(localAddr common.Address, rpcServiceUrls []string, acc *account.Account) *TokenNetworkState {
 	result := &TokenNetworkState{}
+	fmt.Printf("[NewTokenNetworkState]: %v", rpcServiceUrls)
+	result.rpcServiceUrls = rpcServiceUrls
+	result.acc = acc
 	result.ChannelsMap = make(map[common.ChannelID]*NettingChannelState)
 	result.PartnerAddressesToChannels = make(map[common.Address]map[common.ChannelID]*NettingChannelState)
 	result.NetworkGraph = TokenNetworkGraph{}
@@ -241,14 +248,9 @@ func NewTokenNetworkState(localAddr common.Address) *TokenNetworkState {
 	return result
 }
 
-func (self *TokenNetworkState) SetDnsClient(rpcAddr []string, acc *account.Account) {
-	if self.DnsClient == nil {
-		self.DnsAddrsMap = make(map[common.Address]int64)
-		self.DnsClient = &dns.Dns{}
-		self.DnsClient.Client = &client.ClientMgr{}
-		self.DnsClient.Client.NewRpcClient().SetAddress(rpcAddr)
-		self.DnsClient.DefAcc = acc
-	}
+func (self *TokenNetworkState) SetChainServiceConfig(rpcServiceUrls []string, acc *account.Account) {
+	self.rpcServiceUrls = rpcServiceUrls
+	self.acc = acc
 }
 
 func (self *TokenNetworkState) UpdateAllDns() {
@@ -256,9 +258,14 @@ func (self *TokenNetworkState) UpdateAllDns() {
 	defer self.mutex.Unlock()
 
 	if self.DnsClient == nil {
-		log.Errorf("[UpdateAllDns] GetAllDnsNodes error: DnsClient is nil")
-		os.Exit(0)
+		self.DnsAddrsMap = make(map[common.Address]int64)
+		self.DnsClient = &dns.Dns{}
+		self.DnsClient.Client = &client.ClientMgr{}
+		fmt.Printf("[UpdateAllDns]: %v", self.rpcServiceUrls)
+		self.DnsClient.Client.NewRpcClient().SetAddress(self.rpcServiceUrls)
+		self.DnsClient.DefAcc = self.acc
 	}
+
 	dnsAddrsMap := make(map[common.Address]int64)
 	dnsNodes, err := self.DnsClient.GetAllDnsNodes()
 	if err != nil {
