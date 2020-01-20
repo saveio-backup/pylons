@@ -817,7 +817,7 @@ func getTxHashString(txHash []byte) string {
 
 func getBalanceHashSlice(balanceHash common.BalanceHash) []byte {
 	if common.IsEmptyBalanceHash(balanceHash) {
-	    return nil
+		return nil
 	} else {
 		return balanceHash[:]
 	}

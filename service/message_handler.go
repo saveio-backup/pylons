@@ -157,8 +157,7 @@ func (self *MessageHandler) HandleMessageRefundTransfer(channel *ChannelService,
 	fromTransfer := LockedTransferSignedFromMessage(message.Refund)
 	chainState := channel.StateFromChannel()
 	routes, _ := GetBestRoutes(channel, common.TokenNetworkID(tokenNetworkAddress),
-		common.Address(channel.address), common.Address(fromTransfer.Target),
-		fromTransfer.Lock.Amount, previousAddress)
+		channel.address, fromTransfer.Target, fromTransfer.Lock.Amount, previousAddress)
 
 	role := transfer.GetTransferRole(chainState, common.SecretHash(fromTransfer.Lock.SecretHash))
 	if role == "initiator" {

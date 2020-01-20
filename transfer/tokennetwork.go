@@ -237,6 +237,7 @@ func handleChannelClose(tokenNetworkState *TokenNetworkState, stateChange StateC
 
 	channelId := stateChange.(*ActionChannelClose).ChannelId
 	tokenNetworkState.DelRoute(channelId)
+	tokenNetworkState.UpdateAllDns()
 	return subDispatchToChannelById(tokenNetworkState, stateChange, blockNumber)
 }
 
@@ -249,6 +250,7 @@ func handleChannelNew(tokenNetworkState *TokenNetworkState,
 	partnerAddress := channelState.PartnerState.Address
 
 	tokenNetworkState.AddRoute(ourAddress, partnerAddress, stateChange.ChannelId)
+	tokenNetworkState.UpdateAllDns()
 	_, ok := tokenNetworkState.ChannelsMap[channelId]
 	if ok == false {
 		tokenNetworkState.ChannelsMap[channelId] = channelState
@@ -273,6 +275,7 @@ func handleClosed(tokenNetworkState *TokenNetworkState, stateChange StateChange,
 
 	channelId := stateChange.(*ContractReceiveChannelClosed).ChannelId
 	tokenNetworkState.DelRoute(channelId)
+	tokenNetworkState.UpdateAllDns()
 	return subDispatchToChannelById(tokenNetworkState, stateChange, blockNumber)
 }
 
@@ -367,11 +370,13 @@ func handleActionTransferDirect(paymentNetworkId common.PaymentNetworkID,
 
 func handleNewRoute(tokenNetworkState *TokenNetworkState, stateChange *ContractReceiveRouteNew) TransitionResult {
 	tokenNetworkState.AddRoute(stateChange.Participant1, stateChange.Participant2, stateChange.ChannelId)
+	tokenNetworkState.UpdateAllDns()
 	return TransitionResult{NewState: tokenNetworkState, Events: nil}
 }
 
 func handleCloseRoute(tokenNetworkState *TokenNetworkState, stateChange *ContractReceiveRouteClosed) TransitionResult {
 	tokenNetworkState.DelRoute(stateChange.ChannelId)
+	tokenNetworkState.UpdateAllDns()
 	return TransitionResult{NewState: tokenNetworkState, Events: nil}
 }
 

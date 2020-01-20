@@ -9,10 +9,8 @@ import (
 	"github.com/saveio/themis/common/log"
 )
 
-func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID,
-	fromAddress common.Address, toAddress common.Address, amount common.TokenAmount,
-	previousAddress common.Address) ([]transfer.RouteState, error) {
-
+func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID, fromAddr common.Address,
+	toAddr common.Address, amount common.TokenAmount, badAddr common.Address) ([]transfer.RouteState, error) {
 	//""" Returns a list of channels that can be used to make a transfer.
 	//
 	//This will filter out channels that are not open and don't have enough
@@ -27,12 +25,12 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 		log.Warnf("[GetBestRoutes] GetTokenNetworkByIdentifier error tokenNetwork is nil")
 		return nil, fmt.Errorf("[GetBestRoutes] GetTokenNetworkByIdentifier error tokenNetwork is nil")
 	}
+	dnsAddrsMap := tokenNetwork.GetAllDns()
 	nodes := tokenNetwork.NetworkGraph.Nodes
 	edges := tokenNetwork.NetworkGraph.Edges
-	//log.Debug("[GetBestRoutes] edges", edges)
 
-	top := transfer.NewTopology(nodes, edges, previousAddress)
-	spt := top.GetShortPath(fromAddress)
+	top := transfer.NewTopology(nodes, edges, badAddr)
+	spt := top.GetShortPath(fromAddr)
 	//for _, sp := range spt {
 	//	for _, node := range sp {
 	//		fmt.Printf("%s ", common.ToBase58(node))
@@ -46,31 +44,40 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	}
 	log.Debugf("SPT:", spt)
 
-	var partAddr common.Address
+	var nextHop common.Address
 	var channelId common.ChannelID
 	var i int
+	var isDnsNode bool
 	for i = 0; i < sptLen; i++ {
 		sp := spt[i]
 		spLen := len(sp)
-		if sp[spLen-1] == toAddress {
-			partAddr = sp[1]
-			networkState := channelSrv.GetNodeNetworkState(partAddr)
-			if networkState == transfer.NetworkReachable {
-				channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(),
-					tokenNetworkId, partAddr)
-				if channelState != nil {
-					channelId = channelState.Identifier
-					if valid, err := checkRouteAvailable(channelState, partAddr, fromAddress, amount); valid {
-						log.Debugf("[GetBestRoutes]: %s", common.ToBase58(partAddr))
-						break
-					} else {
-						log.Warnf("[GetBestRoutes] checkRouteAvailable %s error: ", common.ToBase58(partAddr), err.Error())
-					}
-				} else {
-					log.Warnf("[GetBestRoutes] GetChannelStateByTokenNetworkAndPartner %s error", common.ToBase58(partAddr))
+		if sp[spLen-1] == toAddr {
+			nextHop = sp[1]
+			if len(dnsAddrsMap) != 0 {
+				_, isDnsNode = dnsAddrsMap[nextHop]
+				if nextHop != toAddr && !isDnsNode {
+					continue
 				}
 			} else {
-				log.Warnf("[GetBestRoutes] %s is NetworkUnReachable", common.ToBase58(partAddr))
+				log.Warnf("[GetBestRoutes] dnsAddrsMap length is zero")
+			}
+			networkState := channelSrv.GetNodeNetworkState(nextHop)
+			if networkState == transfer.NetworkReachable {
+				channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(),
+					tokenNetworkId, nextHop)
+				if channelState != nil {
+					channelId = channelState.Identifier
+					if valid, err := checkRouteAvailable(channelState, nextHop, fromAddr, amount); valid {
+						log.Debugf("[GetBestRoutes]: %s", common.ToBase58(nextHop))
+						break
+					} else {
+						log.Warnf("[GetBestRoutes] checkRouteAvailable %s error: ", common.ToBase58(nextHop), err.Error())
+					}
+				} else {
+					log.Warnf("[GetBestRoutes] GetChannelStateByTokenNetworkAndPartner %s error", common.ToBase58(nextHop))
+				}
+			} else {
+				log.Warnf("[GetBestRoutes] %s is NetworkUnReachable", common.ToBase58(nextHop))
 			}
 		}
 	}
@@ -79,7 +86,7 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 		return nil, fmt.Errorf("[GetBestRoutes] no route to target")
 	}
 
-	availableRoutes := []transfer.RouteState{{NodeAddress: partAddr, ChannelId: channelId}}
+	availableRoutes := []transfer.RouteState{{NodeAddress: nextHop, ChannelId: channelId}}
 	return availableRoutes, nil
 }
 

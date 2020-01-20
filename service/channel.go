@@ -9,12 +9,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-
-	"reflect"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/saveio/pylons/common"
@@ -440,6 +439,8 @@ func (self *ChannelService) UpdateRouteMap() {
 			}
 		}
 	}
+	tokenNetwork.SetDnsClient(self.chain.ChainServiceUrl, self.Account)
+	tokenNetwork.UpdateAllDns()
 }
 
 func (self *ChannelService) CallbackNewBlock() {
@@ -621,7 +622,6 @@ func (self *ChannelService) StateFromChannel() *transfer.ChainState {
 }
 
 func (self *ChannelService) InitializeTokenNetwork() {
-
 	tokenNetworkState := transfer.NewTokenNetworkState(self.address)
 	tokenNetworkState.Address = common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 	tokenNetworkState.TokenAddress = common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)

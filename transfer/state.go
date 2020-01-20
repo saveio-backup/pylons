@@ -3,11 +3,16 @@ package transfer
 import (
 	"bytes"
 	"errors"
-	"github.com/saveio/pylons/common"
-	"github.com/saveio/pylons/common/constants"
-	"github.com/saveio/themis/common/log"
+	"os"
 	"sort"
 	"sync"
+
+	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/common/constants"
+	"github.com/saveio/themis-go-sdk/client"
+	"github.com/saveio/themis-go-sdk/dns"
+	"github.com/saveio/themis/account"
+	"github.com/saveio/themis/common/log"
 )
 
 type SecretHashToLock map[common.SecretHash]*HashTimeLockState
@@ -143,6 +148,8 @@ func DeepCopy(src State) *ChainState {
 			value.IdentifiersToPaymentNetworks[id].TokenIdentifiersToTokenNetworks = make(map[common.TokenNetworkID]*TokenNetworkState)
 			for tokenNetworkId, tokenNetworkState := range state.TokenIdentifiersToTokenNetworks {
 				var tokenNwState TokenNetworkState
+				tokenNwState.DnsClient = tokenNetworkState.DnsClient
+				tokenNwState.DnsAddrsMap = tokenNetworkState.DnsAddrsMap
 				tokenNwState.Address = tokenNetworkState.Address
 				tokenNwState.TokenAddress = tokenNetworkState.TokenAddress
 				tokenNwState.NetworkGraph = tokenNetworkState.NetworkGraph
@@ -212,6 +219,9 @@ type TokenNetworkGraph struct {
 }
 
 type TokenNetworkState struct {
+	mutex                      sync.Mutex
+	DnsClient                  *dns.Dns
+	DnsAddrsMap                map[common.Address]int64
 	Address                    common.TokenNetworkID
 	TokenAddress               common.TokenAddress
 	NetworkGraph               TokenNetworkGraph
@@ -223,13 +233,56 @@ func NewTokenNetworkState(localAddr common.Address) *TokenNetworkState {
 	result := &TokenNetworkState{}
 	result.ChannelsMap = make(map[common.ChannelID]*NettingChannelState)
 	result.PartnerAddressesToChannels = make(map[common.Address]map[common.ChannelID]*NettingChannelState)
-
 	result.NetworkGraph = TokenNetworkGraph{}
 	result.NetworkGraph.Nodes = new(sync.Map)
 	result.NetworkGraph.Edges = new(sync.Map)
 	result.NetworkGraph.Nodes.Store(localAddr, int64(1))
 
 	return result
+}
+
+func (self *TokenNetworkState) SetDnsClient(rpcAddr []string, acc *account.Account) {
+	if self.DnsClient == nil {
+		self.DnsAddrsMap = make(map[common.Address]int64)
+		self.DnsClient = &dns.Dns{}
+		self.DnsClient.Client = &client.ClientMgr{}
+		self.DnsClient.Client.NewRpcClient().SetAddress(rpcAddr)
+		self.DnsClient.DefAcc = acc
+	}
+}
+
+func (self *TokenNetworkState) UpdateAllDns() {
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
+
+	if self.DnsClient == nil {
+		log.Errorf("[UpdateAllDns] GetAllDnsNodes error: DnsClient is nil")
+		os.Exit(0)
+	}
+	dnsAddrsMap := make(map[common.Address]int64)
+	dnsNodes, err := self.DnsClient.GetAllDnsNodes()
+	if err != nil {
+		log.Errorf("[UpdateAllDns] GetAllDnsNodes error: %s", err.Error())
+		return
+	}
+
+	for _, info := range dnsNodes {
+		var tmpAddr common.Address
+		copy(tmpAddr[:], info.WalletAddr[:])
+		dnsAddrsMap[tmpAddr] = 1
+	}
+	self.DnsAddrsMap = dnsAddrsMap
+}
+
+func (self *TokenNetworkState) GetAllDns() map[common.Address]int64 {
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
+
+	dnsAddrsMap := make(map[common.Address]int64)
+	for addr, _ := range self.DnsAddrsMap {
+		dnsAddrsMap[addr] = 1
+	}
+	return dnsAddrsMap
 }
 
 func (self *TokenNetworkState) AddRoute(addr1 common.Address, addr2 common.Address, channelId common.ChannelID) {

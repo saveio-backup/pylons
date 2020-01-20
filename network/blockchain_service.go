@@ -15,12 +15,13 @@ import (
 )
 
 type BlockChainService struct {
-	Address       common.Address
-	Account       *account.Account
-	mutex         sync.Mutex
-	ChainClient   *chainsdk.Chain
-	ChannelClient *chnsdk.Channel
-	currentHeight common.BlockHeight
+	Address         common.Address
+	Account         *account.Account
+	ChainServiceUrl []string
+	mutex           sync.Mutex
+	ChainClient     *chainsdk.Chain
+	ChannelClient   *chnsdk.Channel
+	currentHeight   common.BlockHeight
 
 	tokenNetwork               *proxies.TokenNetwork
 	secretRegistry             *proxies.SecretRegistry
@@ -39,6 +40,7 @@ func NewBlockChainService(clientType string, url []string, account *account.Acco
 	}
 
 	this := &BlockChainService{}
+	this.ChainServiceUrl = url
 	this.identifierToPaymentChannel = make(map[common.ChannelID]*proxies.PaymentChannel)
 
 	this.ChainClient = chainsdk.NewChain()
