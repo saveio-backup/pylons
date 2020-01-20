@@ -273,14 +273,14 @@ type ReceiveSecretRequest struct {
 	MessageId  common.MessageID
 }
 
-//Need calculte Secret hash when construct this struct.
+//Need calculate Secret hash when construct this struct.
 type ReceiveSecretReveal struct {
 	Secret    common.Secret
 	Sender    common.Address
 	MessageId common.MessageID
 }
 
-//Need calculte Secret hash when construct this struct.
+//Need calculate Secret hash when construct this struct.
 type ReceiveTransferRefundCancelRoute struct {
 	Transfer   *LockedTransferSignedState
 	Routes     []RouteState

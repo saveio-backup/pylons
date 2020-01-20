@@ -184,8 +184,6 @@ func (self *MessageHandler) HandleMessageLockedTransfer(channel *ChannelService,
 	var targetAddress common.Address
 	copy(targetAddress[:], message.Target.Address)
 	if targetAddress == channel.address {
-		var initiator common.Address
-		copy(initiator[:], message.Initiator.Address)
 		initTargetStateChange := channel.TargetInit(message)
 		channel.HandleStateChange(initTargetStateChange)
 	} else {

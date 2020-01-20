@@ -117,8 +117,8 @@ func StartPylons() error {
 
 func main() {
 	flag.Parse()
-	log.InitLog(log.InfoLog, log.PATH, log.Stdout)
-	log.SetModuleLevel("carrier", log.ErrorLog)
+	log.InitLog(log.DebugLog, log.PATH, log.Stdout)
+	//log.SetModuleLevel("carrier", log.ErrorLog)
 
 	log.Info("StartPylons")
 	if err := StartPylons(); err != nil {

@@ -52,7 +52,7 @@ func ImCanCancel(paymentState *InitiatorPaymentState) bool {
 func ImEventsForCancelCurrentRoute(transferDescription *TransferDescriptionWithSecretState) []Event {
 	var events []Event
 
-	unlockFailed := EventUnlockFailed{
+	unlockFailed := &EventUnlockFailed{
 		Identifier: transferDescription.PaymentId,
 		SecretHash: transferDescription.SecretHash,
 		Reason:     string("route was canceled")}
