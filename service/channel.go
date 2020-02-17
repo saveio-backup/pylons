@@ -244,7 +244,7 @@ func (self *ChannelService) initDB() error {
 		}
 		log.Infof("Restored state from WAL,last log BlockHeight=%d", lastLogBlockHeight)
 		tokenNetwork := transfer.GetTokenNetworkByIdentifier(self.StateFromChannel(), common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
-		tokenNetwork.SetChainServiceConfig(self.chain.ChainServiceUrl, self.Account)
+		tokenNetwork.InitDnsClient(self.chain.ChainServiceUrl, self.Account)
 	}
 
 	//set filter start block number
@@ -442,7 +442,7 @@ func (self *ChannelService) UpdateRouteMap() {
 			}
 		}
 	}
-	tokenNetwork.UpdateAllDns()
+
 }
 
 func (self *ChannelService) CallbackNewBlock() {

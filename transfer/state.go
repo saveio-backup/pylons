@@ -12,6 +12,7 @@ import (
 	"github.com/saveio/themis-go-sdk/client"
 	"github.com/saveio/themis-go-sdk/dns"
 	"github.com/saveio/themis/account"
+	thecom "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
 )
 
@@ -149,8 +150,6 @@ func DeepCopy(src State) *ChainState {
 			for tokenNetworkId, tokenNetworkState := range state.TokenIdentifiersToTokenNetworks {
 				var tokenNwState TokenNetworkState
 				tokenNwState.DnsClient = tokenNetworkState.DnsClient
-				tokenNwState.rpcServiceUrls = tokenNetworkState.rpcServiceUrls
-				tokenNwState.acc = tokenNetworkState.acc
 				tokenNwState.DnsAddrsMap = tokenNetworkState.DnsAddrsMap
 				tokenNwState.Address = tokenNetworkState.Address
 				tokenNwState.TokenAddress = tokenNetworkState.TokenAddress
@@ -222,8 +221,6 @@ type TokenNetworkGraph struct {
 
 type TokenNetworkState struct {
 	mutex                      sync.Mutex
-	rpcServiceUrls             []string
-	acc                        *account.Account
 	DnsClient                  *dns.Dns
 	DnsAddrsMap                map[common.Address]int64
 	Address                    common.TokenNetworkID
@@ -235,9 +232,6 @@ type TokenNetworkState struct {
 
 func NewTokenNetworkState(localAddr common.Address, rpcServiceUrls []string, acc *account.Account) *TokenNetworkState {
 	result := &TokenNetworkState{}
-	fmt.Printf("[NewTokenNetworkState]: %v", rpcServiceUrls)
-	result.rpcServiceUrls = rpcServiceUrls
-	result.acc = acc
 	result.ChannelsMap = make(map[common.ChannelID]*NettingChannelState)
 	result.PartnerAddressesToChannels = make(map[common.Address]map[common.ChannelID]*NettingChannelState)
 	result.NetworkGraph = TokenNetworkGraph{}
@@ -245,15 +239,13 @@ func NewTokenNetworkState(localAddr common.Address, rpcServiceUrls []string, acc
 	result.NetworkGraph.Edges = new(sync.Map)
 	result.NetworkGraph.Nodes.Store(localAddr, int64(1))
 
+	fmt.Printf("[NewTokenNetworkState] rpcServiceUrls: %v", rpcServiceUrls)
+	result.DnsAddrsMap = make(map[common.Address]int64)
+	result.InitDnsClient(rpcServiceUrls, acc)
 	return result
 }
 
-func (self *TokenNetworkState) SetChainServiceConfig(rpcServiceUrls []string, acc *account.Account) {
-	self.rpcServiceUrls = rpcServiceUrls
-	self.acc = acc
-}
-
-func (self *TokenNetworkState) UpdateAllDns() {
+func (self *TokenNetworkState) InitDnsClient(rpcServiceUrls []string, acc *account.Account) {
 	self.mutex.Lock()
 	defer self.mutex.Unlock()
 
@@ -261,16 +253,21 @@ func (self *TokenNetworkState) UpdateAllDns() {
 		self.DnsAddrsMap = make(map[common.Address]int64)
 		self.DnsClient = &dns.Dns{}
 		self.DnsClient.Client = &client.ClientMgr{}
-		fmt.Printf("[UpdateAllDns]: %v", self.rpcServiceUrls)
-		self.DnsClient.Client.NewRpcClient().SetAddress(self.rpcServiceUrls)
-		self.DnsClient.DefAcc = self.acc
+		fmt.Printf("[InitDnsClient] rpcServiceUrls: %v\n", rpcServiceUrls)
+		self.DnsClient.Client.NewRpcClient().SetAddress(rpcServiceUrls)
+		self.DnsClient.DefAcc = acc
 	}
+}
 
+func (self *TokenNetworkState) GetAllDnsFromChain() map[common.Address]int64 {
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
+	fmt.Printf("[GetAllDnsFromChain] begin\n")
 	dnsAddrsMap := make(map[common.Address]int64)
 	dnsNodes, err := self.DnsClient.GetAllDnsNodes()
 	if err != nil {
-		log.Errorf("[UpdateAllDns] GetAllDnsNodes error: %s", err.Error())
-		return
+		log.Errorf("[GetAllDnsFromChain] GetAllDnsNodes error: %s", err.Error())
+		return nil
 	}
 
 	for _, info := range dnsNodes {
@@ -278,7 +275,7 @@ func (self *TokenNetworkState) UpdateAllDns() {
 		copy(tmpAddr[:], info.WalletAddr[:])
 		dnsAddrsMap[tmpAddr] = 1
 	}
-	self.DnsAddrsMap = dnsAddrsMap
+	return dnsAddrsMap
 }
 
 func (self *TokenNetworkState) GetAllDns() map[common.Address]int64 {
@@ -292,8 +289,22 @@ func (self *TokenNetworkState) GetAllDns() map[common.Address]int64 {
 	return dnsAddrsMap
 }
 
+func (self *TokenNetworkState) updateDns(addr common.Address) {
+	var theAddr thecom.Address
+	copy(theAddr[:], addr[:])
+
+	fmt.Printf("[updateDns] %s\n", theAddr.ToBase58())
+	dnsInfo, err := self.DnsClient.GetDnsNodeByAddr(theAddr)
+	if err == nil && dnsInfo != nil {
+		self.DnsAddrsMap[addr] = 1
+		fmt.Printf("[updateDns] AddDns %s\n", theAddr.ToBase58())
+	}
+}
+
 func (self *TokenNetworkState) AddRoute(addr1 common.Address, addr2 common.Address, channelId common.ChannelID) {
 	log.Infof("[AddRoute] [%v] [%v]", common.ToBase58(addr1), common.ToBase58(addr2))
+	self.updateDns(addr1)
+	self.updateDns(addr2)
 
 	networkGraphState := self.NetworkGraph
 

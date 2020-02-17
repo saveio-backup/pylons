@@ -26,6 +26,12 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 		return nil, fmt.Errorf("[GetBestRoutes] GetTokenNetworkByIdentifier error tokenNetwork is nil")
 	}
 	dnsAddrsMap := tokenNetwork.GetAllDns()
+	if len(dnsAddrsMap) == 0 {
+		dnsAddrsMap = tokenNetwork.GetAllDnsFromChain()
+		if len(dnsAddrsMap) == 0 {
+			return nil, fmt.Errorf("[GetBestRoutes] dnsAddrsMap is nil")
+		}
+	}
 	nodes := tokenNetwork.NetworkGraph.Nodes
 	edges := tokenNetwork.NetworkGraph.Edges
 
@@ -53,14 +59,11 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 		spLen := len(sp)
 		if sp[spLen-1] == toAddr {
 			nextHop = sp[1]
-			if len(dnsAddrsMap) != 0 {
-				_, isDnsNode = dnsAddrsMap[nextHop]
-				if nextHop != toAddr && !isDnsNode {
-					continue
-				}
-			} else {
-				log.Warnf("[GetBestRoutes] dnsAddrsMap length is zero")
+			_, isDnsNode = dnsAddrsMap[nextHop]
+			if nextHop != toAddr && !isDnsNode {
+				continue
 			}
+
 			networkState := channelSrv.GetNodeNetworkState(nextHop)
 			if networkState == transfer.NetworkReachable {
 				channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(),
