@@ -220,7 +220,6 @@ type TokenNetworkGraph struct {
 }
 
 type TokenNetworkState struct {
-	mutex                      sync.Mutex
 	DnsClient                  *dns.Dns
 	DnsAddrsMap                map[common.Address]int64
 	Address                    common.TokenNetworkID
@@ -246,22 +245,18 @@ func NewTokenNetworkState(localAddr common.Address, rpcServiceUrls []string, acc
 }
 
 func (self *TokenNetworkState) InitDnsClient(rpcServiceUrls []string, acc *account.Account) {
-	self.mutex.Lock()
-	defer self.mutex.Unlock()
-
+	fmt.Printf("[InitDnsClient] rpcServiceUrls: %v\n", rpcServiceUrls)
 	if self.DnsClient == nil {
 		self.DnsAddrsMap = make(map[common.Address]int64)
 		self.DnsClient = &dns.Dns{}
 		self.DnsClient.Client = &client.ClientMgr{}
-		fmt.Printf("[InitDnsClient] rpcServiceUrls: %v\n", rpcServiceUrls)
+
 		self.DnsClient.Client.NewRpcClient().SetAddress(rpcServiceUrls)
 		self.DnsClient.DefAcc = acc
 	}
 }
 
 func (self *TokenNetworkState) GetAllDnsFromChain() map[common.Address]int64 {
-	self.mutex.Lock()
-	defer self.mutex.Unlock()
 	fmt.Printf("[GetAllDnsFromChain] begin\n")
 	dnsAddrsMap := make(map[common.Address]int64)
 	dnsNodes, err := self.DnsClient.GetAllDnsNodes()
@@ -279,9 +274,6 @@ func (self *TokenNetworkState) GetAllDnsFromChain() map[common.Address]int64 {
 }
 
 func (self *TokenNetworkState) GetAllDns() map[common.Address]int64 {
-	self.mutex.Lock()
-	defer self.mutex.Unlock()
-
 	dnsAddrsMap := make(map[common.Address]int64)
 	for addr, _ := range self.DnsAddrsMap {
 		dnsAddrsMap[addr] = 1
