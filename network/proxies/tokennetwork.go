@@ -456,7 +456,7 @@ func (self *TokenNetwork) Close(channelId common.ChannelID, partner common.Addre
 	opLock.Lock()
 	defer opLock.Unlock()
 
-	txHash, err := self.ChannelClient.CloseChannel(uint64(channelId), comm.Address(self.nodeAddress), comm.Address(partner), getBalanceHashSlice(balanceHash), uint64(nonce), []byte(additionalHash), []byte(signature), []byte(partnerPubKey))
+	txHash, err := self.ChannelClient.CloseChannel(uint64(channelId), comm.Address(self.nodeAddress), comm.Address(partner), balanceHash[:], uint64(nonce), []byte(additionalHash), []byte(signature), []byte(partnerPubKey))
 	if err != nil {
 		log.Errorf("CloseChannel err:%s", err)
 		return
@@ -483,7 +483,7 @@ func (self *TokenNetwork) updateTransfer(channelId common.ChannelID, partner com
 	}
 
 	// need pubkey
-	txHash, err := self.ChannelClient.UpdateNonClosingBalanceProof(uint64(channelId), comm.Address(partner), comm.Address(self.nodeAddress), getBalanceHashSlice(balanceHash), uint64(nonce), []byte(additionalHash), []byte(closingSignature), []byte(nonClosingSignature), closePubKey, nonClosePubKey)
+	txHash, err := self.ChannelClient.UpdateNonClosingBalanceProof(uint64(channelId), comm.Address(partner), comm.Address(self.nodeAddress), balanceHash[:], uint64(nonce), []byte(additionalHash), []byte(closingSignature), []byte(nonClosingSignature), closePubKey, nonClosePubKey)
 	if err != nil {
 		log.Errorf("UpdateNonClosingBalanceProof err:%s", err)
 		return
@@ -620,45 +620,29 @@ func (self *TokenNetwork) settle(channelId common.ChannelID, transferredAmount c
 	ourBpIsLarger := ourMaximum > partnerMaximum
 	var txHash []byte
 	var err error
-	var locksRootSlice []byte
-	var partnerLocksrootSlice []byte
-
-	if common.LocksRootEmpty(locksRoot) {
-		locksRootSlice = nil
-	} else {
-		locksRootSlice = locksRoot[:]
-	}
-
-	if common.LocksRootEmpty(partnerLocksroot) {
-		partnerLocksrootSlice = nil
-	} else {
-		partnerLocksrootSlice = partnerLocksroot[:]
-	}
 
 	if ourBpIsLarger {
-
 		txHash, err = self.ChannelClient.SettleChannel(uint64(channelId),
 			comm.Address(partner),
 			uint64(partnerTransferredAmount),
 			uint64(partnerLockedAmount),
-			partnerLocksrootSlice,
+			partnerLocksroot[:],
 			comm.Address(self.nodeAddress),
 			uint64(transferredAmount),
 			uint64(lockedAmount),
-			locksRootSlice,
+			locksRoot[:],
 		)
-
 	} else {
 
 		txHash, err = self.ChannelClient.SettleChannel(uint64(channelId),
 			comm.Address(self.nodeAddress),
 			uint64(transferredAmount),
 			uint64(lockedAmount),
-			locksRootSlice,
+			locksRoot[:],
 			comm.Address(partner),
 			uint64(partnerTransferredAmount),
 			uint64(partnerLockedAmount),
-			partnerLocksrootSlice,
+			partnerLocksroot[:],
 		)
 	}
 
@@ -813,12 +797,4 @@ func getTxHashString(txHash []byte) string {
 		return "error parsing tx hash"
 	}
 	return hash.ToHexString()
-}
-
-func getBalanceHashSlice(balanceHash common.BalanceHash) []byte {
-	if common.IsEmptyBalanceHash(balanceHash) {
-		return nil
-	} else {
-		return balanceHash[:]
-	}
 }
