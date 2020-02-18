@@ -237,14 +237,18 @@ func (self *ChannelService) initDB() error {
 			// return fmt.Errorf("error: lastLogBlockHeight > chainBlockHeight")
 		}
 
-		err = self.checkAddressIntegrity(chainState)
-		if err != nil {
+		if err = self.checkAddressIntegrity(chainState); err != nil {
 			log.Errorf("check address integrity failed: %s", err)
 			return err
 		}
 		log.Infof("Restored state from WAL,last log BlockHeight=%d", lastLogBlockHeight)
-		tokenNetwork := transfer.GetTokenNetworkByIdentifier(self.StateFromChannel(), common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
-		tokenNetwork.InitDnsClient(self.chain.ChainServiceUrl, self.Account)
+
+		tokenNetwork := transfer.GetTokenNetworkByIdentifier(chainState, common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
+		if tokenNetwork != nil {
+			tokenNetwork.InitDnsClient(self.chain.ChainServiceUrl, self.Account)
+		} else {
+			log.Warnf("initDB tokenNetwork is nil")
+		}
 	}
 
 	//set filter start block number
@@ -423,6 +427,12 @@ func (self *ChannelService) GetLastFilterBlock() common.BlockHeight {
 
 func (self *ChannelService) UpdateRouteMap() {
 	tokenNetwork := transfer.GetTokenNetworkByIdentifier(self.StateFromChannel(), common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
+	if tokenNetwork != nil {
+		tokenNetwork.InitDnsClient(self.chain.ChainServiceUrl, self.Account)
+	} else {
+		log.Warnf("UpdateRouteMap tokenNetwork is nil")
+	}
+
 	allOpenChannels, err := self.chain.ChannelClient.GetAllOpenChannels()
 	if err != nil {
 		log.Errorf("[UpdateRouteMap] GetAllOpenChannels error: %s", err.Error())
