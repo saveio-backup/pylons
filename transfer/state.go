@@ -9,8 +9,7 @@ import (
 
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
-	"github.com/saveio/themis-go-sdk/client"
-	"github.com/saveio/themis-go-sdk/dns"
+	"github.com/saveio/pylons/network/dns"
 	"github.com/saveio/themis/account"
 	thecom "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
@@ -149,7 +148,6 @@ func DeepCopy(src State) *ChainState {
 			value.IdentifiersToPaymentNetworks[id].TokenIdentifiersToTokenNetworks = make(map[common.TokenNetworkID]*TokenNetworkState)
 			for tokenNetworkId, tokenNetworkState := range state.TokenIdentifiersToTokenNetworks {
 				var tokenNwState TokenNetworkState
-				tokenNwState.DnsClient = tokenNetworkState.DnsClient
 				tokenNwState.DnsAddrsMap = tokenNetworkState.DnsAddrsMap
 				tokenNwState.Address = tokenNetworkState.Address
 				tokenNwState.TokenAddress = tokenNetworkState.TokenAddress
@@ -220,7 +218,6 @@ type TokenNetworkGraph struct {
 }
 
 type TokenNetworkState struct {
-	DnsClient                  *dns.Dns
 	DnsAddrsMap                map[common.Address]int64
 	Address                    common.TokenNetworkID
 	TokenAddress               common.TokenAddress
@@ -237,29 +234,16 @@ func NewTokenNetworkState(localAddr common.Address, rpcServiceUrls []string, acc
 	result.NetworkGraph.Nodes = new(sync.Map)
 	result.NetworkGraph.Edges = new(sync.Map)
 	result.NetworkGraph.Nodes.Store(localAddr, int64(1))
-
-	fmt.Printf("[NewTokenNetworkState] rpcServiceUrls: %v", rpcServiceUrls)
 	result.DnsAddrsMap = make(map[common.Address]int64)
-	result.InitDnsClient(rpcServiceUrls, acc)
+
+	dns.InitDnsClient(rpcServiceUrls, acc)
 	return result
-}
-
-func (self *TokenNetworkState) InitDnsClient(rpcServiceUrls []string, acc *account.Account) {
-	fmt.Printf("[InitDnsClient] rpcServiceUrls: %v\n", rpcServiceUrls)
-	if self.DnsClient == nil {
-		self.DnsAddrsMap = make(map[common.Address]int64)
-		self.DnsClient = &dns.Dns{}
-		self.DnsClient.Client = &client.ClientMgr{}
-
-		self.DnsClient.Client.NewRpcClient().SetAddress(rpcServiceUrls)
-		self.DnsClient.DefAcc = acc
-	}
 }
 
 func (self *TokenNetworkState) GetAllDnsFromChain() map[common.Address]int64 {
 	fmt.Printf("[GetAllDnsFromChain] begin\n")
 	dnsAddrsMap := make(map[common.Address]int64)
-	dnsNodes, err := self.DnsClient.GetAllDnsNodes()
+	dnsNodes, err := dns.Client.GetAllDnsNodes()
 	if err != nil {
 		log.Errorf("[GetAllDnsFromChain] GetAllDnsNodes error: %s", err.Error())
 		return nil
@@ -286,7 +270,7 @@ func (self *TokenNetworkState) updateDns(addr common.Address) {
 	copy(theAddr[:], addr[:])
 
 	fmt.Printf("[updateDns] %s\n", theAddr.ToBase58())
-	dnsInfo, err := self.DnsClient.GetDnsNodeByAddr(theAddr)
+	dnsInfo, err := dns.Client.GetDnsNodeByAddr(theAddr)
 	if err == nil && dnsInfo != nil {
 		self.DnsAddrsMap[addr] = 1
 		fmt.Printf("[updateDns] AddDns %s\n", theAddr.ToBase58())

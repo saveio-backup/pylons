@@ -19,6 +19,7 @@ import (
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network"
+	"github.com/saveio/pylons/network/dns"
 	"github.com/saveio/pylons/network/secretcrypt"
 	"github.com/saveio/pylons/network/transport"
 	"github.com/saveio/pylons/network/transport/messages"
@@ -243,12 +244,7 @@ func (self *ChannelService) initDB() error {
 		}
 		log.Infof("Restored state from WAL,last log BlockHeight=%d", lastLogBlockHeight)
 
-		tokenNetwork := transfer.GetTokenNetworkByIdentifier(chainState, common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
-		if tokenNetwork != nil {
-			tokenNetwork.InitDnsClient(self.chain.ChainServiceUrl, self.Account)
-		} else {
-			log.Warnf("initDB tokenNetwork is nil")
-		}
+		dns.InitDnsClient(self.chain.ChainServiceUrl, self.Account)
 	}
 
 	//set filter start block number
@@ -427,12 +423,6 @@ func (self *ChannelService) GetLastFilterBlock() common.BlockHeight {
 
 func (self *ChannelService) UpdateRouteMap() {
 	tokenNetwork := transfer.GetTokenNetworkByIdentifier(self.StateFromChannel(), common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
-	if tokenNetwork != nil {
-		tokenNetwork.InitDnsClient(self.chain.ChainServiceUrl, self.Account)
-	} else {
-		log.Warnf("UpdateRouteMap tokenNetwork is nil")
-	}
-
 	allOpenChannels, err := self.chain.ChannelClient.GetAllOpenChannels()
 	if err != nil {
 		log.Errorf("[UpdateRouteMap] GetAllOpenChannels error: %s", err.Error())
@@ -452,7 +442,6 @@ func (self *ChannelService) UpdateRouteMap() {
 			}
 		}
 	}
-
 }
 
 func (self *ChannelService) CallbackNewBlock() {
