@@ -1482,7 +1482,9 @@ func (self *ChannelService) GetAllChannelInfo() []*ChannelInfo {
 
 	channelList := self.GetChannelList(common.PaymentNetworkID(self.microAddress),
 		common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), common.EmptyAddress)
-
+	if channelList ==  nil {
+		return infos
+	}
 	for e := channelList.Front(); e != nil; e = e.Next() {
 		channelState := e.Value.(*transfer.NettingChannelState)
 
