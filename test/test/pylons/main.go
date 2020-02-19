@@ -18,6 +18,8 @@ import (
 	p2p "github.com/saveio/pylons/test/p2p/network"
 	tc "github.com/saveio/pylons/test/test/config"
 	"github.com/saveio/pylons/transfer"
+	sdk_client "github.com/saveio/themis-go-sdk/client"
+	"github.com/saveio/themis-go-sdk/dns"
 	"github.com/saveio/themis-go-sdk/usdt"
 	"github.com/saveio/themis-go-sdk/wallet"
 	"github.com/saveio/themis/common/log"
@@ -31,6 +33,7 @@ var deposit = flag.Int("deposit", 10000, "deposit count")
 var transferTo = flag.String("transferTo", "", "transfer asset to")
 var transferAmount = flag.Int("amount", 1000, "test transfer amount")
 var transferType = flag.Int("type", 0, "transferType [0: MediaTransfer; 1: DirectTransfer; Other: MediaTransferBySpecificMedia]")
+var dnsNode = flag.Bool("dnsNode", false, "dns node")
 
 var tokenAddress = common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 var channelActor *ch_actor.ChannelActorServer
@@ -45,6 +48,24 @@ func StartPylons() error {
 	if err != nil {
 		log.Error("GetDefaultAccount error:%s\n", err)
 		return fmt.Errorf("GetDefaultAccount error:%s\n", err)
+	}
+
+	if *dnsNode {
+		clt := &dns.Dns{}
+		clt.Client = &sdk_client.ClientMgr{}
+		clt.Client.NewRpcClient().SetAddress(tc.Parameters.BaseConfig.ChainNodeURLs)
+		clt.DefAcc = account
+		_, err = clt.DNSNodeReg([]byte("192.168.199.64"), []byte("1"), 1)
+		time.Sleep(6 * time.Second)
+		dnsInfo, err := clt.GetDnsNodeByAddr(account.Address)
+		if err != nil {
+			log.Error("GetDnsNodeByAddr error: %s", err.Error())
+			return fmt.Errorf("GetDnsNodeByAddr error: %s", err.Error())
+		}
+		if dnsInfo == nil {
+			log.Error("GetDnsNodeByAddr error: dnsInfo is nil")
+			return fmt.Errorf("GetDnsNodeByAddr error: dnsInfo is nil")
+		}
 	}
 
 	var walletAddr common.Address
@@ -136,6 +157,8 @@ func main() {
 	for _, channel := range allChannels.Channels {
 		log.Infof("[Channel]: Address: %s, ChannelId: %d", channel.Address, channel.ChannelId)
 	}
+
+
 
 	if *mate != "" {
 		log.Infof("[OpenChannel] Open Channel with %s", *mate)

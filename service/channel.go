@@ -112,6 +112,8 @@ func NewChannelService(chain *network.BlockChainService, queryStartBlock common.
 	self.alarm = NewAlarmTask(chain)
 	self.firstRun = true
 
+	dns.InitDnsClient(self.chain.ChainServiceUrl, self.Account)
+
 	networkId, err := self.chain.ChainClient.GetNetworkId()
 	if err != nil {
 		log.Error("get network id failed:", err)
@@ -244,7 +246,7 @@ func (self *ChannelService) initDB() error {
 		}
 		log.Infof("Restored state from WAL,last log BlockHeight=%d", lastLogBlockHeight)
 
-		dns.InitDnsClient(self.chain.ChainServiceUrl, self.Account)
+
 	}
 
 	//set filter start block number
@@ -422,7 +424,8 @@ func (self *ChannelService) GetLastFilterBlock() common.BlockHeight {
 }
 
 func (self *ChannelService) UpdateRouteMap() {
-	tokenNetwork := transfer.GetTokenNetworkByIdentifier(self.StateFromChannel(), common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
+	tokenNetwork := transfer.GetTokenNetworkByIdentifier(self.StateFromChannel(),
+		common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS))
 	allOpenChannels, err := self.chain.ChannelClient.GetAllOpenChannels()
 	if err != nil {
 		log.Errorf("[UpdateRouteMap] GetAllOpenChannels error: %s", err.Error())
@@ -478,7 +481,8 @@ func (self *ChannelService) CallbackNewBlock() {
 			}
 
 			secretRevealEvents, secretRevealPos, err := self.chain.ChannelClient.GetFilterArgsForAllEventsFromChannelByEventId(
-				comm.Address(self.microAddress), comm.ADDRESS_EMPTY, mpay.EVENT_SECRET_REVEALED, uint32(bgnBlockHeight), uint32(endBlockHeight))
+				comm.Address(self.microAddress), comm.ADDRESS_EMPTY, mpay.EVENT_SECRET_REVEALED,
+				uint32(bgnBlockHeight), uint32(endBlockHeight))
 			if err != nil {
 				log.Errorf("CallbackNewBlock GetFilterArgsForAllEventsFromChannelByEventId for secret reveal error: %s", err)
 				return
@@ -625,16 +629,19 @@ func (self *ChannelService) StateFromChannel() *transfer.ChainState {
 func (self *ChannelService) InitializeTokenNetwork() {
 	fmt.Printf("ChainServiceUrl: %v\n", self.chain.ChainServiceUrl)
 	fmt.Printf("Address: %v\n", self.Account.Address)
-	tokenNetworkState := transfer.NewTokenNetworkState(self.address, self.chain.ChainServiceUrl, self.Account)
+	tokenNetworkState := transfer.NewTokenNetworkState(self.address)
 	tokenNetworkState.Address = common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 	tokenNetworkState.TokenAddress = common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
-	newTokenNetwork := &transfer.ContractReceiveNewTokenNetwork{PaymentNetworkId: common.PaymentNetworkID(scUtils.MicroPayContractAddress),
-		TokenNetwork: tokenNetworkState}
+	newTokenNetwork := &transfer.ContractReceiveNewTokenNetwork{
+		PaymentNetworkId: common.PaymentNetworkID(scUtils.MicroPayContractAddress),
+		TokenNetwork: tokenNetworkState,
+	}
 
 	self.HandleStateChange(newTokenNetwork)
 }
 
-func (self *ChannelService) GetPaymentChannelArgs(tokenNetworkId common.TokenNetworkID, channelId common.ChannelID) map[string]interface{} {
+func (self *ChannelService) GetPaymentChannelArgs(tokenNetworkId common.TokenNetworkID,
+	channelId common.ChannelID) map[string]interface{} {
 	chainState := self.StateFromChannel()
 	channelState := transfer.GetChannelStateByTokenNetworkId(chainState, tokenNetworkId, channelId)
 	if channelState == nil {
@@ -1471,7 +1478,7 @@ func (self *ChannelService) GetAllChannelInfo() []*ChannelInfo {
 
 	channelList := self.GetChannelList(common.PaymentNetworkID(self.microAddress),
 		common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS), common.EmptyAddress)
-	if channelList ==  nil {
+	if channelList == nil {
 		return infos
 	}
 	for e := channelList.Front(); e != nil; e = e.Next() {

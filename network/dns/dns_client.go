@@ -16,12 +16,9 @@ var Client *dns.Dns
 func InitDnsClient(rpcServiceUrls []string, acc *account.Account) {
 	once.Do(func() {
 		log.Infof("[InitDnsClient] rpcServiceUrls: %v", rpcServiceUrls)
-		if Client == nil {
-			Client = &dns.Dns{}
-			Client.Client = &client.ClientMgr{}
-
-			Client.Client.NewRpcClient().SetAddress(rpcServiceUrls)
-			Client.DefAcc = acc
-		}
+		Client = &dns.Dns{}
+		Client.Client = &client.ClientMgr{}
+		Client.Client.NewRpcClient().SetAddress(rpcServiceUrls)
+		Client.DefAcc = acc
 	})
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/network/dns"
-	"github.com/saveio/themis/account"
 	thecom "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
 )
@@ -226,7 +225,7 @@ type TokenNetworkState struct {
 	PartnerAddressesToChannels map[common.Address]map[common.ChannelID]*NettingChannelState
 }
 
-func NewTokenNetworkState(localAddr common.Address, rpcServiceUrls []string, acc *account.Account) *TokenNetworkState {
+func NewTokenNetworkState(localAddr common.Address) *TokenNetworkState {
 	result := &TokenNetworkState{}
 	result.ChannelsMap = make(map[common.ChannelID]*NettingChannelState)
 	result.PartnerAddressesToChannels = make(map[common.Address]map[common.ChannelID]*NettingChannelState)
@@ -236,7 +235,6 @@ func NewTokenNetworkState(localAddr common.Address, rpcServiceUrls []string, acc
 	result.NetworkGraph.Nodes.Store(localAddr, int64(1))
 	result.DnsAddrsMap = make(map[common.Address]int64)
 
-	dns.InitDnsClient(rpcServiceUrls, acc)
 	return result
 }
 
