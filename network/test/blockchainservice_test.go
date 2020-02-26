@@ -38,8 +38,3 @@ func TestGetBlock(t *testing.T) {
 	block, _ := blockchainService.GetBlock(uint32(2))
 	fmt.Println(block.ToArray())
 }
-
-func TestRPCServerRun(t *testing.T) {
-	tx, err := blockchainService.ChannelClient.RegisterPaymentEndPoint([]byte("127.0.0.1"), []byte("15566"), blockchainService.GetAccount().Address)
-	fmt.Printf("res:%s, err:%s\n", tx[:], err)
-}
