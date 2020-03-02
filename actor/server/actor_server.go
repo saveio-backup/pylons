@@ -78,21 +78,6 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 			msg.Ret.Err = nil
 			msg.Ret.Done <- true
 		}()
-	case *GetHostAddrReq:
-		go func() {
-			msg.Ret.NetAddr, msg.Ret.Err = this.chSrv.Service.GetHostAddr(msg.WalletAddr)
-			msg.Ret.Done <- true
-		}()
-	case *SetGetHostAddrCallbackReq:
-		go func() {
-			if this.chSrv == nil || this.chSrv.Service == nil {
-				msg.Ret.Done <- false
-				return
-			}
-			this.chSrv.Service.SetHostAddrCallBack(msg.GetHostAddrCallback)
-			msg.Ret.Err = nil
-			msg.Ret.Done <- true
-		}()
 	case *OpenChannelReq:
 		go func() {
 			msg.Ret.ChannelID, msg.Ret.Err = this.chSrv.Service.OpenChannel(msg.TokenAddress, msg.Target)

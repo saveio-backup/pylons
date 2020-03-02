@@ -5,8 +5,6 @@ import (
 	"github.com/saveio/pylons/transfer"
 )
 
-type GetHostAddrCallbackType func(address common.Address) (string, error)
-
 type ChannelInfo struct {
 	ChannelId     uint32
 	Balance       uint64
@@ -48,28 +46,6 @@ type VersionRet struct {
 
 type VersionReq struct {
 	Ret *VersionRet
-}
-
-type GetHostAddrRet struct {
-	WalletAddr common.Address
-	NetAddr    string
-	Done       chan bool
-	Err        error
-}
-
-type GetHostAddrReq struct {
-	WalletAddr common.Address
-	Ret        *GetHostAddrRet
-}
-
-type SetGetHostAddrCallbackRet struct {
-	Done chan bool
-	Err  error
-}
-
-type SetGetHostAddrCallbackReq struct {
-	GetHostAddrCallback GetHostAddrCallbackType
-	Ret                 *SetGetHostAddrCallbackRet
 }
 
 type OpenChannelRet struct {

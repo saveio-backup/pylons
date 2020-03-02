@@ -1,7 +1,6 @@
 package transport
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"sync"
@@ -27,12 +26,11 @@ type ChannelServiceInterface interface {
 }
 
 type Transport struct {
-	queueLock           *sync.Mutex
-	messageQueues       map[transfer.QueueId]*Queue
-	addressQueueMap     *sync.Map
-	kill                chan struct{}
-	getHostAddrCallback func(address common.Address) (string, error)
-	ChannelService      ChannelServiceInterface
+	queueLock       *sync.Mutex
+	messageQueues   map[transfer.QueueId]*Queue
+	addressQueueMap *sync.Map
+	kill            chan struct{}
+	ChannelService  ChannelServiceInterface
 }
 
 type QueueItem struct {
@@ -134,8 +132,8 @@ func (this *Transport) QueueSend(queue *Queue, queueId transfer.QueueId) {
 
 			// if reach max try , only try to send when networkstate is reachable
 			if retryTimes == MAX_RETRY {
-				_, err := this.GetHostAddr(queueId.Recipient)
-				if err != nil {
+				recipientState := this.GetNodeNetworkState(queueId.Recipient)
+				if recipientState != transfer.NetworkReachable {
 					log.Debugf("[QueueSend] reach max retry, dont send message")
 					continue
 				} else {
@@ -226,16 +224,11 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueId) erro
 	}
 
 	log.Debugf("send msg msg = %+v\n", msg)
-	address, err := this.GetHostAddr(queueId.Recipient)
-	if err != nil {
-		log.Errorf("[PeekAndSend] GetHostAddr %s, error: %s", common.ToBase58(queueId.Recipient), err.Error())
-		return errors.New("no valid address to send message")
-	}
-
-	log.Debugf("[PeekAndSend] address: %s msgId: %v, queue: %p, len: %d\n", address, msgId, queue, queue.Len())
+	log.Debugf("[PeekAndSend] address: %s msgId: %v, queue: %p, len: %d\n",
+		common.ToBase58(queueId.Recipient), msgId, queue, queue.Len())
 
 	this.addressQueueMap.LoadOrStore(msgId, queue)
-	if err = client.P2pSend(address, msg); err != nil {
+	if err := client.P2pSend(common.ToBase58(queueId.Recipient), msg); err != nil {
 		log.Error("[PeekAndSend] send error: ", err.Error())
 		return err
 	}
@@ -244,13 +237,7 @@ func (this *Transport) PeekAndSend(queue *Queue, queueId *transfer.QueueId) erro
 }
 
 func (this *Transport) Send(address common.Address, msg proto.Message) error {
-	nodeAddress, err := this.GetHostAddr(address)
-	if err != nil {
-		log.Error("[Send] GetHostAddr address %s, error: %s", common.ToBase58(address), err.Error())
-		return errors.New("no valid address to send message")
-	}
-
-	if err = client.P2pSend(nodeAddress, msg); err != nil {
+	if err := client.P2pSend(common.ToBase58(address), msg); err != nil {
 		log.Error("[PeekAndSend] send error: ", err.Error())
 		return err
 	}
@@ -258,26 +245,20 @@ func (this *Transport) Send(address common.Address, msg proto.Message) error {
 }
 
 func (this *Transport) GetNodeNetworkState(nodeAddr common.Address) string {
-	var err error
-	var nodeNetAddress string
+	nodeAddress := common.ToBase58(nodeAddr)
 
-	if this.getHostAddrCallback == nil {
-		log.Errorf("[GetNodeNetworkState] getHostAddrCallback is not set!!!")
-		panic("[GetNodeNetworkState] getHostAddrCallback is not set!!!")
+	state, err := client.GetNodeNetworkState(nodeAddress)
+	if err != nil {
+		log.Errorf("GetNodeNetworkState nodeAddress: %s error: %s", nodeAddress, err.Error())
+		return ""
 	}
-	if nodeNetAddress, err = this.getHostAddrCallback(nodeAddr); err != nil {
-		log.Errorf("[GetNodeNetworkState] getHostAddrCallback err: %s", err.Error())
-		return transfer.NetworkUnknown
-	}
-
-	state := client.GetNodeNetworkState(nodeNetAddress)
 	nodeNetState := network.PeerState(state)
 	switch nodeNetState {
 	case network.PEER_UNKNOWN:
-		log.Errorf("[GetNodeNetworkState] nodeNetAddress: %s is unknown", nodeNetAddress)
+		log.Errorf("[GetNodeNetworkState] nodeNetAddress: %s is unknown", nodeAddress)
 		return transfer.NetworkUnknown
 	case network.PEER_UNREACHABLE:
-		log.Errorf("[GetNodeNetworkState] nodeNetAddress: %s is unreachable", nodeNetAddress)
+		log.Errorf("[GetNodeNetworkState] nodeNetAddress: %s is unreachable", nodeAddress)
 		return transfer.NetworkUnreachable
 	case network.PEER_REACHABLE:
 		return transfer.NetworkReachable
@@ -285,77 +266,26 @@ func (this *Transport) GetNodeNetworkState(nodeAddr common.Address) string {
 	return ""
 }
 
-func (this *Transport) SetGetHostAddrCallback(getHostAddrCallback func(address common.Address) (string, error)) {
-	this.getHostAddrCallback = getHostAddrCallback
-}
-
-func (this *Transport) GetHostAddrByCallBack(walletAddr common.Address) (string, error) {
-	if this.getHostAddrCallback == nil {
-		log.Errorf("[GetHostAddrByCallBack] getHostAddrCallback is not set!!!")
-		panic("[GetHostAddrByCallBack] getHostAddrCallback is not set!!!")
-	}
-
-	nodeNetAddr, err := this.getHostAddrCallback(walletAddr)
-	if err == nil {
-		if client.GetNodeNetworkState(nodeNetAddr) == int(network.PEER_REACHABLE) {
-			return nodeNetAddr, nil
-		} else {
-			return "", fmt.Errorf("[GetHostAddrByCallBack] %s is unreachable", common.ToBase58(walletAddr))
-		}
-	} else {
-		return "", fmt.Errorf("[GetHostAddrByCallBack] %s error: %s", common.ToBase58(walletAddr), err.Error())
-	}
-}
-
-func (this *Transport) GetHostAddr(walletAddr common.Address) (string, error) {
-	nodeNetAddr, err := this.GetHostAddrByCallBack(walletAddr)
-	if err != nil {
-		log.Errorf("[GetHostAddr] GetHostAddrByCallBack: %s error: %s", common.ToBase58(walletAddr), err.Error())
-	}
-	return nodeNetAddr, err
-}
-
 func (this *Transport) StartHealthCheck(walletAddr common.Address) error {
 	log.Debugf("[StartHealthCheck] walletAddr: %s", common.ToBase58(walletAddr))
-
-	var err error
-	var nodeNetAddr string
-
-	if this.getHostAddrCallback == nil {
-		log.Errorf("[StartHealthCheck] getHostAddrCallback is not set!!!")
-		panic("[StartHealthCheck] getHostAddrCallback is not set!!!")
-	}
-
-	nodeNetAddr, err = this.getHostAddrCallback(walletAddr)
-	if err != nil {
-		err = fmt.Errorf("[StartHealthCheck] getHostAddrCallback error: %s", err.Error())
-		log.Errorf("[StartHealthCheck] error:", err.Error())
-		return err
-	}
-	if nodeNetAddr == "" {
-		err = fmt.Errorf("[StartHealthCheck] error: nodeNetAddr is nil string")
-		log.Error("[StartHealthCheck] error:", err.Error())
-		return err
-	} else {
-		return client.P2pConnect(nodeNetAddr)
-	}
+	return client.P2pConnect(common.ToBase58(walletAddr))
 }
 
-func (this *Transport) Receive(message proto.Message, from string) {
+func (this *Transport) Receive(message proto.Message, walletAddr string) {
 	//log.Info("[NetComponent] Receive: ", reflect.TypeOf(message).String(), " From: ", from)
 
 	switch message.(type) {
 	case *messages.Delivered:
-		this.ReceiveDelivered(message, from)
+		this.ReceiveDelivered(message, walletAddr)
 	default:
-		this.ReceiveMessage(message, from)
+		this.ReceiveMessage(message, walletAddr)
 	}
 }
 
-func (this *Transport) ReceiveMessage(message proto.Message, fromNetAddr string) {
-	log.Debugf("[ReceiveMessage] %v from: %v", reflect.TypeOf(message).String(), fromNetAddr)
+func (this *Transport) ReceiveMessage(message proto.Message, walletAddr string) {
+	log.Debugf("[ReceiveMessage] %v from: %v", reflect.TypeOf(message).String(), walletAddr)
 	if this.ChannelService != nil {
-		this.ChannelService.OnMessage(message, fromNetAddr)
+		this.ChannelService.OnMessage(message, walletAddr)
 	}
 	var senderWallerAddr common.Address
 	var msgID *messages.MessageID
@@ -415,7 +345,7 @@ func (this *Transport) ReceiveMessage(message proto.Message, fromNetAddr string)
 	}
 
 	log.Debugf("[ReceiveMessage] %s msgId: %d fromNetAddr: %s fromWalletAddr: %s", reflect.TypeOf(message).String(),
-		msgID.MessageId, fromNetAddr, common.ToBase58(senderWallerAddr))
+		msgID.MessageId, walletAddr, common.ToBase58(senderWallerAddr))
 	deliveredMessage := &messages.Delivered{
 		DeliveredMessageId: msgID,
 	}
@@ -424,27 +354,23 @@ func (this *Transport) ReceiveMessage(message proto.Message, fromNetAddr string)
 	err := this.ChannelService.Sign(deliveredMessage)
 	if err == nil {
 		log.Debugf("[SendDeliver] (%v) MessageId: %d to:  %s", reflect.TypeOf(message).String(),
-			deliveredMessage.DeliveredMessageId.MessageId, fromNetAddr)
+			deliveredMessage.DeliveredMessageId.MessageId, walletAddr)
 
-		senderNetAddr, err := this.GetHostAddr(senderWallerAddr)
-		if err != nil {
-			log.Errorf("[PeekAndSend] state != NetworkReachable %s", senderNetAddr)
-		}
-
-		if err = client.P2pSend(senderNetAddr, deliveredMessage); err != nil {
+		targetAddr := common.ToBase58(senderWallerAddr)
+		if err = client.P2pSend(targetAddr, deliveredMessage); err != nil {
 			log.Errorf("[SendDeliver] (%v) MessageId: %d to: %s error: %s",
 				reflect.TypeOf(message).String(), deliveredMessage.DeliveredMessageId.MessageId,
-				senderNetAddr, err.Error())
+				targetAddr, err.Error())
 		}
 	} else {
 		log.Errorf("[SendDeliver] (%v) deliveredMessage Sign error: ", err.Error(),
-			reflect.TypeOf(message).String(), fromNetAddr)
+			reflect.TypeOf(message).String(), walletAddr)
 	}
 }
 
-func (this *Transport) ReceiveDelivered(message proto.Message, from string) {
+func (this *Transport) ReceiveDelivered(message proto.Message, walletAddr string) {
 	if this.ChannelService != nil {
-		this.ChannelService.OnMessage(message, from)
+		this.ChannelService.OnMessage(message, walletAddr)
 	}
 	//f := func(key, value interface{}) bool {
 	//	fmt.Printf("[ReceiveDelivered] addressQueueMap Content \n", )
@@ -456,11 +382,12 @@ func (this *Transport) ReceiveDelivered(message proto.Message, from string) {
 	msgId := common.MessageID(msg.DeliveredMessageId.MessageId)
 	queue, ok := this.addressQueueMap.Load(msgId)
 	if !ok {
-		log.Debugf("[ReceiveDelivered] from: %s Time: %s msgId: %v\n", from, time.Now().String(), msgId)
+		log.Debugf("[ReceiveDelivered] from: %s Time: %s msgId: %v\n", walletAddr, time.Now().String(), msgId)
 		log.Error("[ReceiveDelivered] msg.DeliveredMessageId is not in addressQueueMap")
 		return
 	}
-	log.Debugf("[ReceiveDelivered] from: %s Time: %s msgId: %v, queue: %p\n", from, time.Now().String(), msgId, queue)
+	log.Debugf("[ReceiveDelivered] from: %s Time: %s msgId: %v, queue: %p\n",
+		walletAddr, time.Now().String(), msgId, queue)
 	queue.(*Queue).DeliverChan <- msg.DeliveredMessageId
 }
 

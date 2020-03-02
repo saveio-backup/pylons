@@ -246,7 +246,6 @@ func (self *ChannelService) initDB() error {
 		}
 		log.Infof("Restored state from WAL,last log BlockHeight=%d", lastLogBlockHeight)
 
-
 	}
 
 	//set filter start block number
@@ -563,7 +562,7 @@ func (self *ChannelService) CallbackNewBlock() {
 	log.Infof("[CallbackNewBlock] finish")
 }
 
-func (self *ChannelService) OnMessage(message proto.Message, from string) {
+func (self *ChannelService) OnMessage(message proto.Message, walletAddr string) {
 	self.messageHandler.OnMessage(self, message)
 	return
 }
@@ -634,7 +633,7 @@ func (self *ChannelService) InitializeTokenNetwork() {
 	tokenNetworkState.TokenAddress = common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 	newTokenNetwork := &transfer.ContractReceiveNewTokenNetwork{
 		PaymentNetworkId: common.PaymentNetworkID(scUtils.MicroPayContractAddress),
-		TokenNetwork: tokenNetworkState,
+		TokenNetwork:     tokenNetworkState,
 	}
 
 	self.HandleStateChange(newTokenNetwork)
@@ -1300,14 +1299,6 @@ func (self *ChannelService) GetEventsPaymentHistory(tokenAddress common.TokenAdd
 
 func (self *ChannelService) GetInternalEventsWithTimestamps(limit int, offset int) *list.List {
 	return self.Wal.Storage.GetEventsWithTimestamps(limit, offset)
-}
-
-func (self *ChannelService) GetHostAddr(nodeAddress common.Address) (string, error) {
-	return self.Transport.GetHostAddr(nodeAddress)
-}
-
-func (self *ChannelService) SetHostAddrCallBack(getHostAddrCallback func(address common.Address) (string, error)) {
-	self.Transport.SetGetHostAddrCallback(getHostAddrCallback)
 }
 
 func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAddress common.Address, totalWithdraw common.TokenAmount) (chan bool, error) {

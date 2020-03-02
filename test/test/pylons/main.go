@@ -1,11 +1,16 @@
 package main
 
 import (
+	"encoding/hex"
 	"flag"
 	"fmt"
+	"runtime/debug"
+
+	//common2 "github.com/saveio/themis/common"
 	"math/rand"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -15,7 +20,7 @@ import (
 	ch_actor "github.com/saveio/pylons/actor/server"
 	"github.com/saveio/pylons/common"
 	p2p_actor "github.com/saveio/pylons/test/p2p/actor/server"
-	p2p "github.com/saveio/pylons/test/p2p/network"
+	"github.com/saveio/pylons/test/p2p/network"
 	tc "github.com/saveio/pylons/test/test/config"
 	"github.com/saveio/pylons/transfer"
 	sdk_client "github.com/saveio/themis-go-sdk/client"
@@ -37,6 +42,125 @@ var dnsNode = flag.Bool("dnsNode", false, "dns node")
 
 var tokenAddress = common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 var channelActor *ch_actor.ChannelActorServer
+
+//
+//func StartPylons() error {
+//	wallet, err := wallet.OpenWallet("./wallet.dat")
+//	if err != nil {
+//		log.Error("Wallet.Open error:%s\n", err)
+//		return fmt.Errorf("Wallet.Open error:%s\n", err)
+//	}
+//	account, err := wallet.GetDefaultAccount([]byte("pwd"))
+//	if err != nil {
+//		log.Error("GetDefaultAccount error:%s\n", err)
+//		return fmt.Errorf("GetDefaultAccount error:%s\n", err)
+//	}
+//
+//	if *dnsNode {
+//		clt := &dns.Dns{}
+//		clt.Client = &sdk_client.ClientMgr{}
+//		clt.Client.NewRpcClient().SetAddress(tc.Parameters.BaseConfig.ChainNodeURLs)
+//		clt.DefAcc = account
+//		_, err = clt.DNSNodeReg([]byte("192.168.199.64"), []byte("1"), 1)
+//		time.Sleep(6 * time.Second)
+//		dnsInfo, err := clt.GetDnsNodeByAddr(account.Address)
+//		if err != nil {
+//			log.Error("GetDnsNodeByAddr error: %s", err.Error())
+//			return fmt.Errorf("GetDnsNodeByAddr error: %s", err.Error())
+//		}
+//		if dnsInfo == nil {
+//			log.Error("GetDnsNodeByAddr error: dnsInfo is nil")
+//			return fmt.Errorf("GetDnsNodeByAddr error: dnsInfo is nil")
+//		}
+//	}
+//
+//	var walletAddr common.Address
+//	copy(walletAddr[:], account.Address[:])
+//	log.Info("StartPylons WalletAddress: ", common.ToBase58(walletAddr))
+//	listenAddr, err := tc.GetHostAddrCallBack(walletAddr)
+//	if err != nil {
+//		log.Errorf("GetHostAddrCallBack error:%s\n", err.Error())
+//		return fmt.Errorf("GetHostAddrCallBack error:%s\n", err.Error())
+//	}
+//	var NodeConfig = &ch.ChannelConfig{
+//		ClientType:    tc.Parameters.BaseConfig.ChainClientType,
+//		ChainNodeURLs: tc.Parameters.BaseConfig.ChainNodeURLs,
+//		SettleTimeout: "50",
+//		RevealTimeout: "20",
+//	}
+//
+//	//start channel and actor
+//	channelActor, err = ch_actor.NewChannelActor(NodeConfig, account)
+//	if err != nil {
+//		log.Fatal(err)
+//		return err
+//	}
+//	err = channelActor.SyncBlockData()
+//	if err != nil {
+//		log.Fatal(err)
+//		return err
+//	}
+//
+//	//start p2p
+//	channelP2p := network.NewP2P()
+//	bPrivate := keypair.SerializePrivateKey(account.PrivKey())
+//	bPub := keypair.SerializePublicKey(account.PubKey())
+//	channelP2p.Keys = &crypto.KeyPair{
+//		PrivateKey: bPrivate,
+//		PublicKey:  bPub,
+//	}
+//
+//	err = channelP2p.Start(listenAddr)
+//	if err != nil {
+//		log.Fatal(err)
+//		return err
+//	}
+//
+//	//bind p2p and p2p actor
+//	p2pActor, err := p2p_actor.NewP2PActor()
+//	if err != nil {
+//		log.Fatal(err)
+//		return err
+//	}
+//	p2pActor.SetChannelNetwork(channelP2p)
+//
+//	//binding channel and p2p actor
+//	client.SetP2pPid(p2pActor.GetLocalPID())
+//
+//	if err = ch_actor.SetGetHostAddrCallback(tc.GetHostAddrCallBack); err != nil {
+//		log.Fatal(err)
+//		return err
+//	}
+//
+//	//start channel service
+//	err = ch_actor.StartPylons()
+//	if err != nil {
+//		log.Fatal(err)
+//		return err
+//	}
+//	time.Sleep(time.Second)
+//	return nil
+//}
+
+func withWalletAddrFromPeerId(s string) string {
+	if len(s) == 0 {
+		log.Errorf("WithWalletAddrFromPeerId error: %s", "length of id is zero")
+		debug.PrintStack()
+		return ""
+	}
+	pubKeyHexData, err := hex.DecodeString(s)
+	if err != nil {
+		log.Errorf("HexDecodeString error: %s", err.Error())
+		return ""
+	}
+	pubKey, err := keypair.DeserializePublicKey(pubKeyHexData)
+	if err != nil {
+		log.Errorf("DeserializePublicKey error: %s", err.Error())
+		return ""
+	}
+	address := common.GetAddressFromPubKey(pubKey)
+	return common.ToBase58(address)
+}
 
 func StartPylons() error {
 	wallet, err := wallet.OpenWallet("./wallet.dat")
@@ -71,7 +195,7 @@ func StartPylons() error {
 	var walletAddr common.Address
 	copy(walletAddr[:], account.Address[:])
 	log.Info("StartPylons WalletAddress: ", common.ToBase58(walletAddr))
-	listenAddr, err := tc.GetHostAddrCallBack(walletAddr)
+	listenAddr, err := tc.GetHostAddrCallBack(common.ToBase58(walletAddr))
 	if err != nil {
 		log.Errorf("GetHostAddrCallBack error:%s\n", err.Error())
 		return fmt.Errorf("GetHostAddrCallBack error:%s\n", err.Error())
@@ -96,15 +220,24 @@ func StartPylons() error {
 	}
 
 	//start p2p
-	channelP2p := p2p.NewP2P()
-	bPrivate := keypair.SerializePrivateKey(account.PrivKey())
-	bPub := keypair.SerializePublicKey(account.PubKey())
-	channelP2p.Keys = &crypto.KeyPair{
-		PrivateKey: bPrivate,
-		PublicKey:  bPub,
+	networkKey := crypto.KeyPair{
+		PrivateKey: keypair.SerializePrivateKey(account.PrivateKey),
+		PublicKey:  keypair.SerializePublicKey(account.PublicKey),
+	}
+	opts := []network.NetworkOption{
+		network.WithKeys(&networkKey),
+		network.WithAsyncRecvMsgDisabled(true),
+		network.WithNetworkId(tc.Parameters.BaseConfig.NetworkId),
+		network.WithWalletAddrFromPeerId(withWalletAddrFromPeerId),
 	}
 
-	err = channelP2p.Start(listenAddr)
+	channelNetwork := network.NewP2P(opts...)
+
+	netTmp := strings.Split(listenAddr, "://")
+	protocol := netTmp[0]
+	ipTmp := strings.Split(netTmp[1], ":")
+
+	err = channelNetwork.Start(protocol, ipTmp[0], ipTmp[1])
 	if err != nil {
 		log.Fatal(err)
 		return err
@@ -116,15 +249,11 @@ func StartPylons() error {
 		log.Fatal(err)
 		return err
 	}
-	p2pActor.SetChannelNetwork(channelP2p)
+	p2pActor.SetHostAddrCallback(tc.GetHostAddrCallBack)
+	p2pActor.SetChannelNetwork(channelNetwork)
 
 	//binding channel and p2p actor
 	client.SetP2pPid(p2pActor.GetLocalPID())
-
-	if err = ch_actor.SetGetHostAddrCallback(tc.GetHostAddrCallBack); err != nil {
-		log.Fatal(err)
-		return err
-	}
 
 	//start channel service
 	err = ch_actor.StartPylons()
@@ -157,8 +286,6 @@ func main() {
 	for _, channel := range allChannels.Channels {
 		log.Infof("[Channel]: Address: %s, ChannelId: %d", channel.Address, channel.ChannelId)
 	}
-
-
 
 	if *mate != "" {
 		log.Infof("[OpenChannel] Open Channel with %s", *mate)

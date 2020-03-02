@@ -102,7 +102,7 @@ func P2pSend(address string, data proto.Message) error {
 	return chReq.Ret.Err
 }
 
-func GetNodeNetworkState(address string) int {
+func GetNodeNetworkState(address string) (int, error) {
 	ret := &GetNodeNetworkStateRet{
 		State: 0,
 		Done:  make(chan bool, 1),
@@ -112,5 +112,5 @@ func GetNodeNetworkState(address string) int {
 	P2pServerPid.Tell(chReq)
 	<-chReq.Ret.Done
 	close(chReq.Ret.Done)
-	return chReq.Ret.State
+	return chReq.Ret.State, chReq.Ret.Err
 }

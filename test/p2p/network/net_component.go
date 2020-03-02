@@ -14,6 +14,11 @@ func (this *NetComponent) Startup(net *network.Network) {
 
 func (this *NetComponent) Receive(ctx *network.ComponentContext) error {
 	msg := ctx.Message()
-	addr := ctx.Client().Address
-	return this.Net.Receive(ctx, msg, addr)
+	client := ctx.Client()
+	var addr, peerId string
+	if client != nil {
+		addr = client.Address
+		peerId = client.ClientID()
+	}
+	return this.Net.Receive(ctx, msg, addr, peerId)
 }

@@ -74,45 +74,6 @@ func GetVersion() (string, error) {
 	}
 }
 
-func GetHostAddr(walletAddr common.Address) (string, error) {
-	if ChannelServerPid == nil {
-		return "", fmt.Errorf("GetHostAddr error:  ChannelServerPid is nil")
-	}
-	ret := &GetHostAddrRet{
-		WalletAddr: common.EmptyAddress,
-		NetAddr:    "",
-		Done:       make(chan bool, 1),
-		Err:        nil,
-	}
-	getHostAddrReq := &GetHostAddrReq{WalletAddr: walletAddr, Ret: ret}
-	ChannelServerPid.Tell(getHostAddrReq)
-
-	if err := waitForCallDone(getHostAddrReq.Ret.Done, "GetHostAddr", defaultMinTimeOut); err != nil {
-		return "", err
-	} else {
-		return getHostAddrReq.Ret.NetAddr, getHostAddrReq.Ret.Err
-	}
-}
-
-func SetGetHostAddrCallback(getHostAddrCallback GetHostAddrCallbackType) error {
-	if ChannelServerPid == nil {
-		return fmt.Errorf("SetGetHostAddrCallback error:  ChannelServerPid is nil")
-	}
-	ret := &SetGetHostAddrCallbackRet{
-		Done: make(chan bool, 1),
-		Err:  nil,
-	}
-
-	setGetHostAddrCallbackReq := &SetGetHostAddrCallbackReq{GetHostAddrCallback: getHostAddrCallback, Ret: ret}
-	ChannelServerPid.Tell(setGetHostAddrCallbackReq)
-
-	if err := waitForCallDone(setGetHostAddrCallbackReq.Ret.Done, "SetGetHostAddrCallback", defaultMinTimeOut); err != nil {
-		return err
-	} else {
-		return setGetHostAddrCallbackReq.Ret.Err
-	}
-}
-
 func OpenChannel(tokenAddress common.TokenAddress, target common.Address) (common.ChannelID, error) {
 	if ChannelServerPid == nil {
 		return 0, fmt.Errorf("OpenChannel error:  ChannelServerPid is nil")

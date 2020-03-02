@@ -3,24 +3,24 @@ package server
 import (
 	"context"
 	"fmt"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/ontio/ontology-eventbus/actor"
 	p2pNet "github.com/saveio/carrier/network"
-	dspact "github.com/saveio/dsp-go-sdk/actor/client"
 	chact "github.com/saveio/pylons/actor/client"
 	"github.com/saveio/pylons/test/p2p/network"
 	"github.com/saveio/themis/common/log"
+	"time"
 )
 
 type MessageHandler func(msgData interface{}, pid *actor.PID)
 
 type P2PActor struct {
-	channelNet  *network.Network
-	dspNet      *network.Network
-	props       *actor.Props
-	msgHandlers map[string]MessageHandler
-	localPID    *actor.PID
+	channelNet          *network.Network
+	dspNet              *network.Network
+	props               *actor.Props
+	msgHandlers         map[string]MessageHandler
+	localPID            *actor.PID
+	getHostAddrCallBack func(string) (string, error)
 }
 
 func NewP2PActor() (*P2PActor, error) {
@@ -33,6 +33,10 @@ func NewP2PActor() (*P2PActor, error) {
 		return nil, err
 	}
 	return p2pActor, nil
+}
+
+func (this *P2PActor) SetHostAddrCallback(cb func(address string) (string, error)) {
+	this.getHostAddrCallBack = cb
 }
 
 func (this *P2PActor) SetChannelNetwork(net *network.Network) {
@@ -74,55 +78,42 @@ func (this *P2PActor) Receive(ctx actor.Context) {
 		log.Warn("[P2PActor] actor restart")
 	case *chact.ConnectReq:
 		go func() {
-			msg.Ret.Err = this.channelNet.Connect(msg.Address)
+			targetNetAddr, err := this.getHostAddrCallBack(msg.Address)
+			if err != nil {
+				msg.Ret.Err = err
+				msg.Ret.Done <- true
+			}
+
+			err = this.channelNet.Connect(targetNetAddr)
+			if err != nil {
+				msg.Ret.Err = err
+				msg.Ret.Done <- true
+			}
+			err = this.channelNet.WaitForConnected(msg.Address, 15*time.Second)
+			if err != nil {
+				msg.Ret.Err = err
+				msg.Ret.Done <- true
+			}
 			msg.Ret.Done <- true
 		}()
 	case *chact.GetNodeNetworkStateReq:
 		go func() {
-			state, err := this.channelNet.GetPeerStateByAddress(msg.Address)
+			state, err := this.channelNet.GetConnStateByWallet(msg.Address)
 			msg.Ret.State = int(state)
+			fmt.Printf("[GetConnStateByWallet] %s: %d\n", msg.Address, msg.Ret.State)
 			msg.Ret.Err = err
 			msg.Ret.Done <- true
 		}()
 	case *chact.CloseReq:
 		go func() {
-			msg.Ret.Err = this.channelNet.Close(msg.Address)
+			//todo: Fix it
+			//msg.Ret.Err = this.channelNet.Close(msg.Address)
 			msg.Ret.Done <- true
 		}()
 	case *chact.SendReq:
 		go func() {
-			msg.Ret.Err = this.channelNet.Send(msg.Data, msg.Address)
+			msg.Ret.Err = this.channelNet.SendOnce(msg.Data, msg.Address)
 			msg.Ret.Done <- true
-		}()
-	case *dspact.ConnectReq:
-		go func() {
-			err := this.dspNet.ConnectAndWait(msg.Address)
-			msg.Response <- &dspact.P2pResp{Error: err}
-		}()
-	case *dspact.WaitForConnectedReq:
-		go func() {
-			err := this.dspNet.WaitForConnected(msg.Address, msg.Timeout)
-			msg.Response <- &dspact.P2pResp{Error: err}
-		}()
-	case *dspact.CloseReq:
-		go func() {
-			err := this.dspNet.Disconnect(msg.Address)
-			msg.Response <- &dspact.P2pResp{Error: err}
-		}()
-	case *dspact.SendReq:
-		go func() {
-			err := this.dspNet.Send(msg.Data, msg.Address)
-			msg.Response <- &dspact.P2pResp{Error: err}
-		}()
-	case *dspact.PublicAddrReq:
-		go func() {
-			addr := this.dspNet.PublicAddr()
-			msg.Response <- &dspact.PublicAddrResp{Addr: addr}
-		}()
-	case *dspact.RequestWithRetryReq:
-		go func() {
-			ret, err := this.dspNet.RequestWithRetry(msg.Data, msg.Address, msg.Retry, msg.Timeout)
-			msg.Response <- &dspact.RequestWithRetryResp{Data: ret, Error: err}
 		}()
 	default:
 		log.Error("[P2PActor] receive unknown message type!")

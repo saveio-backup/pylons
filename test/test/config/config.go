@@ -64,11 +64,15 @@ func InitConfig() *Config {
 	return cfg
 }
 
-func GetHostAddrCallBack(walletAddr common.Address) (string, error) {
+func GetHostAddrCallBack(base58Addr string) (string, error) {
+	walletAddr, err := common.FromBase58(base58Addr)
+	if err != nil {
+		return "", fmt.Errorf("[GetHostAddrCallBack] FromBase58 error: %s.", base58Addr)
+	}
 	if addr, exist := NodeMap[walletAddr]; exist {
 		return addr, nil
 	} else {
-		log.Errorf("[GetHostAddrCallBack] Host: %s is not exist.", common.ToBase58(walletAddr))
+		log.Errorf("[GetHostAddrCallBack] Host: %s is not exist.", base58Addr)
 		return "", fmt.Errorf("[GetHostAddrCallBack] Host: %s is not exist.", common.ToBase58(walletAddr))
 	}
 }
