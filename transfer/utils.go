@@ -34,9 +34,7 @@ func HashBalanceData(transferredAmount common.TokenAmount,
 	buf := new(bytes.Buffer)
 	buf.Write(Uint64ToBytes(uint64(transferredAmount)))
 	buf.Write(Uint64ToBytes(uint64(lockedAmount)))
-	if !compareLocksroot(locksRoot, empty) {
-		buf.Write(locksRoot[:])
-	}
+	buf.Write(locksRoot[:])
 
 	//[TODO] make sure sha256.Sum256 is similar with web3.utils.soliditySha3
 	sum := common.GetHash(buf.Bytes())
