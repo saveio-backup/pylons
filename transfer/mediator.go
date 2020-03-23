@@ -434,7 +434,7 @@ func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRout
 		lockedTransferEvent := sendLockedTransfer(payeeChannel, payerTransfer.Initiator, payerTransfer.Target,
 			common.PaymentAmount(payerTransfer.Lock.Amount), messageId, payerTransfer.PaymentId,
 			common.BlockExpiration(payerTransfer.Lock.Expiration), payerTransfer.EncSecret,
-			common.SecretHash(payerTransfer.Lock.SecretHash))
+			common.SecretHash(payerTransfer.Lock.SecretHash), payerTransfer.Mediators)
 		if lockedTransferEvent == nil {
 			log.Debug("[forwardTransferPair] lockedTransferEvent is nil")
 			return nil, nil, fmt.Errorf("[forwardTransferPair] lockedTransferEvent is nil")

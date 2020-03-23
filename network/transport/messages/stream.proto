@@ -145,6 +145,7 @@ message LockedTransfer{
     Address target = 3;
     EncSecret enc_secret = 4;
     uint32 fee = 5;
+    repeated Address mediators = 6;
 }
 
 // RefundTransfer(LockedTransfer)

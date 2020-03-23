@@ -45,6 +45,18 @@ func AddressEqual(address1 Address, address2 Address) bool {
 	return result
 }
 
+func AddressContains(addrs []Address, address Address) bool {
+	if addrs == nil {
+		return false
+	}
+	for _, addr := range addrs {
+		if AddressEqual(addr, address) {
+			return true
+		}
+	}
+	return false
+}
+
 func Keccak256Compare(one *Keccak256, two *Keccak256) int {
 	result := 0
 

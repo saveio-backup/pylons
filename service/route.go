@@ -10,7 +10,7 @@ import (
 )
 
 func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID, fromAddr common.Address,
-	toAddr common.Address, amount common.TokenAmount, badAddr common.Address) ([]transfer.RouteState, error) {
+	toAddr common.Address, amount common.TokenAmount, badAddrs []common.Address) ([]transfer.RouteState, error) {
 	//""" Returns a list of channels that can be used to make a transfer.
 	//
 	//This will filter out channels that are not open and don't have enough
@@ -34,21 +34,14 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	}
 	nodes := tokenNetwork.NetworkGraph.Nodes
 	edges := tokenNetwork.NetworkGraph.Edges
-
-	top := transfer.NewTopology(nodes, edges, badAddr)
+	top := transfer.NewTopology(nodes, edges, badAddrs)
 	spt := top.GetShortPath(fromAddr)
-	//for _, sp := range spt {
-	//	for _, node := range sp {
-	//		fmt.Printf("%s ", common.ToBase58(node))
-	//	}
-	//	fmt.Println()
-	//}
 	sptLen := len(spt)
 	if len(spt) == 0 {
 		log.Errorf("[GetBestRoutes] spt is nil")
 		return nil, fmt.Errorf("[GetBestRoutes] spt is nil")
 	}
-	log.Debugf("SPT:", spt)
+	log.Debugf("SPT:", sptLen)
 
 	var nextHop common.Address
 	var channelId common.ChannelID
@@ -57,31 +50,32 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	for i = 0; i < sptLen; i++ {
 		sp := spt[i]
 		spLen := len(sp)
-		if sp[spLen-1] == toAddr {
-			nextHop = sp[1]
-			_, isDnsNode = dnsAddrsMap[nextHop]
-			if nextHop != toAddr && !isDnsNode {
-				continue
-			}
-
-			networkState := channelSrv.GetNodeNetworkState(nextHop)
-			if networkState == transfer.NetworkReachable {
-				channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(),
-					tokenNetworkId, nextHop)
-				if channelState != nil {
-					channelId = channelState.Identifier
-					if valid, err := checkRouteAvailable(channelState, nextHop, fromAddr, amount); valid {
-						log.Debugf("[GetBestRoutes]: %s", common.ToBase58(nextHop))
-						break
-					} else {
-						log.Warnf("[GetBestRoutes] checkRouteAvailable %s error: ", common.ToBase58(nextHop), err.Error())
-					}
-				} else {
-					log.Warnf("[GetBestRoutes] GetChannelStateByTokenNetworkAndPartner %s error", common.ToBase58(nextHop))
-				}
-			} else {
-				log.Warnf("[GetBestRoutes] %s is NetworkUnReachable", common.ToBase58(nextHop))
-			}
+		// destination is not target
+		if sp[spLen-1] != toAddr {
+			continue
+		}
+		nextHop = sp[1]
+		_, isDnsNode = dnsAddrsMap[nextHop]
+		if nextHop != toAddr && !isDnsNode {
+			continue
+		}
+		networkState := channelSrv.GetNodeNetworkState(nextHop)
+		if networkState != transfer.NetworkReachable {
+			log.Warnf("[GetBestRoutes] %s is NetworkUnReachable", common.ToBase58(nextHop))
+			continue
+		}
+		channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(),
+			tokenNetworkId, nextHop)
+		if channelState == nil {
+			log.Warnf("[GetBestRoutes] GetChannelStateByTokenNetworkAndPartner %s error", common.ToBase58(nextHop))
+			continue
+		}
+		channelId = channelState.Identifier
+		if valid, err := checkRouteAvailable(channelState, nextHop, fromAddr, amount); valid {
+			log.Debugf("[GetBestRoutes]: %s", common.ToBase58(nextHop))
+			break
+		} else {
+			log.Warnf("[GetBestRoutes] checkRouteAvailable %s error: ", common.ToBase58(nextHop), err.Error())
 		}
 	}
 	if i == sptLen {

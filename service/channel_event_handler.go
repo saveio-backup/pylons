@@ -17,7 +17,7 @@ type ChannelEventHandler struct {
 }
 
 func (self ChannelEventHandler) OnChannelEvent(channel *ChannelService, event transfer.Event) {
-	log.Debug("[OnChannelEvent]  type: ", reflect.TypeOf(event).String())
+	log.Debugf("[OnChannelEvent]  type: %v", reflect.TypeOf(event).String())
 	switch event.(type) {
 	case *transfer.SendDirectTransfer:
 		sendDirectTransfer := event.(*transfer.SendDirectTransfer)

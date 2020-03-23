@@ -865,7 +865,7 @@ func computeMerkleTreeWithout(merkleTree *MerkleTreeState, lockHash common.LockH
 func createSendLockedTransfer(channelState *NettingChannelState, initiator common.Address,
 	target common.Address, amount common.PaymentAmount, messageId common.MessageID,
 	paymentId common.PaymentID, expiration common.BlockExpiration, encSecret common.EncSecret,
-	secretHash common.SecretHash) (*SendLockedTransfer, *MerkleTreeState, error) {
+	secretHash common.SecretHash, mediators []common.Address) (*SendLockedTransfer, *MerkleTreeState, error) {
 
 	var err error
 	ourState := channelState.OurState
@@ -937,6 +937,7 @@ func createSendLockedTransfer(channelState *NettingChannelState, initiator commo
 		Initiator:    initiator,
 		Target:       target,
 		EncSecret:    encSecret,
+		Mediators:    mediators,
 	}
 
 	lockedTransfer := &SendLockedTransfer{
@@ -1103,10 +1104,11 @@ func CreateUnlock(channelState *NettingChannelState, messageId common.MessageID,
 
 func sendLockedTransfer(channelState *NettingChannelState, initiator common.Address, target common.Address,
 	amount common.PaymentAmount, messageId common.MessageID, paymentId common.PaymentID,
-	expiration common.BlockExpiration, encSecret common.EncSecret, secretHash common.SecretHash) *SendLockedTransfer {
+	expiration common.BlockExpiration, encSecret common.EncSecret, secretHash common.SecretHash,
+	mediators []common.Address) *SendLockedTransfer {
 
 	sendLockedTransferEvent, merkleTree, err := createSendLockedTransfer(channelState, initiator, target, amount,
-		messageId, paymentId, expiration, encSecret, secretHash)
+		messageId, paymentId, expiration, encSecret, secretHash, mediators)
 	if err != nil {
 		log.Error("[sendLockedTransfer] createSendLockedTransfer error: %s", err.Error())
 	}
@@ -1143,7 +1145,7 @@ func sendRefundTransfer(channelState *NettingChannelState, initiator common.Addr
 
 	sendMediatedTransfer, merkleTree, err := createSendLockedTransfer(
 		channelState, initiator, target, amount, messageId, paymentId,
-		expiration, encSecret, secretHash)
+		expiration, encSecret, secretHash, nil)
 	if err != nil {
 		log.Error("[sendRefundTransfer] createSendLockedTransfer error: %s", err.Error())
 		return nil, err

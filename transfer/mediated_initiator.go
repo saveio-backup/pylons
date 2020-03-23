@@ -177,7 +177,7 @@ func InitSendLockedTransfer(transferDescription *TransferDescriptionWithSecretSt
 	lockedTransferEvent := sendLockedTransfer(channelState, transferDescription.Initiator,
 		common.Address(transferDescription.Target), common.PaymentAmount(transferDescription.Amount),
 		messageId, transferDescription.PaymentId, lockExpiration, transferDescription.EncSecret,
-		transferDescription.SecretHash)
+		transferDescription.SecretHash, nil)
 
 	return lockedTransferEvent
 }

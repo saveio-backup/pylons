@@ -1185,7 +1185,7 @@ func (self *ChannelService) InitiatorInit(paymentId common.PaymentID, transferAm
 	}
 
 	routes, err := GetBestRoutes(self, TokenNetworkId, self.address, targetAddress, transferAmount,
-		common.Address{})
+		nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1233,11 +1233,15 @@ func (self *ChannelService) MediatorInit(lockedTransfer *messages.LockedTransfer
 	copy(initiatorAddr[:], lockedTransfer.Initiator.Address)
 
 	fromTransfer := LockedTransferSignedFromMessage(lockedTransfer)
+	badAddrs := make([]common.Address, 0, len(fromTransfer.Mediators)+1)
+	badAddrs = append(badAddrs, initiatorAddr)
+	badAddrs = append(badAddrs, fromTransfer.Mediators...)
 	routes, err := GetBestRoutes(self, fromTransfer.BalanceProof.TokenNetworkId,
-		self.address, fromTransfer.Target, fromTransfer.Lock.Amount, initiatorAddr)
+		self.address, fromTransfer.Target, fromTransfer.Lock.Amount, badAddrs)
 	if err != nil {
 		log.Infof("[GetBestRoutes] error : %v", err)
 	}
+	fromTransfer.Mediators = append(fromTransfer.Mediators, self.address)
 	fromRoute := &transfer.RouteState{
 		NodeAddress: initiatorAddr,
 		ChannelId:   fromTransfer.BalanceProof.ChannelId,

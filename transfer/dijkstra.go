@@ -26,8 +26,19 @@ const (
 
 type ShortPathTree [][]common.Address
 
+func (s ShortPathTree) Len() int {
+	return len(s)
+}
+func (s ShortPathTree) Less(i, j int) bool {
+	return len(s[i]) < len(s[j])
+}
+
+func (s ShortPathTree) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
 // NewTopology creates a new topology
-func NewTopology(nodes *sync.Map, edges *sync.Map, previousAddr common.Address) *Topology {
+func NewTopology(nodes *sync.Map, edges *sync.Map, previousAddrs []common.Address) *Topology {
 	t := &Topology{
 		nodes: make(map[common.Address]int64),
 		edges: make(map[common.Address]map[common.Address]int64),
@@ -35,7 +46,7 @@ func NewTopology(nodes *sync.Map, edges *sync.Map, previousAddr common.Address) 
 
 	nodes.Range(func(key, value interface{}) bool {
 		tmpAddr := key.(common.Address)
-		if !common.AddressEqual(previousAddr, tmpAddr) {
+		if !common.AddressContains(previousAddrs, tmpAddr) {
 			t.nodes[tmpAddr] = value.(int64)
 		}
 		return true
@@ -44,7 +55,7 @@ func NewTopology(nodes *sync.Map, edges *sync.Map, previousAddr common.Address) 
 	edges.Range(func(key, value interface{}) bool {
 		addr1 := key.(common.EdgeId).GetAddr1()
 		addr2 := key.(common.EdgeId).GetAddr2()
-		if !common.AddressEqual(addr1, previousAddr) && !common.AddressEqual(addr2, previousAddr) {
+		if !common.AddressContains(previousAddrs, addr1) && !common.AddressContains(previousAddrs, addr2) {
 			if _, ok := t.edges[addr1]; !ok {
 				t.edges[addr1] = make(map[common.Address]int64)
 			}

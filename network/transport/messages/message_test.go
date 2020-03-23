@@ -6,6 +6,7 @@ import (
 	proto "github.com/gogo/protobuf/proto"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/themis/account"
+	"github.com/saveio/themis/common/log"
 )
 
 func BuildDirectTransfer(chainID common.ChainID, nonce common.Nonce, amount common.TokenAmount,
@@ -61,4 +62,20 @@ func TestVerifySignature(t *testing.T) {
 	if err != nil {
 		t.Fatal("error verify the message")
 	}
+}
+
+func TestAppendMediator(t *testing.T) {
+	testAddr := make([]common.Address, 0)
+	addr1, _ := common.FromBase58("AaH1pqFW3YskUDwpg7XqrqxgviBb57JyK1")
+	addr2, _ := common.FromBase58("AanMAAHLVdpsGFo5QMbQDkfpMTcNGAFXNz")
+	testAddr = append(testAddr, addr1)
+	testAddr = append(testAddr, addr2)
+	mediators := make([]*Address, 0, len(testAddr))
+	for _, mediator := range testAddr {
+		log.Infof("event transfer mediator %s", common.ToBase58(mediator))
+		var addr common.Address
+		copy(addr[:], mediator[:])
+		mediators = append(mediators, &Address{Address: addr[:]})
+	}
+	log.Infof("event transfer mediator %v", mediators)
 }

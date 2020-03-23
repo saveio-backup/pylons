@@ -305,12 +305,20 @@ func LockedTransferFromEvent(event *transfer.SendLockedTransfer) proto.Message {
 		Recipient:       &Address{Address: event.Recipient[:]},
 	}
 
+	mediators := make([]*Address, 0, len(event.Transfer.Mediators))
+	for _, mediator := range event.Transfer.Mediators {
+		log.Infof("event transfer mediator %s", common.ToBase58(mediator))
+		var addr common.Address
+		copy(addr[:], mediator[:])
+		mediators = append(mediators, &Address{Address: addr[:]})
+	}
 	msg := &LockedTransfer{
 		BaseMessage: transferBase,
 		Target:      &Address{Address: event.Transfer.Target[:]},
 		Initiator:   &Address{Address: event.Transfer.Initiator[:]},
 		EncSecret:   &EncSecret{EncSecret: event.Transfer.EncSecret[:]},
 		Fee:         0,
+		Mediators:   mediators,
 	}
 	return msg
 }
@@ -554,7 +562,7 @@ func Sign(account *account.Account, message SignedMessageInterface) error {
 			Publickey: pubKey,
 		}
 	default:
-		return fmt.Errorf("[Sign] Unknow message type to sign ", reflect.TypeOf(message).String())
+		return fmt.Errorf("[Sign] Unknow message type to sign %v", reflect.TypeOf(message).String())
 	}
 	//log.Debug("Sign [PubKey]: ", pubKey)
 	//log.Debug("Sign [Data]: ", data)

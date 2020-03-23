@@ -157,7 +157,7 @@ func (self *MessageHandler) HandleMessageRefundTransfer(channel *ChannelService,
 	fromTransfer := LockedTransferSignedFromMessage(message.Refund)
 	chainState := channel.StateFromChannel()
 	routes, _ := GetBestRoutes(channel, common.TokenNetworkID(tokenNetworkAddress),
-		channel.address, fromTransfer.Target, fromTransfer.Lock.Amount, previousAddress)
+		channel.address, fromTransfer.Target, fromTransfer.Lock.Amount, []common.Address{previousAddress})
 
 	role := transfer.GetTransferRole(chainState, common.SecretHash(fromTransfer.Lock.SecretHash))
 	if role == "initiator" {
@@ -357,6 +357,14 @@ func LockedTransferSignedFromMessage(message *messages.LockedTransfer) *transfer
 	var targetAddress [20]byte
 	copy(targetAddress[:], message.Target.Address[:20])
 
+	mediators := make([]common.Address, 0, len(message.Mediators))
+	for _, addr := range message.Mediators {
+		var mediator [constants.AddrLen]byte
+		copy(mediator[:], addr.Address[:constants.AddrLen])
+		mediators = append(mediators, mediator)
+		log.Infof("append mediator %s", common.ToBase58(mediator))
+	}
+
 	transferState := &transfer.LockedTransferSignedState{
 		MessageId:    common.MessageID(message.BaseMessage.MessageId.MessageId),
 		PaymentId:    common.PaymentID(message.BaseMessage.PaymentId.PaymentId),
@@ -366,6 +374,7 @@ func LockedTransferSignedFromMessage(message *messages.LockedTransfer) *transfer
 		Initiator:    initAddress,
 		Target:       targetAddress,
 		EncSecret:    common.EncSecret(message.EncSecret.EncSecret),
+		Mediators:    mediators,
 	}
 	return transferState
 }

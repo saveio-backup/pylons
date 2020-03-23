@@ -267,11 +267,11 @@ func (self *TokenNetworkState) updateDns(addr common.Address) {
 	var theAddr thecom.Address
 	copy(theAddr[:], addr[:])
 
-	fmt.Printf("[updateDns] %s\n", theAddr.ToBase58())
+	// fmt.Printf("[updateDns] %s\n", theAddr.ToBase58())
 	dnsInfo, err := dns.Client.GetDnsNodeByAddr(theAddr)
 	if err == nil && dnsInfo != nil {
 		self.DnsAddrsMap[addr] = 1
-		fmt.Printf("[updateDns] AddDns %s\n", theAddr.ToBase58())
+		// fmt.Printf("[updateDns] AddDns %s\n", theAddr.ToBase58())
 	}
 }
 
@@ -632,6 +632,7 @@ type LockedTransferUnsignedState struct {
 	Initiator    common.Address
 	Target       common.Address
 	EncSecret    common.EncSecret
+	Mediators    []common.Address
 }
 
 type LockedTransferSignedState struct {
@@ -643,6 +644,7 @@ type LockedTransferSignedState struct {
 	Initiator    common.Address
 	Target       common.Address
 	EncSecret    common.EncSecret
+	Mediators    []common.Address
 }
 
 //NOTE, need calculate SecretHash based on Secret in construct func
