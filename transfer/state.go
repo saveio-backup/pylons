@@ -270,6 +270,9 @@ func (self *TokenNetworkState) updateDns(addr common.Address) {
 	// fmt.Printf("[updateDns] %s\n", theAddr.ToBase58())
 	dnsInfo, err := dns.Client.GetDnsNodeByAddr(theAddr)
 	if err == nil && dnsInfo != nil {
+		if self.DnsAddrsMap == nil {
+			self.DnsAddrsMap = make(map[common.Address]int64)
+		}
 		self.DnsAddrsMap[addr] = 1
 		// fmt.Printf("[updateDns] AddDns %s\n", theAddr.ToBase58())
 	}
