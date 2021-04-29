@@ -249,16 +249,16 @@ func (this *Transport) GetNodeNetworkState(nodeAddr common.Address) string {
 
 	state, err := client.GetNodeNetworkState(nodeAddress)
 	if err != nil {
-		log.Errorf("GetNodeNetworkState nodeAddress: %s error: %s", nodeAddress, err.Error())
+		log.Warnf("GetNodeNetworkState nodeAddress: %s error: %s", nodeAddress, err.Error())
 		return ""
 	}
 	nodeNetState := network.PeerState(state)
 	switch nodeNetState {
 	case network.PEER_UNKNOWN:
-		log.Errorf("[GetNodeNetworkState] nodeNetAddress: %s is unknown", nodeAddress)
+		log.Warnf("[GetNodeNetworkState] nodeNetAddress: %s is unknown", nodeAddress)
 		return transfer.NetworkUnknown
 	case network.PEER_UNREACHABLE:
-		log.Errorf("[GetNodeNetworkState] nodeNetAddress: %s is unreachable", nodeAddress)
+		log.Warnf("[GetNodeNetworkState] nodeNetAddress: %s is unreachable", nodeAddress)
 		return transfer.NetworkUnreachable
 	case network.PEER_REACHABLE:
 		return transfer.NetworkReachable

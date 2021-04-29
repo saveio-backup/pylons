@@ -3,8 +3,6 @@ package transport
 import (
 	"fmt"
 	"sync"
-	"testing"
-	"time"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/saveio/pylons/common"
@@ -53,69 +51,4 @@ func CheckConnectedNodes(peerMap *sync.Map, expected []string) error {
 	}
 
 	return nil
-}
-
-func TestConnect(t *testing.T) {
-	var err error
-	node1 := NewTransport(protocol)
-	node2 := NewTransport(protocol)
-	node3 := NewTransport(protocol)
-
-	node1.SetAddress(node1Addr)
-	node2.SetAddress(node2Addr)
-	node3.SetAddress(node3Addr)
-	tc := &TestChannel{}
-	err = node1.Start(tc)
-	if err != nil {
-		t.Error(err)
-	}
-	err = node2.Start(tc)
-	if err != nil {
-		t.Error(err)
-	}
-	node2.Connect(protocol + "://" + node1Addr)
-
-	time.Sleep(2 * time.Second)
-
-	err = CheckConnectedNodes(node1.activePeers, []string{protocol + "://" + node2Addr})
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = CheckConnectedNodes(node2.activePeers, []string{protocol + "://" + node1Addr})
-	if err != nil {
-		t.Error(err)
-	}
-	node3.Start(tc)
-
-	node2.Connect(protocol + "://" + node3Addr)
-
-	time.Sleep(2 * time.Second)
-
-	err = CheckConnectedNodes(node1.activePeers, []string{protocol + "://" + node2Addr})
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = CheckConnectedNodes(node2.activePeers, []string{protocol + "://" + node1Addr, protocol + "://" + node3Addr})
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = CheckConnectedNodes(node3.activePeers, []string{protocol + "://" + node2Addr})
-	if err != nil {
-		t.Error(err)
-	}
-
-	node1.Stop()
-
-	err = CheckConnectedNodes(node2.activePeers, []string{protocol + "://" + node3Addr})
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = CheckConnectedNodes(node3.activePeers, []string{protocol + "://" + node2Addr})
-	if err != nil {
-		t.Error(err)
-	}
 }

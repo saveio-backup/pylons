@@ -19,7 +19,7 @@ type ConnectRet struct {
 }
 
 type ConnectReq struct {
-	Address string
+	Address string // wallet address
 	Ret     *ConnectRet
 }
 

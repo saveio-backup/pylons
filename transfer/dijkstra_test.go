@@ -57,7 +57,8 @@ func TestSPT(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	top := NewTopology(nodes, edges, common.Address{})
+	addrs := make([]common.Address, 0)
+	top := NewTopology(nodes, edges, addrs)
 	//fmt.Println("TOP: ", top)
 	spt := top.GetShortPath(common.Address(toAddress))
 	fmt.Printf("path to %s:\n", alias[toAddress])
@@ -125,7 +126,8 @@ func TestDijWithSubnet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	top := NewTopology(nodes, edges, common.Address{})
+	addrs := make([]common.Address, 0)
+	top := NewTopology(nodes, edges, addrs)
 	spt := top.GetShortPath(common.Address(toAddress))
 	fmt.Printf("path to %s:\n", alias[toAddress])
 	for index := 0; index < len(spt); index++ {
@@ -191,7 +193,8 @@ func TestDijWith2hops(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	top := NewTopology(nodes, edges, common.Address{})
+	addrs := make([]common.Address, 0)
+	top := NewTopology(nodes, edges, addrs)
 	spt := top.GetShortPath(common.Address(toAddress))
 	fmt.Printf("path to %s:\n", alias[toAddress])
 	for index := 0; index < len(spt); index++ {
@@ -258,7 +261,8 @@ func TestDijWithCircle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	top := NewTopology(nodes, edges, common.Address{})
+	addrs := make([]common.Address, 0)
+	top := NewTopology(nodes, edges, addrs)
 	spt := top.GetShortPath(common.Address(toAddress))
 	fmt.Printf("path to %s:\n", alias[toAddress])
 	for index := 0; index < len(spt); index++ {
@@ -318,7 +322,8 @@ func TestDijWithDiamond(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	top := NewTopology(nodes, edges, common.Address{})
+	addrs := make([]common.Address, 0)
+	top := NewTopology(nodes, edges, addrs)
 	spt := top.GetShortPath(common.Address(fromAddress))
 	fmt.Printf("path to %s:\n", alias[fromAddress])
 	for index := 0; index < len(spt); index++ {
