@@ -1,6 +1,6 @@
 module github.com/saveio/pylons
 
-go 1.14
+go 1.16
 
 require (
 	github.com/gogo/protobuf v1.3.2
@@ -9,8 +9,8 @@ require (
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/ontio/ontology-eventbus v0.9.1
 	github.com/orcaman/concurrent-map v0.0.0-20210501183033-44dafcb38ecc // indirect
-	github.com/saveio/carrier v0.0.0-20210519082359-9fc4d908c385
-	github.com/saveio/themis v1.0.115-0.20210519082201-29f8330c44d9
-	github.com/saveio/themis-go-sdk v0.0.0-20210519082257-3f5361282350
+	github.com/saveio/carrier v0.0.0-20210802052456-cd8c9fa6551d
+	github.com/saveio/themis v1.0.135-0.20210802052006-7b1a7f1fef1c
+	github.com/saveio/themis-go-sdk v0.0.0-20210802052239-10a9844e20d5
 	github.com/tjfoc/gmsm v1.2.3 // indirect
 )
