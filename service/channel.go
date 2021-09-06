@@ -1057,7 +1057,7 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 			return nil, errors.New("Another payment with same id is in flight. ")
 		}
 		log.Warn("payment already existed:")
-		return paymentStatus.paymentDone, nil
+		return paymentStatus.paymentDone, errors.New("Payment already existed.")
 	}
 
 	directTransfer := &transfer.ActionTransferDirect{
@@ -1444,6 +1444,7 @@ func (self *ChannelService) GetCurrentBalance(partnerAddress common.Address) (co
 	if channelState == nil {
 		return 0, errors.New("GetCurrentBalance error, channel state is nil")
 	}
+	// TODO There is a serious error
 	return channelState.OurState.GetGasBalance(), nil
 }
 
