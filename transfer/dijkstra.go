@@ -1,6 +1,7 @@
 package transfer
 
 import (
+	"sort"
 	"sync"
 
 	"github.com/saveio/pylons/common"
@@ -19,10 +20,6 @@ type Edge struct {
 	NodeB    common.Address
 	Distance int64
 }
-
-const (
-	INT_MAX = 1<<32 - 1
-)
 
 type ShortPathTree [][]common.Address
 
@@ -66,39 +63,47 @@ func NewTopology(nodes *sync.Map, edges *sync.Map, previousAddrs []common.Addres
 	return t
 }
 
-func (self *Topology) GetShortPath(node common.Address) ShortPathTree {
+func (self *Topology) GetAllPath(from common.Address) ShortPathTree {
 	if 0 == len(self.nodes) || 0 == len(self.edges) {
 		return [][]common.Address{}
 	}
 	var path []common.Address
-	self.searchPath(node, path)
+	self.searchPathDFS(from, path)
 	return self.sp
 }
 
-func (self *Topology) searchPath(node common.Address, path []common.Address) {
-	path = append(path, node)
+func (self *Topology) GetAllPathSorted(from common.Address) ShortPathTree {
+	self.GetAllPath(from)
+	sort.Sort(self.sp)
+	return self.sp
+}
+
+func (self *Topology) searchPathDFS(from common.Address, path []common.Address) {
+	path = append(path, from)
+	// path may repeat when recurse return to upper layer
 	for _, v := range self.sp {
 		if sliceEqual(v, path) {
 			return
 		}
 	}
 	self.sp = append(self.sp, path)
-	for n := range self.edges[node] {
-		//fmt.Printf("int64 node %s loop\n", common.ToBase58(node))
+	for n := range self.edges[from] {
+		// skip nodes already in path record
 		walked := false
 		for _, v := range path {
 			if n == v {
-				//fmt.Printf("node %s exist break\n", common.ToBase58(n))
 				walked = true
+				break
 			}
 		}
 		if walked {
 			continue
 		}
-		self.searchPath(n, path)
+		self.searchPathDFS(n, path)
 	}
 	return
 }
+
 func sliceEqual(a, b []common.Address) bool {
 	if len(a) != len(b) {
 		return false
@@ -116,3 +121,40 @@ func sliceEqual(a, b []common.Address) bool {
 
 	return true
 }
+
+func (self *Topology) GetPairPath(from, to common.Address) ShortPathTree {
+	if 0 == len(self.nodes) || 0 == len(self.edges) {
+		return [][]common.Address{}
+	}
+	var path []common.Address
+	self.searchPathWithSource(from, to, path)
+	sort.Sort(self.sp)
+	return self.sp
+}
+
+func (self *Topology) searchPathWithSource(from, to common.Address, path []common.Address) {
+	path = append(path, to)
+	if to == from {
+		self.sp = append(self.sp, path)
+		return
+	}
+	for _, v := range self.sp {
+		if sliceEqual(v, path) {
+			return
+		}
+	}
+	for n := range self.edges[to] {
+		walked := false
+		for _, v := range path {
+			if n == v {
+				walked = true
+				break
+			}
+		}
+		if walked {
+			continue
+		}
+		self.searchPathWithSource(from, n, path)
+	}
+}
+

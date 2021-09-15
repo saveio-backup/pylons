@@ -13,8 +13,7 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	toAddr common.Address, amount common.TokenAmount, badAddrs []common.Address) ([]transfer.RouteState, error) {
 	//""" Returns a list of channels that can be used to make a transfer.
 	//
-	//This will filter out channels that are not open and don't have enough
-	//capacity.
+	//This will filter out channels that are not open and don't have enough capacity.
 	//"""
 	//# TODO: Route ranking.
 	//# Rate each route to optimize the fee price/quality of each route and add a
@@ -35,7 +34,7 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	nodes := tokenNetwork.NetworkGraph.Nodes
 	edges := tokenNetwork.NetworkGraph.Edges
 	top := transfer.NewTopology(nodes, edges, badAddrs)
-	spt := top.GetShortPath(fromAddr)
+	spt := top.GetAllPathSorted(fromAddr)
 	sptLen := len(spt)
 	if len(spt) == 0 {
 		log.Errorf("[GetBestRoutes] spt is nil")

@@ -60,7 +60,7 @@ func TestSPT(t *testing.T) {
 	addrs := make([]common.Address, 0)
 	top := NewTopology(nodes, edges, addrs)
 	//fmt.Println("TOP: ", top)
-	spt := top.GetShortPath(common.Address(toAddress))
+	spt := top.GetAllPath(common.Address(toAddress))
 	fmt.Printf("path to %s:\n", alias[toAddress])
 	for index := 0; index < len(spt); index++ {
 		for _, v := range spt[index] {
@@ -128,7 +128,7 @@ func TestDijWithSubnet(t *testing.T) {
 	}
 	addrs := make([]common.Address, 0)
 	top := NewTopology(nodes, edges, addrs)
-	spt := top.GetShortPath(common.Address(toAddress))
+	spt := top.GetAllPath(common.Address(toAddress))
 	fmt.Printf("path to %s:\n", alias[toAddress])
 	for index := 0; index < len(spt); index++ {
 		for _, v := range spt[index] {
@@ -195,7 +195,7 @@ func TestDijWith2hops(t *testing.T) {
 	}
 	addrs := make([]common.Address, 0)
 	top := NewTopology(nodes, edges, addrs)
-	spt := top.GetShortPath(common.Address(toAddress))
+	spt := top.GetAllPath(common.Address(toAddress))
 	fmt.Printf("path to %s:\n", alias[toAddress])
 	for index := 0; index < len(spt); index++ {
 		for _, v := range spt[index] {
@@ -263,7 +263,7 @@ func TestDijWithCircle(t *testing.T) {
 	}
 	addrs := make([]common.Address, 0)
 	top := NewTopology(nodes, edges, addrs)
-	spt := top.GetShortPath(common.Address(toAddress))
+	spt := top.GetAllPath(common.Address(toAddress))
 	fmt.Printf("path to %s:\n", alias[toAddress])
 	for index := 0; index < len(spt); index++ {
 		for _, v := range spt[index] {
@@ -324,8 +324,80 @@ func TestDijWithDiamond(t *testing.T) {
 	}
 	addrs := make([]common.Address, 0)
 	top := NewTopology(nodes, edges, addrs)
-	spt := top.GetShortPath(common.Address(fromAddress))
+	spt := top.GetAllPath(common.Address(fromAddress))
 	fmt.Printf("path to %s:\n", alias[fromAddress])
+	for index := 0; index < len(spt); index++ {
+		for _, v := range spt[index] {
+			fmt.Printf("%s ", alias[v])
+		}
+		fmt.Println()
+	}
+}
+
+func TestMultiPath(t *testing.T) {
+	names := []string{
+		"AGeTrARjozPVLhuzMxZq36THMtvsrZNAHq",
+		"AYMnqA65pJFKAbbpD8hi5gdNDBmeFBy5hS",
+		"AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf",
+		"AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng",
+		"AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ",
+		"Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC",
+		"AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg",
+	}
+	alias := make(map[common.Address]string)
+	nodes := new(sync.Map)
+	edges := new(sync.Map)
+	for k, n := range names {
+		addr, _ := common.FromBase58(n)
+		nodes.Store(addr, int64(1))
+		name := fmt.Sprintf("%s%d", "node", k)
+		alias[addr] = name
+	}
+	for k, en := range alias {
+		fmt.Printf("%s --- %s \n", common.ToBase58(k), en)
+	}
+	edgeNames := make([][]string, 0)
+	edgeNames = append(edgeNames, []string{names[0], names[1]})
+	edgeNames = append(edgeNames, []string{names[1], names[2]})
+	edgeNames = append(edgeNames, []string{names[2], names[3]})
+	edgeNames = append(edgeNames, []string{names[3], names[4]})
+	edgeNames = append(edgeNames, []string{names[4], names[5]})
+	edgeNames = append(edgeNames, []string{names[0], names[2]})
+	edgeNames = append(edgeNames, []string{names[0], names[3]})
+	edgeNames = append(edgeNames, []string{names[0], names[4]})
+
+	for _, en := range edgeNames {
+		NodeA := en[0]
+		NodeB := en[1]
+		addrA, _ := common.FromBase58(NodeA)
+		addrB, _ := common.FromBase58(NodeB)
+
+		var nodeANodeB common.EdgeId
+		copy(nodeANodeB[:constants.AddrLen], addrA[:])
+		copy(nodeANodeB[constants.AddrLen:], addrB[:])
+		edges.Store(nodeANodeB, int64(1))
+		fmt.Printf("add edge:%s-%s\n", alias[addrA], alias[addrB])
+	}
+
+	toAddress, err := common.FromBase58(names[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	addrs := make([]common.Address, 0)
+	top := NewTopology(nodes, edges, addrs)
+	spt := top.GetAllPath(toAddress)
+	fmt.Printf("------ path to %s:\n", alias[toAddress])
+	for index := 0; index < len(spt); index++ {
+		for _, v := range spt[index] {
+			fmt.Printf("%s ", alias[v])
+		}
+		fmt.Println()
+	}
+	// test with source
+	fromAddress, err := common.FromBase58(names[5])
+	top = NewTopology(nodes, edges, addrs)
+	spt = top.GetPairPath(fromAddress, toAddress)
+	fmt.Printf("------ path from %s to %s:\n", alias[fromAddress], alias[toAddress])
 	for index := 0; index < len(spt); index++ {
 		for _, v := range spt[index] {
 			fmt.Printf("%s ", alias[v])
