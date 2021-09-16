@@ -20,6 +20,7 @@ func (s ShortPathTree) Swap(i, j int) {
 
 type route interface {
 	NewTopology(nodes, edges *sync.Map, opts ...interface{})
+	// GetShortPathTree return spt should contains path with format: [target ... media ... self]
 	GetShortPathTree(from, to common.Address, opts ...interface{}) ShortPathTree
 }
 
