@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/saveio/pylons/route"
 
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/transfer"
@@ -33,8 +34,9 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	}
 	nodes := tokenNetwork.NetworkGraph.Nodes
 	edges := tokenNetwork.NetworkGraph.Edges
-	top := transfer.NewTopology(nodes, edges, badAddrs)
-	spt := top.GetAllPathSorted(fromAddr)
+	routeDFS := &route.DFS{}
+	routeDFS.NewTopology(nodes, edges, badAddrs)
+	spt := routeDFS.GetShortPathTree(fromAddr, toAddr)
 	sptLen := len(spt)
 	if len(spt) == 0 {
 		log.Errorf("[GetBestRoutes] spt is nil")
@@ -44,18 +46,20 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 
 	var nextHop common.Address
 	var channelId common.ChannelID
-	var i int
+	routeAvailable := false
 	var isDnsNode bool
-	for i = 0; i < sptLen; i++ {
+	for i := 0; i < sptLen; i++ {
 		sp := spt[i]
 		spLen := len(sp)
 		// destination is not target
-		if sp[spLen-1] != toAddr {
+		if sp[0] != toAddr {
 			continue
 		}
-		nextHop = sp[1]
+		// [target ... media ... self]
+		nextHop = sp[spLen-2]
 		_, isDnsNode = dnsAddrsMap[nextHop]
-		if nextHop != toAddr && !isDnsNode {
+		if !isDnsNode {
+			log.Warnf("[GetBestRoutes] nextHop is not dns node: %s", common.ToBase58(nextHop))
 			continue
 		}
 		networkState := channelSrv.GetNodeNetworkState(nextHop)
@@ -63,21 +67,21 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 			log.Warnf("[GetBestRoutes] %s is NetworkUnReachable", common.ToBase58(nextHop))
 			continue
 		}
-		channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(),
-			tokenNetworkId, nextHop)
+		channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(),tokenNetworkId, nextHop)
 		if channelState == nil {
 			log.Warnf("[GetBestRoutes] GetChannelStateByTokenNetworkAndPartner %s error", common.ToBase58(nextHop))
 			continue
 		}
 		channelId = channelState.Identifier
 		if valid, err := checkRouteAvailable(channelState, nextHop, fromAddr, amount); valid {
+			routeAvailable = true
 			log.Debugf("[GetBestRoutes]: %s", common.ToBase58(nextHop))
 			break
 		} else {
 			log.Warnf("[GetBestRoutes] checkRouteAvailable %s error: ", common.ToBase58(nextHop), err.Error())
 		}
 	}
-	if i == sptLen {
+	if !routeAvailable {
 		log.Errorf("[GetBestRoutes] no route to target")
 		return nil, fmt.Errorf("[GetBestRoutes] no route to target")
 	}
