@@ -196,3 +196,66 @@ func TestSptWithMultiPath(t *testing.T) {
 	edgeNames = append(edgeNames, []string{names[0], names[4]})
 	getResult(names, edgeNames, 5, 0)
 }
+
+func TestPrevAddr(t *testing.T) {
+	nodes := new(sync.Map)
+	names := []string{
+		"AGeTrARjozPVLhuzMxZq36THMtvsrZNAHq",
+		"AYMnqA65pJFKAbbpD8hi5gdNDBmeFBy5hS",
+		"AJtzEUDLzsRKbHC1Tfc1oNh8a1edpnVAUf",
+		"AWpW2ukMkgkgRKtwWxC3viXEX8ijLio2Ng",
+		"AMkN2sRQyT3qHZQqwEycHCX2ezdZNpXNdJ",
+		"Ac54scP31i6h5zUsYGPegLf2yUSCK74KYC",
+		"AQAz1RTZLW6ptervbNzs29rXKvKJuFNxMg",
+	}
+	for k, n := range names {
+		addr, _ := common.FromBase58(n)
+		nodes.Store(addr, int64(k))
+	}
+
+	edges := new(sync.Map)
+	edgeNames := make([][]string, 0)
+	edgeNames = append(edgeNames, []string{names[0], names[1]})
+	edgeNames = append(edgeNames, []string{names[1], names[2]})
+	edgeNames = append(edgeNames, []string{names[2], names[3]})
+	edgeNames = append(edgeNames, []string{names[3], names[4]})
+	edgeNames = append(edgeNames, []string{names[4], names[5]})
+	edgeNames = append(edgeNames, []string{names[0], names[2]})
+	edgeNames = append(edgeNames, []string{names[0], names[3]})
+	edgeNames = append(edgeNames, []string{names[0], names[4]})
+
+	for _, en := range edgeNames {
+		NodeA := en[0]
+		NodeB := en[1]
+		addrA, _ := common.FromBase58(NodeA)
+		addrB, _ := common.FromBase58(NodeB)
+		var nodeANodeB common.EdgeId
+		copy(nodeANodeB[:constants.AddrLen], addrA[:])
+		copy(nodeANodeB[constants.AddrLen:], addrB[:])
+		edges.Store(nodeANodeB, int64(1))
+	}
+
+	fromAddress, err := common.FromBase58(names[5])
+	toAddress, err := common.FromBase58(names[0])
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	route := &DFS{}
+	badAddr := make([]common.Address, 1)
+	route.NewTopology(nodes, edges, badAddr)
+	spt := route.GetShortPathTree(fromAddress, toAddress)
+
+	from, _ := nodes.Load(fromAddress)
+	to, _ := nodes.Load(toAddress)
+	fmt.Printf("--- path from [%d] to [%d]:\n", from, to)
+	for index := 0; index < len(spt); index++ {
+		for _, v := range spt[index] {
+			node, _ := nodes.Load(v)
+			fmt.Printf("%d ", node)
+		}
+		fmt.Println()
+	}
+}
+

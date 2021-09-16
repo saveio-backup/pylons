@@ -1,9 +1,10 @@
 package route
 
 import (
-	"github.com/saveio/pylons/common"
 	"sort"
 	"sync"
+
+	"github.com/saveio/pylons/common"
 )
 
 type DFS struct {
@@ -11,7 +12,15 @@ type DFS struct {
 }
 
 func (dfs *DFS) NewTopology(nodes, edges *sync.Map, opts ...interface{}) {
-	prevAddrs := opts[0].([]common.Address)
+	prevAddrs := make([]common.Address, 0)
+	if opts != nil && len(opts) > 0 {
+		if opts[0] != nil {
+			switch opts[0].(type) {
+			case []common.Address:
+				prevAddrs = opts[0].([]common.Address)
+			}
+		}
+	}
 	topology := NewTopology(nodes, edges, prevAddrs)
 	dfs.Topology = topology
 }
