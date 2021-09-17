@@ -10,7 +10,7 @@ import (
 	"github.com/saveio/themis/common/log"
 )
 
-func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID, fromAddr common.Address,
+func GetBestRoutesByDFS(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID, fromAddr common.Address,
 	toAddr common.Address, amount common.TokenAmount, badAddrs []common.Address) ([]transfer.RouteState, error) {
 	//""" Returns a list of channels that can be used to make a transfer.
 	//
@@ -34,7 +34,7 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	}
 	nodes := tokenNetwork.NetworkGraph.Nodes
 	edges := tokenNetwork.NetworkGraph.Edges
-	routeDFS := &route.Dijkstra{}
+	routeDFS := &route.DFS{}
 	routeDFS.NewTopology(nodes, edges, badAddrs)
 	spt := routeDFS.GetShortPathTree(fromAddr, toAddr)
 	sptLen := len(spt)
@@ -91,6 +91,77 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 
 	availableRoutes := []transfer.RouteState{{NodeAddress: nextHop, ChannelId: channelId}}
 	return availableRoutes, nil
+}
+
+func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID, fromAddr common.Address,
+	toAddr common.Address, amount common.TokenAmount, badAddrs []common.Address) ([]transfer.RouteState, error) {
+	//""" Returns a list of channels that can be used to make a transfer.
+	//
+	//This will filter out channels that are not open and don't have enough capacity.
+	//"""
+	//# Rate each route to optimize the fee price/quality of each route and add a
+	//# rate from in the range [0.0,1.0].
+
+	tokenNetwork := transfer.GetTokenNetworkByIdentifier(channelSrv.StateFromChannel(), tokenNetworkId)
+	if tokenNetwork == nil {
+		log.Warnf("[GetBestRoutes] GetTokenNetworkByIdentifier error tokenNetwork is nil")
+		return nil, fmt.Errorf("[GetBestRoutes] GetTokenNetworkByIdentifier error tokenNetwork is nil")
+	}
+	dnsAddrsMap := tokenNetwork.GetAllDns()
+	if len(dnsAddrsMap) == 0 {
+		dnsAddrsMap = tokenNetwork.GetAllDnsFromChain()
+		if len(dnsAddrsMap) == 0 {
+			return nil, fmt.Errorf("[GetBestRoutes] dnsAddrsMap is nil")
+		}
+	}
+	nodes := tokenNetwork.NetworkGraph.Nodes
+	edges := tokenNetwork.NetworkGraph.Edges
+
+	routeDijkstra := &route.Dijkstra{}
+	routeDijkstra.NewTopology(nodes, edges, badAddrs)
+	spt := routeDijkstra.GetShortPathTree(fromAddr, toAddr)
+	sptLen := len(spt)
+	log.Debugf("SPT:", sptLen)
+
+	for sptLen > 0 {
+		var nextHop common.Address
+		var channelId common.ChannelID
+		sp := spt[0]
+		spLen := len(sp)
+		if spLen < 2 {
+			continue
+		}
+		// [target ... media ... self]
+		nextHop = sp[spLen-2]
+		_, isDnsNode := dnsAddrsMap[nextHop]
+		if !isDnsNode {
+			log.Warnf("[GetBestRoutes] nextHop is not dns node: %s", common.ToBase58(nextHop))
+			continue
+		}
+		networkState := channelSrv.GetNodeNetworkState(nextHop)
+		if networkState != transfer.NetworkReachable {
+			log.Warnf("[GetBestRoutes] %s is NetworkUnReachable", common.ToBase58(nextHop))
+			continue
+		}
+		channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(),tokenNetworkId, nextHop)
+		if channelState == nil {
+			log.Warnf("[GetBestRoutes] GetChannelStateByTokenNetworkAndPartner %s error", common.ToBase58(nextHop))
+			continue
+		}
+		channelId = channelState.Identifier
+		if valid, err := checkRouteAvailable(channelState, nextHop, fromAddr, amount); valid {
+			availableRoutes := []transfer.RouteState{{NodeAddress: nextHop, ChannelId: channelId}}
+			return availableRoutes, nil
+		} else {
+			log.Warnf("[GetBestRoutes] checkRouteAvailable %s error: ", common.ToBase58(nextHop), err.Error())
+		}
+		badAddrs = append(badAddrs, nextHop)
+		routeDijkstra.NewTopology(nodes, edges, badAddrs)
+		spt := routeDijkstra.GetShortPathTree(fromAddr, toAddr)
+		sptLen = len(spt)
+	}
+	log.Errorf("[GetBestRoutes] no route to target")
+	return nil, fmt.Errorf("[GetBestRoutes] no route to target")
 }
 
 func GetSpecifiedRoute(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID, media common.Address,
