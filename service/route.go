@@ -154,11 +154,11 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 			return availableRoutes, nil
 		} else {
 			log.Warnf("[GetBestRoutes] checkRouteAvailable %s error: ", common.ToBase58(nextHop), err.Error())
+			badAddrs = append(badAddrs, nextHop)
+			routeDijkstra.NewTopology(nodes, edges, badAddrs)
+			spt := routeDijkstra.GetShortPathTree(fromAddr, toAddr)
+			sptLen = len(spt)
 		}
-		badAddrs = append(badAddrs, nextHop)
-		routeDijkstra.NewTopology(nodes, edges, badAddrs)
-		spt := routeDijkstra.GetShortPathTree(fromAddr, toAddr)
-		sptLen = len(spt)
 	}
 	log.Errorf("[GetBestRoutes] no route to target")
 	return nil, fmt.Errorf("[GetBestRoutes] no route to target")
