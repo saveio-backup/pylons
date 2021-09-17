@@ -118,15 +118,13 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	edges := tokenNetwork.NetworkGraph.Edges
 
 	routeDijkstra := &route.Dijkstra{}
-	routeDijkstra.NewTopology(nodes, edges, badAddrs)
-	spt := routeDijkstra.GetShortPathTree(fromAddr, toAddr)
-	sptLen := len(spt)
-	log.Debugf("SPT:", sptLen)
-
-	for sptLen > 0 {
+	for {
 		routeDijkstra.NewTopology(nodes, edges, badAddrs)
-		spt = routeDijkstra.GetShortPathTree(fromAddr, toAddr)
-		sptLen = len(spt)
+		spt := routeDijkstra.GetShortPathTree(fromAddr, toAddr)
+		sptLen := len(spt)
+		if sptLen <= 0 {
+			break
+		}
 
 		var nextHop common.Address
 		var channelId common.ChannelID
