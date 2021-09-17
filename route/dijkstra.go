@@ -1,9 +1,10 @@
 package route
 
 import (
-	"github.com/saveio/pylons/common"
 	"math"
 	"sync"
+
+	"github.com/saveio/pylons/common"
 )
 
 type Dijkstra struct {
@@ -45,10 +46,10 @@ func NewDirectGraph(nodes *sync.Map, edges *sync.Map, blacklist []common.Address
 	edges.Range(func(key, value interface{}) bool {
 		addr1 := key.(common.EdgeId).GetAddr1()
 		addr2 := key.(common.EdgeId).GetAddr2()
-		if _, ok := dg[addr1]; ok {
+		_, ok1 := dg[addr1]
+		_, ok2 := dg[addr2]
+		if ok1 && ok2 {
 			dg[addr1].From[addr2] = value.(int64)
-		}
-		if _, ok := dg[addr2]; ok {
 			dg[addr2].To[addr1] = value.(int64)
 		}
 		return true

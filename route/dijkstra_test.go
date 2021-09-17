@@ -384,3 +384,82 @@ func TestBlackListWithMultiPathD(t *testing.T) {
 		t.Error()
 	}
 }
+
+func TestBlackListWithPairPathD(t *testing.T) {
+	nodes := new(sync.Map)
+	names := []string{
+		"AGeTrARjozPVLhuzMxZq36THMtvsrZNAHq",
+		"AYMnqA65pJFKAbbpD8hi5gdNDBmeFBy5hS",
+	}
+	for k, n := range names {
+		addr, _ := common.FromBase58(n)
+		nodes.Store(addr, int64(k))
+	}
+
+	edgeNames := make([][]string, 0)
+	edgeNames = append(edgeNames, []string{names[0], names[1]})
+	edgeNames = append(edgeNames, []string{names[1], names[0]})
+
+	edgeDistance := make(map[int]int64)
+	edgeDistance[0] = 1
+	edgeDistance[1] = 1
+	if len(edgeDistance) != len(edgeNames) {
+		return
+	}
+
+	edges := new(sync.Map)
+	for i, en := range edgeNames {
+		NodeA := en[0]
+		NodeB := en[1]
+		addrA, _ := common.FromBase58(NodeA)
+		addrB, _ := common.FromBase58(NodeB)
+		var nodeANodeB common.EdgeId
+		copy(nodeANodeB[:constants.AddrLen], addrA[:])
+		copy(nodeANodeB[constants.AddrLen:], addrB[:])
+		edges.Store(nodeANodeB, edgeDistance[i])
+	}
+
+	fromAddress, err := common.FromBase58(names[0])
+	toAddress, err := common.FromBase58(names[1])
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	blackAddr, err := common.FromBase58(names[1])
+	fmt.Println(common.ToBase58(blackAddr))
+	blackList := []common.Address {blackAddr}
+	//blackList := []common.Address {}
+
+	route := &DFS{}
+	route.NewTopology(nodes, edges, blackList)
+	spt1 := route.GetShortPathTree(fromAddress, toAddress)
+
+	from, _ := nodes.Load(fromAddress)
+	to, _ := nodes.Load(toAddress)
+	fmt.Printf("--- [dfs] path from [%d] to [%d]:\n", from, to)
+	for index := 0; index < len(spt1); index++ {
+		for _, v := range spt1[index] {
+			node, _ := nodes.Load(v)
+			fmt.Printf("%d ", node)
+		}
+		fmt.Println()
+	}
+
+	route2 := &Dijkstra{}
+	route2.NewTopology(nodes, edges, blackList)
+	spt2 := route2.GetShortPathTree(fromAddress, toAddress)
+
+	fmt.Printf("--- [dijkstra] path from [%d] to [%d]:\n", from, to)
+	for index := 0; index < len(spt2); index++ {
+		for _, v := range spt2[index] {
+			node, _ := nodes.Load(v)
+			fmt.Printf("%d ", node)
+		}
+		fmt.Println()
+	}
+
+	if !sliceEqual(spt1[0], spt2[0]) {
+		t.Error()
+	}
+}

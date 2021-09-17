@@ -61,7 +61,7 @@ func GetBestRoutesByDFS(channelSrv *ChannelService, tokenNetworkId common.TokenN
 		// [target ... media ... self]
 		nextHop = sp[spLen-2]
 		_, isDnsNode = dnsAddrsMap[nextHop]
-		if !isDnsNode {
+		if nextHop != toAddr && !isDnsNode {
 			log.Warnf("[GetBestRoutes] nextHop is not dns node: %s", common.ToBase58(nextHop))
 			continue
 		}
@@ -124,27 +124,34 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	log.Debugf("SPT:", sptLen)
 
 	for sptLen > 0 {
+		routeDijkstra.NewTopology(nodes, edges, badAddrs)
+		spt = routeDijkstra.GetShortPathTree(fromAddr, toAddr)
+		sptLen = len(spt)
+
 		var nextHop common.Address
 		var channelId common.ChannelID
-		sp := spt[0]
-		spLen := len(sp)
-		if spLen < 2 {
-			continue
+		path := spt[0]
+		// path may empty while not found route
+		if len(path) < 2 {
+			break
 		}
 		// [target ... media ... self]
-		nextHop = sp[spLen-2]
+		nextHop = path[len(path)-2]
 		_, isDnsNode := dnsAddrsMap[nextHop]
-		if !isDnsNode {
+		if nextHop != toAddr && !isDnsNode {
+			badAddrs = append(badAddrs, nextHop)
 			log.Warnf("[GetBestRoutes] nextHop is not dns node: %s", common.ToBase58(nextHop))
 			continue
 		}
 		networkState := channelSrv.GetNodeNetworkState(nextHop)
 		if networkState != transfer.NetworkReachable {
+			badAddrs = append(badAddrs, nextHop)
 			log.Warnf("[GetBestRoutes] %s is NetworkUnReachable", common.ToBase58(nextHop))
 			continue
 		}
 		channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(),tokenNetworkId, nextHop)
 		if channelState == nil {
+			badAddrs = append(badAddrs, nextHop)
 			log.Warnf("[GetBestRoutes] GetChannelStateByTokenNetworkAndPartner %s error", common.ToBase58(nextHop))
 			continue
 		}
@@ -153,11 +160,8 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 			availableRoutes := []transfer.RouteState{{NodeAddress: nextHop, ChannelId: channelId}}
 			return availableRoutes, nil
 		} else {
-			log.Warnf("[GetBestRoutes] checkRouteAvailable %s error: ", common.ToBase58(nextHop), err.Error())
 			badAddrs = append(badAddrs, nextHop)
-			routeDijkstra.NewTopology(nodes, edges, badAddrs)
-			spt := routeDijkstra.GetShortPathTree(fromAddr, toAddr)
-			sptLen = len(spt)
+			log.Warnf("[GetBestRoutes] checkRouteAvailable %s error %s: ", common.ToBase58(nextHop), err.Error())
 		}
 	}
 	log.Errorf("[GetBestRoutes] no route to target")
