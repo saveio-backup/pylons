@@ -11,21 +11,12 @@ type DFS struct {
 	Topology *Topology
 }
 
-func (dfs *DFS) NewTopology(nodes, edges *sync.Map, opts ...interface{}) {
-	prevAddrs := make([]common.Address, 0)
-	if opts != nil && len(opts) > 0 {
-		if opts[0] != nil {
-			switch opts[0].(type) {
-			case []common.Address:
-				prevAddrs = opts[0].([]common.Address)
-			}
-		}
-	}
-	topology := NewTopology(nodes, edges, prevAddrs)
+func (dfs *DFS) NewTopology(nodes, edges *sync.Map, blacklist []common.Address) {
+	topology := NewTopology(nodes, edges, blacklist)
 	dfs.Topology = topology
 }
 
-func (dns *DFS) GetShortPathTree(from, to common.Address, opts ...interface{}) ShortPathTree {
+func (dns *DFS) GetShortPathTree(from, to common.Address) ShortPathTree {
 	return dns.Topology.GetPairPathSorted(from, to)
 }
 

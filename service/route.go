@@ -34,7 +34,7 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	}
 	nodes := tokenNetwork.NetworkGraph.Nodes
 	edges := tokenNetwork.NetworkGraph.Edges
-	routeDFS := &route.DFS{}
+	routeDFS := &route.Dijkstra{}
 	routeDFS.NewTopology(nodes, edges, badAddrs)
 	spt := routeDFS.GetShortPathTree(fromAddr, toAddr)
 	sptLen := len(spt)
@@ -51,6 +51,9 @@ func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetwor
 	for i := 0; i < sptLen; i++ {
 		sp := spt[i]
 		spLen := len(sp)
+		if spLen < 2 {
+			continue
+		}
 		// destination is not target
 		if sp[0] != toAddr {
 			continue

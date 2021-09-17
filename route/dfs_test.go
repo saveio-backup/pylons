@@ -9,7 +9,7 @@ import (
 	"github.com/saveio/pylons/common/constants"
 )
 
-func getResult(names []string, edgeNames [][]string, fromIndex, toIndex int) {
+func getResult(names []string, edgeNames [][]string, fromIndex, toIndex int) ShortPathTree {
 	nodes := new(sync.Map)
 	for k, n := range names {
 		addr, _ := common.FromBase58(n)
@@ -33,7 +33,7 @@ func getResult(names []string, edgeNames [][]string, fromIndex, toIndex int) {
 	toAddress, err := common.FromBase58(names[toIndex])
 	if err != nil {
 		fmt.Println(err)
-		return
+		return nil
 	}
 
 	route := &DFS{}
@@ -42,7 +42,7 @@ func getResult(names []string, edgeNames [][]string, fromIndex, toIndex int) {
 
 	from, _ := nodes.Load(fromAddress)
 	to, _ := nodes.Load(toAddress)
-	fmt.Printf("--- path from [%d] to [%d]:\n", from, to)
+	fmt.Printf("--- [dfs] path from [%d] to [%d]:\n", from, to)
 	for index := 0; index < len(spt); index++ {
 		for _, v := range spt[index] {
 			node, _ := nodes.Load(v)
@@ -50,6 +50,7 @@ func getResult(names []string, edgeNames [][]string, fromIndex, toIndex int) {
 		}
 		fmt.Println()
 	}
+	return spt
 }
 
 func TestSPT(t *testing.T) {
@@ -243,8 +244,7 @@ func TestPrevAddr(t *testing.T) {
 	}
 
 	route := &DFS{}
-	badAddr := make([]common.Address, 1)
-	route.NewTopology(nodes, edges, badAddr)
+	route.NewTopology(nodes, edges, nil)
 	spt := route.GetShortPathTree(fromAddress, toAddress)
 
 	from, _ := nodes.Load(fromAddress)
