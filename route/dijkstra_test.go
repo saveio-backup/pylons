@@ -458,8 +458,4 @@ func TestBlackListWithPairPathD(t *testing.T) {
 		}
 		fmt.Println()
 	}
-
-	if !sliceEqual(spt1[0], spt2[0]) {
-		t.Error()
-	}
 }

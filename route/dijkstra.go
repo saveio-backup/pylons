@@ -84,14 +84,14 @@ func (g *DirectedGraph) searchPathDijkstra(dist, prev map[common.Address]int64, 
 		if _, ok := prev[node]; !ok {
 			dist[node] = func(a, b int64) int64 {
 				if a < b {
+					// dynamic update path which not in prev and have min distance
+					temp := make([]common.Address, len((*pathList)[from]))
+					copy(temp, (*pathList)[from])
+					(*pathList)[node] = append(temp, node)
 					return a
 				}
 				return b
 			}(dist[from]+distance, dist[node])
-			// dynamic update path which not in prev
-			temp := make([]common.Address, len((*pathList)[from]))
-			copy(temp, (*pathList)[from])
-			(*pathList)[node] = append(temp, node)
 		}
 	}
 	// find nearest node
