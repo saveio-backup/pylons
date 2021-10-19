@@ -54,3 +54,10 @@ func SetMaxBlockDelay(maxBlockDelay int) {
 	}
 	Config.MaxBlockDelay = maxBlockDelay
 }
+
+type MediationFeeConfig struct {
+	TokenToFlatFee map[TokenAddress]FeeAmount
+	TokenToProportionalFee map[TokenAddress]ProportionalFeeAmount
+	TokenToProportionalImbalanceFee map[TokenAddress]ProportionalFeeAmount
+	CapMediationFees bool
+}

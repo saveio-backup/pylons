@@ -59,6 +59,12 @@ type PaymentID int
 
 type PaymentAmount uint64
 
+type FeeAmount uint64
+
+type ProportionalFeeAmount uint64
+
+type PaymentWithFeeAmount FeeAmount
+
 type PaymentNetworkID [20]byte
 
 type ChainID int

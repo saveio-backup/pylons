@@ -238,6 +238,16 @@ func GetPendingTransferPairs(transfersPair []*MediationPairState) []*MediationPa
 	return pendingPairs
 }
 
+func getAmountWithoutFees(amountWithFees common.TokenAmount, channelIn *NettingChannelState) common.PaymentWithFeeAmount {
+	amountWithoutFees := uint64(amountWithFees)
+	scheduleIn := channelIn.GetFeeSchedule()
+	if scheduleIn.CapFees {
+		// TODO add dynamic fees
+		amountWithoutFees -= uint64(scheduleIn.Flat)
+	}
+	return common.PaymentWithFeeAmount(amountWithoutFees)
+}
+
 func SanityCheck(state *MediatorTransferState) error {
 
 	//# if a transfer is paid we must know the secret
@@ -419,8 +429,11 @@ func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRout
 		lockTimeout = 0
 	}
 
+	payerChannel := channelsMap[payerTransfer.BalanceProof.ChannelId]
 	payeeChannel := nextChannelFromRoutes(availableRoutes, channelsMap,
 		common.PaymentAmount(payerTransfer.Lock.Amount), lockTimeout)
+
+	amountAfterFee := getAmountWithoutFees(payerTransfer.Lock.Amount, payerChannel)
 
 	if payeeChannel != nil {
 		if payeeChannel.SettleTimeout < lockTimeout {
@@ -432,7 +445,7 @@ func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRout
 
 		messageId := common.GetMsgID()
 		lockedTransferEvent := sendLockedTransfer(payeeChannel, payerTransfer.Initiator, payerTransfer.Target,
-			common.PaymentAmount(payerTransfer.Lock.Amount), messageId, payerTransfer.PaymentId,
+			common.PaymentAmount(amountAfterFee), messageId, payerTransfer.PaymentId,
 			common.BlockExpiration(payerTransfer.Lock.Expiration), payerTransfer.EncSecret,
 			common.SecretHash(payerTransfer.Lock.SecretHash), payerTransfer.Mediators)
 		if lockedTransferEvent == nil {

@@ -512,6 +512,7 @@ type NettingChannelState struct {
 	TokenNetworkId          common.TokenNetworkID
 	RevealTimeout           common.BlockTimeout
 	SettleTimeout           common.BlockTimeout
+	FeeSchedule 			*FeeScheduleState
 	OurState                *NettingChannelEndState
 	PartnerState            *NettingChannelEndState
 	DepositTransactionQueue TransactionOrderHeap
@@ -565,6 +566,18 @@ func (self *NettingChannelState) GetGasBalance(ownAddress common.Address, target
 		return 0, errors.New("target address must be one of the channel participants!")
 	}
 	return result, nil
+}
+
+func (t *NettingChannelState) GetFeeSchedule() *FeeScheduleState {
+	if t.FeeSchedule == nil {
+		t.FeeSchedule = &FeeScheduleState{
+			CapFees:          false,
+			Flat:             0,
+			Proportional:     0,
+			ImbalancePenalty: nil,
+		}
+	}
+	return t.FeeSchedule
 }
 
 type TransactionChannelNewBalance struct {
