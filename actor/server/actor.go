@@ -496,6 +496,26 @@ func GetPaymentResult(target common.Address, identifier common.PaymentID) (*Paym
 	}
 }
 
+func GetFee(cid common.ChannelID) (uint64, error) {
+	if ChannelServerPid == nil {
+		return 0, fmt.Errorf("GetFee error:  ChannelServerPid is nil")
+	}
+	req := &GetFeeReq{
+		ChannelId: cid,
+		Ret: GetFeeRet{
+			Fee:  0,
+			Done: make(chan bool, 1),
+			Err:  nil,
+		},
+	}
+	ChannelServerPid.Tell(req)
+	err := waitForCallDone(req.Ret.Done, "GetFee", defaultMinTimeOut)
+	if err != nil {
+		return 0, err
+	}
+	return req.Ret.Fee, req.Ret.Err
+}
+
 func waitForCallDone(c chan bool, funcName string, maxTimeOut int64) error {
 	if maxTimeOut < defaultMinTimeOut {
 		maxTimeOut = defaultMinTimeOut

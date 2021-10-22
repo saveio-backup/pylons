@@ -241,10 +241,8 @@ func GetPendingTransferPairs(transfersPair []*MediationPairState) []*MediationPa
 func getAmountWithoutFees(amountWithFees common.TokenAmount, channelIn *NettingChannelState) common.PaymentWithFeeAmount {
 	amountWithoutFees := uint64(amountWithFees)
 	scheduleIn := channelIn.GetFeeSchedule()
-	if scheduleIn.CapFees {
-		// TODO add dynamic fees
-		amountWithoutFees -= uint64(scheduleIn.Flat)
-	}
+	// TODO add dynamic fees
+	amountWithoutFees -= uint64(scheduleIn.Flat)
 	return common.PaymentWithFeeAmount(amountWithoutFees)
 }
 

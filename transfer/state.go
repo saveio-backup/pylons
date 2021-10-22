@@ -571,7 +571,7 @@ func (self *NettingChannelState) GetGasBalance(ownAddress common.Address, target
 func (t *NettingChannelState) GetFeeSchedule() *FeeScheduleState {
 	if t.FeeSchedule == nil {
 		t.FeeSchedule = &FeeScheduleState{
-			CapFees:          false,
+			CapFees:          true,
 			Flat:             0,
 			Proportional:     0,
 			ImbalancePenalty: nil,

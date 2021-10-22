@@ -1532,3 +1532,15 @@ func (self *ChannelService) GetPaymentResult(target common.Address, identifier c
 	log.Debugf("Payment result not found for paymentId %d, target %s", identifier, common.ToBase58(target))
 	return nil
 }
+
+func (c *ChannelService) GetFee(cid common.ChannelID) (uint64, error) {
+	chain := c.StateFromChannel()
+	pid := common.PaymentNetworkID(c.microAddress)
+	ta := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
+	channel := transfer.GetChannelStateById(chain, pid, ta, cid)
+	if channel == nil {
+		return 0, errors.New("channel not exists")
+	}
+	fee := channel.GetFeeSchedule()
+	return uint64(fee.Flat), nil
+}

@@ -275,8 +275,20 @@ type GetPaymentResultRet struct {
 	Done chan bool
 	Err  error
 }
+
 type GetPaymentResultReq struct {
 	Target     common.Address
 	Identifier common.PaymentID
 	Ret        *GetPaymentResultRet
+}
+
+type GetFeeRet struct {
+	Fee  uint64
+	Done chan bool
+	Err  error
+}
+
+type GetFeeReq struct {
+	ChannelId common.ChannelID
+	Ret GetFeeRet
 }
