@@ -246,6 +246,12 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 			msg.Ret.Err = err
 			msg.Ret.Done <- true
 		}()
+	case *SetFeeReq:
+		go func() {
+			err := this.chSrv.Service.SetFee(msg.ChannelId, msg.WalletAddr, msg.Flat)
+			msg.Ret.Err = err
+			msg.Ret.Done <- true
+		}()
 	default:
 		log.Errorf("[ChannelActorServer] receive unknown message type:%+v", msg)
 	}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+	"github.com/saveio/themis/crypto/signature"
 	"strconv"
 	"sync"
 	"time"
@@ -797,4 +798,40 @@ func getTxHashString(txHash []byte) string {
 		return "error parsing tx hash"
 	}
 	return hash.ToHexString()
+}
+
+func (t *TokenNetwork) SetFee(cid common.ChannelID, wa common.Address, flat common.FeeAmount) ([]byte, error) {
+	walletAddr :=comm.Address(wa)
+	channelId := uint64(cid)
+	msgHash := micropayment.FeeInfoMessageBundleHash(walletAddr, channelId)
+	sign, err := signature.Sign(t.ChannelClient.DefAcc.SigScheme, t.ChannelClient.DefAcc.PrivateKey, msgHash[:], nil)
+	if err != nil {
+		log.Errorf("%s\n", err.Error())
+		return nil, err
+	}
+	serialize, err := signature.Serialize(sign)
+	if err != nil {
+		log.Errorf("%s\n", err.Error())
+		return nil, err
+	}
+	pkHex := comm.PubKeyToHex(t.ChannelClient.DefAcc.PubKey())
+	pkByte, err := comm.HexToBytes(pkHex)
+	if err != nil {
+		log.Errorf("%s\n", err.Error())
+		return nil, err
+	}
+	feeInfo := micropayment.FeeInfo{
+		WalletAddr: walletAddr,
+		ChannelID:  channelId,
+		Flat: 		uint64(flat),
+		PublicKey:  pkByte,
+		Signature:  serialize,
+	}
+	tx, err := t.ChannelClient.SetFeeInfo(feeInfo)
+	if err != nil {
+		log.Errorf("%s\n", err.Error())
+		return nil, err
+	}
+	log.Info("Set fee tx:", hex.EncodeToString(tx))
+	return tx, nil
 }

@@ -292,3 +292,15 @@ type GetFeeReq struct {
 	ChannelId common.ChannelID
 	Ret GetFeeRet
 }
+
+type SetFeeRet struct {
+	Done chan bool
+	Err  error
+}
+
+type SetFeeReq struct {
+	ChannelId common.ChannelID
+	WalletAddr common.Address
+	Flat common.FeeAmount
+	Ret SetFeeRet
+}

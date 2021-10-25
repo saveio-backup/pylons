@@ -1544,3 +1544,21 @@ func (c *ChannelService) GetFee(cid common.ChannelID) (uint64, error) {
 	fee := channel.GetFeeSchedule()
 	return uint64(fee.Flat), nil
 }
+
+func (c *ChannelService) SetFee(cid common.ChannelID, wa common.Address, flat common.FeeAmount) error {
+	chain := c.StateFromChannel()
+	pid := common.PaymentNetworkID(c.microAddress)
+	ta := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
+	channel := transfer.GetChannelStateById(chain, pid, ta, cid)
+	if channel == nil {
+		return errors.New("channel not exists")
+	}
+	tokenNetwork := c.chain.NewTokenNetwork(common.Address(usdt.USDT_CONTRACT_ADDRESS))
+	_, err := tokenNetwork.SetFee(cid, wa, flat)
+	if err != nil {
+		return err
+	}
+	// TODO wait for transaction success
+	channel.SetFeeSchedule(flat)
+	return nil
+}

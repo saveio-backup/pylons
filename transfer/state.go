@@ -580,6 +580,18 @@ func (t *NettingChannelState) GetFeeSchedule() *FeeScheduleState {
 	return t.FeeSchedule
 }
 
+func (t *NettingChannelState) SetFeeSchedule(flat common.FeeAmount) {
+	if t.FeeSchedule == nil {
+		t.FeeSchedule = &FeeScheduleState{
+			CapFees:          true,
+			Flat:             0,
+			Proportional:     0,
+			ImbalancePenalty: nil,
+		}
+	}
+	t.FeeSchedule.Flat = flat
+}
+
 type TransactionChannelNewBalance struct {
 	ParticipantAddress common.Address
 	ContractBalance    common.TokenAmount
