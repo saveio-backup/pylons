@@ -241,14 +241,14 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		}()
 	case *GetFeeReq:
 		go func() {
-			fee, err := this.chSrv.Service.GetFee(msg.ChannelId)
+			fee, err := this.chSrv.Service.GetFee(msg.ChannelId, msg.WithChain)
 			msg.Ret.Fee = fee
 			msg.Ret.Err = err
 			msg.Ret.Done <- true
 		}()
 	case *SetFeeReq:
 		go func() {
-			err := this.chSrv.Service.SetFee(msg.ChannelId, msg.Flat)
+			err := this.chSrv.Service.SetFee(msg.ChannelId, msg.Flat, msg.WithChain)
 			msg.Ret.Err = err
 			msg.Ret.Done <- true
 		}()

@@ -800,6 +800,15 @@ func getTxHashString(txHash []byte) string {
 	return hash.ToHexString()
 }
 
+func (t *TokenNetwork) GetFee(wa comm.Address, cid common.ChannelID) (uint64, error) {
+	info, err := t.ChannelClient.GetFeeInfo(wa, uint64(cid))
+	if err != nil {
+		log.Errorf("%s\n", err.Error())
+		return 0, err
+	}
+	return info.Flat, nil
+}
+
 func (t *TokenNetwork) SetFee(cid common.ChannelID, wa common.Address, flat common.FeeAmount) ([]byte, error) {
 	walletAddr :=comm.Address(wa)
 	channelId := uint64(cid)

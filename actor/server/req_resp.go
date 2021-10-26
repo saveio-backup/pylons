@@ -290,6 +290,7 @@ type GetFeeRet struct {
 
 type GetFeeReq struct {
 	ChannelId common.ChannelID
+	WithChain bool
 	Ret GetFeeRet
 }
 
@@ -301,5 +302,6 @@ type SetFeeRet struct {
 type SetFeeReq struct {
 	ChannelId common.ChannelID
 	Flat common.FeeAmount
+	WithChain bool
 	Ret SetFeeRet
 }
