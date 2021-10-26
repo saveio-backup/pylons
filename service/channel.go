@@ -1545,7 +1545,7 @@ func (c *ChannelService) GetFee(cid common.ChannelID) (uint64, error) {
 	return uint64(fee.Flat), nil
 }
 
-func (c *ChannelService) SetFee(cid common.ChannelID, wa common.Address, flat common.FeeAmount) error {
+func (c *ChannelService) SetFee(cid common.ChannelID, flat common.FeeAmount) error {
 	chain := c.StateFromChannel()
 	pid := common.PaymentNetworkID(c.microAddress)
 	ta := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
@@ -1554,7 +1554,7 @@ func (c *ChannelService) SetFee(cid common.ChannelID, wa common.Address, flat co
 		return errors.New("channel not exists")
 	}
 	tokenNetwork := c.chain.NewTokenNetwork(common.Address(usdt.USDT_CONTRACT_ADDRESS))
-	_, err := tokenNetwork.SetFee(cid, wa, flat)
+	_, err := tokenNetwork.SetFee(cid, c.chain.Address, flat)
 	if err != nil {
 		return err
 	}

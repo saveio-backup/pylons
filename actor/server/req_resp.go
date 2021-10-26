@@ -300,7 +300,6 @@ type SetFeeRet struct {
 
 type SetFeeReq struct {
 	ChannelId common.ChannelID
-	WalletAddr common.Address
 	Flat common.FeeAmount
 	Ret SetFeeRet
 }

@@ -516,13 +516,12 @@ func GetFee(cid common.ChannelID) (uint64, error) {
 	return req.Ret.Fee, req.Ret.Err
 }
 
-func SetFee(cid common.ChannelID, wa common.Address, flat common.FeeAmount) error {
+func SetFee(cid common.ChannelID, flat common.FeeAmount) error {
 	if ChannelServerPid == nil {
 		return fmt.Errorf("SetFee error:  ChannelServerPid is nil")
 	}
 	req := &SetFeeReq{
 		ChannelId: cid,
-		WalletAddr: wa,
 		Flat: flat,
 		Ret: SetFeeRet{
 			Done: make(chan bool, 1),
