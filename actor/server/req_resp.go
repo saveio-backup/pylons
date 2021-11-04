@@ -12,6 +12,7 @@ type ChannelInfo struct {
 	Address       string
 	HostAddr      string
 	TokenAddr     string
+	TokenNetworkAddr string
 }
 
 type ChannelsInfoResp struct {

@@ -1467,6 +1467,7 @@ type ChannelInfo struct {
 	Balance   common.TokenAmount
 	Address   common.Address
 	TokenAddr common.TokenAddress
+	TokenNetworkAddr common.TokenNetworkAddress
 }
 
 func (self *ChannelService) GetAllChannelInfo() []*ChannelInfo {
@@ -1488,6 +1489,7 @@ func (self *ChannelService) GetAllChannelInfo() []*ChannelInfo {
 			Address:   partnerAddress,
 			Balance:   balance,
 			TokenAddr: common.TokenAddress(channelState.TokenAddress),
+			TokenNetworkAddr: common.TokenNetworkAddress(self.microAddress),
 		}
 		infos = append(infos, info)
 	}

@@ -277,12 +277,14 @@ func getChannelsInfoRespFromChannelsInfo(channelInfos []*service.ChannelInfo) *C
 
 		addr := com.Address(info.Address)
 		tokenAddr := com.Address(info.TokenAddr)
+		tokenNetworkAddr := com.Address(info.TokenNetworkAddr)
 		info := &ChannelInfo{
 			ChannelId:     uint32(info.ChannelId),
 			Address:       (&addr).ToBase58(),
 			Balance:       uint64(info.Balance),
 			BalanceFormat: utils.FormatUsdt(uint64(info.Balance)),
 			TokenAddr:     (&tokenAddr).ToBase58(),
+			TokenNetworkAddr: (&tokenNetworkAddr).ToBase58(),
 		}
 		totalBalance += balance
 		infos = append(infos, info)
