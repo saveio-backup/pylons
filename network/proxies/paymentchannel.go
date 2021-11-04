@@ -117,8 +117,7 @@ func (self *PaymentChannel) CanTransfer() bool {
 }
 
 func (self *PaymentChannel) SetTotalDeposit(totalDeposit common.TokenAmount) error {
-	return self.TokenNetwork.SetTotalDeposit(self.channelId, totalDeposit,
-		self.Participant2)
+	return self.TokenNetwork.SetTotalDeposit(self.channelId, totalDeposit, self.Participant2)
 }
 
 func (self *PaymentChannel) Close(nonce common.Nonce, balanceHash common.BalanceHash,

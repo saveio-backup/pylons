@@ -369,8 +369,7 @@ func handleTokenNetworkAction(chainState *ChainState, stateChange StateChange,
 
 	var events []Event
 	tokenNetworkState := GetTokenNetworkByIdentifier(chainState, tokenNetworkId)
-	paymentNetworkState := GetTokenNetworkRegistryByTokenNetworkId(
-		chainState, tokenNetworkId)
+	paymentNetworkState := GetTokenNetworkRegistryByTokenNetworkId(chainState, tokenNetworkId)
 	if paymentNetworkState == nil {
 		return &TransitionResult{}
 	}
@@ -380,8 +379,7 @@ func handleTokenNetworkAction(chainState *ChainState, stateChange StateChange,
 		iteration := stateTransitionForNetwork(paymentNetworkId, tokenNetworkState,
 			stateChange, chainState.BlockHeight)
 		if IsStateNil(iteration.NewState) {
-			paymentNetworkState = searchPaymentNetworkByTokenNetworkId(
-				chainState, tokenNetworkId)
+			paymentNetworkState = searchPaymentNetworkByTokenNetworkId(chainState, tokenNetworkId)
 
 			delete(paymentNetworkState.TokenAddressesToTokenIdentifiers, tokenNetworkState.TokenAddress)
 			delete(paymentNetworkState.TokenIdentifiersToTokenNetworks, tokenNetworkId)

@@ -128,13 +128,11 @@ func (self *ChannelService) handleChannelNewBalance(event map[string]interface{}
 
 		self.HandleStateChange(newBalanceStateChange)
 
-		previousBalance := previousChannelState.OurState.ContractBalance
-		if previousBalance == 0 && participantAddress != self.address {
+		if participantAddress != self.address {
 			// if our deposit transaction is not confirmed and participant deposit event received ,
 			// we should not deposit again, check the DepositTransactionQueue if we have deposit before
 			chainState := self.StateFromChannel()
-			channelState := transfer.GetChannelStateByTokenNetworkId(chainState,
-				tokenNetworkId, channelId)
+			channelState := transfer.GetChannelStateByTokenNetworkId(chainState, tokenNetworkId, channelId)
 
 			var found bool
 			for _, v := range channelState.DepositTransactionQueue {
@@ -146,11 +144,9 @@ func (self *ChannelService) handleChannelNewBalance(event map[string]interface{}
 
 			if !found {
 				connectionManager := self.ConnectionManagerForTokenNetwork(tokenNetworkId)
-
 				go connectionManager.JoinChannel(participantAddress, totalDeposit)
 			}
 		}
-
 	}
 
 	return
