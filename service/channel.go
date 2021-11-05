@@ -1120,7 +1120,7 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 		if !paymentStatusMatches {
 			return nil, fmt.Errorf("Another payment with the same id is in flight. ")
 		}
-		return paymentStatus.paymentDone, nil
+		return paymentStatus.paymentDone, errors.New("payment id already exist")
 	}
 
 	encSecret, err := secretcrypt.SecretCryptService.EncryptSecret(target, secret)
