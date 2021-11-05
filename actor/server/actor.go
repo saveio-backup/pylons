@@ -496,12 +496,11 @@ func GetPaymentResult(target common.Address, identifier common.PaymentID) (*Paym
 	}
 }
 
-func GetFee(cid common.ChannelID, withChain bool) (uint64, error) {
+func GetFee(withChain bool) (uint64, error) {
 	if ChannelServerPid == nil {
 		return 0, fmt.Errorf("GetFee error:  ChannelServerPid is nil")
 	}
 	req := &GetFeeReq{
-		ChannelId: cid,
 		WithChain: withChain,
 		Ret: GetFeeRet{
 			Fee:  0,
@@ -517,12 +516,11 @@ func GetFee(cid common.ChannelID, withChain bool) (uint64, error) {
 	return req.Ret.Fee, req.Ret.Err
 }
 
-func SetFee(cid common.ChannelID, flat common.FeeAmount, withChain bool) error {
+func SetFee(flat common.FeeAmount, withChain bool) error {
 	if ChannelServerPid == nil {
 		return fmt.Errorf("SetFee error:  ChannelServerPid is nil")
 	}
 	req := &SetFeeReq{
-		ChannelId: cid,
 		Flat: flat,
 		WithChain: withChain,
 		Ret: SetFeeRet{

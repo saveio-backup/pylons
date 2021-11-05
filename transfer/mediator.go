@@ -3,6 +3,7 @@ package transfer
 import (
 	"crypto/sha256"
 	"fmt"
+	"github.com/saveio/themis-go-sdk/usdt"
 	"reflect"
 
 	"github.com/saveio/pylons/common"
@@ -240,9 +241,10 @@ func GetPendingTransferPairs(transfersPair []*MediationPairState) []*MediationPa
 
 func getAmountWithoutFees(amountWithFees common.TokenAmount, channelIn *NettingChannelState) common.PaymentWithFeeAmount {
 	amountWithoutFees := uint64(amountWithFees)
-	scheduleIn := channelIn.GetFeeSchedule()
+	// TODO get fee config from channel state rather then pylons' config
+	fee := common.Config.MediationFeeConfig.TokenToFlatFee[common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)]
 	// TODO add dynamic fees
-	amountWithoutFees -= uint64(scheduleIn.Flat)
+	amountWithoutFees -= uint64(fee)
 	return common.PaymentWithFeeAmount(amountWithoutFees)
 }
 

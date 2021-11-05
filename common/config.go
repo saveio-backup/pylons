@@ -2,6 +2,7 @@ package common
 
 import (
 	"github.com/saveio/pylons/common/constants"
+	"github.com/saveio/themis-go-sdk/usdt"
 	"github.com/saveio/themis/common/log"
 )
 
@@ -17,6 +18,7 @@ type PylonsConfig struct {
 	WithdrawTimeout          int
 	MaxBlockDelay            int
 	ConfirmBlockCount        int
+	MediationFeeConfig		 MediationFeeConfig
 }
 
 var DefaultConfig = &PylonsConfig{
@@ -31,6 +33,14 @@ var DefaultConfig = &PylonsConfig{
 	WithdrawTimeout:          constants.DefaultWithdrawTimeout,
 	MaxBlockDelay:            constants.DefaultNumberOfMaxBlockDelay,
 	ConfirmBlockCount:        constants.DefaultNumberOfConfirmationsBlock,
+	MediationFeeConfig: MediationFeeConfig{
+		TokenToFlatFee:                  map[TokenAddress]FeeAmount{
+											TokenAddress(usdt.USDT_CONTRACT_ADDRESS): FeeAmount(0),
+										 },
+		TokenToProportionalFee:          nil,
+		TokenToProportionalImbalanceFee: nil,
+		CapMediationFees:                false,
+	},
 }
 
 var Config *PylonsConfig

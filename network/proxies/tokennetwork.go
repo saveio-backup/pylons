@@ -800,8 +800,8 @@ func getTxHashString(txHash []byte) string {
 	return hash.ToHexString()
 }
 
-func (t *TokenNetwork) GetFee(wa comm.Address, cid common.ChannelID) (uint64, error) {
-	info, err := t.ChannelClient.GetFeeInfo(wa, uint64(cid))
+func (t *TokenNetwork) GetFee(wa comm.Address, ta comm.Address) (uint64, error) {
+	info, err := t.ChannelClient.GetFeeInfo(wa, ta)
 	if err != nil {
 		log.Errorf("%s\n", err.Error())
 		return 0, err
@@ -809,10 +809,10 @@ func (t *TokenNetwork) GetFee(wa comm.Address, cid common.ChannelID) (uint64, er
 	return info.Flat, nil
 }
 
-func (t *TokenNetwork) SetFee(cid common.ChannelID, wa common.Address, flat common.FeeAmount) ([]byte, error) {
+func (t *TokenNetwork) SetFee(wa common.Address, ta common.Address, flat common.FeeAmount) ([]byte, error) {
 	walletAddr :=comm.Address(wa)
-	channelId := uint64(cid)
-	msgHash := micropayment.FeeInfoMessageBundleHash(walletAddr, channelId)
+	tokenAddr :=comm.Address(ta)
+	msgHash := micropayment.FeeInfoMessageBundleHash(walletAddr, tokenAddr)
 	sign, err := signature.Sign(t.ChannelClient.DefAcc.SigScheme, t.ChannelClient.DefAcc.PrivateKey, msgHash[:], nil)
 	if err != nil {
 		log.Errorf("%s\n", err.Error())
@@ -831,7 +831,7 @@ func (t *TokenNetwork) SetFee(cid common.ChannelID, wa common.Address, flat comm
 	}
 	feeInfo := micropayment.FeeInfo{
 		WalletAddr: walletAddr,
-		ChannelID:  channelId,
+		TokenAddr:  tokenAddr,
 		Flat: 		uint64(flat),
 		PublicKey:  pkByte,
 		Signature:  serialize,

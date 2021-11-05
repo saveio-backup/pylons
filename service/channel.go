@@ -1535,42 +1535,30 @@ func (self *ChannelService) GetPaymentResult(target common.Address, identifier c
 	return nil
 }
 
-func (c *ChannelService) GetFee(cid common.ChannelID, withChain bool) (uint64, error) {
-	chain := c.StateFromChannel()
-	pid := common.PaymentNetworkID(c.microAddress)
-	ta := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
-	channel := transfer.GetChannelStateById(chain, pid, ta, cid)
-	if channel == nil {
-		return 0, errors.New("channel not exists")
-	}
-	fee := channel.GetFeeSchedule()
+func (c *ChannelService) GetFee(withChain bool) (uint64, error) {
+	ua := usdt.USDT_CONTRACT_ADDRESS
+	fee := common.Config.MediationFeeConfig.TokenToFlatFee[common.TokenAddress(ua)]
 	if withChain {
-		tokenNetwork := c.chain.NewTokenNetwork(common.Address(usdt.USDT_CONTRACT_ADDRESS))
-		getFee, err := tokenNetwork.GetFee(comm.Address(c.chain.Address), cid)
+		tokenNetwork := c.chain.NewTokenNetwork(common.Address(ua))
+		getFee, err := tokenNetwork.GetFee(comm.Address(c.chain.Address), ua)
 		if err != nil {
 			return 0, err
 		}
-		fee.Flat = common.FeeAmount(getFee)
-		channel.SetFeeSchedule(common.FeeAmount(getFee))
+		fee = common.FeeAmount(getFee)
+		common.Config.MediationFeeConfig.TokenToFlatFee[common.TokenAddress(ua)] = common.FeeAmount(getFee)
 	}
-	return uint64(fee.Flat), nil
+	return uint64(fee), nil
 }
 
-func (c *ChannelService) SetFee(cid common.ChannelID, flat common.FeeAmount, withChain bool) error {
-	chain := c.StateFromChannel()
-	pid := common.PaymentNetworkID(c.microAddress)
-	ta := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
-	channel := transfer.GetChannelStateById(chain, pid, ta, cid)
-	if channel == nil {
-		return errors.New("channel not exists")
-	}
+func (c *ChannelService) SetFee(flat common.FeeAmount, withChain bool) error {
+	ua := usdt.USDT_CONTRACT_ADDRESS
+	common.Config.MediationFeeConfig.TokenToFlatFee[common.TokenAddress(ua)] = flat
 	if withChain {
 		tokenNetwork := c.chain.NewTokenNetwork(common.Address(usdt.USDT_CONTRACT_ADDRESS))
-		_, err := tokenNetwork.SetFee(cid, c.chain.Address, flat)
+		_, err := tokenNetwork.SetFee(c.chain.Address, common.Address(ua), flat)
 		if err != nil {
 			return err
 		}
 	}
-	channel.SetFeeSchedule(flat)
 	return nil
 }
