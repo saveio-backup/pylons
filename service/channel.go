@@ -1184,8 +1184,7 @@ func (self *ChannelService) InitiatorInit(paymentId common.PaymentID, transferAm
 		SecretHash:       secretHash,
 	}
 
-	routes, err := GetBestRoutes(self, TokenNetworkId, self.address, targetAddress, transferAmount,
-		nil)
+	routes, err := GetBestRoutes(self, TokenNetworkId, self.address, targetAddress, transferAmount, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1463,10 +1462,10 @@ func (self *ChannelService) GetAllMessageQueues() transfer.QueueIdsToQueuesType 
 }
 
 type ChannelInfo struct {
-	ChannelId common.ChannelID
-	Balance   common.TokenAmount
-	Address   common.Address
-	TokenAddr common.TokenAddress
+	ChannelId        common.ChannelID
+	Balance          common.TokenAmount
+	Address          common.Address
+	TokenAddr        common.TokenAddress
 	TokenNetworkAddr common.TokenNetworkAddress
 }
 
@@ -1485,10 +1484,10 @@ func (self *ChannelService) GetAllChannelInfo() []*ChannelInfo {
 		balance := transfer.GetDistributable(channelState.OurState, channelState.PartnerState)
 
 		info := &ChannelInfo{
-			ChannelId: channelState.Identifier,
-			Address:   partnerAddress,
-			Balance:   balance,
-			TokenAddr: common.TokenAddress(channelState.TokenAddress),
+			ChannelId:        channelState.Identifier,
+			Address:          partnerAddress,
+			Balance:          balance,
+			TokenAddr:        common.TokenAddress(channelState.TokenAddress),
 			TokenNetworkAddr: common.TokenNetworkAddress(self.microAddress),
 		}
 		infos = append(infos, info)

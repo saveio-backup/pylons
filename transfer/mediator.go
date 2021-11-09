@@ -243,6 +243,9 @@ func getAmountWithoutFees(amountWithFees common.TokenAmount, channelIn *NettingC
 	amountWithoutFees := uint64(amountWithFees)
 	// TODO get fee config from channel state rather then pylons' config
 	fee := common.Config.MediationFeeConfig.TokenToFlatFee[common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)]
+	if uint64(fee) > amountWithoutFees {
+		return 0
+	}
 	// TODO add dynamic fees
 	amountWithoutFees -= uint64(fee)
 	return common.PaymentWithFeeAmount(amountWithoutFees)
@@ -434,9 +437,13 @@ func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRout
 		common.PaymentAmount(payerTransfer.Lock.Amount), lockTimeout)
 
 	amountAfterFee := getAmountWithoutFees(payerTransfer.Lock.Amount, payerChannel)
+	if amountAfterFee <= 0 {
+		log.Error("[forwardTransferPair] amount can't afford fee")
+	}
 
 	if payeeChannel != nil {
 		if payeeChannel.SettleTimeout < lockTimeout {
+			// TODO there will nil pointer panic if return nil
 			return nil, nil, fmt.Errorf("[forwardTransferPair] payeeChannel.SettleTimeout < lockTimeout")
 		}
 		if payeeChannel.TokenAddress != payerTransfer.Token {

@@ -157,7 +157,7 @@ func (self ChannelEventHandler) HandleSendProcessed(channel *ChannelService, pro
 }
 
 func (self ChannelEventHandler) HandlePaymentSentSuccess(channel *ChannelService, paymentSentSuccessEvent *transfer.EventPaymentSentSuccess) {
-	target := common.Address(paymentSentSuccessEvent.Target)
+	target := paymentSentSuccessEvent.Target
 	identifier := paymentSentSuccessEvent.Identifier
 
 	paymentStatus, exist := channel.GetPaymentStatus(target, identifier)
@@ -350,7 +350,7 @@ func (self ChannelEventHandler) HandleSendLockedTransfer(channel *ChannelService
 		}
 
 		queueId := &transfer.QueueId{
-			Recipient: common.Address(sendLockedTransfer.Recipient),
+			Recipient: sendLockedTransfer.Recipient,
 			ChannelId: sendLockedTransfer.ChannelId,
 		}
 		channel.Transport.SendAsync(queueId, mediatedTransferMessage)

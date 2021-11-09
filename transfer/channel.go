@@ -411,8 +411,7 @@ func IsValidDirectTransfer(directTransfer *ReceiveTransferDirect, channelState *
 	distributable := GetDistributable(senderState, receiverState)
 	amount := receivedBalanceProof.TransferredAmount - currentTransferredAmount
 
-	isBalanceProofUsable, invalidBalanceProofMsg := IsBalanceProofUsableOnChain(
-		receivedBalanceProof, channelState, senderState)
+	isBalanceProofUsable, invalidBalanceProofMsg := IsBalanceProofUsableOnChain(receivedBalanceProof, channelState, senderState)
 
 	if isBalanceProofUsable == false {
 		return false, fmt.Errorf("invalid DirectTransfer message. {%s}", invalidBalanceProofMsg)
@@ -998,7 +997,7 @@ func createSendDirectTransfer(channelState *NettingChannelState, amount common.P
 
 	sendDirectTransfer := SendDirectTransfer{
 		SendMessageEvent: SendMessageEvent{
-			Recipient: common.Address(recipient),
+			Recipient: recipient,
 			ChannelId: channelState.Identifier,
 			MessageId: messageId,
 		},
@@ -1110,6 +1109,7 @@ func sendLockedTransfer(channelState *NettingChannelState, initiator common.Addr
 	sendLockedTransferEvent, merkleTree, err := createSendLockedTransfer(channelState, initiator, target, amount,
 		messageId, paymentId, expiration, encSecret, secretHash, mediators)
 	if err != nil {
+		// TODO there will nil pointer panic if err not nil
 		log.Error("[sendLockedTransfer] createSendLockedTransfer error: %s", err.Error())
 	}
 
@@ -1297,7 +1297,7 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 
 	var events []Event
 
-	amount := common.TokenAmount(stateChange.Amount)
+	amount := stateChange.Amount
 	paymentId := stateChange.PaymentId
 	targetAddress := stateChange.ReceiverAddress
 	distributableAmount := GetDistributable(channelState.OurState, channelState.PartnerState)
@@ -1921,8 +1921,7 @@ func HandleReceiveLockedTransfer(channelState *NettingChannelState,
 	//transfer. The receiver needs to ensure that the merkle root has the
 	//secrethash included, otherwise it won't be able to claim it.
 	log.Debug("[HandleReceiveLockedTransfer] LocksRoot:", mediatedTransfer.BalanceProof.LocksRoot)
-	merkleTree, err := IsValidLockedTransfer(mediatedTransfer, channelState,
-		channelState.PartnerState, channelState.OurState)
+	merkleTree, err := IsValidLockedTransfer(mediatedTransfer, channelState, channelState.PartnerState, channelState.OurState)
 
 	var events []Event
 	if err == nil {

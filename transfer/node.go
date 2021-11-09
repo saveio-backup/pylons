@@ -517,10 +517,10 @@ func handleProcessed(chainState *ChainState, stateChange *ReceiveProcessed) *Tra
 		for i := 0; i < len; i++ {
 			message := GetSenderMessageEvent(v[i])
 			sender, messageId := GetSenderAndMessageId(stateChange)
-			if message.MessageId == messageId && common.AddressEqual(common.Address(message.Recipient), sender) {
+			if message.MessageId == messageId && common.AddressEqual(message.Recipient, sender) {
 				if message, ok := v[i].(*SendDirectTransfer); ok {
 					channelState := GetChannelStateByTokenNetworkAndPartner(chainState,
-						message.BalanceProof.TokenNetworkId, common.Address(message.Recipient))
+						message.BalanceProof.TokenNetworkId, message.Recipient)
 
 					paySuccess := &EventPaymentSentSuccess{
 						PaymentNetworkId: channelState.PaymentNetworkId,
