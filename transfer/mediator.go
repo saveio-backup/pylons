@@ -239,7 +239,7 @@ func GetPendingTransferPairs(transfersPair []*MediationPairState) []*MediationPa
 	return pendingPairs
 }
 
-func getAmountWithoutFees(amountWithFees common.TokenAmount, channelIn *NettingChannelState) common.PaymentWithFeeAmount {
+func GetAmountWithoutFees(amountWithFees common.TokenAmount, channelOut *NettingChannelState) common.PaymentWithFeeAmount {
 	amountWithoutFees := uint64(amountWithFees)
 	// TODO get fee config from channel state rather then pylons' config
 	fee := common.Config.MediationFeeConfig.TokenToFlatFee[common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)]
@@ -432,11 +432,9 @@ func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRout
 		lockTimeout = 0
 	}
 
-	payerChannel := channelsMap[payerTransfer.BalanceProof.ChannelId]
-	payeeChannel := nextChannelFromRoutes(availableRoutes, channelsMap,
-		common.PaymentAmount(payerTransfer.Lock.Amount), lockTimeout)
+	payeeChannel := nextChannelFromRoutes(availableRoutes, channelsMap, common.PaymentAmount(payerTransfer.Lock.Amount), lockTimeout)
 
-	amountAfterFee := getAmountWithoutFees(payerTransfer.Lock.Amount, payerChannel)
+	amountAfterFee := GetAmountWithoutFees(payerTransfer.Lock.Amount, payeeChannel)
 	if amountAfterFee <= 0 {
 		log.Error("[forwardTransferPair] amount can't afford fee")
 	}

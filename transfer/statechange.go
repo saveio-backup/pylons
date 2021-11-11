@@ -201,6 +201,12 @@ type ContractReceiveUpdateTransfer struct {
 	Nonce          common.Nonce
 }
 
+type ContractReceiveSetFee struct {
+	ContractReceiveStateChange
+	WalletAddr	common.Address
+	TokenAddr	common.Address
+}
+
 type ReceiveTransferDirect struct {
 	AuthenticatedSenderStateChange
 	TokenNetworkId common.TokenNetworkID

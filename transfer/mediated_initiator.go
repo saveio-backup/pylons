@@ -175,7 +175,7 @@ func InitSendLockedTransfer(transferDescription *TransferDescriptionWithSecretSt
 	lockExpiration := InitGetInitialLockExpiration(blockNumber, channelState.RevealTimeout)
 
 	lockedTransferEvent := sendLockedTransfer(channelState, transferDescription.Initiator,
-		common.Address(transferDescription.Target), common.PaymentAmount(transferDescription.Amount),
+		transferDescription.Target, common.PaymentAmount(transferDescription.Amount),
 		messageId, transferDescription.PaymentId, lockExpiration, transferDescription.EncSecret,
 		transferDescription.SecretHash, nil)
 

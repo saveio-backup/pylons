@@ -394,6 +394,23 @@ func (self *ChannelService) HandleSecretRevealed(event map[string]interface{}) {
 	self.HandleStateChange(registeredSecretStateChange)
 }
 
+func (c *ChannelService) HandleChannelSetFee(event map[string]interface{}) {
+	var transactionHash common.TransactionHash
+	blockNumber := event["blockHeight"].(common.BlockHeight)
+	walletAddr := event["walletAddr"].(common.Address)
+	tokenAddr := event["tokenAddr"].(common.Address)
+
+	e := &transfer.ContractReceiveSetFee{
+		ContractReceiveStateChange: transfer.ContractReceiveStateChange{
+			TransactionHash: transactionHash,
+			BlockHeight:     blockNumber,
+		},
+		WalletAddr: walletAddr,
+		TokenAddr: tokenAddr,
+	}
+	c.HandleStateChange(e)
+}
+
 func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 	var eventName string
 	if _, ok := event["eventName"].(string); ok == false {
@@ -401,7 +418,9 @@ func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 	}
 
 	eventName = event["eventName"].(string)
+	log.Debugf("OnBlockchainEvent eventName: %s", eventName)
 	events := ParseEvent(event)
+	log.Debugf("OnBlockchainEvent events: %v", events)
 
 	if eventName == "chanOpened" {
 		channel.HandleChannelNew(events)
@@ -421,6 +440,9 @@ func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 		channel.HandleSecretRevealed(events)
 	} else if eventName == "ChannelUnlocked" {
 		channel.HandleChannelBatchUnlock(events)
+	} else if eventName == "SetFee" {
+		// TODO complete
+		//channel.HandleChannelSetFee(events)
 	}
 
 	return
@@ -479,12 +501,10 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 			fallthrough
 		case "closingParticipant":
 			var address common.Address
-
 			for index, data := range value.([]interface{}) {
 				value := data.(float64)
 				address[index] = byte(value)
 			}
-
 			events[item] = address
 		case "channelID":
 			events[item] = common.ChannelID(value.(float64))
@@ -508,7 +528,6 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 			events[item] = common.Nonce(value.(float64))
 		case "secret":
 			var secret [constants.SecretLen]byte
-
 			for index, data := range value.([]interface{}) {
 				value := data.(float64)
 				secret[index] = byte(value)
@@ -530,6 +549,22 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 				locksRoot[index] = byte(value)
 			}
 			events[item] = locksRoot
+		case "walletAddr":
+			var address common.Address
+			for index, data := range value.([]interface{}) {
+				value := data.(float64)
+				address[index] = byte(value)
+			}
+			events[item] = address
+		case "tokenAddr":
+			var address common.Address
+			for index, data := range value.([]interface{}) {
+				value := data.(float64)
+				address[index] = byte(value)
+			}
+			events[item] = address
+		case "flat":
+			events[item] = common.FeeAmount(value.(float64))
 		}
 	}
 	return events

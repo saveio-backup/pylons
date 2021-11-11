@@ -376,8 +376,7 @@ func handleTokenNetworkAction(chainState *ChainState, stateChange StateChange,
 	paymentNetworkId := paymentNetworkState.Address
 
 	if tokenNetworkState != nil {
-		iteration := stateTransitionForNetwork(paymentNetworkId, tokenNetworkState,
-			stateChange, chainState.BlockHeight)
+		iteration := stateTransitionForNetwork(paymentNetworkId, tokenNetworkState, stateChange, chainState.BlockHeight)
 		if IsStateNil(iteration.NewState) {
 			paymentNetworkState = searchPaymentNetworkByTokenNetworkId(chainState, tokenNetworkId)
 

@@ -429,7 +429,7 @@ func (self ChannelEventHandler) HandleSendSecretRequest(channel *ChannelService,
 			return
 		}
 		queueId := &transfer.QueueId{
-			Recipient: common.Address(secretRequestEvent.Recipient),
+			Recipient: secretRequestEvent.Recipient,
 			ChannelId: secretRequestEvent.ChannelId,
 		}
 		channel.Transport.SendAsync(queueId, secretRequestMessage)

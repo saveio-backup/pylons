@@ -3,12 +3,26 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/saveio/pylons/route"
-
 	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/route"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis/common/log"
 )
+
+func GetBestRoutes (channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID,
+	fromAddr,toAddr common.Address, amount common.TokenAmount, badAddrs []common.Address,
+	opts... float64) ([]transfer.RouteState, error) {
+	// TODO replace variable args
+	// opts[0] diversity_penalty
+	// opts[1] fee_penalty
+
+	if len(opts) <= 0 {
+		return GetBestRoutesByDFS(channelSrv, tokenNetworkId, fromAddr, toAddr, amount, badAddrs)
+	} else {
+		// TODO edge_weight = diversity_weight + fee_weight
+		return GetBestRoutesByDijkstra(channelSrv, tokenNetworkId, fromAddr, toAddr, amount, badAddrs)
+	}
+}
 
 func GetBestRoutesByDFS(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID, fromAddr common.Address,
 	toAddr common.Address, amount common.TokenAmount, badAddrs []common.Address) ([]transfer.RouteState, error) {
@@ -93,7 +107,7 @@ func GetBestRoutesByDFS(channelSrv *ChannelService, tokenNetworkId common.TokenN
 	return availableRoutes, nil
 }
 
-func GetBestRoutes(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID, fromAddr common.Address,
+func GetBestRoutesByDijkstra(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID, fromAddr common.Address,
 	toAddr common.Address, amount common.TokenAmount, badAddrs []common.Address) ([]transfer.RouteState, error) {
 	//""" Returns a list of channels that can be used to make a transfer.
 	//

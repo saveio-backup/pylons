@@ -490,8 +490,7 @@ func stateTransitionForNetwork(paymentNetworkId common.PaymentNetworkID,
 		iteration = handleUpdatedTransfer(tokenNetworkState, stateChange, blockNumber)
 	case *ActionTransferDirect:
 		actionTransferDirect, _ := stateChange.(*ActionTransferDirect)
-		iteration = handleActionTransferDirect(paymentNetworkId, tokenNetworkState,
-			actionTransferDirect, blockNumber)
+		iteration = handleActionTransferDirect(paymentNetworkId, tokenNetworkState, actionTransferDirect, blockNumber)
 	case *ReceiveTransferDirect:
 		receiveTransferDirect, _ := stateChange.(*ReceiveTransferDirect)
 		iteration = handleReceiveTransferDirect(tokenNetworkState, receiveTransferDirect, blockNumber)
@@ -503,8 +502,7 @@ func stateTransitionForNetwork(paymentNetworkId common.PaymentNetworkID,
 		iteration = handleCloseRoute(tokenNetworkState, contractReceiveRouteClosed)
 	case *ActionWithdraw:
 		actionWithdraw, _ := stateChange.(*ActionWithdraw)
-		iteration = handleActionWithdraw(paymentNetworkId, tokenNetworkState,
-			actionWithdraw, blockNumber)
+		iteration = handleActionWithdraw(paymentNetworkId, tokenNetworkState, actionWithdraw, blockNumber)
 	case *ReceiveWithdrawRequest:
 		iteration = handleReceiveWithdrawRequest(paymentNetworkId, tokenNetworkState, stateChange, blockNumber)
 	case *ReceiveWithdraw:
@@ -513,8 +511,7 @@ func stateTransitionForNetwork(paymentNetworkId common.PaymentNetworkID,
 		iteration = handleWithdraw(tokenNetworkState, stateChange, blockNumber)
 	case *ActionCooperativeSettle:
 		actionCooperativeSettle, _ := stateChange.(*ActionCooperativeSettle)
-		iteration = handleActionCooperativeSettle(paymentNetworkId, tokenNetworkState,
-			actionCooperativeSettle, blockNumber)
+		iteration = handleActionCooperativeSettle(paymentNetworkId, tokenNetworkState, actionCooperativeSettle, blockNumber)
 	case *ReceiveCooperativeSettleRequest:
 		iteration = handleReceiveWithdrawRequest(paymentNetworkId, tokenNetworkState, stateChange, blockNumber)
 	case *ReceiveCooperativeSettle:
