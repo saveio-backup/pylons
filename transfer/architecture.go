@@ -54,9 +54,11 @@ type StateManager struct {
 func (self *StateManager) Dispatch(stateChange StateChange) []Event {
 	nextState := DeepCopy(self.CurrentState)
 	iteration := self.StateTransition(nextState, stateChange)
+	if iteration == nil {
+		return []Event{}
+	}
 	self.CurrentState = iteration.NewState
 	events := iteration.Events
-
 	return events
 }
 

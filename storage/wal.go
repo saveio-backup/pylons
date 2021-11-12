@@ -49,6 +49,10 @@ func RestoreToStateChange(transitionFunction transfer.StateTransitionCallback,
 	for _, change := range unAppliedStateChanges {
 		//log.Info("[RestoreToStateChange] stateChangeId: ", fromStateChangeId + i)
 		common.SetRandSeed(fromStateChangeId+i, selfAddr)
+		if change == nil {
+			log.Warn("restore state change is null")
+			continue
+		}
 		wal.StateManager.Dispatch(change)
 		i++
 	}

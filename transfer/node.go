@@ -81,8 +81,7 @@ func subDispatchToPaymentTask(chainState *ChainState, stateChange StateChange,
 				paymentState := &InitiatorPaymentState{
 					Initiator: ms,
 				}
-				subIteration = ImStateTransition(paymentState, stateChange,
-					tokenNetworkState.ChannelsMap, blockNumber)
+				subIteration = ImStateTransition(paymentState, stateChange, tokenNetworkState.ChannelsMap, blockNumber)
 				events = subIteration.Events
 				for _, e := range events {
 					log.Debug("[subDispatchToPaymentTask]:", reflect.TypeOf(e).String())
@@ -814,6 +813,10 @@ func updateQueues(iteration *TransitionResult, stateChange StateChange) {
 
 func StateTransition(chainState State, stateChange StateChange) *TransitionResult {
 	iteration := handleStateChangeForNode(chainState, stateChange)
+	if iteration == nil {
+		log.Errorf("iteration is nil")
+		return nil
+	}
 	if IsStateNil(iteration.NewState) {
 		log.Warn("[node.StateTransition] iteration.NewState is nil")
 	}

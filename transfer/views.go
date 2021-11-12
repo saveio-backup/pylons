@@ -385,9 +385,6 @@ func ListChannelStateForTokenNetwork(chainState *ChainState, paymentNetworkId co
 	var result *list.List
 
 	tokenNetworkState := GetTokenNetworkByTokenAddress(chainState, paymentNetworkId, tokenAddress)
-	//for addr := range tokenNetworkState.PartnerAddressesToChannels {
-	//	log.Info(common.ToBase58(addr))
-	//}
 
 	if tokenNetworkState != nil {
 		result = flattenChannelStates(tokenNetworkState.PartnerAddressesToChannels)
