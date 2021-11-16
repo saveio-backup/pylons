@@ -124,6 +124,7 @@ func (self *ChannelService) handleChannelNewBalance(event map[string]interface{}
 			TokenNetworkId:     tokenNetworkId,
 			ChannelId:          channelId,
 			DepositTransaction: depositTransaction,
+			FeeConfig: 			common.Config.MediationFeeConfig,
 		}
 
 		self.HandleStateChange(newBalanceStateChange)

@@ -18,7 +18,7 @@ type PylonsConfig struct {
 	WithdrawTimeout          int
 	MaxBlockDelay            int
 	ConfirmBlockCount        int
-	MediationFeeConfig		 MediationFeeConfig
+	MediationFeeConfig       MediationFeeConfig
 }
 
 var DefaultConfig = &PylonsConfig{
@@ -34,9 +34,9 @@ var DefaultConfig = &PylonsConfig{
 	MaxBlockDelay:            constants.DefaultNumberOfMaxBlockDelay,
 	ConfirmBlockCount:        constants.DefaultNumberOfConfirmationsBlock,
 	MediationFeeConfig: MediationFeeConfig{
-		TokenToFlatFee:                  map[TokenAddress]FeeAmount{
-											TokenAddress(usdt.USDT_CONTRACT_ADDRESS): FeeAmount(0),
-										 },
+		TokenToFlatFee: map[TokenAddress]FeeAmount{
+			TokenAddress(usdt.USDT_CONTRACT_ADDRESS): FeeAmount(0),
+		},
 		TokenToProportionalFee:          nil,
 		TokenToProportionalImbalanceFee: nil,
 		CapMediationFees:                false,
@@ -66,8 +66,10 @@ func SetMaxBlockDelay(maxBlockDelay int) {
 }
 
 type MediationFeeConfig struct {
-	TokenToFlatFee map[TokenAddress]FeeAmount
-	TokenToProportionalFee map[TokenAddress]ProportionalFeeAmount
+	TokenToFlatFee                  map[TokenAddress]FeeAmount
+	TokenToProportionalFee          map[TokenAddress]ProportionalFeeAmount
 	TokenToProportionalImbalanceFee map[TokenAddress]ProportionalFeeAmount
-	CapMediationFees bool
+	CapMediationFees                bool
 }
+
+const DEFAULT_MEDIATION_FEE_MARGIN = 0.003

@@ -3,8 +3,10 @@ package transfer
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/saveio/themis-go-sdk/usdt"
+	"math"
 	"reflect"
+
+	"github.com/saveio/themis-go-sdk/usdt"
 
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/themis/common/log"
@@ -239,15 +241,22 @@ func GetPendingTransferPairs(transfersPair []*MediationPairState) []*MediationPa
 	return pendingPairs
 }
 
-func GetAmountWithoutFees(amountWithFees common.TokenAmount, channelOut *NettingChannelState) common.PaymentWithFeeAmount {
-	amountWithoutFees := uint64(amountWithFees)
-	// TODO get fee config from channel state rather then pylons' config
-	fee := common.Config.MediationFeeConfig.TokenToFlatFee[common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)]
-	if uint64(fee) > amountWithoutFees {
+func GetAmountWithoutFees(amountWithFees common.TokenAmount, channelIn *NettingChannelState) common.PaymentWithFeeAmount {
+	amountWithoutFees := common.FeeAmount(amountWithFees)
+	log.Debug("amount before fee:", amountWithoutFees)
+	fee := channelIn.GetFeeSchedule().Flat
+	proFee := common.Config.MediationFeeConfig.TokenToProportionalFee[common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)]
+	// TODO remove debug
+	proFee = 1000000
+	rate := float64(proFee) / math.Pow10(9)
+	log.Debugf("flat fee: %d, rate: %f", fee, rate)
+
+	fee += common.FeeAmount(float64(amountWithFees) * rate)
+	if amountWithoutFees < fee {
 		return 0
 	}
-	// TODO add dynamic fees
-	amountWithoutFees -= uint64(fee)
+	amountWithoutFees -= fee
+	log.Debug("amount after fee:", amountWithoutFees)
 	return common.PaymentWithFeeAmount(amountWithoutFees)
 }
 
@@ -432,16 +441,16 @@ func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRout
 		lockTimeout = 0
 	}
 
+	payerChannel := channelsMap[payerTransfer.BalanceProof.ChannelId]
 	payeeChannel := nextChannelFromRoutes(availableRoutes, channelsMap, common.PaymentAmount(payerTransfer.Lock.Amount), lockTimeout)
 
-	amountAfterFee := GetAmountWithoutFees(payerTransfer.Lock.Amount, payeeChannel)
+	amountAfterFee := GetAmountWithoutFees(payerTransfer.Lock.Amount, payerChannel)
 	if amountAfterFee <= 0 {
-		log.Error("[forwardTransferPair] amount can't afford fee")
+		log.Warn("[forwardTransferPair] amount zero after fee")
 	}
 
 	if payeeChannel != nil {
 		if payeeChannel.SettleTimeout < lockTimeout {
-			// TODO there will nil pointer panic if return nil
 			return nil, nil, fmt.Errorf("[forwardTransferPair] payeeChannel.SettleTimeout < lockTimeout")
 		}
 		if payeeChannel.TokenAddress != payerTransfer.Token {

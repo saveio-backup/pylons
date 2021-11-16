@@ -298,7 +298,6 @@ func (self *ChannelService) HandleStateChange(stateChange transfer.StateChange) 
 		self.channelEventHandler.OnChannelEvent(self, e.(transfer.Event))
 	}
 	//take snapshot
-
 	newSnapShotGroup := self.Wal.StateChangeId / common.Config.SnapshotStateChangeCount
 	if newSnapShotGroup > self.snapshotGroup {
 		log.Infof("storing snapshot, Snapshot Id = %d, LastFilterBlockHeight = %d", newSnapShotGroup, self.GetLastFilterBlock())
@@ -872,23 +871,19 @@ func (self *ChannelService) ChannelClose(tokenAddress common.TokenAddress, partn
 
 	addressList := list.New()
 	addressList.PushBack(partnerAddress)
-
 	self.ChannelBatchClose(tokenAddress, addressList, retryTimeout)
 	return
 }
 
-func (self *ChannelService) ChannelBatchClose(tokenAddress common.TokenAddress, partnerAddress *list.List, retryTimeout common.NetworkTimeout) {
+func (self *ChannelService) ChannelBatchClose(tokenAddress common.TokenAddress, partnerAddress *list.List,
+	retryTimeout common.NetworkTimeout) {
 
 	chainState := self.StateFromChannel()
 	registryAddress := common.PaymentNetworkID(self.microAddress)
-	channelsToClose := transfer.FilterChannelsByPartnerAddress(chainState, registryAddress,
-		tokenAddress, partnerAddress)
+	channelsToClose := transfer.FilterChannelsByPartnerAddress(chainState, registryAddress, tokenAddress, partnerAddress)
+	TokenNetworkId := transfer.GetTokenNetworkIdByTokenAddress(chainState, registryAddress, tokenAddress)
 
-	TokenNetworkId := transfer.GetTokenNetworkIdByTokenAddress(
-		chainState, registryAddress, tokenAddress)
-
-	//[TODO] use BlockChainService.PaymentChannel to get PaymentChannels and
-	// get the lock!!
+	//[TODO] use BlockChainService.PaymentChannel to get PaymentChannels and get the lock!!
 
 	channelIds := list.New()
 	for e := channelsToClose.Front(); e != nil; e = e.Next() {
@@ -909,13 +904,12 @@ func (self *ChannelService) ChannelBatchClose(tokenAddress common.TokenAddress, 
 		channelClose.ChannelId = identifier
 
 		self.HandleStateChange(channelClose)
+		log.Debugf("channel will be closed: %d", channelClose.ChannelId)
 
 		tokenNetworkState := transfer.GetTokenNetworkByIdentifier(chainState, channelState.TokenNetworkId)
 		tokenNetworkState.DelRoute(channelState.Identifier)
 	}
-
 	WaitForClose(self, registryAddress, tokenAddress, channelIds, float32(retryTimeout))
-
 	return
 }
 
@@ -950,17 +944,14 @@ func (self *ChannelService) GetChannelList(registryAddress common.PaymentNetwork
 	chainState := self.StateFromChannel()
 
 	if tokenAddress != common.EmptyTokenAddress && partnerAddress != common.EmptyAddress {
-		channelState := transfer.GetChannelStateFor(chainState, registryAddress,
-			tokenAddress, partnerAddress)
-
+		channelState := transfer.GetChannelStateFor(chainState, registryAddress, tokenAddress, partnerAddress)
 		if channelState != nil {
 			result.PushBack(channelState)
 		} else {
 			log.Debug("[GetChannelList] channelState == nil")
 		}
 	} else if tokenAddress != common.EmptyTokenAddress {
-		result = transfer.ListChannelStateForTokenNetwork(chainState, registryAddress,
-			tokenAddress)
+		result = transfer.ListChannelStateForTokenNetwork(chainState, registryAddress, tokenAddress)
 	} else {
 		result = transfer.ListAllChannelState(chainState)
 	}
@@ -1129,6 +1120,8 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 		return nil, fmt.Errorf("Encrypt secret error: %s", err.Error())
 	}
 
+	amount = common.TokenAmount(calculateSafeAmountWithFee(common.PaymentAmount(amount)))
+
 	var actionInitiator *transfer.ActionInitInitiator
 	if media == common.EmptyAddress {
 		actionInitiator, err = self.InitiatorInit(paymentId, amount, secret, tokenNetworkId, target, encSecret)
@@ -1160,6 +1153,14 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	//# wal entry.
 	self.HandleStateChange(actionInitiator)
 	return paymentStatus.paymentDone, nil
+}
+
+func calculateSafeAmountWithFee(amount common.PaymentAmount) common.PaymentAmount {
+	log.Debugf("before margin: %d", amount)
+	margin := common.PaymentAmount(float64(amount) * common.DEFAULT_MEDIATION_FEE_MARGIN)
+	amount += margin
+	log.Debugf("after margin: %d", amount)
+	return amount
 }
 
 func (self *ChannelService) InitiatorInit(paymentId common.PaymentID, transferAmount common.TokenAmount,

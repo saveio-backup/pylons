@@ -136,6 +136,7 @@ type ContractReceiveChannelNewBalance struct {
 	TokenNetworkId     common.TokenNetworkID
 	ChannelId          common.ChannelID
 	DepositTransaction TransactionChannelNewBalance
+	FeeConfig  		   common.MediationFeeConfig
 }
 
 type ContractReceiveChannelSettled struct {

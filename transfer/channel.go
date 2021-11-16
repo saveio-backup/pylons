@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/saveio/themis-go-sdk/usdt"
 	"math"
 	"sync"
 
@@ -2194,7 +2195,14 @@ func handleChannelNewBalance(channelState *NettingChannelState,
 		channelState.DepositTransactionQueue.Push(order)
 	}
 
+	UpdateFeeScheduleAfterBalanceChange(channelState, stateChange.FeeConfig)
 	return TransitionResult{channelState, nil}
+}
+
+func UpdateFeeScheduleAfterBalanceChange(channelState *NettingChannelState, feeConfig common.MediationFeeConfig) {
+	channelState.FeeSchedule = &FeeScheduleState{
+		Flat: feeConfig.TokenToFlatFee[common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)],
+	}
 }
 
 func applyChannelNewBalance(channelState *NettingChannelState,
