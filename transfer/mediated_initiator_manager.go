@@ -299,16 +299,13 @@ func ImStateTransition(paymentState *InitiatorPaymentState, stateChange interfac
 		iteration = ImHandleCancelPayment(paymentState, channelState)
 	case *ReceiveSecretReveal:
 		receiveSecretReveal, _ := stateChange.(*ReceiveSecretReveal)
-		iteration = ImHandleOffchainSecretReveal(paymentState, receiveSecretReveal,
-			channelIdToChannels)
+		iteration = ImHandleOffchainSecretReveal(paymentState, receiveSecretReveal, channelIdToChannels)
 	case *ReceiveLockExpired:
 		receiveLockExpired, _ := stateChange.(*ReceiveLockExpired)
-		iteration = ImHandleLockExpired(paymentState, receiveLockExpired,
-			channelIdToChannels, blockNumber)
+		iteration = ImHandleLockExpired(paymentState, receiveLockExpired, channelIdToChannels, blockNumber)
 	case *ContractReceiveSecretReveal:
 		contractReceiveSecretReveal, _ := stateChange.(*ContractReceiveSecretReveal)
-		iteration = ImHandleOnChainSecretReveal(paymentState, contractReceiveSecretReveal,
-			channelIdToChannels)
+		iteration = ImHandleOnChainSecretReveal(paymentState, contractReceiveSecretReveal, channelIdToChannels)
 	default:
 		log.Warn("[ImStateTransition] unknown stateChange Type: ", reflect.TypeOf(stateChange).String())
 	}

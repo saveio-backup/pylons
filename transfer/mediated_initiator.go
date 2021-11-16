@@ -147,16 +147,18 @@ func InitTryNewRoute(oldInitiatorState *InitiatorTransferState,
 			PaymentNetworkId: transferDescription.PaymentNetworkId,
 			TokenNetworkId:   transferDescription.TokenNetworkId,
 			Identifier:       transferDescription.PaymentId,
-			Target:           common.Address(transferDescription.Target),
+			Target:           transferDescription.Target,
 			Reason:           reason,
 		}
 		events = append(events, transferFailed)
 		initiatorState = oldInitiatorState
 	} else {
 		messageId := common.GetMsgID()
-		lockedTransferEvent := InitSendLockedTransfer(transferDescription, channelState,
-			messageId, blockNumber)
-
+		lockedTransferEvent := InitSendLockedTransfer(transferDescription, channelState, messageId, blockNumber)
+		if lockedTransferEvent == nil {
+			log.Errorf("InitSendLockedTransfer event null")
+			return &TransitionResult{NewState: initiatorState, Events: events}
+		}
 		initiatorState = &InitiatorTransferState{
 			TransferDescription: transferDescription,
 			ChannelId:           channelState.Identifier,
@@ -164,7 +166,6 @@ func InitTryNewRoute(oldInitiatorState *InitiatorTransferState,
 		}
 		events = append(events, lockedTransferEvent)
 	}
-
 	return &TransitionResult{NewState: initiatorState, Events: events}
 }
 

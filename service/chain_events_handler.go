@@ -166,8 +166,7 @@ func (self *ChannelService) HandleChannelClose(event map[string]interface{}) {
 	blockNumber = event["blockHeight"].(common.BlockHeight)
 
 	chainState := self.StateFromChannel()
-	channelState := transfer.GetChannelStateByTokenNetworkId(chainState,
-		tokenNetworkId, channelId)
+	channelState := transfer.GetChannelStateByTokenNetworkId(chainState, tokenNetworkId, channelId)
 
 	if channelState != nil {
 		channelClosed := &transfer.ContractReceiveChannelClosed{

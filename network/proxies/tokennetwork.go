@@ -468,7 +468,6 @@ func (self *TokenNetwork) Close(channelId common.ChannelID, partner common.Addre
 	if err != nil {
 		log.Errorf("CloseChannel  WaitForGenerateBlock err:%s", err)
 		self.checkChannelStateForClose(self.nodeAddress, partner, channelId)
-
 		return
 	}
 

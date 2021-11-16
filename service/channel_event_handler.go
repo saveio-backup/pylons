@@ -229,8 +229,7 @@ func (self ChannelEventHandler) HandleContractSendChannelClose(channel *ChannelS
 	}
 
 	channelProxy := channel.chain.PaymentChannel(common.Address(channelCloseEvent.TokenNetworkId), channelCloseEvent.ChannelId, args)
-
-	channelProxy.Close(nonce, balanceHash, common.AdditionalHash(messageHash[:]), signature, publicKey)
+	channelProxy.Close(nonce, balanceHash, messageHash[:], signature, publicKey)
 }
 
 func (self ChannelEventHandler) HandelContractSendChannelUpdate(channel *ChannelService, channelUpdateEvent *transfer.ContractSendChannelUpdateTransfer) {
@@ -273,7 +272,8 @@ func (self ChannelEventHandler) HandelContractSendChannelUpdate(channel *Channel
 		nonClosePubkey = keypair.SerializePublicKey(channel.Account.PubKey())
 
 		channelProxy.UpdateTransfer(
-			balanceProof.Nonce, balanceHash, common.AdditionalHash(balanceProof.MessageHash[:]),
+			balanceProof.Nonce, balanceHash,
+			balanceProof.MessageHash[:],
 			balanceProof.Signature, ourSignature,
 			balanceProof.PublicKey, nonClosePubkey)
 	}

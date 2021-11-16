@@ -1109,8 +1109,8 @@ func sendLockedTransfer(channelState *NettingChannelState, initiator common.Addr
 	sendLockedTransferEvent, merkleTree, err := createSendLockedTransfer(channelState, initiator, target, amount,
 		messageId, paymentId, expiration, encSecret, secretHash, mediators)
 	if err != nil {
-		// TODO there will nil pointer panic if err not nil
 		log.Error("[sendLockedTransfer] createSendLockedTransfer error: %s", err.Error())
+		return nil
 	}
 
 	transfer := sendLockedTransferEvent.Transfer
@@ -1199,6 +1199,7 @@ func EventsForClose(channelState *NettingChannelState, blockNumber common.BlockH
 	var events []Event
 
 	status := GetStatus(channelState)
+	log.Debugf("channel status while channel close event: %s", status)
 	if status == ChannelStateOpened || status == ChannelStateClosing {
 		channelState.CloseTransaction = &TransactionExecutionStatus{
 			blockNumber, 0, ""}
@@ -1256,7 +1257,7 @@ func createSendExpiredLock(senderEndState *NettingChannelEndState, lockedLock *H
 
 	sendLockExpired := &SendLockExpired{
 		SendMessageEvent: SendMessageEvent{
-			Recipient: common.Address(recipient),
+			Recipient: recipient,
 			ChannelId: channelId,
 			MessageId: common.GetMsgID(),
 		},
@@ -2012,7 +2013,7 @@ func HandleUnlock(channelState *NettingChannelState, unlock *ReceiveUnlock) (boo
 
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
-				Recipient: common.Address(unlock.BalanceProof.Sender),
+				Recipient: unlock.BalanceProof.Sender,
 				ChannelId: ChannelIdGlobalQueue,
 				MessageId: unlock.MessageId,
 			},

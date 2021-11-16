@@ -123,9 +123,7 @@ func (self *PaymentChannel) SetTotalDeposit(totalDeposit common.TokenAmount) err
 func (self *PaymentChannel) Close(nonce common.Nonce, balanceHash common.BalanceHash,
 	additionalHash common.AdditionalHash, signature common.Signature, pubKey common.PubKey) {
 
-	self.TokenNetwork.Close(self.channelId, self.Participant2,
-		balanceHash, nonce, additionalHash, signature, pubKey)
-
+	self.TokenNetwork.Close(self.channelId, self.Participant2, balanceHash, nonce, additionalHash, signature, pubKey)
 	return
 }
 
