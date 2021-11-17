@@ -1541,7 +1541,7 @@ func (c *ChannelService) GetFee(withChain bool) (*transfer.FeeScheduleState, err
 	ua := usdt.USDT_CONTRACT_ADDRESS
 	if withChain {
 		tokenNetwork := c.chain.NewTokenNetwork(common.Address(ua))
-		info, err := tokenNetwork.GetFee(comm.Address(c.chain.Address), ua)
+		info, err := tokenNetwork.GetFee(c.Account.Address, ua)
 		if err != nil {
 			return nil, err
 		}
@@ -1562,7 +1562,7 @@ func (c *ChannelService) SetFee(fee *transfer.FeeScheduleState, withChain bool) 
 	config.TokenToProportionalFee[common.TokenAddress(ua)] = fee.Proportional
 	if withChain {
 		tokenNetwork := c.chain.NewTokenNetwork(common.Address(usdt.USDT_CONTRACT_ADDRESS))
-		_, err := tokenNetwork.SetFee(c.chain.Address, common.Address(ua), fee)
+		_, err := tokenNetwork.SetFee(common.Address(c.Account.Address), common.Address(ua), fee)
 		if err != nil {
 			return err
 		}
