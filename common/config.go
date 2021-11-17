@@ -35,9 +35,11 @@ var DefaultConfig = &PylonsConfig{
 	ConfirmBlockCount:        constants.DefaultNumberOfConfirmationsBlock,
 	MediationFeeConfig: MediationFeeConfig{
 		TokenToFlatFee: map[TokenAddress]FeeAmount{
-			TokenAddress(usdt.USDT_CONTRACT_ADDRESS): FeeAmount(0),
+			TokenAddress(usdt.USDT_CONTRACT_ADDRESS): FeeAmount(constants.DEFAULT_MEDIATION_FEE_FLAT),
 		},
-		TokenToProportionalFee:          nil,
+		TokenToProportionalFee:          map[TokenAddress]ProportionalFeeAmount{
+			TokenAddress(usdt.USDT_CONTRACT_ADDRESS): ProportionalFeeAmount(constants.DEFAULT_MEDIATION_FEE_PROPORTIONAL),
+		},
 		TokenToProportionalImbalanceFee: nil,
 		CapMediationFees:                false,
 	},
@@ -71,5 +73,3 @@ type MediationFeeConfig struct {
 	TokenToProportionalImbalanceFee map[TokenAddress]ProportionalFeeAmount
 	CapMediationFees                bool
 }
-
-const DEFAULT_MEDIATION_FEE_MARGIN = 0.003

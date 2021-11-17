@@ -6,8 +6,6 @@ import (
 	"math"
 	"reflect"
 
-	"github.com/saveio/themis-go-sdk/usdt"
-
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/themis/common/log"
 )
@@ -245,9 +243,7 @@ func GetAmountWithoutFees(amountWithFees common.TokenAmount, channelIn *NettingC
 	amountWithoutFees := common.FeeAmount(amountWithFees)
 	log.Debug("amount before fee:", amountWithoutFees)
 	fee := channelIn.GetFeeSchedule().Flat
-	proFee := common.Config.MediationFeeConfig.TokenToProportionalFee[common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)]
-	// TODO remove debug
-	proFee = 1000000
+	proFee := channelIn.GetFeeSchedule().Proportional
 	rate := float64(proFee) / math.Pow10(9)
 	log.Debugf("flat fee: %d, rate: %f", fee, rate)
 

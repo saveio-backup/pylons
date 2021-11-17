@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
-	"github.com/saveio/themis/crypto/signature"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/saveio/themis/crypto/signature"
 
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/common/constants"
@@ -799,18 +800,18 @@ func getTxHashString(txHash []byte) string {
 	return hash.ToHexString()
 }
 
-func (t *TokenNetwork) GetFee(wa comm.Address, ta comm.Address) (uint64, error) {
+func (t *TokenNetwork) GetFee(wa comm.Address, ta comm.Address) (*micropayment.FeeInfo, error) {
 	info, err := t.ChannelClient.GetFeeInfo(wa, ta)
 	if err != nil {
 		log.Errorf("%s\n", err.Error())
-		return 0, err
+		return nil, err
 	}
-	return info.Flat, nil
+	return info, nil
 }
 
-func (t *TokenNetwork) SetFee(wa common.Address, ta common.Address, flat common.FeeAmount) ([]byte, error) {
-	walletAddr :=comm.Address(wa)
-	tokenAddr :=comm.Address(ta)
+func (t *TokenNetwork) SetFee(wa common.Address, ta common.Address, fee *transfer.FeeScheduleState) ([]byte, error) {
+	walletAddr := comm.Address(wa)
+	tokenAddr := comm.Address(ta)
 	msgHash := micropayment.FeeInfoMessageBundleHash(walletAddr, tokenAddr)
 	sign, err := signature.Sign(t.ChannelClient.DefAcc.SigScheme, t.ChannelClient.DefAcc.PrivateKey, msgHash[:], nil)
 	if err != nil {
@@ -829,11 +830,12 @@ func (t *TokenNetwork) SetFee(wa common.Address, ta common.Address, flat common.
 		return nil, err
 	}
 	feeInfo := micropayment.FeeInfo{
-		WalletAddr: walletAddr,
-		TokenAddr:  tokenAddr,
-		Flat: 		uint64(flat),
-		PublicKey:  pkByte,
-		Signature:  serialize,
+		WalletAddr:   walletAddr,
+		TokenAddr:    tokenAddr,
+		Flat:         uint64(fee.Flat),
+		Proportional: uint64(fee.Proportional),
+		PublicKey:    pkByte,
+		Signature:    serialize,
 	}
 	tx, err := t.ChannelClient.SetFeeInfo(feeInfo)
 	if err != nil {

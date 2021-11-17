@@ -1361,7 +1361,7 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 				PaymentNetworkId: channelState.PaymentNetworkId,
 				TokenNetworkId:   channelState.TokenNetworkId,
 				Identifier:       paymentId,
-				Target:           common.Address(targetAddress),
+				Target:           targetAddress,
 				Reason:           msg,
 			}
 			log.Warn("[handleSendDirectTransfer] failure: ", msg)
@@ -2200,9 +2200,9 @@ func handleChannelNewBalance(channelState *NettingChannelState,
 }
 
 func UpdateFeeScheduleAfterBalanceChange(channelState *NettingChannelState, feeConfig common.MediationFeeConfig) {
-	channelState.FeeSchedule = &FeeScheduleState{
-		Flat: feeConfig.TokenToFlatFee[common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)],
-	}
+	flat := feeConfig.TokenToFlatFee[common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)]
+	pro := feeConfig.TokenToProportionalFee[common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)]
+	channelState.SetFeeSchedule(flat, pro)
 }
 
 func applyChannelNewBalance(channelState *NettingChannelState,

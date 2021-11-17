@@ -570,26 +570,17 @@ func (self *NettingChannelState) GetGasBalance(ownAddress common.Address, target
 
 func (t *NettingChannelState) GetFeeSchedule() *FeeScheduleState {
 	if t.FeeSchedule == nil {
-		t.FeeSchedule = &FeeScheduleState{
-			CapFees:          true,
-			Flat:             0,
-			Proportional:     0,
-			ImbalancePenalty: nil,
-		}
+		t.FeeSchedule = &FeeScheduleState{}
 	}
 	return t.FeeSchedule
 }
 
-func (t *NettingChannelState) SetFeeSchedule(flat common.FeeAmount) {
+func (t *NettingChannelState) SetFeeSchedule(flat common.FeeAmount, pro common.ProportionalFeeAmount) {
 	if t.FeeSchedule == nil {
-		t.FeeSchedule = &FeeScheduleState{
-			CapFees:          true,
-			Flat:             0,
-			Proportional:     0,
-			ImbalancePenalty: nil,
-		}
+		t.FeeSchedule = &FeeScheduleState{}
 	}
 	t.FeeSchedule.Flat = flat
+	t.FeeSchedule.Proportional = pro
 }
 
 type TransactionChannelNewBalance struct {

@@ -22,4 +22,8 @@ const (
 	DefaultWithdrawTimeout            = 5
 	DefaultNumberOfMaxBlockDelay      = 3
 	DefaultNumberOfConfirmationsBlock = 0
+
+	DEFAULT_MEDIATION_FEE_MARGIN 		= 0.003
+	DEFAULT_MEDIATION_FEE_FLAT   		= 1
+	DEFAULT_MEDIATION_FEE_PROPORTIONAL  = 1000000
 )

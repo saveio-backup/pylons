@@ -284,7 +284,7 @@ type GetPaymentResultReq struct {
 }
 
 type GetFeeRet struct {
-	Fee  uint64
+	Fee *transfer.FeeScheduleState
 	Done chan bool
 	Err  error
 }
@@ -300,7 +300,7 @@ type SetFeeRet struct {
 }
 
 type SetFeeReq struct {
-	Flat common.FeeAmount
+	Fee *transfer.FeeScheduleState
 	WithChain bool
 	Ret SetFeeRet
 }

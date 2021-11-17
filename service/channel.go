@@ -1157,7 +1157,7 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 
 func calculateSafeAmountWithFee(amount common.PaymentAmount) common.PaymentAmount {
 	log.Debugf("before margin: %d", amount)
-	margin := common.PaymentAmount(float64(amount) * common.DEFAULT_MEDIATION_FEE_MARGIN)
+	margin := common.PaymentAmount(float64(amount) * constants.DEFAULT_MEDIATION_FEE_MARGIN)
 	amount += margin
 	log.Debugf("after margin: %d", amount)
 	return amount
@@ -1535,27 +1535,34 @@ func (self *ChannelService) GetPaymentResult(target common.Address, identifier c
 	return nil
 }
 
-func (c *ChannelService) GetFee(withChain bool) (uint64, error) {
+func (c *ChannelService) GetFee(withChain bool) (*transfer.FeeScheduleState, error) {
+	fee := &transfer.FeeScheduleState{}
+	config := common.Config.MediationFeeConfig
 	ua := usdt.USDT_CONTRACT_ADDRESS
-	fee := common.Config.MediationFeeConfig.TokenToFlatFee[common.TokenAddress(ua)]
 	if withChain {
 		tokenNetwork := c.chain.NewTokenNetwork(common.Address(ua))
-		getFee, err := tokenNetwork.GetFee(comm.Address(c.chain.Address), ua)
+		info, err := tokenNetwork.GetFee(comm.Address(c.chain.Address), ua)
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
-		fee = common.FeeAmount(getFee)
-		common.Config.MediationFeeConfig.TokenToFlatFee[common.TokenAddress(ua)] = common.FeeAmount(getFee)
+		fee.Flat = common.FeeAmount(info.Flat)
+		fee.Proportional = common.ProportionalFeeAmount(info.Proportional)
+		config.TokenToFlatFee[common.TokenAddress(ua)] = common.FeeAmount(info.Flat)
+		config.TokenToProportionalFee[common.TokenAddress(ua)] = common.ProportionalFeeAmount(info.Proportional)
 	}
-	return uint64(fee), nil
+	fee.Flat = config.TokenToFlatFee[common.TokenAddress(ua)]
+	fee.Proportional = config.TokenToProportionalFee[common.TokenAddress(ua)]
+	return fee, nil
 }
 
-func (c *ChannelService) SetFee(flat common.FeeAmount, withChain bool) error {
+func (c *ChannelService) SetFee(fee *transfer.FeeScheduleState, withChain bool) error {
 	ua := usdt.USDT_CONTRACT_ADDRESS
-	common.Config.MediationFeeConfig.TokenToFlatFee[common.TokenAddress(ua)] = flat
+	config := common.Config.MediationFeeConfig
+	config.TokenToFlatFee[common.TokenAddress(ua)] = fee.Flat
+	config.TokenToProportionalFee[common.TokenAddress(ua)] = fee.Proportional
 	if withChain {
 		tokenNetwork := c.chain.NewTokenNetwork(common.Address(usdt.USDT_CONTRACT_ADDRESS))
-		_, err := tokenNetwork.SetFee(c.chain.Address, common.Address(ua), flat)
+		_, err := tokenNetwork.SetFee(c.chain.Address, common.Address(ua), fee)
 		if err != nil {
 			return err
 		}
