@@ -549,22 +549,24 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 				locksRoot[index] = byte(value)
 			}
 			events[item] = locksRoot
-		case "walletAddr":
-			var address common.Address
-			for index, data := range value.([]interface{}) {
-				value := data.(float64)
-				address[index] = byte(value)
-			}
-			events[item] = address
-		case "tokenAddr":
-			var address common.Address
-			for index, data := range value.([]interface{}) {
-				value := data.(float64)
-				address[index] = byte(value)
-			}
-			events[item] = address
-		case "flat":
-			events[item] = common.FeeAmount(value.(float64))
+		//case "walletAddr":
+		//	var address common.Address
+		//	for index, data := range value.([]interface{}) {
+		//		value := data.(float64)
+		//		address[index] = byte(value)
+		//	}
+		//	events[item] = address
+		//case "tokenAddr":
+		//	var address common.Address
+		//	for index, data := range value.([]interface{}) {
+		//		value := data.(float64)
+		//		address[index] = byte(value)
+		//	}
+		//	events[item] = address
+		//case "flat":
+		//	events[item] = common.FeeAmount(value.(float64))
+		//case "proportional":
+		//	events[item] = common.ProportionalFeeAmount(value.(float64))
 		}
 	}
 	return events
