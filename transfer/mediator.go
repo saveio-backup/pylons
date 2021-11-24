@@ -3,6 +3,7 @@ package transfer
 import (
 	"crypto/sha256"
 	"fmt"
+	"github.com/saveio/pylons/common/constants"
 	"math"
 	"reflect"
 
@@ -251,7 +252,11 @@ func GetAmountWithoutFees(amountWithFees common.TokenAmount, channelIn *NettingC
 	if amountWithoutFees < fee {
 		return 0
 	}
-	amountWithoutFees -= fee
+	if float64(fee) <= float64(amountWithFees) * constants.DEFAULT_MEDIATION_FEE_LIMIT {
+		amountWithoutFees -= fee
+	} else {
+		amountWithoutFees -= common.FeeAmount(float64(amountWithFees) * constants.DEFAULT_MEDIATION_FEE_LIMIT)
+	}
 	log.Debug("amount after fee:", amountWithoutFees)
 	return common.PaymentWithFeeAmount(amountWithoutFees)
 }
