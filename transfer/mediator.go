@@ -249,9 +249,6 @@ func GetAmountWithoutFees(amountWithFees common.TokenAmount, channelIn *NettingC
 	log.Debugf("flat fee: %d, rate: %f", fee, rate)
 
 	fee += common.FeeAmount(float64(amountWithFees) * rate)
-	if amountWithoutFees < fee {
-		return 0
-	}
 	if float64(fee) <= float64(amountWithFees) * constants.DEFAULT_MEDIATION_FEE_LIMIT {
 		amountWithoutFees -= fee
 	} else {
