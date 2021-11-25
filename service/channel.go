@@ -776,7 +776,8 @@ func (self *ChannelService) OpenChannel(tokenAddress common.TokenAddress,
 			log.Warnf("[OpenChannel] StartHealthCheck warn: %s", err.Error())
 		}
 		log.Infof("channel between %s and %s already setup, id: %d", regAddr, patAddr, id)
-		return common.ChannelID(id), nil
+		errMsg := fmt.Sprintf("channel already exist, channel id: %d", common.ChannelID(id))
+		return 0, errors.New(errMsg)
 	}
 
 	log.Infof("channel between %s and %s haven`t setup. start to create new one", regAddr, patAddr)

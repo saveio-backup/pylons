@@ -9,8 +9,8 @@ type ChannelInfo struct {
 	ChannelId     uint32
 	Balance       uint64
 	BalanceFormat string
-	Address       string
 	HostAddr      string
+	Address       string
 	TokenAddr     string
 	TokenNetworkAddr string
 }

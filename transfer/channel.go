@@ -1417,6 +1417,7 @@ func handleSendWithdrawRequest(channelState *NettingChannelState, stateChange *A
 func isValidWithdrawAmount(participant *NettingChannelEndState, partner *NettingChannelEndState, totalWithdraw common.TokenAmount) (bool, error) {
 	currentWithdraw := participant.GetTotalWithdraw()
 	amountToWithdraw := totalWithdraw - currentWithdraw
+	log.Debugf("withdraw total: %d, current: %d, amount: %d", totalWithdraw, currentWithdraw, amountToWithdraw)
 
 	if totalWithdraw < currentWithdraw {
 		return false, errors.New("total withdraw smaller than current")
