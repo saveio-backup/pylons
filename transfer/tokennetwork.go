@@ -468,6 +468,12 @@ func handleCoopeativeSettle(tokenNetworkState *TokenNetworkState, stateChange St
 	return subDispatchToChannelById(tokenNetworkState, stateChange, blockNumber)
 }
 
+func handleContractReceiveSetFee(state *TokenNetworkState, stateChange StateChange, height common.BlockHeight) TransitionResult {
+	sc := stateChange.(*ContractReceiveSetFee)
+	state.AddFeeSchedule(sc.WalletAddr, &sc.FeeSchedule)
+	return TransitionResult{state, nil}
+}
+
 func stateTransitionForNetwork(paymentNetworkId common.PaymentNetworkID,
 	tokenNetworkState *TokenNetworkState, stateChange StateChange,
 	blockNumber common.BlockHeight) TransitionResult {
@@ -520,6 +526,8 @@ func stateTransitionForNetwork(paymentNetworkId common.PaymentNetworkID,
 		iteration = handleCoopeativeSettle(tokenNetworkState, stateChange, blockNumber)
 	case *ContractReceiveChannelBatchUnlock:
 		iteration = handleBatchUnlock(tokenNetworkState, stateChange, blockNumber)
+	case *ContractReceiveSetFee:
+		iteration = handleContractReceiveSetFee(tokenNetworkState, stateChange, blockNumber)
 	}
 
 	return iteration

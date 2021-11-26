@@ -240,19 +240,19 @@ func GetPendingTransferPairs(transfersPair []*MediationPairState) []*MediationPa
 	return pendingPairs
 }
 
-func GetAmountWithoutFees(amountWithFees common.TokenAmount, channelIn *NettingChannelState) common.PaymentWithFeeAmount {
+func GetAmountWithoutFees(amountWithFees common.TokenAmount, payerFeeSchedule *FeeScheduleState) common.PaymentWithFeeAmount {
 	amountWithoutFees := common.FeeAmount(amountWithFees)
 	log.Debug("amount before fee:", amountWithoutFees)
-	fee := channelIn.GetFeeSchedule().Flat
-	proFee := channelIn.GetFeeSchedule().Proportional
+	fee := payerFeeSchedule.Flat
+	proFee := payerFeeSchedule.Proportional
 	rate := float64(proFee) / math.Pow10(9)
 	log.Debugf("flat fee: %d, rate: %f", fee, rate)
 
 	fee += common.FeeAmount(float64(amountWithFees) * rate)
-	if float64(fee) <= float64(amountWithFees) * constants.DEFAULT_MEDIATION_FEE_LIMIT {
+	if float64(fee) <= float64(amountWithFees) * constants.DefaultMediationFeeLimit {
 		amountWithoutFees -= fee
 	} else {
-		amountWithoutFees -= common.FeeAmount(float64(amountWithFees) * constants.DEFAULT_MEDIATION_FEE_LIMIT)
+		amountWithoutFees -= common.FeeAmount(float64(amountWithFees) * constants.DefaultMediationFeeLimit)
 	}
 	log.Debug("amount after fee:", amountWithoutFees)
 	return common.PaymentWithFeeAmount(amountWithoutFees)
@@ -442,7 +442,7 @@ func forwardTransferPair(payerTransfer *LockedTransferSignedState, availableRout
 	payerChannel := channelsMap[payerTransfer.BalanceProof.ChannelId]
 	payeeChannel := nextChannelFromRoutes(availableRoutes, channelsMap, common.PaymentAmount(payerTransfer.Lock.Amount), lockTimeout)
 
-	amountAfterFee := GetAmountWithoutFees(payerTransfer.Lock.Amount, payerChannel)
+	amountAfterFee := GetAmountWithoutFees(payerTransfer.Lock.Amount, payerChannel.GetFeeSchedule())
 	if amountAfterFee <= 0 {
 		log.Warn("[forwardTransferPair] amount zero after fee")
 	}

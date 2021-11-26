@@ -1158,7 +1158,7 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 
 func calculateSafeAmountWithFee(amount common.PaymentAmount) common.PaymentAmount {
 	log.Debugf("before margin: %d", amount)
-	margin := common.PaymentAmount(float64(amount) * constants.DEFAULT_MEDIATION_FEE_MARGIN)
+	margin := common.PaymentAmount(float64(amount) * constants.DefaultMediationFeeMargin)
 	amount += margin
 	log.Debugf("after margin: %d", amount)
 	return amount

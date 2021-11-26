@@ -2,35 +2,39 @@ package service
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/saveio/pylons/common"
+	"github.com/saveio/pylons/common/constants"
 	"github.com/saveio/pylons/route"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis/common/log"
+	"sync"
 )
 
 func GetBestRoutes (channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID,
-	fromAddr,toAddr common.Address, amount common.TokenAmount, badAddrs []common.Address,
-	opts... float64) ([]transfer.RouteState, error) {
-	// TODO replace variable args
-	// opts[0] diversity_penalty
-	// opts[1] fee_penalty
+	fromAddr,toAddr common.Address, amount common.TokenAmount, badAddrs []common.Address) ([]transfer.RouteState, error) {
 
-	if len(opts) <= 0 {
+	switch common.Config.RouteStrategy {
+	case constants.RouteStrategyShort:
+		// DFS will return a short path ignore edges weight
 		return GetBestRoutesByDFS(channelSrv, tokenNetworkId, fromAddr, toAddr, amount, badAddrs)
-	} else {
-		// TODO edge_weight = diversity_weight + fee_weight
-		return GetBestRoutesByDijkstra(channelSrv, tokenNetworkId, fromAddr, toAddr, amount, badAddrs)
+	case constants.RouteStrategyCheap:
+		// Dijkstra will return a short path by calculated edges weight
+		return GetBestRoutesByDijkstra(channelSrv, tokenNetworkId, fromAddr, toAddr, amount, badAddrs, constants.RouteStrategyCheap)
+	case constants.RouteStrategyDiverse:
+		// Dijkstra will return a short path by calculated edges weight
+		return GetBestRoutesByDijkstra(channelSrv, tokenNetworkId, fromAddr, toAddr, amount, badAddrs, constants.RouteStrategyDiverse)
 	}
+	return nil, errors.New("no path found")
 }
 
-func GetBestRoutesByDFS(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID, fromAddr common.Address,
-	toAddr common.Address, amount common.TokenAmount, badAddrs []common.Address) ([]transfer.RouteState, error) {
+func GetBestRoutesByDFS(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID,
+	fromAddr, toAddr common.Address, amount common.TokenAmount, badAddrs []common.Address) ([]transfer.RouteState, error) {
 	//""" Returns a list of channels that can be used to make a transfer.
 	//
 	//This will filter out channels that are not open and don't have enough capacity.
 	//"""
-	//# TODO: Route ranking.
 	//# Rate each route to optimize the fee price/quality of each route and add a
 	//# rate from in the range [0.0,1.0].
 
@@ -107,8 +111,9 @@ func GetBestRoutesByDFS(channelSrv *ChannelService, tokenNetworkId common.TokenN
 	return availableRoutes, nil
 }
 
-func GetBestRoutesByDijkstra(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID, fromAddr common.Address,
-	toAddr common.Address, amount common.TokenAmount, badAddrs []common.Address) ([]transfer.RouteState, error) {
+func GetBestRoutesByDijkstra(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID,
+	fromAddr, toAddr common.Address, amount common.TokenAmount, badAddrs []common.Address,
+	strategy string) ([]transfer.RouteState, error) {
 	//""" Returns a list of channels that can be used to make a transfer.
 	//
 	//This will filter out channels that are not open and don't have enough capacity.
@@ -133,6 +138,14 @@ func GetBestRoutesByDijkstra(channelSrv *ChannelService, tokenNetworkId common.T
 
 	routeDijkstra := &route.Dijkstra{}
 	for {
+		switch strategy {
+		case constants.RouteStrategyDiverse:
+			rp := common.Config.RoutePenaltyConfig
+			edges = CalculateEdgeWeightByPenalty(edges, amount, len(badAddrs), rp.FeePenalty, rp.DiversityPenalty,
+				tokenNetwork.FeeScheduleMap)
+		case constants.RouteStrategyShort:
+			edges = CalculateEdgeWeightByFee(edges, amount, tokenNetwork.FeeScheduleMap)
+		}
 		routeDijkstra.NewTopology(nodes, edges, badAddrs)
 		spt := routeDijkstra.GetShortPathTree(fromAddr, toAddr)
 		sptLen := len(spt)
@@ -178,6 +191,64 @@ func GetBestRoutesByDijkstra(channelSrv *ChannelService, tokenNetworkId common.T
 	}
 	log.Errorf("[GetBestRoutes] no route to target")
 	return nil, fmt.Errorf("[GetBestRoutes] no route to target")
+}
+
+func CalculateEdgeWeightByPenalty(edges *sync.Map, amount common.TokenAmount, visited int,
+	feePenalty, diversityPenalty float64, feeScheduleMap map[common.Address]*transfer.FeeScheduleState) *sync.Map {
+
+	// fee_weight = amount_fee * fee_penalty
+	// diversity_weight = visited_number * diversity_penalty
+	// edge_weight = diversity_weight + fee_weight
+
+	edges.Range(func(key, value interface{}) bool {
+		e := key.(common.EdgeId)
+		to := e.GetAddr2()
+
+		// use from fee schedule because mediation fee calculated by in channel
+		schedule := feeScheduleMap[to]
+		if schedule == nil {
+			schedule = &transfer.FeeScheduleState{
+				Flat:             constants.DefaultMediationFeeFlat,
+				Proportional:     constants.DefaultMediationFeeProportional,
+			}
+		}
+		amountWithoutFee := transfer.GetAmountWithoutFees(amount, schedule)
+		amountFee := float64(amount) - float64(amountWithoutFee)
+
+		feeWeight := amountFee * feePenalty
+		diversityWeight := float64(visited) * diversityPenalty
+		weight := 1 + feeWeight + diversityWeight
+
+		edges.Store(key, weight)
+		return true
+	})
+
+	return edges
+}
+
+func CalculateEdgeWeightByFee(edges *sync.Map, amount common.TokenAmount,
+	feeScheduleMap map[common.Address]*transfer.FeeScheduleState) *sync.Map {
+
+	edges.Range(func(key, value interface{}) bool {
+		e := key.(common.EdgeId)
+		to := e.GetAddr2()
+
+		// use from fee schedule because mediation fee calculated by in channel
+		schedule := feeScheduleMap[to]
+		if schedule == nil {
+			schedule = &transfer.FeeScheduleState{
+				Flat:             constants.DefaultMediationFeeFlat,
+				Proportional:     constants.DefaultMediationFeeProportional,
+			}
+		}
+		amountWithoutFee := transfer.GetAmountWithoutFees(amount, schedule)
+		amountFee := float64(amount) - float64(amountWithoutFee)
+
+		edges.Store(key, amountFee)
+		return true
+	})
+
+	return edges
 }
 
 func GetSpecifiedRoute(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID, media common.Address,

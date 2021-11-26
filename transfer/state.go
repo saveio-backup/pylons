@@ -223,6 +223,7 @@ type TokenNetworkState struct {
 	NetworkGraph               TokenNetworkGraph
 	ChannelsMap                map[common.ChannelID]*NettingChannelState
 	PartnerAddressesToChannels map[common.Address]map[common.ChannelID]*NettingChannelState
+	FeeScheduleMap		       map[common.Address]*FeeScheduleState
 }
 
 func NewTokenNetworkState(localAddr common.Address) *TokenNetworkState {
@@ -234,7 +235,7 @@ func NewTokenNetworkState(localAddr common.Address) *TokenNetworkState {
 	result.NetworkGraph.Edges = new(sync.Map)
 	result.NetworkGraph.Nodes.Store(localAddr, int64(1))
 	result.DnsAddrsMap = make(map[common.Address]int64)
-
+	result.FeeScheduleMap = make(map[common.Address]*FeeScheduleState)
 	return result
 }
 
@@ -370,6 +371,15 @@ func (self *TokenNetworkState) AdjustTokenNetworkState() {
 
 	return
 }
+
+func (t *TokenNetworkState) AddFeeSchedule(addr common.Address, fee *FeeScheduleState) {
+	if t.FeeScheduleMap == nil {
+		t.FeeScheduleMap = make(map[common.Address]*FeeScheduleState)
+	}
+	t.FeeScheduleMap[addr] = fee
+}
+
+// ----------------------------------
 
 type PaymentMappingState struct {
 	SecretHashesToTask map[common.SecretHash]State
@@ -685,4 +695,12 @@ type MediationPairState struct {
 	PayeeState    string
 	PayerTransfer *LockedTransferSignedState
 	PayerState    string
+}
+
+// FeeScheduleState is struct of mediation fee
+type FeeScheduleState struct {
+	CapFees bool
+	Flat common.FeeAmount
+	Proportional common.ProportionalFeeAmount
+	ImbalancePenalty []map[common.TokenAmount]common.FeeAmount
 }

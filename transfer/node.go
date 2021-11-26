@@ -660,6 +660,9 @@ func handleStateChangeForNode(chainStateArg State, stateChange StateChange) *Tra
 	case *ReceiveLockExpired:
 		receiveLockExpired, _ := stateChange.(*ReceiveLockExpired)
 		iteration = handleReceiveLockedExpired(chainState, receiveLockExpired)
+	case *ContractReceiveSetFee:
+		fee := stateChange.(*ContractReceiveSetFee)
+		iteration = handleTokenNetworkAction(chainState, stateChange, fee.TokenNetworkId)
 	default:
 		log.Warn("[node.handleStateChangeForNode] unknown stateChange Type: ",
 			reflect.TypeOf(stateChange).String())

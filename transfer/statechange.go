@@ -204,8 +204,10 @@ type ContractReceiveUpdateTransfer struct {
 
 type ContractReceiveSetFee struct {
 	ContractReceiveStateChange
-	WalletAddr	common.Address
-	TokenAddr	common.Address
+	WalletAddr     common.Address
+	TokenAddr      common.Address
+	TokenNetworkId common.TokenNetworkID
+	FeeSchedule    FeeScheduleState
 }
 
 type ReceiveTransferDirect struct {

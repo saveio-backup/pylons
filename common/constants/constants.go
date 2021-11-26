@@ -23,8 +23,14 @@ const (
 	DefaultNumberOfMaxBlockDelay      = 3
 	DefaultNumberOfConfirmationsBlock = 0
 
-	DEFAULT_MEDIATION_FEE_MARGIN 		= 0.003
-	DEFAULT_MEDIATION_FEE_FLAT   		= 1
-	DEFAULT_MEDIATION_FEE_PROPORTIONAL  = 1000000
-	DEFAULT_MEDIATION_FEE_LIMIT			= 0.2
+	DefaultMediationFeeMargin       = 0.003
+	DefaultMediationFeeFlat         = 1
+	DefaultMediationFeeProportional = 1000000
+	DefaultMediationFeeLimit        = 0.2
+
+	RouteStrategyShort      = "short"
+	RouteStrategyCheap      = "cheap"
+	RouteStrategyDiverse    = "diverse"
+	DefaultFeePenalty       = 1
+	DefaultDiversityPenalty = 1
 )

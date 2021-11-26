@@ -19,6 +19,8 @@ type PylonsConfig struct {
 	MaxBlockDelay            int
 	ConfirmBlockCount        int
 	MediationFeeConfig       MediationFeeConfig
+	RouteStrategy			 string
+	RoutePenaltyConfig	     RoutePenaltyConfig
 }
 
 var DefaultConfig = &PylonsConfig{
@@ -35,13 +37,18 @@ var DefaultConfig = &PylonsConfig{
 	ConfirmBlockCount:        constants.DefaultNumberOfConfirmationsBlock,
 	MediationFeeConfig: MediationFeeConfig{
 		TokenToFlatFee: map[TokenAddress]FeeAmount{
-			TokenAddress(usdt.USDT_CONTRACT_ADDRESS): FeeAmount(constants.DEFAULT_MEDIATION_FEE_FLAT),
+			TokenAddress(usdt.USDT_CONTRACT_ADDRESS): FeeAmount(constants.DefaultMediationFeeFlat),
 		},
 		TokenToProportionalFee:          map[TokenAddress]ProportionalFeeAmount{
-			TokenAddress(usdt.USDT_CONTRACT_ADDRESS): ProportionalFeeAmount(constants.DEFAULT_MEDIATION_FEE_PROPORTIONAL),
+			TokenAddress(usdt.USDT_CONTRACT_ADDRESS): ProportionalFeeAmount(constants.DefaultMediationFeeProportional),
 		},
 		TokenToProportionalImbalanceFee: nil,
 		CapMediationFees:                false,
+	},
+	RouteStrategy: constants.RouteStrategyShort,
+	RoutePenaltyConfig: RoutePenaltyConfig{
+		FeePenalty:       constants.DefaultFeePenalty,
+		DiversityPenalty: constants.DefaultDiversityPenalty,
 	},
 }
 
@@ -72,4 +79,9 @@ type MediationFeeConfig struct {
 	TokenToProportionalFee          map[TokenAddress]ProportionalFeeAmount
 	TokenToProportionalImbalanceFee map[TokenAddress]ProportionalFeeAmount
 	CapMediationFees                bool
+}
+
+type RoutePenaltyConfig struct {
+	FeePenalty float64
+	DiversityPenalty float64
 }

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+	"reflect"
 	"strconv"
 
 	"github.com/saveio/pylons/common"
@@ -399,6 +401,8 @@ func (c *ChannelService) HandleChannelSetFee(event map[string]interface{}) {
 	blockNumber := event["blockHeight"].(common.BlockHeight)
 	walletAddr := event["walletAddr"].(common.Address)
 	tokenAddr := event["tokenAddr"].(common.Address)
+	flat := event["flat"].(common.FeeAmount)
+	proportional := event["proportional"].(common.ProportionalFeeAmount)
 
 	e := &transfer.ContractReceiveSetFee{
 		ContractReceiveStateChange: transfer.ContractReceiveStateChange{
@@ -407,6 +411,11 @@ func (c *ChannelService) HandleChannelSetFee(event map[string]interface{}) {
 		},
 		WalletAddr: walletAddr,
 		TokenAddr: tokenAddr,
+		TokenNetworkId: common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS),
+		FeeSchedule: transfer.FeeScheduleState{
+			Flat:         flat,
+			Proportional: proportional,
+		},
 	}
 	c.HandleStateChange(e)
 }
@@ -441,8 +450,7 @@ func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {
 	} else if eventName == "ChannelUnlocked" {
 		channel.HandleChannelBatchUnlock(events)
 	} else if eventName == "SetFee" {
-		// TODO complete
-		//channel.HandleChannelSetFee(events)
+		channel.HandleChannelSetFee(events)
 	}
 
 	return
@@ -549,24 +557,30 @@ func ParseEvent(event map[string]interface{}) map[string]interface{} {
 				locksRoot[index] = byte(value)
 			}
 			events[item] = locksRoot
-		//case "walletAddr":
-		//	var address common.Address
-		//	for index, data := range value.([]interface{}) {
-		//		value := data.(float64)
-		//		address[index] = byte(value)
-		//	}
-		//	events[item] = address
-		//case "tokenAddr":
-		//	var address common.Address
-		//	for index, data := range value.([]interface{}) {
-		//		value := data.(float64)
-		//		address[index] = byte(value)
-		//	}
-		//	events[item] = address
-		//case "flat":
-		//	events[item] = common.FeeAmount(value.(float64))
-		//case "proportional":
-		//	events[item] = common.ProportionalFeeAmount(value.(float64))
+		case "walletAddr":
+			fmt.Println(reflect.TypeOf(value))
+			var address common.Address
+			switch value.(type) {
+			case string:
+				events[item] = value
+			case []interface{}:
+				for index, data := range value.([]interface{}) {
+					value := data.(float64)
+					address[index] = byte(value)
+				}
+				events[item] = address
+			}
+		case "tokenAddr":
+			var address common.Address
+			for index, data := range value.([]interface{}) {
+				value := data.(float64)
+				address[index] = byte(value)
+			}
+			events[item] = address
+		case "flat":
+			events[item] = common.FeeAmount(value.(float64))
+		case "proportional":
+			events[item] = common.ProportionalFeeAmount(value.(float64))
 		}
 	}
 	return events
