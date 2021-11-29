@@ -2,6 +2,8 @@ package service
 
 import (
 	"reflect"
+	"errors"
+	"fmt"
 
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/network/transport/messages"
@@ -499,12 +501,13 @@ func (self ChannelEventHandler) HandleSendWithdrawRequest(channel *ChannelServic
 			}
 			channel.Transport.SendAsync(queueId, withdrawRequestMessage)
 		*/
-
 		// send directly instead of push to queue
 		err = channel.Transport.Send(withdrawRequestEvent.Recipient, withdrawRequestMessage)
 		if err != nil {
 			log.Debugf("SendWithdrawRequest failed : %s", err)
-			self.handleWithdrawFailure(channel, withdrawRequestEvent.TokenNetworkId, withdrawRequestEvent.ChannelId)
+			self.handleWithdrawFailure(channel, withdrawRequestEvent.TokenNetworkId, withdrawRequestEvent.ChannelId,
+				errors.New("send withdraw request failed"))
+			return
 		}
 	} else {
 		log.Warn("[HandleSendWithdrawRequest] Message is nil")
@@ -552,7 +555,7 @@ func (self ChannelEventHandler) HandleContractSendChannelWithdraw(channel *Chann
 			channelWithdrawEvent.ParticipantSignature, channelWithdrawEvent.ParticipantPublicKey)
 		if err != nil {
 			log.Warnf("HandleContractSendChannelWithdraw, proxy returns: %s", err)
-			ok := channel.WithdrawResultNotify(channelWithdrawEvent.ChannelId, false)
+			ok := channel.WithdrawResultNotify(channelWithdrawEvent.ChannelId, false, err)
 			if !ok {
 				log.Warnf("error in HandleContractSendChannelWithdraw, no withdraw status found in the map")
 			}
@@ -560,23 +563,32 @@ func (self ChannelEventHandler) HandleContractSendChannelWithdraw(channel *Chann
 	}()
 }
 
-func (self ChannelEventHandler) HandleWithdrawRequestSentFailed(channel *ChannelService, withdrawRequestSentFailedEvent *transfer.EventWithdrawRequestSentFailed) {
+func (self ChannelEventHandler) HandleWithdrawRequestSentFailed(channel *ChannelService,
+	withdrawRequestSentFailedEvent *transfer.EventWithdrawRequestSentFailed) {
 	log.Debugf("HandleWithdrawRequestSentFailed")
-	self.handleWithdrawFailure(channel, withdrawRequestSentFailedEvent.TokenNetworkId, withdrawRequestSentFailedEvent.ChannelId)
+	errMsg := fmt.Sprintf("withdraw request sent failed: %s", withdrawRequestSentFailedEvent.Reason)
+	self.handleWithdrawFailure(channel, withdrawRequestSentFailedEvent.TokenNetworkId,
+		withdrawRequestSentFailedEvent.ChannelId, errors.New(errMsg))
 }
 
-func (self ChannelEventHandler) HandleInvalidReceivedWithdraw(channel *ChannelService, invalidWithdrawReceivedEvent *transfer.EventInvalidReceivedWithdraw) {
+func (self ChannelEventHandler) HandleInvalidReceivedWithdraw(channel *ChannelService,
+	invalidWithdrawReceivedEvent *transfer.EventInvalidReceivedWithdraw) {
 	log.Debugf("HandleInvalidReceivedWithdraw")
-	self.handleWithdrawFailure(channel, invalidWithdrawReceivedEvent.TokenNetworkId, invalidWithdrawReceivedEvent.ChannelId)
+	self.handleWithdrawFailure(channel, invalidWithdrawReceivedEvent.TokenNetworkId,
+		invalidWithdrawReceivedEvent.ChannelId, errors.New("invalid receive withdraw"))
 }
 
-func (self ChannelEventHandler) HandleWithdrawRequestTimeout(channel *ChannelService, withdrawRequestTimeoutEvent *transfer.EventWithdrawRequestTimeout) {
+func (self ChannelEventHandler) HandleWithdrawRequestTimeout(channel *ChannelService,
+	withdrawRequestTimeoutEvent *transfer.EventWithdrawRequestTimeout) {
 	log.Debugf("HandleWithdrawRequestTimeout")
-	self.handleWithdrawFailure(channel, withdrawRequestTimeoutEvent.TokenNetworkId, withdrawRequestTimeoutEvent.ChannelId)
+	self.handleWithdrawFailure(channel, withdrawRequestTimeoutEvent.TokenNetworkId,
+		withdrawRequestTimeoutEvent.ChannelId, errors.New("withdraw request timeout"))
 }
 
-func (self ChannelEventHandler) handleWithdrawFailure(channel *ChannelService, TokenNetworkId common.TokenNetworkID, channelId common.ChannelID) {
-	ok := channel.WithdrawResultNotify(channelId, false)
+func (self ChannelEventHandler) handleWithdrawFailure(channel *ChannelService, TokenNetworkId common.TokenNetworkID,
+	channelId common.ChannelID, err error) {
+
+	ok := channel.WithdrawResultNotify(channelId, false, err)
 	if !ok {
 		log.Warnf("handleWithdrawFailure no withdraw status found in the map")
 	}

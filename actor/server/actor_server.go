@@ -122,7 +122,7 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 	case *WithdrawReq:
 		go func() {
 			ret, err := this.chSrv.Service.Withdraw(msg.TokenAddress, msg.PartnerAddress, msg.TotalWithdraw)
-			msg.Ret.Success = <-ret
+			msg.Ret.Success = ret
 			msg.Ret.Err = err
 			msg.Ret.Done <- true
 		}()

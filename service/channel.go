@@ -1306,19 +1306,19 @@ func (self *ChannelService) GetInternalEventsWithTimestamps(limit int, offset in
 	return self.Wal.Storage.GetEventsWithTimestamps(limit, offset)
 }
 
-func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAddress common.Address, totalWithdraw common.TokenAmount) (chan bool, error) {
+func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAddress common.Address, totalWithdraw common.TokenAmount) (bool, error) {
 	chainState := self.StateFromChannel()
 	partAddr, _ := comm.AddressParseFromBytes(partnerAddress[:])
 	channelState := transfer.GetChannelStateFor(chainState, common.PaymentNetworkID(self.microAddress), tokenAddress, partnerAddress)
 	if channelState == nil {
 		log.Errorf("withdraw failed, can not find specific channel with %s", partAddr.ToBase58())
-		return nil, errors.New("can not find specific channel")
+		return false, errors.New("can not find specific channel")
 	}
 
 	_, exist := self.GetWithdrawStatus(channelState.Identifier)
 	if exist {
 		log.Errorf("withdraw failed, there is ongoing withdraw for the channel")
-		return nil, errors.New("withdraw ongoing")
+		return false, errors.New("withdraw ongoing")
 	}
 
 	paymentNetworkId := common.PaymentNetworkID(self.microAddress)
@@ -1334,24 +1334,28 @@ func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAd
 	}
 
 	withdrawResult := self.RegisterWithdrawStatus(channelState.Identifier)
-
 	self.HandleStateChange(withdraw)
 
-	return withdrawResult, nil
+	result := <-withdrawResult
+	return result.Result, result.Err
 }
 
-func (self *ChannelService) RegisterWithdrawStatus(channelId common.ChannelID) chan bool {
-	withdrawResult := make(chan bool, 1)
+type WithdrawStatus struct {
+	Result bool
+	Err error
+}
+
+func (self *ChannelService) RegisterWithdrawStatus(channelId common.ChannelID) chan WithdrawStatus {
+	withdrawResult := make(chan WithdrawStatus, 1)
 	self.channelWithdrawStatus.Store(channelId, withdrawResult)
 	return withdrawResult
 }
 
-func (self *ChannelService) GetWithdrawStatus(channelId common.ChannelID) (chan bool, bool) {
+func (self *ChannelService) GetWithdrawStatus(channelId common.ChannelID) (chan WithdrawStatus, bool) {
 	result, exist := self.channelWithdrawStatus.Load(channelId)
 	if exist {
-		return result.(chan bool), true
+		return result.(chan WithdrawStatus), true
 	}
-
 	return nil, false
 }
 
@@ -1361,11 +1365,10 @@ func (self *ChannelService) RemoveWithdrawStatus(channelId common.ChannelID) boo
 		self.channelWithdrawStatus.Delete(channelId)
 		return true
 	}
-
 	return false
 }
 
-func (self *ChannelService) WithdrawResultNotify(channelId common.ChannelID, result bool) bool {
+func (self *ChannelService) WithdrawResultNotify(channelId common.ChannelID, result bool, err error) bool {
 	withdrawResult, exist := self.GetWithdrawStatus(channelId)
 	if !exist {
 		return false
@@ -1374,7 +1377,10 @@ func (self *ChannelService) WithdrawResultNotify(channelId common.ChannelID, res
 	self.RemoveWithdrawStatus(channelId)
 
 	log.Infof("WithdrawResultNotify for channel %d, result %v", channelId, result)
-	withdrawResult <- result
+	withdrawResult <- WithdrawStatus{
+		Result: result,
+		Err:    err,
+	}
 	return true
 }
 

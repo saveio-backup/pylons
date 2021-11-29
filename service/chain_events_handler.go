@@ -293,13 +293,12 @@ func (self *ChannelService) HandleChannelWithdraw(event map[string]interface{}) 
 }
 
 func (self *ChannelService) HandleWithdrawSuccess(channelId common.ChannelID) {
-	ok := self.WithdrawResultNotify(channelId, true)
+	ok := self.WithdrawResultNotify(channelId, true, nil)
 	if !ok {
 		// when process saved event after restart, there is no withdraw status,but there
 		// should be a withdrawTransaction in the channelState
 		log.Warn("error in HandleWithdrawSuccess, no withdraw status found in the map")
 	}
-
 	return
 }
 
