@@ -1536,10 +1536,23 @@ func (self *ChannelService) GetPaymentResult(target common.Address, identifier c
 	return nil
 }
 
-func (c *ChannelService) GetFee(withChain bool) (*transfer.FeeScheduleState, error) {
+func (c *ChannelService) GetFee(channelID common.ChannelID, withChain bool) (*transfer.FeeScheduleState, error) {
 	fee := &transfer.FeeScheduleState{}
-	config := common.Config.MediationFeeConfig
 	ua := usdt.USDT_CONTRACT_ADDRESS
+	ta := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
+
+	// get schedule from channel state
+	if channelID != 0 {
+		pid := common.PaymentNetworkID(scUtils.MicroPayContractAddress)
+		channel := transfer.GetChannelStateById(c.StateFromChannel(), pid, ta, channelID)
+		if channel == nil {
+			return nil, errors.New("channel not exist")
+		}
+		return channel.GetFeeSchedule(), nil
+	}
+
+	// get schedule from tokennetwork
+	config := common.Config.MediationFeeConfig
 	if withChain {
 		tokenNetwork := c.chain.NewTokenNetwork(common.Address(ua))
 		info, err := tokenNetwork.GetFee(c.Account.Address, ua)
@@ -1548,11 +1561,11 @@ func (c *ChannelService) GetFee(withChain bool) (*transfer.FeeScheduleState, err
 		}
 		fee.Flat = common.FeeAmount(info.Flat)
 		fee.Proportional = common.ProportionalFeeAmount(info.Proportional)
-		config.TokenToFlatFee[common.TokenAddress(ua)] = common.FeeAmount(info.Flat)
-		config.TokenToProportionalFee[common.TokenAddress(ua)] = common.ProportionalFeeAmount(info.Proportional)
+		config.TokenToFlatFee[ta] = common.FeeAmount(info.Flat)
+		config.TokenToProportionalFee[ta] = common.ProportionalFeeAmount(info.Proportional)
 	}
-	fee.Flat = config.TokenToFlatFee[common.TokenAddress(ua)]
-	fee.Proportional = config.TokenToProportionalFee[common.TokenAddress(ua)]
+	fee.Flat = config.TokenToFlatFee[ta]
+	fee.Proportional = config.TokenToProportionalFee[ta]
 	return fee, nil
 }
 

@@ -136,7 +136,6 @@ func (this *BlockChainService) NewTokenNetwork(address common.Address) *proxies.
 	defer this.tokenNetworkCreateLock.Unlock()
 
 	if this.tokenNetwork == nil {
-
 		this.tokenNetwork = proxies.NewTokenNetwork(this.ChainClient, address)
 	}
 

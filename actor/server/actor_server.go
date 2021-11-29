@@ -241,7 +241,7 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 		}()
 	case *GetFeeReq:
 		go func() {
-			fee, err := this.chSrv.Service.GetFee(msg.WithChain)
+			fee, err := this.chSrv.Service.GetFee(msg.ChannelID, msg.WithChain)
 			msg.Ret.Fee = fee
 			msg.Ret.Err = err
 			msg.Ret.Done <- true
