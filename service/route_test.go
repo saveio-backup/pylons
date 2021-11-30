@@ -76,6 +76,26 @@ func TestCalculateEdgeWeightByPenalty(t *testing.T) {
 				edges:            edges,
 				feePenalty:       1,
 				diversityPenalty: 1,
+				amount:           10,
+				visited:          0,
+				feeMap:           feeMap,
+			},
+		},
+		{
+			args: args{
+				edges:            edges,
+				feePenalty:       1,
+				diversityPenalty: 1,
+				amount:           100,
+				visited:          0,
+				feeMap:           feeMap,
+			},
+		},
+		{
+			args: args{
+				edges:            edges,
+				feePenalty:       1,
+				diversityPenalty: 1,
 				amount:           1000,
 				visited:          0,
 				feeMap:           feeMap,
@@ -95,36 +115,6 @@ func TestCalculateEdgeWeightByPenalty(t *testing.T) {
 			args: args{
 				edges:            edges,
 				feePenalty:       1,
-				diversityPenalty: 1,
-				amount:           1000,
-				visited:          2,
-				feeMap:           feeMap,
-			},
-		},
-		{
-			args: args{
-				edges:            edges,
-				feePenalty:       2,
-				diversityPenalty: 1,
-				amount:           1000,
-				visited:          0,
-				feeMap:           feeMap,
-			},
-		},
-		{
-			args: args{
-				edges:            edges,
-				feePenalty:       2,
-				diversityPenalty: 1,
-				amount:           1000,
-				visited:          1,
-				feeMap:           feeMap,
-			},
-		},
-		{
-			args: args{
-				edges:            edges,
-				feePenalty:       2,
 				diversityPenalty: 1,
 				amount:           1000,
 				visited:          2,

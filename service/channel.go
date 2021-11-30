@@ -76,8 +76,7 @@ type PaymentStatus struct {
 
 func (self *PaymentStatus) Match(paymentType common.PaymentType, tokenNetworkId common.TokenNetworkID,
 	amount common.TokenAmount) bool {
-	if self.paymentType == paymentType && self.TokenNetworkId == tokenNetworkId &&
-		self.amount == amount {
+	if self.paymentType == paymentType && self.TokenNetworkId == tokenNetworkId && self.amount == amount {
 		return true
 	} else {
 		return false
@@ -1542,7 +1541,7 @@ func (self *ChannelService) GetPaymentResult(target common.Address, identifier c
 	return nil
 }
 
-func (c *ChannelService) GetFee(channelID common.ChannelID, withChain bool) (*transfer.FeeScheduleState, error) {
+func (self *ChannelService) GetFee(channelID common.ChannelID, withChain bool) (*transfer.FeeScheduleState, error) {
 	fee := &transfer.FeeScheduleState{}
 	ua := usdt.USDT_CONTRACT_ADDRESS
 	ta := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
@@ -1550,7 +1549,7 @@ func (c *ChannelService) GetFee(channelID common.ChannelID, withChain bool) (*tr
 	// get schedule from channel state
 	if channelID != 0 {
 		pid := common.PaymentNetworkID(scUtils.MicroPayContractAddress)
-		channel := transfer.GetChannelStateById(c.StateFromChannel(), pid, ta, channelID)
+		channel := transfer.GetChannelStateById(self.StateFromChannel(), pid, ta, channelID)
 		if channel == nil {
 			return nil, errors.New("channel not exist")
 		}
@@ -1560,8 +1559,8 @@ func (c *ChannelService) GetFee(channelID common.ChannelID, withChain bool) (*tr
 	// get schedule from tokennetwork
 	config := common.Config.MediationFeeConfig
 	if withChain {
-		tokenNetwork := c.chain.NewTokenNetwork(common.Address(ua))
-		info, err := tokenNetwork.GetFee(c.Account.Address, ua)
+		tokenNetwork := self.chain.NewTokenNetwork(common.Address(ua))
+		info, err := tokenNetwork.GetFee(self.Account.Address, ua)
 		if err != nil {
 			return nil, err
 		}
@@ -1575,17 +1574,26 @@ func (c *ChannelService) GetFee(channelID common.ChannelID, withChain bool) (*tr
 	return fee, nil
 }
 
-func (c *ChannelService) SetFee(fee *transfer.FeeScheduleState, withChain bool) error {
+func (self *ChannelService) SetFee(fee *transfer.FeeScheduleState, withChain bool) error {
 	ua := usdt.USDT_CONTRACT_ADDRESS
 	config := common.Config.MediationFeeConfig
 	config.TokenToFlatFee[common.TokenAddress(ua)] = fee.Flat
 	config.TokenToProportionalFee[common.TokenAddress(ua)] = fee.Proportional
 	if withChain {
-		tokenNetwork := c.chain.NewTokenNetwork(common.Address(usdt.USDT_CONTRACT_ADDRESS))
-		_, err := tokenNetwork.SetFee(common.Address(c.Account.Address), common.Address(ua), fee)
+		tokenNetwork := self.chain.NewTokenNetwork(common.Address(usdt.USDT_CONTRACT_ADDRESS))
+		_, err := tokenNetwork.SetFee(common.Address(self.Account.Address), common.Address(ua), fee)
 		if err != nil {
 			return err
 		}
 	}
+	return nil
+}
+
+func (self *ChannelService) GetPenalty() (*common.RoutePenaltyConfig, error) {
+	return &common.Config.RoutePenaltyConfig, nil
+}
+
+func (self *ChannelService) SetPenalty(penalty *common.RoutePenaltyConfig) error {
+	common.Config.RoutePenaltyConfig = *penalty
 	return nil
 }

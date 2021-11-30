@@ -252,6 +252,19 @@ func (this *ChannelActorServer) Receive(ctx actor.Context) {
 			msg.Ret.Err = err
 			msg.Ret.Done <- true
 		}()
+	case *GetPenaltyReq:
+		go func() {
+			res, err := this.chSrv.Service.GetPenalty()
+			msg.Ret.Penalty = res
+			msg.Ret.Err = err
+			msg.Ret.Done <- true
+		}()
+	case *SetPenaltyReq:
+		go func() {
+			err := this.chSrv.Service.SetPenalty(msg.Penalty)
+			msg.Ret.Err = err
+			msg.Ret.Done <- true
+		}()
 	default:
 		log.Errorf("[ChannelActorServer] receive unknown message type:%+v", msg)
 	}

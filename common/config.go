@@ -45,7 +45,7 @@ var DefaultConfig = &PylonsConfig{
 		TokenToProportionalImbalanceFee: nil,
 		CapMediationFees:                false,
 	},
-	RouteStrategy: constants.RouteStrategyShort,
+	RouteStrategy: constants.RouteStrategyDiverse,
 	RoutePenaltyConfig: RoutePenaltyConfig{
 		FeePenalty:       constants.DefaultFeePenalty,
 		DiversityPenalty: constants.DefaultDiversityPenalty,

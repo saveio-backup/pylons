@@ -395,7 +395,7 @@ func (self *ChannelService) HandleSecretRevealed(event map[string]interface{}) {
 	self.HandleStateChange(registeredSecretStateChange)
 }
 
-func (c *ChannelService) HandleChannelSetFee(event map[string]interface{}) {
+func (self *ChannelService) HandleChannelSetFee(event map[string]interface{}) {
 	var transactionHash common.TransactionHash
 	blockNumber := event["blockHeight"].(common.BlockHeight)
 	walletAddr := event["walletAddr"].(common.Address)
@@ -416,7 +416,7 @@ func (c *ChannelService) HandleChannelSetFee(event map[string]interface{}) {
 			Proportional: proportional,
 		},
 	}
-	c.HandleStateChange(e)
+	self.HandleStateChange(e)
 }
 
 func OnBlockchainEvent(channel *ChannelService, event map[string]interface{}) {

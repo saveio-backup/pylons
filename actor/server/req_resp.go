@@ -9,8 +9,8 @@ type ChannelInfo struct {
 	ChannelId     uint32
 	Balance       uint64
 	BalanceFormat string
-	HostAddr      string
 	Address       string
+	HostAddr      string
 	TokenAddr     string
 	TokenNetworkAddr string
 }
@@ -304,4 +304,24 @@ type SetFeeReq struct {
 	Fee *transfer.FeeScheduleState
 	WithChain bool
 	Ret SetFeeRet
+}
+
+type GetPenaltyRet struct {
+	Penalty *common.RoutePenaltyConfig
+	Done chan bool
+	Err  error
+}
+
+type GetPenaltyReq struct {
+	Ret GetPenaltyRet
+}
+
+type SetPenaltyRet struct {
+	Done chan bool
+	Err  error
+}
+
+type SetPenaltyReq struct {
+	Penalty *common.RoutePenaltyConfig
+	Ret SetPenaltyRet
 }

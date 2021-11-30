@@ -496,7 +496,7 @@ func GetPaymentResult(target common.Address, identifier common.PaymentID) (*Paym
 	}
 }
 
-func GetFee(channelID common.ChannelID ,withChain bool) (*transfer.FeeScheduleState, error) {
+func GetFee(channelID common.ChannelID, withChain bool) (*transfer.FeeScheduleState, error) {
 	if ChannelServerPid == nil {
 		return nil, fmt.Errorf("GetFee error:  ChannelServerPid is nil")
 	}
@@ -531,6 +531,42 @@ func SetFee(fee *transfer.FeeScheduleState,withChain bool) error {
 	}
 	ChannelServerPid.Tell(req)
 	err := waitForCallDone(req.Ret.Done, "SetFee", defaultMinTimeOut)
+	if err != nil {
+		return err
+	}
+	return req.Ret.Err
+}
+
+func GetPenalty() (*common.RoutePenaltyConfig, error) {
+	if ChannelServerPid == nil {
+		return nil, fmt.Errorf("GetPenalty error:  ChannelServerPid is nil")
+	}
+	req := &GetPenaltyReq{
+		GetPenaltyRet{
+			Done: make(chan bool, 1),
+			Err:  nil,
+		}}
+	ChannelServerPid.Tell(req)
+	err := waitForCallDone(req.Ret.Done, "GetPenalty", defaultMinTimeOut)
+	if err != nil {
+		return nil, err
+	}
+	return req.Ret.Penalty, req.Ret.Err
+}
+
+func SetPenalty(penalty *common.RoutePenaltyConfig) error {
+	if ChannelServerPid == nil {
+		return fmt.Errorf("SetFee error:  ChannelServerPid is nil")
+	}
+	req := &SetPenaltyReq{
+		Penalty: penalty,
+		Ret:     SetPenaltyRet{
+			Done: make(chan bool, 1),
+			Err:  nil,
+		},
+	}
+	ChannelServerPid.Tell(req)
+	err := waitForCallDone(req.Ret.Done, "SetPenalty", defaultMinTimeOut)
 	if err != nil {
 		return err
 	}

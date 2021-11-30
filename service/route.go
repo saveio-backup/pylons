@@ -9,6 +9,7 @@ import (
 	"github.com/saveio/pylons/route"
 	"github.com/saveio/pylons/transfer"
 	"github.com/saveio/themis/common/log"
+	"math"
 	"sync"
 )
 
@@ -215,11 +216,13 @@ func CalculateEdgeWeightByPenalty(edges *sync.Map, amount common.TokenAmount, vi
 		amountWithoutFee := transfer.GetAmountWithoutFees(amount, schedule)
 		amountFee := float64(amount) - float64(amountWithoutFee)
 
+		fmt.Println(amountFee)
 		feeWeight := amountFee * feePenalty
 		diversityWeight := float64(visited) * diversityPenalty
 		weight := 1 + feeWeight + diversityWeight
 
-		edges.Store(key, weight)
+		w := math.Ceil(weight)
+		edges.Store(key, int64(w))
 		return true
 	})
 
@@ -242,9 +245,10 @@ func CalculateEdgeWeightByFee(edges *sync.Map, amount common.TokenAmount,
 			}
 		}
 		amountWithoutFee := transfer.GetAmountWithoutFees(amount, schedule)
-		amountFee := float64(amount) - float64(amountWithoutFee)
+		amountFee := 1 + float64(amount) - float64(amountWithoutFee)
 
-		edges.Store(key, amountFee)
+		w := math.Ceil(amountFee)
+		edges.Store(key, int64(w))
 		return true
 	})
 
