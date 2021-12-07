@@ -3,8 +3,6 @@ package transfer
 import (
 	"reflect"
 
-	"encoding/hex"
-
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/themis/common/log"
 	scUtils "github.com/saveio/themis/smartcontract/service/native/utils"
@@ -69,10 +67,9 @@ func subDispatchToPaymentTask(chainState *ChainState, stateChange StateChange,
 	if subTask != nil {
 		log.Debug("[subDispatchToPaymentTask] subTask Type: ", reflect.TypeOf(subTask).String())
 		log.Debug("[subDispatchToPaymentTask] stateChange Type: ", reflect.TypeOf(stateChange).String())
-		log.Debug("[subDispatchToPaymentTask] secretHash: ", secretHash)
+		log.Debug("[subDispatchToPaymentTask] secretHash: ", common.SecretHashHex(secretHash))
 
 		if reflect.TypeOf(subTask).String() == "*transfer.InitiatorTask" {
-			log.Debug("-------------------------------")
 			iSubTask := subTask.(*InitiatorTask)
 			TokenNetworkId := iSubTask.TokenNetworkId
 			tokenNetworkState := GetTokenNetworkByIdentifier(chainState, TokenNetworkId)
@@ -106,8 +103,7 @@ func subDispatchToPaymentTask(chainState *ChainState, stateChange StateChange,
 			TokenNetworkId := tSubTask.TokenNetworkId
 			channelId := tSubTask.ChannelId
 
-			channelState := GetChannelStateByTokenNetworkId(chainState,
-				TokenNetworkId, channelId)
+			channelState := GetChannelStateByTokenNetworkId(chainState,TokenNetworkId, channelId)
 
 			if channelState != nil {
 				subIteration = TgStateTransition(tSubTask.TargetState.(*TargetTransferState),
@@ -119,11 +115,11 @@ func subDispatchToPaymentTask(chainState *ChainState, stateChange StateChange,
 		}
 
 		if subIteration != nil && IsStateNil(subIteration.NewState) {
-			log.Debug("[subDispatchToPaymentTask] delete SecretHashesToTask %v", secretHash)
+			log.Debug("[subDispatchToPaymentTask] delete SecretHashesToTask: ", common.SecretHashHex(secretHash))
 			delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
 		}
 	} else {
-		log.Warn("subTask is nil, HashValue: ", hex.EncodeToString(secretHash[:]))
+		log.Warn("subTask is nil, HashValue: ", common.SecretHashHex(secretHash))
 	}
 
 	return &TransitionResult{NewState: chainState, Events: events}
@@ -141,7 +137,7 @@ func subDispatchInitiatorTask(chainState *ChainState, stateChange StateChange,
 	if subTask == nil {
 		isValidSubTask = true
 		managerState = nil
-	} else if subTask != nil && reflect.TypeOf(subTask).String() == "*transfer.InitiatorTask" {
+	} else if reflect.TypeOf(subTask).String() == "*transfer.InitiatorTask" {
 		initTask := subTask.(*InitiatorTask)
 		isValidSubTask = TokenNetworkId == initTask.TokenNetworkId
 		managerState = initTask.ManagerState.(*InitiatorPaymentState)
@@ -152,8 +148,7 @@ func subDispatchInitiatorTask(chainState *ChainState, stateChange StateChange,
 	var events []Event
 	if isValidSubTask {
 		tokenNetworkState := GetTokenNetworkByIdentifier(chainState, TokenNetworkId)
-		iteration := ImStateTransition(managerState, stateChange,
-			tokenNetworkState.ChannelsMap, blockNumber)
+		iteration := ImStateTransition(managerState, stateChange, tokenNetworkState.ChannelsMap, blockNumber)
 
 		events = append(events, iteration.Events...)
 		if !IsStateNil(iteration.NewState) {
@@ -211,7 +206,7 @@ func subDispatchMediatorTask(chainState *ChainState, stateChange StateChange,
 			chainState.PaymentMapping.SecretHashesToTask[secretHash] = subTask
 			log.Debug("[subDispatchMediatorTask] iteration.NewState")
 		} else if _, ok := chainState.PaymentMapping.SecretHashesToTask[secretHash]; ok {
-			log.Debug("[subDispatchMediatorTask] delete SecretHashesToTask %v", secretHash)
+			log.Debug("[subDispatchMediatorTask] delete SecretHashesToTask %v", common.SecretHashHex(secretHash))
 			delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
 		}
 	}
@@ -232,7 +227,7 @@ func subDispatchTargetTask(chainState *ChainState, stateChange StateChange,
 	if subTask == nil {
 		isValidSubTask = true
 		targetState = nil
-	} else if subTask != nil && reflect.TypeOf(subTask).String() == "*transfer.TargetTask" {
+	} else if reflect.TypeOf(subTask).String() == "*transfer.TargetTask" {
 		tTask := subTask.(*TargetTask)
 		isValidSubTask = TokenNetworkId == tTask.TokenNetworkId
 		targetState = tTask.TargetState.(*TargetTransferState)
@@ -243,8 +238,7 @@ func subDispatchTargetTask(chainState *ChainState, stateChange StateChange,
 	var events []Event
 	var channelState *NettingChannelState
 	if isValidSubTask {
-		channelState = GetChannelStateByTokenNetworkId(chainState,
-			TokenNetworkId, channelId)
+		channelState = GetChannelStateByTokenNetworkId(chainState, TokenNetworkId, channelId)
 	}
 
 	if channelState != nil {
@@ -261,7 +255,7 @@ func subDispatchTargetTask(chainState *ChainState, stateChange StateChange,
 				}
 				chainState.PaymentMapping.SecretHashesToTask[secretHash] = subTask
 			} else if _, ok := chainState.PaymentMapping.SecretHashesToTask[secretHash]; ok {
-				log.Debug("[subDispatchTargetTask] delete SecretHashesToTask %v", secretHash)
+				log.Debug("[subDispatchTargetTask] delete SecretHashesToTask %v", common.SecretHashHex(secretHash))
 				delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
 			}
 		}
@@ -504,15 +498,13 @@ func handleReceiveTransferRefund(chainState *ChainState, stateChange *ReceiveTra
 
 func handleReceiveLockedExpired(chainState *ChainState, stateChange *ReceiveLockExpired) *TransitionResult {
 	secretHash := stateChange.SecretHash
-	return subDispatchToPaymentTask(chainState, stateChange, common.SecretHash(secretHash))
+	return subDispatchToPaymentTask(chainState, stateChange, secretHash)
 }
 
 func handleProcessed(chainState *ChainState, stateChange *ReceiveProcessed) *TransitionResult {
 	var events []Event
 	for _, v := range chainState.QueueIdsToQueues {
-		len := len(v)
-
-		for i := 0; i < len; i++ {
+		for i := 0; i < len(v); i++ {
 			message := GetSenderMessageEvent(v[i])
 			sender, messageId := GetSenderAndMessageId(stateChange)
 			if message.MessageId == messageId && common.AddressEqual(message.Recipient, sender) {
@@ -532,7 +524,6 @@ func handleProcessed(chainState *ChainState, stateChange *ReceiveProcessed) *Tra
 			}
 		}
 	}
-
 	//log.Infof("[handleProcessed] MessageId: %d", stateChange.MessageId)
 	for k := range chainState.QueueIdsToQueues {
 		inPlaceDeleteMessageQueue(chainState, stateChange, k)

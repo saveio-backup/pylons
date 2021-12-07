@@ -1,9 +1,9 @@
 package service
 
 import (
-	"reflect"
 	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/network/transport/messages"
@@ -347,7 +347,7 @@ func (self ChannelEventHandler) HandleSendLockedTransfer(channel *ChannelService
 	if mediatedTransferMessage != nil {
 		err := channel.Sign(mediatedTransferMessage)
 		if err != nil {
-			log.Error("[HandleSendLockedTransfer] ", err.Error())
+			log.Error("[HandleSendLockedTransfer] sign:", err.Error())
 			return
 		}
 
@@ -355,7 +355,11 @@ func (self ChannelEventHandler) HandleSendLockedTransfer(channel *ChannelService
 			Recipient: sendLockedTransfer.Recipient,
 			ChannelId: sendLockedTransfer.ChannelId,
 		}
-		channel.Transport.SendAsync(queueId, mediatedTransferMessage)
+		err = channel.Transport.SendAsync(queueId, mediatedTransferMessage)
+		if err != nil {
+			log.Error("[HandleSendLockedTransfer] send async err:", err.Error())
+			return
+		}
 	} else {
 		log.Warn("[HandleSendLockedTransfer] Message is nil")
 	}

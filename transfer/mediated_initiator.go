@@ -24,7 +24,7 @@ func InitEventsForUnlockLock(initiatorState *InitiatorTransferState, channelStat
 		TokenNetworkId:   channelState.TokenNetworkId,
 		Identifier:       transferDescription.PaymentId,
 		Amount:           transferDescription.Amount,
-		Target:           common.Address(transferDescription.Target),
+		Target:           transferDescription.Target,
 	}
 
 	unlockSuccess := &EventUnlockSuccess{
@@ -71,7 +71,7 @@ func InitHandleBlock(initiatorState *InitiatorTransferState, stateChange *Block,
 			PaymentNetworkId: transferDescription.PaymentNetworkId,
 			TokenNetworkId:   transferDescription.TokenNetworkId,
 			Identifier:       transferDescription.PaymentId,
-			Target:           common.Address(transferDescription.Target),
+			Target:           transferDescription.Target,
 			Reason:           "transfer's lock has expired",
 		}
 		expiredLockEvents = append(expiredLockEvents, transferFailed)
@@ -92,6 +92,7 @@ func InitGetInitialLockExpiration(blockNumber common.BlockHeight, revealTimeout 
 func InitNextChannelFromRoutes(availableRoutes []RouteState,
 	channelIdToChannels map[common.ChannelID]*NettingChannelState,
 	transferAmount common.TokenAmount) *NettingChannelState {
+
 	log.Debug("[InitNextChannelFromRoutes]")
 	for i := 0; i < len(availableRoutes); i++ {
 		channelId := availableRoutes[i].ChannelId
@@ -251,7 +252,7 @@ func HandleSecretRequest(initiatorState *InitiatorTransferState, stateChange *Re
 		recipient := transferDescription.Target
 		revealSecret := &SendSecretReveal{
 			SendMessageEvent: SendMessageEvent{
-				Recipient: common.Address(recipient),
+				Recipient: recipient,
 				ChannelId: ChannelIdGlobalQueue,
 				MessageId: messageId,
 			},
@@ -264,7 +265,7 @@ func HandleSecretRequest(initiatorState *InitiatorTransferState, stateChange *Re
 
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
-				Recipient: common.Address(stateChange.Sender),
+				Recipient: stateChange.Sender,
 				ChannelId: ChannelIdGlobalQueue,
 				MessageId: stateChange.MessageId,
 			},
@@ -281,8 +282,8 @@ func HandleSecretRequest(initiatorState *InitiatorTransferState, stateChange *Re
 			PaymentNetworkId: channelState.PaymentNetworkId,
 			TokenNetworkId:   channelState.TokenNetworkId,
 			Identifier:       initiatorState.TransferDescription.PaymentId,
-			Target:           common.Address(initiatorState.TransferDescription.Target),
-			Reason:           string("bad secret request message from target")}
+			Target:           initiatorState.TransferDescription.Target,
+			Reason:           "bad secret request message from target"}
 
 		initiatorState.ReceivedSecretRequest = true
 		var events []Event
@@ -325,7 +326,7 @@ func InitHandleOffChainSecretReveal(initiatorState *InitiatorTransferState,
 
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
-				Recipient: common.Address(stateChange.Sender),
+				Recipient: stateChange.Sender,
 				ChannelId: ChannelIdGlobalQueue,
 				MessageId: stateChange.MessageId,
 			},

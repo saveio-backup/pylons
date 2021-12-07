@@ -41,7 +41,6 @@ func ImIterationFromSub(paymentState *InitiatorPaymentState, iteration *Transiti
 		paymentState.Initiator = iteration.NewState.(*InitiatorTransferState)
 		return &TransitionResult{NewState: paymentState, Events: iteration.Events}
 	}
-
 	return iteration
 }
 

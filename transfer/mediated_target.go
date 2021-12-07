@@ -67,8 +67,7 @@ func HandleInitTarget(stateChange *ActionInitTarget, channelState *NettingChanne
 						RegisterOffChainSecret(channelState, secret, secretHash)
 
 						targetState.State = "reveal_secret"
-						comSecret := common.Secret(secret)
-						targetState.Secret = &comSecret
+						targetState.Secret = &secret
 
 						reveal := &SendSecretReveal{
 							SendMessageEvent: SendMessageEvent{
@@ -76,7 +75,7 @@ func HandleInitTarget(stateChange *ActionInitTarget, channelState *NettingChanne
 								ChannelId: targetState.Route.ChannelId,
 								MessageId: common.GetMsgID(),
 							},
-							Secret: comSecret,
+							Secret: secret,
 						}
 						channelEvents = append(channelEvents, reveal)
 						return &TransitionResult{NewState: targetState, Events: channelEvents}
@@ -118,9 +117,6 @@ func TgHandleOffChainSecretReveal(targetState *TargetTransferState, stateChange 
 		targetState.State = "reveal_secret"
 		targetState.Secret = &stateChange.Secret
 
-		//addr := common2.Address(recipient)
-		//fmt.Println("[TgHandleOffChainSecretReveal] recipient: ", addr.ToBase58())
-
 		messageId := common.GetMsgID()
 		reveal := &SendSecretReveal{
 			SendMessageEvent: SendMessageEvent{
@@ -133,14 +129,14 @@ func TgHandleOffChainSecretReveal(targetState *TargetTransferState, stateChange 
 		}
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
-				Recipient: common.Address(stateChange.Sender),
+				Recipient: stateChange.Sender,
 				ChannelId: ChannelIdGlobalQueue,
 				MessageId: stateChange.MessageId,
 			},
 		}
 		recipient := common.ToBase58(route.NodeAddress)
 		sender := common.ToBase58(stateChange.Sender)
-		log.Debugf("recipient: %s route.channelId :%d    sender:%s", recipient, route.ChannelId, sender)
+		log.Debugf("recipient: %s, route.channelId: %d, sender: %s", recipient, route.ChannelId, sender)
 		events = append(events, sendProcessed)
 		events = append(events, reveal)
 
@@ -167,7 +163,6 @@ func TgHandleOnChainSecretReveal(targetState *TargetTransferState,
 func TgHandleUnlock(targetState *TargetTransferState, stateChange *ReceiveUnlock,
 	channelState *NettingChannelState) *TransitionResult {
 
-	//balanceProofSender := stateChange.BalanceProof.Sender
 	isValid, events, _ := HandleUnlock(channelState, stateChange)
 
 	if isValid {
@@ -238,18 +233,6 @@ func TgHandleLockExpired(targetState *TargetTransferState, stateChange *ReceiveL
 	}
 	return &TransitionResult{NewState: targetState, Events: result.Events}
 }
-
-//func StateTransitionForTarget(targetState *TargetTransferState, stateChange StateChange,
-//    channelState *NettingChannelState, pseudoRandomGenerator *rand.Rand, blockNumber common.BlockHeight) TransitionResult {
-//
-//	iteration := TransitionResult{targetState, list.New()}
-//
-//	switch stateChange.(type) {
-//	case *Block:
-//		block, _ := stateChange.(*Block)
-//		iteration = TargetHandleBlock(targetState, channelState, block.BlockNumber)
-//	}
-//}
 
 func TgStateTransition(targetState *TargetTransferState, stateChange interface{},
 	channelState *NettingChannelState, blockNumber common.BlockHeight) *TransitionResult {

@@ -236,7 +236,6 @@ func (self *ChannelService) initDB() error {
 		}
 		if lastLogBlockHeight > chainBlockHeight {
 			log.Errorf("error: lastLogBlockHeight > chainBlockHeight")
-			// return fmt.Errorf("error: lastLogBlockHeight > chainBlockHeight")
 		}
 
 		if err = self.checkAddressIntegrity(chainState); err != nil {
@@ -244,7 +243,6 @@ func (self *ChannelService) initDB() error {
 			return err
 		}
 		log.Infof("Restored state from WAL,last log BlockHeight=%d", lastLogBlockHeight)
-
 	}
 
 	//set filter start block number
@@ -336,12 +334,12 @@ func (self *ChannelService) RegisterPaymentStatus(target common.Address, identif
 	self.statusLock.Lock()
 	defer self.statusLock.Unlock()
 
-	if payments, exist := self.targetsToIdentifierToStatues[common.Address(target)]; exist {
+	if payments, exist := self.targetsToIdentifierToStatues[target]; exist {
 		payments.Store(identifier, status)
 	} else {
 		payments := new(sync.Map)
 		payments.Store(identifier, status)
-		self.targetsToIdentifierToStatues[common.Address(target)] = payments
+		self.targetsToIdentifierToStatues[target] = payments
 	}
 
 	return &status
@@ -396,7 +394,7 @@ func (self *ChannelService) InitializeMessagesQueues(chainState *transfer.ChainS
 					e.BalanceProof.TransferredAmount, e.BalanceProof.TokenNetworkId)
 			case *transfer.SendLockedTransfer:
 				e := event.(*transfer.SendLockedTransfer)
-				self.RegisterPaymentStatus(common.Address(e.Recipient), e.Transfer.PaymentId, common.PAYMENT_MEDIATED,
+				self.RegisterPaymentStatus(e.Recipient, e.Transfer.PaymentId, common.PAYMENT_MEDIATED,
 					e.Transfer.BalanceProof.TransferredAmount, e.Transfer.BalanceProof.TokenNetworkId)
 			}
 
@@ -682,7 +680,7 @@ func EventFilterForPayments(event transfer.Event, tokenNetworkId common.TokenNet
 		eventPaymentSentSuccess := event.(*transfer.EventPaymentSentSuccess)
 		if partnerAddress == emptyAddress {
 			result = true
-		} else if eventPaymentSentSuccess.Target == common.Address(partnerAddress) {
+		} else if eventPaymentSentSuccess.Target == partnerAddress {
 			result = true
 		}
 	case *transfer.EventPaymentReceivedSuccess:
@@ -1091,13 +1089,14 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	tokenNetworkId := transfer.GetTokenNetworkIdByTokenAddress(chainState, paymentNetworkId, tokenAddress)
 
 	secret := common.SecretRandom(constants.SecretLen)
-	log.Debug("[MediaTransfer] Secret: ", secret)
-
 	secretHash := common.GetHash(secret)
+	secretHashHex := common.SecretHashHex(secretHash)
+	log.Debug("Current secretHash: ", secretHashHex)
+
 	secretRegistry := self.chain.SecretRegistry(common.SecretRegistryAddress(usdt.USDT_CONTRACT_ADDRESS))
 	if secretRegistry.IsSecretRegistered(secretHash) {
-		log.Errorf("SecretHash %v has been registerd onchain", secretHash)
-		return nil, fmt.Errorf("SecretHash %v has been registerd onchain", secretHash)
+		log.Errorf("SecretHash %v has been registered unchain", secretHashHex)
+		return nil, fmt.Errorf("SecretHash %v has been registerd onchain", secretHashHex)
 	}
 
 	if paymentId == common.PaymentID(0) {
@@ -1117,25 +1116,25 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	encSecret, err := secretcrypt.SecretCryptService.EncryptSecret(target, secret)
 	if err != nil {
 		log.Errorf("Encrypt secret error: %s", err.Error())
-		return nil, fmt.Errorf("Encrypt secret error: %s", err.Error())
+		return nil, fmt.Errorf("encrypt secret error: %s", err.Error())
 	}
 
 	amount = common.TokenAmount(calculateSafeAmountWithFee(common.PaymentAmount(amount)))
 
 	var actionInitiator *transfer.ActionInitInitiator
 	if media == common.EmptyAddress {
-		actionInitiator, err = self.InitiatorInit(paymentId, amount, secret, tokenNetworkId, target, encSecret)
+		actionInitiator, err = self.InitiatorInit(paymentId, amount, secret, secretHash, encSecret, tokenNetworkId, target)
 	} else {
-		actionInitiator, err = self.InitiatorInitBySpecifiedMedia(paymentId, media, amount, secret, tokenNetworkId,
-			target, encSecret)
+		actionInitiator, err = self.InitiatorInitBySpecifiedMedia(paymentId, media, amount, secret, secretHash, encSecret,
+			tokenNetworkId, target)
 	}
 	if err != nil {
-		log.Error("[MediaTransfer]:", err.Error())
+		log.Error("InitiatorInit error:", err.Error())
 		return nil, err
 	}
 
-	if ok, err := self.CheckPayRoute(actionInitiator.Routes[0].NodeAddress, target); !ok {
-		log.Errorf("[MediaTransfer] CheckPayRoute error: %s", err.Error())
+	if ok, err := self.CheckPayRoute(actionInitiator.Routes[0].NodeAddress, target); !ok && err != nil {
+		log.Errorf("CheckPayRoute error: %s", err.Error())
 		return nil, err
 	}
 
@@ -1149,8 +1148,7 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	}
 	paymentStatus = self.RegisterPaymentStatus(target, paymentId, common.PAYMENT_MEDIATED, amount, tokenNetworkId)
 
-	//# Dispatch the state change even if there are no routes to create the
-	//# wal entry.
+	// Dispatch the state change even if there are no routes to create the wal entry.
 	self.HandleStateChange(actionInitiator)
 	return paymentStatus.paymentDone, nil
 }
@@ -1164,14 +1162,14 @@ func calculateSafeAmountWithFee(amount common.PaymentAmount) common.PaymentAmoun
 }
 
 func (self *ChannelService) InitiatorInit(paymentId common.PaymentID, transferAmount common.TokenAmount,
-	secret common.Secret, TokenNetworkId common.TokenNetworkID, targetAddress common.Address,
-	encSecret common.EncSecret) (*transfer.ActionInitInitiator, error) {
+	secret common.Secret, secretHash common.SecretHash, encSecret common.EncSecret,
+	TokenNetworkId common.TokenNetworkID, targetAddress common.Address) (*transfer.ActionInitInitiator, error) {
+
 	if 0 == bytes.Compare(secret, common.EmptySecretHash[:]) {
 		return nil, fmt.Errorf("Should never end up initiating transfer with Secret 0x0 ")
 	}
 
-	secretHash := common.GetHash(secret)
-	log.Debug("[InitiatorInit] secretHash: ", secretHash)
+	log.Debug("[InitiatorInit] secretHash: ", common.SecretHashHex(secretHash))
 
 	transferState := &transfer.TransferDescriptionWithSecretState{
 		PaymentNetworkId: common.PaymentNetworkID{},
@@ -1197,14 +1195,15 @@ func (self *ChannelService) InitiatorInit(paymentId common.PaymentID, transferAm
 }
 
 func (self *ChannelService) InitiatorInitBySpecifiedMedia(paymentId common.PaymentID, media common.Address,
-	transferAmount common.TokenAmount, secret common.Secret, TokenNetworkId common.TokenNetworkID,
-	targetAddress common.Address, encSecret common.EncSecret) (*transfer.ActionInitInitiator, error) {
+	transferAmount common.TokenAmount, secret common.Secret, secretHash common.SecretHash,encSecret common.EncSecret,
+	TokenNetworkId common.TokenNetworkID, targetAddress common.Address,) (*transfer.ActionInitInitiator, error) {
+
 	if 0 == bytes.Compare(secret, common.EmptySecretHash[:]) {
 		return nil, fmt.Errorf("Should never end up initiating transfer with Secret 0x0 ")
 	}
 
-	secretHash := common.GetHash(secret)
-	log.Debug("[InitiatorInitBySpecifiedMedia] secretHash: ", secretHash)
+	log.Debug("[InitiatorInitBySpecifiedMedia] secretHash: ", common.SecretHashHex(secretHash))
+
 	transferState := &transfer.TransferDescriptionWithSecretState{
 		PaymentNetworkId: common.PaymentNetworkID{},
 		PaymentId:        paymentId,

@@ -118,10 +118,9 @@ func (self *SecretRegistry) RegisterSecretBatch(secrets []common.Secret) {
 func (self *SecretRegistry) getSecretRegistrationBlockBySecretHash(secretHash common.SecretHash) (common.BlockHeight, error) {
 	height, err := self.ChannelClient.GetSecretRevealBlockHeight(secretHash[:])
 	if err != nil || height == 0 {
-		log.Debugf("secret for hash %v is not register", secretHash)
+		log.Debugf("SecretHash %v is not registered", common.SecretHashHex(secretHash))
 		return 0, err
 	}
-
 	return common.BlockHeight(height), nil
 }
 
@@ -130,6 +129,5 @@ func (self *SecretRegistry) IsSecretRegistered(secretHash common.SecretHash) boo
 	if err == nil && height != 0 {
 		return true
 	}
-
 	return false
 }

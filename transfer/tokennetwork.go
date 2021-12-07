@@ -84,7 +84,6 @@ func GetSenderAndMessageId(stateChange StateChange) (common.Address, common.Mess
 		messageId = v.MessageId
 	default:
 		log.Warn("[GetSenderAndMessageId] eventType: ", reflect.TypeOf(stateChange).String())
-
 	}
 
 	return sender, messageId

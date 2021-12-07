@@ -425,8 +425,7 @@ type HashTimeLockState struct {
 }
 
 func (self *HashTimeLockState) CalcLockHash() common.LockHash {
-	log.Debug("[CalcLockHash]: ", self.Expiration, self.Amount, self.SecretHash)
-
+	log.Debug("[CalcLockHash]: ", self.Expiration, self.Amount, common.Keccak256Hex(self.SecretHash))
 	hash := common.LockHash(common.GetHash(self.PackData()))
 	return hash
 }

@@ -286,6 +286,7 @@ func IsValidRefund(refund *ReceiveTransferRefund, channelState *NettingChannelSt
 
 func IsValidUnlock(unlock *ReceiveUnlock, channelState *NettingChannelState,
 	senderState *NettingChannelEndState) (bool, *MerkleTreeState, error) {
+
 	receivedBalanceProof := unlock.BalanceProof
 	currentBalanceProof, err := getCurrentBalanceProof(senderState)
 	if err != nil {
@@ -543,7 +544,7 @@ func ValidLockedTransferCheck(channelState *NettingChannelState, senderState *Ne
 
 	currentTransferredAmount := currentBalanceProof.transferredAmount
 	currentLockedAmount := currentBalanceProof.lockedAmount
-	//_, _, current_transferred_amount, current_locked_amount = current_balance_proof
+
 	distributable := GetDistributable(senderState, receiverState)
 	expectedLockedAmount := currentLockedAmount + lock.Amount
 
@@ -804,7 +805,7 @@ func updateContractBalance(endState *NettingChannelEndState, contractBalance com
 
 func computeMerkleTreeWith(merkleTree *MerkleTreeState, lockHash common.LockHash) *MerkleTreeState {
 	var result *MerkleTreeState
-	log.Debug("[computeMerkleTreeWith] lockHash:", lockHash)
+	log.Debug("[computeMerkleTreeWith] lockHash:", common.LockHashHex(lockHash))
 	leaves := merkleTree.Layers[0]
 	found := false
 	for i := 0; i < len(leaves); i++ {
@@ -834,7 +835,7 @@ func computeMerkleTreeWithout(merkleTree *MerkleTreeState, lockHash common.LockH
 	var i int
 	found := false
 	leaves := merkleTree.Layers[0]
-	log.Debug("[computeMerkleTreeWithout] lockHash:", lockHash)
+	log.Debug("[computeMerkleTreeWithout] lockHash:", common.LockHashHex(lockHash))
 	for i = 0; i < len(leaves); i++ {
 		temp := common.Keccak256(lockHash)
 		log.Debug("[computeMerkleTreeWithout] leaves[i]:", leaves[i])
@@ -892,7 +893,7 @@ func createSendLockedTransfer(channelState *NettingChannelState, initiator commo
 	lock.LockHash = lock.CalcLockHash()
 
 	log.Debug("---------------------------------------------------------------------")
-	log.Debug("[createSendLockedTransfer], lock.LockHash: ", lock.LockHash)
+	log.Debug("[createSendLockedTransfer] lock.LockHash: ", lock.LockHash)
 	log.Debug("[createSendLockedTransfer] computeMerkleTreeWith Before merkleTreeWidth: ", MerkleTreeWidth(ourState.MerkleTree))
 	log.Debug(ourState.MerkleTree)
 
@@ -1046,19 +1047,18 @@ func CreateUnlock(channelState *NettingChannelState, messageId common.MessageID,
 			lock.Amount, ourBalanceProof.TransferredAmount, transferredAmount)
 	} else {
 		transferredAmount = lock.Amount
-		log.Debug("[CreateUnlock] lock.Amount: %v, transferredAmount: %v\n",
-			lock.Amount, transferredAmount)
+		log.Debug("[CreateUnlock] lock.Amount: %v, transferredAmount: %v\n", lock.Amount, transferredAmount)
 	}
 
 	lock.LockHash = lock.CalcLockHash()
 
 	log.Debug("---------------------------------------------------------------------")
-	log.Debug("[CreateUnlock], lock.LockHash: ", lock.LockHash)
+	log.Debug("[CreateUnlock], lock.LockHash: ", common.LockHashHex(lock.LockHash))
 	log.Debug("[CreateUnlock] computeMerkleTreeWithout Before merkleTreeWidth: ", MerkleTreeWidth(ourState.MerkleTree))
 	log.Debug(ourState.MerkleTree)
 	merkleTree := computeMerkleTreeWithout(ourState.MerkleTree, lock.LockHash)
 
-	log.Debug("[CreateUnlock] computeMerkleTreeWithout After  merkleTreeWidth: ", MerkleTreeWidth(merkleTree))
+	log.Debug("[CreateUnlock] computeMerkleTreeWithout After merkleTreeWidth: ", MerkleTreeWidth(merkleTree))
 	log.Debug(merkleTree)
 	log.Debug("======================================================================")
 
@@ -1089,7 +1089,7 @@ func CreateUnlock(channelState *NettingChannelState, messageId common.MessageID,
 
 	unlockLock := &SendBalanceProof{
 		SendMessageEvent: SendMessageEvent{
-			Recipient: common.Address(recipient),
+			Recipient: recipient,
 			ChannelId: channelState.Identifier,
 			MessageId: messageId,
 		},
@@ -1129,7 +1129,8 @@ func sendLockedTransfer(channelState *NettingChannelState, initiator common.Addr
 	}
 	channelState.OurState.MerkleTree = merkleTree
 
-	log.Debug("[SendLockedTransfer] Add SecretHashesToLockedLocks")
+	hashHex := common.SecretHashHex(common.SecretHash(lock.SecretHash))
+	log.Debugf("[SendLockedTransfer] Add SecretHash %s To LockedLocks", hashHex)
 	channelState.OurState.SecretHashesToLockedLocks[common.SecretHash(lock.SecretHash)] = lock
 
 	return sendLockedTransferEvent
@@ -1174,6 +1175,7 @@ func sendRefundTransfer(channelState *NettingChannelState, initiator common.Addr
 
 func SendUnlock(channelState *NettingChannelState, messageId common.MessageID,
 	paymentId common.PaymentID, secret common.Secret, secretHash common.SecretHash) *SendBalanceProof {
+
 	lock := GetLock(channelState.OurState, secretHash)
 	if lock == nil {
 		return nil
@@ -1427,16 +1429,18 @@ func isValidWithdrawAmount(participant *NettingChannelEndState, partner *Netting
 		return false, errors.New("amount to withdraw no larger than 0")
 	}
 
-	totalDeposit := participant.GetContractBalance() + partner.GetContractBalance()
-	if totalWithdraw+partner.GetTotalWithdraw() > totalDeposit {
-		return false, fmt.Errorf("withdraw from both side : totalWithdraw %d, partner totalWithdraw %d is larger than total deposit %d",
-			totalWithdraw, partner.GetTotalWithdraw(), totalDeposit)
+	bothDeposit := participant.GetContractBalance() + partner.GetContractBalance()
+	bothWithdraw := totalWithdraw + partner.GetTotalWithdraw()
+	if bothWithdraw > bothDeposit {
+		return false, fmt.Errorf("we total withdraw %d, partner total withdraw %d, " +
+			"both side total withdraw %d large than both side total deposit %d",
+			totalWithdraw, partner.GetTotalWithdraw(), bothWithdraw, bothDeposit)
 	}
 
 	// NOTE: GetDistributable already take current withdraw into account
 	distributable := GetDistributable(participant, partner)
 	if amountToWithdraw > distributable {
-		return false, fmt.Errorf("total withdraw %d is larger than  distributable %d", totalWithdraw, distributable)
+		return false, fmt.Errorf("total withdraw %d is larger than distributable %d", totalWithdraw, distributable)
 	}
 
 	return true, nil
@@ -1923,7 +1927,8 @@ func HandleReceiveLockedTransfer(channelState *NettingChannelState,
 	//_valid_ transfer, otherwise the locksroot will not contain the pending
 	//transfer. The receiver needs to ensure that the merkle root has the
 	//secrethash included, otherwise it won't be able to claim it.
-	log.Debug("[HandleReceiveLockedTransfer] LocksRoot:", mediatedTransfer.BalanceProof.LocksRoot)
+	log.Debug("[HandleReceiveLockedTransfer] LocksRoot:", common.LocksRootHex(mediatedTransfer.BalanceProof.LocksRoot))
+
 	merkleTree, err := IsValidLockedTransfer(mediatedTransfer, channelState, channelState.PartnerState, channelState.OurState)
 
 	var events []Event
@@ -1933,11 +1938,9 @@ func HandleReceiveLockedTransfer(channelState *NettingChannelState,
 
 		lock := mediatedTransfer.Lock
 		channelState.PartnerState.SecretHashesToLockedLocks[common.SecretHash(lock.SecretHash)] = lock
-		//addr2 := common2.Address(mediatedTransfer.BalanceProof.Sender)
-		//log.Debug("[HandleReceiveLockedTransfer] SendProcessed to: ", addr2.ToBase58())
 
 		sendProcessed := &SendProcessed{SendMessageEvent: SendMessageEvent{
-			Recipient: common.Address(mediatedTransfer.BalanceProof.Sender),
+			Recipient: mediatedTransfer.BalanceProof.Sender,
 			ChannelId: ChannelIdGlobalQueue,
 			MessageId: mediatedTransfer.MessageId,
 		}}
@@ -2022,7 +2025,7 @@ func HandleUnlock(channelState *NettingChannelState, unlock *ReceiveUnlock) (boo
 		}
 		events = append(events, sendProcessed)
 	} else {
-		log.Error("[HandleUnlock] ErrorMsg: ", err.Error())
+		log.Error("[HandleUnlock] ErrorMsg: ", err)
 		secretHash := common.GetHash(unlock.Secret)
 		invalidUnlock := &EventInvalidReceivedUnlock{
 			SecretHash: secretHash,
@@ -2037,6 +2040,7 @@ func handleBlock(channelState *NettingChannelState, stateChange *Block,
 	blockNumber common.BlockHeight) TransitionResult {
 
 	var events []Event
+
 	if GetStatus(channelState) == ChannelStateClosed {
 		closedBlockHeight := channelState.CloseTransaction.FinishedBlockHeight
 		settlementEnd := closedBlockHeight + common.BlockHeight(channelState.SettleTimeout)

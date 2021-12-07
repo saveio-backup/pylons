@@ -124,10 +124,8 @@ func (this *BlockChainService) SecretRegistry(address common.SecretRegistryAddre
 	defer this.secretRegistryCreateLock.Unlock()
 
 	if this.secretRegistry == nil {
-
 		this.secretRegistry = proxies.NewSecretRegistry(this.ChainClient, address)
 	}
-
 	return this.secretRegistry
 }
 

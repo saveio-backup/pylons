@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"math/rand"
 	"os"
@@ -600,4 +601,20 @@ func IsEmptyBalanceHash(balanceHash BalanceHash) bool {
 	var empty BalanceHash
 
 	return empty == balanceHash
+}
+
+func SecretHashHex(s SecretHash) string{
+	return hex.EncodeToString(s[:])
+}
+
+func LocksRootHex(s LocksRoot) string {
+	return hex.EncodeToString(s[:])
+}
+
+func LockHashHex(s LockHash) string {
+	return hex.EncodeToString(s[:])
+}
+
+func Keccak256Hex(s Keccak256) string {
+	return hex.EncodeToString(s[:])
 }
