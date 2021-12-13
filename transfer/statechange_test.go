@@ -1,7 +1,7 @@
 package transfer
 
 import (
-	"fmt"
+	"encoding/hex"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/utils/jsonext"
 	"testing"
@@ -37,7 +37,7 @@ func TestActionInitTargetMarshal(t *testing.T) {
 	}
 
 	initTarget1.Transfer = &LockedTransferSignedState{
-		MessageId:    common.GetMsgID(),
+		MessageId:    common.MessageID(0),
 		PaymentId:    common.PaymentID(0),
 		Token:        common.EmptyAddress,
 		BalanceProof: balanceProof,
@@ -50,18 +50,12 @@ func TestActionInitTargetMarshal(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	}
-	fmt.Println(data)
+	t.Log(hex.EncodeToString(data))
 
-	//var initTarget2 *ActionInitTarget
 	v, err := jsonext.UnmarshalExt(data, nil, CreateObjectByClassId)
 	if err != nil {
 		t.Error(err.Error())
 	}
-	if v == nil {
-		t.Error("v is nil")
-		return
-	}
-	//initTarget2 := v.(StateChange)
 	initTarget2 := v.(*ActionInitTarget)
-	fmt.Println(initTarget2)
+	t.Log(initTarget2)
 }

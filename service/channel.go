@@ -349,7 +349,7 @@ func (self *ChannelService) GetPaymentStatus(target common.Address, identifier c
 	self.statusLock.RLock()
 	defer self.statusLock.RUnlock()
 
-	payments, exist := self.targetsToIdentifierToStatues[common.Address(target)]
+	payments, exist := self.targetsToIdentifierToStatues[target]
 	if exist {
 		paymentStatus, ok := payments.Load(identifier)
 		if ok {

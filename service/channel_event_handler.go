@@ -396,7 +396,7 @@ func (self ChannelEventHandler) HandleSendSecretReveal(channel *ChannelService, 
 		}
 
 		queueId := &transfer.QueueId{
-			Recipient: common.Address(revealSecretEvent.Recipient),
+			Recipient: revealSecretEvent.Recipient,
 			ChannelId: revealSecretEvent.ChannelId,
 		}
 		channel.Transport.SendAsync(queueId, revealSecretMessage)

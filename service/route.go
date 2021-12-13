@@ -257,11 +257,11 @@ func CalculateEdgeWeightByFee(edges *sync.Map, amount common.TokenAmount,
 
 func GetSpecifiedRoute(channelSrv *ChannelService, tokenNetworkId common.TokenNetworkID, media common.Address,
 	fromAddress common.Address, amount common.TokenAmount) ([]transfer.RouteState, error) {
+
 	var channelId common.ChannelID
 	networkState := channelSrv.GetNodeNetworkState(media)
 	if networkState == transfer.NetworkReachable {
-		channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(),
-			tokenNetworkId, media)
+		channelState := transfer.GetChannelStateByTokenNetworkAndPartner(channelSrv.StateFromChannel(), tokenNetworkId, media)
 		if channelState != nil {
 			channelId = channelState.Identifier
 			if valid, err := checkRouteAvailable(channelState, media, fromAddress, amount); valid {

@@ -26,3 +26,17 @@ func PackCooperativeSettle(channelId common.ChannelID, participant1 common.Addre
 
 	return result[:]
 }
+
+func PackWithdraw(channelId common.ChannelID, participant common.Address, withdrawAmount common.TokenAmount) []byte {
+	var buf bytes.Buffer
+
+	buf.Write([]byte(mpay.SIGNATURE_PREFIX))
+	buf.Write([]byte(mpay.WITHDRAW_MESSAGE_LENGTH))
+	buf.Write(Uint64ToBytes(uint64(mpay.WITHDRAW)))
+	buf.Write(Uint64ToBytes(uint64(channelId)))
+	buf.Write(participant[:])
+	buf.Write(Uint64ToBytes(uint64(withdrawAmount)))
+
+	result := sha256.Sum256(buf.Bytes())
+	return result[:]
+}

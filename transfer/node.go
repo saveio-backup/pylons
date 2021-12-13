@@ -157,6 +157,7 @@ func subDispatchInitiatorTask(chainState *ChainState, stateChange StateChange,
 				ManagerState:   iteration.NewState,
 			}
 			chainState.PaymentMapping.SecretHashesToTask[secretHash] = subTask
+			log.Debug("Register secret hash to task:", common.SecretHashHex(secretHash))
 		} else if _, ok := chainState.PaymentMapping.SecretHashesToTask[secretHash]; ok {
 			delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
 		}
@@ -254,9 +255,12 @@ func subDispatchTargetTask(chainState *ChainState, stateChange StateChange,
 					TargetState:    iteration.NewState,
 				}
 				chainState.PaymentMapping.SecretHashesToTask[secretHash] = subTask
-			} else if _, ok := chainState.PaymentMapping.SecretHashesToTask[secretHash]; ok {
-				log.Debug("[subDispatchTargetTask] delete SecretHashesToTask %v", common.SecretHashHex(secretHash))
-				delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
+				log.Debug("[subDispatchTargetTask] register SecretHashesToTask %v", common.SecretHashHex(secretHash))
+			} else {
+				if _, ok := chainState.PaymentMapping.SecretHashesToTask[secretHash]; ok {
+					log.Debug("[subDispatchTargetTask] delete SecretHashesToTask %v", common.SecretHashHex(secretHash))
+					delete(chainState.PaymentMapping.SecretHashesToTask, secretHash)
+				}
 			}
 		}
 	}

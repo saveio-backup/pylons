@@ -14,9 +14,9 @@ func BytesToUint64(data []byte) uint64 {
 	binary.Read(bytesBuffer, binary.LittleEndian, &n)
 	return n
 }
+
 func Uint64ToBytes(n uint64) []byte {
 	bytesBuffer := bytes.NewBuffer([]byte{})
-
 	binary.Write(bytesBuffer, binary.LittleEndian, n)
 	return bytesBuffer.Bytes()
 }
@@ -51,6 +51,5 @@ func IsStateNil(state State) bool {
 	if state == nil {
 		return true
 	}
-
 	return reflect.ValueOf(state).IsNil()
 }

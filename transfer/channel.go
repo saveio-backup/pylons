@@ -1221,7 +1221,6 @@ func createSendExpiredLock(senderEndState *NettingChannelEndState, lockedLock *H
 	chainId common.ChainID, TokenNetworkId common.TokenNetworkID,
 	channelId common.ChannelID, recipient common.Address) (*SendLockExpired, *MerkleTreeState) {
 
-	nonce := getNextNonce(senderEndState)
 	lockedAmount := getAmountLocked(senderEndState)
 	balanceProof := senderEndState.BalanceProof
 	updatedLockedAmount := common.TokenAmount(lockedAmount) - lockedLock.Amount
@@ -1239,6 +1238,7 @@ func createSendExpiredLock(senderEndState *NettingChannelEndState, lockedLock *H
 		return nil, nil
 	}
 
+	nonce := getNextNonce(senderEndState)
 	locksRoot := MerkleRoot(merkleTree.Layers)
 
 	//todo: check
@@ -1422,7 +1422,8 @@ func isValidWithdrawAmount(participant *NettingChannelEndState, partner *Netting
 	log.Debugf("withdraw total: %d, current: %d, amount: %d", totalWithdraw, currentWithdraw, amountToWithdraw)
 
 	if totalWithdraw < currentWithdraw {
-		return false, errors.New("total withdraw smaller than current")
+		return false, fmt.Errorf("total withdraw smaller than current, totalWithdraw: %d, currentWithdraw: %d",
+			totalWithdraw, currentWithdraw)
 	}
 
 	if amountToWithdraw <= 0 {
@@ -1903,7 +1904,7 @@ func handleReceiveLockExpired(channelState *NettingChannelState, stateChange *Re
 
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
-				Recipient: common.Address(stateChange.BalanceProof.Sender),
+				Recipient: stateChange.BalanceProof.Sender,
 				ChannelId: ChannelIdGlobalQueue,
 				MessageId: stateChange.MessageId,
 			},

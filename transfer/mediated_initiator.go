@@ -60,7 +60,9 @@ func InitHandleBlock(initiatorState *InitiatorTransferState, stateChange *Block,
 
 	if lockHasExpired {
 		log.Debugf("expiration: %d, blockHeight: %d, confirmBlockCount: %d", lockedLock.Expiration, stateChange.BlockHeight, common.Config.ConfirmBlockCount)
+		event := make([]Event, 0)
 		expiredLockEvents := EventsForExpiredLock(channelState, lockedLock)
+		event = append(event, expiredLockEvents...)
 		transferDescription := initiatorState.TransferDescription
 		// TODO: When we introduce multiple transfers per payment this needs to be
 		//       reconsidered. As we would want to try other routes once a route
@@ -74,12 +76,12 @@ func InitHandleBlock(initiatorState *InitiatorTransferState, stateChange *Block,
 			Target:           transferDescription.Target,
 			Reason:           "transfer's lock has expired",
 		}
-		expiredLockEvents = append(expiredLockEvents, transferFailed)
+		event = append(event, transferFailed)
 		lockExists := LockExistsInEitherChannelSide(channelState, secretHash)
 		if lockExists {
-			return &TransitionResult{NewState: initiatorState, Events: expiredLockEvents}
+			return &TransitionResult{NewState: initiatorState, Events: event}
 		} else {
-			return &TransitionResult{NewState: nil, Events: expiredLockEvents}
+			return &TransitionResult{NewState: nil, Events: event}
 		}
 	}
 	return &TransitionResult{NewState: initiatorState, Events: nil}

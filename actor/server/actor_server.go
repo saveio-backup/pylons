@@ -2,16 +2,15 @@ package server
 
 import (
 	"fmt"
-
 	"github.com/ontio/ontology-eventbus/actor"
 	oc "github.com/saveio/pylons"
 	p2pAct "github.com/saveio/pylons/actor/client"
 	"github.com/saveio/pylons/common"
 	"github.com/saveio/pylons/service"
 	"github.com/saveio/pylons/transfer"
+	"github.com/saveio/pylons/utils"
 	"github.com/saveio/themis-go-sdk/usdt"
 	"github.com/saveio/themis/account"
-	"github.com/saveio/themis/cmd/utils"
 	com "github.com/saveio/themis/common"
 	"github.com/saveio/themis/common/log"
 )
@@ -287,15 +286,14 @@ func getChannelsInfoRespFromChannelsInfo(channelInfos []*service.ChannelInfo) *C
 	infos := make([]*ChannelInfo, 0)
 	for _, info := range channelInfos {
 		balance := uint64(info.Balance)
-
 		addr := com.Address(info.Address)
 		tokenAddr := com.Address(info.TokenAddr)
 		tokenNetworkAddr := com.Address(info.TokenNetworkAddr)
 		info := &ChannelInfo{
 			ChannelId:     uint32(info.ChannelId),
 			Address:       (&addr).ToBase58(),
-			Balance:       uint64(info.Balance),
-			BalanceFormat: utils.FormatUsdt(uint64(info.Balance)),
+			Balance:       balance,
+			BalanceFormat: utils.FormatUSDT(balance),
 			TokenAddr:     (&tokenAddr).ToBase58(),
 			TokenNetworkAddr: (&tokenNetworkAddr).ToBase58(),
 		}
@@ -304,7 +302,7 @@ func getChannelsInfoRespFromChannelsInfo(channelInfos []*service.ChannelInfo) *C
 	}
 
 	resp.Balance = totalBalance
-	resp.BalanceFormat = utils.FormatUsdt(totalBalance)
+	resp.BalanceFormat = utils.FormatUSDT(totalBalance)
 	resp.Channels = infos
 	return resp
 }
