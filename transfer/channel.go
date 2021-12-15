@@ -646,7 +646,7 @@ func getCurrentBalanceProof(endState *NettingChannelEndState) (*BalanceProofData
 	if balanceProof != nil {
 		return &BalanceProofData{
 			locksRoot:         balanceProof.LocksRoot,
-			nonce:             (common.Nonce)(balanceProof.Nonce),
+			nonce:             balanceProof.Nonce,
 			transferredAmount: balanceProof.TransferredAmount,
 			lockedAmount:      (common.TokenAmount)(getAmountLocked(endState)),
 		}, nil

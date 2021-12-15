@@ -35,7 +35,7 @@ func TestFormatUSDT(t *testing.T) {
 		{
 			name: "overflow",
 			args: args{amount: 11396358700},
-			want: "11.396358700",
+			want: "11.3963587",
 		},
 		{
 			name: "not overflow",
@@ -57,6 +57,57 @@ func TestFormatUSDT(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := FormatUSDT(tt.args.amount); got != tt.want {
 				t.Errorf("FormatUSDT() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRemoveRightZero(t *testing.T) {
+	type args struct {
+		s string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			args: args{s: "0.0000000001"},
+			want: "0.0000000001",
+		},
+		{
+			args: args{s: "0.0000000010"},
+			want: "0.000000001",
+		},
+		{
+			args: args{s: "0.0000000100"},
+			want: "0.00000001",
+		},
+		{
+			args: args{s: "0.1000000000"},
+			want: "0.1",
+		},
+		{
+			args: args{s: "1.0"},
+			want: "1",
+		},
+		{
+			args: args{s: "10.0"},
+			want: "10",
+		},
+		{
+			args: args{s: "1"},
+			want: "1",
+		},
+		{
+			args: args{s: "10"},
+			want: "10",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := RemoveRightZero(tt.args.s); got != tt.want {
+				t.Errorf("RemoveRightZero() = %v, want %v", got, tt.want)
 			}
 		})
 	}
