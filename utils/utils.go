@@ -2,12 +2,18 @@ package utils
 
 import (
 	"github.com/saveio/themis/cmd/utils"
+	"github.com/saveio/themis/common/constants"
+	"math"
+	"math/big"
 	"strings"
 )
 
 func FormatUSDT(amount uint64) string {
-	u := utils.FormatUsdt(amount)
-	return CutPrecision(u)
+	d := constants.USDT_DECIMALS
+	a := big.NewFloat(float64(amount))
+	p := big.NewFloat(math.Pow(10, float64(d)))
+	c := a.Quo(a, p)
+	return c.Text('f', d)
 }
 
 func CutPrecision(amount string) string {

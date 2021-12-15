@@ -64,7 +64,6 @@ func IsLockExpired(endState *NettingChannelEndState, lock *HashTimeLockState,
 	if blockNumber < lockExpirationThreshold {
 		return false, fmt.Errorf("current block number: %d is not larger than lockExpirationThreshold: %d",
 			blockNumber, lockExpirationThreshold)
-		return false, errors.New("current block number is not larger than lock expiration + confirmation blocks")
 	}
 
 	return true, nil
@@ -1987,7 +1986,7 @@ func handleReceiveDirectTransfer(channelState *NettingChannelState,
 
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
-				Recipient: common.Address(directTransfer.BalanceProof.Sender),
+				Recipient: directTransfer.BalanceProof.Sender,
 				ChannelId: ChannelIdGlobalQueue,
 				MessageId: directTransfer.MessageId,
 			},

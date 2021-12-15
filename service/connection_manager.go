@@ -140,8 +140,7 @@ func (self *ConnectionManager) findNewPartners() *list.List {
 				break
 			}
 		}
-
-		if found == false {
+		if !found {
 			available.PushBack(k)
 		}
 	}

@@ -177,7 +177,7 @@ func subDispatchMediatorTask(chainState *ChainState, stateChange StateChange,
 	if subTask == nil {
 		isValidSubTask = true
 		mediatorState = nil
-	} else if subTask != nil && reflect.TypeOf(subTask).String() == "*transfer.MediatorTask" {
+	} else if reflect.TypeOf(subTask).String() == "*transfer.MediatorTask" {
 		mTask := subTask.(*MediatorTask)
 		isValidSubTask = TokenNetworkId == mTask.TokenNetworkId
 		mediatorState = mTask.MediatorState.(*MediatorTransferState)
