@@ -33,7 +33,7 @@ func NewPaymentChannel(tokenNetwork *TokenNetwork, channelId common.ChannelID, a
 	}
 
 	if tokenNetwork.nodeAddress != participant1 && tokenNetwork.nodeAddress != participant2 {
-		return nil, errors.New("One participant must be the node address")
+		return nil, errors.New("one participant must be the node address")
 	}
 
 	if tokenNetwork.nodeAddress == participant2 {
@@ -53,7 +53,6 @@ func NewPaymentChannel(tokenNetwork *TokenNetwork, channelId common.ChannelID, a
 	}
 
 	self.channelId = channelId
-
 	self.Participant1 = participant1
 	self.Participant2 = participant2
 	self.TokenNetwork = tokenNetwork
@@ -67,7 +66,6 @@ func (self *PaymentChannel) GetChannelId() common.ChannelID {
 
 func (self *PaymentChannel) LockOrRaise() *sync.Mutex {
 	opLock := self.TokenNetwork.getOperationLock(self.Participant2)
-
 	return opLock
 }
 
@@ -87,33 +85,28 @@ func (self PaymentChannel) SettleTimeout() common.BlockHeight {
 func (self *PaymentChannel) CloseBlockHeight() common.BlockHeight {
 
 	//[NOTE] should not care about close block number!
-	// can get it by fitler log if needed
+	// can get it by filter log if needed
 	return 0
 }
 
 func (self *PaymentChannel) Opened() bool {
-	return self.TokenNetwork.ChannelIsOpened(self.Participant1, self.Participant2,
-		self.channelId)
+	return self.TokenNetwork.ChannelIsOpened(self.Participant1, self.Participant2, self.channelId)
 }
 
 func (self *PaymentChannel) Closed() bool {
-	return self.TokenNetwork.ChannelIsClosed(self.Participant1, self.Participant2,
-		self.channelId)
+	return self.TokenNetwork.ChannelIsClosed(self.Participant1, self.Participant2, self.channelId)
 }
 
 func (self *PaymentChannel) Settled() bool {
-	return self.TokenNetwork.ChannelIsSettled(self.Participant1, self.Participant2,
-		self.channelId)
+	return self.TokenNetwork.ChannelIsSettled(self.Participant1, self.Participant2, self.channelId)
 }
 
 func (self *PaymentChannel) ClosingAddress() common.Address {
-	return self.TokenNetwork.ClosingAddress(self.Participant1, self.Participant2,
-		self.channelId)
+	return self.TokenNetwork.ClosingAddress(self.Participant1, self.Participant2, self.channelId)
 }
 
 func (self *PaymentChannel) CanTransfer() bool {
-	return self.TokenNetwork.CanTransfer(self.Participant1, self.Participant2,
-		self.channelId)
+	return self.TokenNetwork.CanTransfer(self.Participant1, self.Participant2, self.channelId)
 }
 
 func (self *PaymentChannel) SetTotalDeposit(totalDeposit common.TokenAmount) error {
@@ -169,9 +162,7 @@ func (self *PaymentChannel) GetGasBalance() (common.TokenAmount, error) {
 	return self.TokenNetwork.GetGasBalance()
 }
 
-//Not needed
-func (self PaymentChannel) AllEventsFilter(fromBlock common.BlockHeight,
-	toBlock common.BlockHeight) {
-
+// AllEventsFilter not needed
+func (self PaymentChannel) AllEventsFilter(fromBlock common.BlockHeight, toBlock common.BlockHeight) {
 	return
 }

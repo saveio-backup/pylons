@@ -308,7 +308,11 @@ func (self *ChannelService) StartNeighboursHealthCheck() {
 	neighbours := transfer.GetNeighbours(self.StateFromChannel())
 	for _, v := range neighbours {
 		log.Debugf("[StartNeighboursHealthCheck] Neighbour: %s", common.ToBase58(v))
-		self.Transport.StartHealthCheck(v)
+		err := self.Transport.StartHealthCheck(v)
+		if err != nil {
+			log.Warn("neighbours health check err:", err)
+			return
+		}
 	}
 	return
 }
@@ -449,6 +453,7 @@ func (self *ChannelService) CallbackNewBlock() {
 		return
 	}
 	if chainBlockHeight <= self.lastFilterBlock {
+		log.Errorf("[CallbackNewBlock] chain block <= last filter block, %d, %d", chainBlockHeight, self.lastFilterBlock)
 		return
 	}
 
@@ -549,7 +554,6 @@ func (self *ChannelService) CallbackNewBlock() {
 			*/
 			block := &transfer.Block{}
 			block.BlockHeight = i
-			//block.BlockHash = common.BlockHash(hash[:])
 			block.BlockHash = common.BlockHash{}
 			self.HandleStateChange(block)
 			self.lastFilterBlock = i
@@ -617,13 +621,14 @@ func (self *ChannelService) StateFromChannel() *transfer.ChainState {
 	}
 
 	//[TODO] call self.Wal.DeepCopy when optimize for writer. This behavior can
-	//be controled by new config option or make default after stable.
+	//be controlled by new config option or make default after stable.
 	return result
 }
 
 func (self *ChannelService) InitializeTokenNetwork() {
-	fmt.Printf("ChainServiceUrl: %v\n", self.chain.ChainServiceUrl)
-	fmt.Printf("Address: %v\n", self.Account.Address)
+	log.Infof("ChainServiceUrl: %v\n", self.chain.ChainServiceUrl)
+	log.Infof("Address: %v\n", self.Account.Address)
+
 	tokenNetworkState := transfer.NewTokenNetworkState(self.address)
 	tokenNetworkState.Address = common.TokenNetworkID(usdt.USDT_CONTRACT_ADDRESS)
 	tokenNetworkState.TokenAddress = common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
@@ -637,6 +642,7 @@ func (self *ChannelService) InitializeTokenNetwork() {
 
 func (self *ChannelService) GetPaymentChannelArgs(tokenNetworkId common.TokenNetworkID,
 	channelId common.ChannelID) map[string]interface{} {
+
 	chainState := self.StateFromChannel()
 	channelState := transfer.GetChannelStateByTokenNetworkId(chainState, tokenNetworkId, channelId)
 	if channelState == nil {
@@ -668,8 +674,7 @@ func (self *ChannelService) GetPaymentArgs(channelState *transfer.NettingChannel
 	return args
 }
 
-func EventFilterForPayments(event transfer.Event, tokenNetworkId common.TokenNetworkID,
-	partnerAddress common.Address) bool {
+func EventFilterForPayments(event transfer.Event, partnerAddress common.Address) bool {
 
 	var result bool
 
@@ -727,9 +732,7 @@ func (self *ChannelService) tokenNetworkConnect(registryAddress common.PaymentNe
 	TokenNetworkId := transfer.GetTokenNetworkIdByTokenAddress(
 		self.StateFromChannel(), registryAddress, tokenAddress)
 
-	connectionManager := self.ConnectionManagerForTokenNetwork(
-		TokenNetworkId)
-
+	connectionManager := self.ConnectionManagerForTokenNetwork(TokenNetworkId)
 	connectionManager.connect(funds, initialChannelTarget, joinableFundsTarget)
 
 	return
@@ -748,8 +751,7 @@ func (self *ChannelService) tokenNetworkLeave(registryAddress common.PaymentNetw
 
 func (self *ChannelService) GetChannelId(
 	partnerAddress common.Address) common.ChannelID {
-	id, err := self.chain.ChannelClient.GetChannelIdentifier(comm.Address(self.address),
-		comm.Address(partnerAddress))
+	id, err := self.chain.ChannelClient.GetChannelIdentifier(comm.Address(self.address), comm.Address(partnerAddress))
 	if err != nil {
 		log.Error("get channel identifier failed ", err)
 		return 0
@@ -962,9 +964,7 @@ func (self *ChannelService) GetNodeNetworkState(nodeAddress common.Address) stri
 }
 
 func (self *ChannelService) GetTokensList(registryAddress common.PaymentNetworkID) *list.List {
-	tokensList := transfer.GetTokenNetworkAddressesFor(self.StateFromChannel(),
-		registryAddress)
-
+	tokensList := transfer.GetTokenNetworkAddressesFor(self.StateFromChannel(), registryAddress)
 	return tokensList
 }
 
@@ -972,8 +972,7 @@ func (self *ChannelService) TransferAndWait(registryAddress common.PaymentNetwor
 	tokenAddress common.TokenAddress, amount common.TokenAmount, target common.Address,
 	identifier common.PaymentID, transferTimeout int) {
 
-	asyncResult := self.TransferAsync(registryAddress, tokenAddress, amount,
-		target, identifier)
+	asyncResult := self.TransferAsync(registryAddress, tokenAddress, amount, target, identifier)
 
 	select {
 	case <-*asyncResult:
@@ -1013,9 +1012,8 @@ func (self *ChannelService) CanTransfer(target common.Address, amount common.Tok
 	}
 	if channelState.OurState.GetGasBalance() < amount {
 		return false
-	} else {
-		return true
 	}
+	return true
 }
 
 func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, target common.Address,
@@ -1028,10 +1026,9 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 	chainState := self.StateFromChannel()
 	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 	paymentNetworkId := common.PaymentNetworkID(self.microAddress)
-	TokenNetworkId := transfer.GetTokenNetworkIdByTokenAddress(chainState,
-		paymentNetworkId, tokenAddress)
+	TokenNetworkId := transfer.GetTokenNetworkIdByTokenAddress(chainState, paymentNetworkId, tokenAddress)
 
-	if err = self.Transport.StartHealthCheck(common.Address(target)); err != nil {
+	if err = self.Transport.StartHealthCheck(target); err != nil {
 		log.Errorf("[DirectTransferAsync] StartHealthCheck error: %s", err.Error())
 		return nil, err
 	}
@@ -1040,7 +1037,7 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 		identifier = CreateDefaultId()
 	}
 
-	paymentStatus, exist := self.GetPaymentStatus(common.Address(target), identifier)
+	paymentStatus, exist := self.GetPaymentStatus(target, identifier)
 	if exist {
 		if !paymentStatus.Match(common.PAYMENT_DIRECT, TokenNetworkId, amount) {
 			return nil, errors.New("Another payment with same id is in flight. ")
@@ -1051,7 +1048,7 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 
 	directTransfer := &transfer.ActionTransferDirect{
 		TokenNetworkId:  TokenNetworkId,
-		ReceiverAddress: common.Address(target),
+		ReceiverAddress: target,
 		PaymentId:       identifier,
 		Amount:          amount,
 	}
@@ -1273,13 +1270,10 @@ func (self *ChannelService) GetEventsPaymentHistoryWithTimestamps(tokenAddress c
 	targetAddress common.Address, limit int, offset int) *list.List {
 
 	result := list.New()
-
-	TokenNetworkId := transfer.GetTokenNetworkIdByTokenAddress(self.StateFromChannel(),
-		common.PaymentNetworkID{}, tokenAddress)
 	events := self.Wal.Storage.GetEventsWithTimestamps(limit, offset)
 	for e := events.Front(); e != nil; e = e.Next() {
 		event := e.Value.(*storage.TimestampedEvent)
-		if EventFilterForPayments(event.WrappedEvent, TokenNetworkId, targetAddress) == true {
+		if EventFilterForPayments(event.WrappedEvent, targetAddress) == true {
 			result.PushBack(event)
 		}
 	}
@@ -1290,8 +1284,7 @@ func (self *ChannelService) GetEventsPaymentHistory(tokenAddress common.TokenAdd
 	targetAddress common.Address, limit int, offset int) *list.List {
 	result := list.New()
 
-	events := self.GetEventsPaymentHistoryWithTimestamps(tokenAddress, targetAddress,
-		limit, offset)
+	events := self.GetEventsPaymentHistoryWithTimestamps(tokenAddress, targetAddress, limit, offset)
 
 	for e := events.Front(); e != nil; e = e.Next() {
 		event := e.Value.(*storage.TimestampedEvent)

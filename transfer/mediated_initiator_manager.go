@@ -148,8 +148,8 @@ func ImHandleCancelPayment(paymentState *InitiatorPaymentState, channelState *Ne
 			PaymentNetworkId: channelState.PaymentNetworkId,
 			TokenNetworkId:   channelState.TokenNetworkId,
 			Identifier:       transferDescription.PaymentId,
-			Target:           common.Address(transferDescription.Target),
-			Reason:           string("user canceld payment"),
+			Target:           transferDescription.Target,
+			Reason:           "user canceld payment",
 		}
 
 		cancelEvents = append(cancelEvents, cancel)

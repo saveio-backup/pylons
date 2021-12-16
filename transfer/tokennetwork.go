@@ -354,10 +354,9 @@ func handleActionTransferDirect(paymentNetworkId common.PaymentNetworkID,
 			PaymentNetworkId: paymentNetworkId,
 			TokenNetworkId:   stateChange.TokenNetworkId,
 			Identifier:       stateChange.PaymentId,
-			Target:           common.Address(receiverAddress),
+			Target:           receiverAddress,
 			Reason:           "Unknown partner channel",
 		}
-
 		events = append(events, failure)
 	}
 

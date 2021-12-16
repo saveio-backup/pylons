@@ -161,7 +161,6 @@ func DelLock(endState *NettingChannelEndState, secretHash common.SecretHash) {
 	if _, exist := endState.SecretHashesToOnChainUnLockedLocks[secretHash]; exist {
 		delete(endState.SecretHashesToOnChainUnLockedLocks, secretHash)
 	}
-
 	return
 }
 
@@ -170,8 +169,7 @@ func RegisterSecretEndState(endState *NettingChannelEndState, secret common.Secr
 		pendingLock := endState.SecretHashesToLockedLocks[secretHash]
 		delete(endState.SecretHashesToLockedLocks, secretHash)
 
-		endState.SecretHashesToUnLockedLocks[secretHash] = &UnlockPartialProofState{
-			Lock: pendingLock, Secret: secret}
+		endState.SecretHashesToUnLockedLocks[secretHash] = &UnlockPartialProofState{Lock: pendingLock, Secret: secret}
 	}
 	return
 }
@@ -231,21 +229,13 @@ func RegisterOnChainSecret(channelState *NettingChannelState, secret common.Secr
 }
 
 func compareLocksroot(one common.LocksRoot, two common.LocksRoot) bool {
-	result := true
-
-	if len(one) != len(two) {
-		result = false
-	}
-
 	length := len(one)
 	for i := 0; i < length; i++ {
 		if one[i] != two[i] {
-			result = false
-			break
+			return false
 		}
 	}
-
-	return result
+	return true
 }
 
 func isDepositConfirmed(channelState *NettingChannelState, blockNumber common.BlockHeight) bool {
@@ -371,9 +361,9 @@ func IsBalanceProofUsableOnChain(receivedBalanceProof *BalanceProofSignedState,
 
 	expectedNonce := getNextNonce(senderState)
 
-	isValidSignature, error := IsValidSignature(receivedBalanceProof, senderState.Address)
+	isValidSignature, err := IsValidSignature(receivedBalanceProof, senderState.Address)
 	if !isValidSignature {
-		return isValidSignature, error
+		return isValidSignature, err
 	}
 	if GetStatus(channelState) != ChannelStateOpened {
 		return false, errors.New("The channel is already closed.")
@@ -456,10 +446,9 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 	//# expiry in this case could still happen which means that we have to make
 	//# sure that we check for "unclaimed" locks in our check.
 	if lock == nil {
-		if value, exist := channelState.PartnerState.SecretHashesToUnLockedLocks[secretHash]; exist {
-			if value != nil {
-				lock = value.Lock
-			}
+		value, exist := channelState.PartnerState.SecretHashesToUnLockedLocks[secretHash]
+		if exist && value != nil {
+			lock = value.Lock
 		}
 	}
 
@@ -484,8 +473,7 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 		expectedLockedAmount = currentLockedAmount - lock.Amount
 	}
 
-	isBalanceProofUsable, invalidBalanceProofMsg := IsBalanceProofUsableOnChain(
-		receivedBalanceProof, channelState, senderState)
+	isBalanceProofUsable, invalidBalanceProofMsg := IsBalanceProofUsableOnChain(receivedBalanceProof, channelState, senderState)
 
 	//result: MerkleTreeOrError = (False, None, None)
 
@@ -526,7 +514,6 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 			return merkleTree, nil
 		}
 	}
-	return nil, nil
 }
 
 func ValidLockedTransferCheck(channelState *NettingChannelState, senderState *NettingChannelEndState,
@@ -1154,7 +1141,7 @@ func sendRefundTransfer(channelState *NettingChannelState, initiator common.Addr
 	mediatedTransfer := sendMediatedTransfer.Transfer
 	lock := mediatedTransfer.Lock
 
-	//todo
+	//todo (do what?
 	channelState.OurState.BalanceProof = &BalanceProofSignedState{
 		Nonce:             mediatedTransfer.BalanceProof.Nonce,
 		TransferredAmount: mediatedTransfer.BalanceProof.TransferredAmount,
@@ -1350,7 +1337,7 @@ func handleSendDirectTransfer(channelState *NettingChannelState, stateChange *Ac
 				PaymentNetworkId: channelState.PaymentNetworkId,
 				TokenNetworkId:   channelState.TokenNetworkId,
 				Identifier:       paymentId,
-				Target:           common.Address(targetAddress),
+				Target:           targetAddress,
 				Reason:           msg,
 			}
 			log.Warn("[handleSendDirectTransfer] failure: ", msg)

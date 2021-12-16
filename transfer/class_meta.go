@@ -776,6 +776,5 @@ func AdjustObject(v interface{}) {
 		}
 	case *TokenNetworkState:
 		//rv, _ := v.(*TokenNetworkState)
-
 	}
 }

@@ -10,8 +10,7 @@ import (
 	"github.com/saveio/themis/common/log"
 )
 
-type MessageHandler struct {
-}
+type MessageHandler struct {}
 
 func (self *MessageHandler) OnMessage(channelSrv *ChannelService, message interface{}) {
 	log.Debug("[OnMessage] message: ", reflect.TypeOf(message).String())
@@ -53,7 +52,6 @@ func (self *MessageHandler) HandleMessageDirectTransfer(channel *ChannelService,
 	copy(tokenNetworkId[:], message.EnvelopeMessage.TokenNetworkAddress.TokenNetworkAddress[:20])
 	//todo check
 
-	//balanceProof := BalanceProofFromEnvelope(message.EnvelopeMessage, message.Pack())
 	balanceProof := BalanceProofFromEnvelope(message.EnvelopeMessage, message.Pack())
 	directTransfer := &transfer.ReceiveTransferDirect{
 		AuthenticatedSenderStateChange: transfer.AuthenticatedSenderStateChange{Sender: balanceProof.Sender},
@@ -277,7 +275,7 @@ func (self *MessageHandler) HandleMessageCooperativeSettle(channel *ChannelServi
 		return
 	}
 
-	// fwtodo : need to check if we send a cooperative settle
+	// todo : need to check if we send a cooperative settle
 	//withdrawTx := transfer.GetWithdrawTransaction(channelState)
 	//if withdrawTx != nil {
 	//}

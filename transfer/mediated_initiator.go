@@ -16,8 +16,7 @@ func InitEventsForUnlockLock(initiatorState *InitiatorTransferState, channelStat
 	transferDescription := initiatorState.TransferDescription
 	messageId := common.GetMsgID()
 
-	unlockLock := SendUnlock(channelState, messageId,
-		transferDescription.PaymentId, secret, secretHash)
+	unlockLock := SendUnlock(channelState, messageId, transferDescription.PaymentId, secret, secretHash)
 
 	paymentSentSuccess := &EventPaymentSentSuccess{
 		PaymentNetworkId: channelState.PaymentNetworkId,
@@ -38,7 +37,6 @@ func InitEventsForUnlockLock(initiatorState *InitiatorTransferState, channelStat
 	result = append(result, unlockSuccess)
 
 	return result
-
 }
 
 func InitHandleBlock(initiatorState *InitiatorTransferState, stateChange *Block,
@@ -186,44 +184,6 @@ func InitSendLockedTransfer(transferDescription *TransferDescriptionWithSecretSt
 	return lockedTransferEvent
 }
 
-/*
-func InitSendLockedTransfer(transferDescription *TransferDescriptionWithSecretState,
-	channelState *NettingChannelState, messageId common.MessageID,
-	blockNumber common.BlockHeight) *SendLockedTransfer {
-
-	//[TODO] implement channel.SendLockedTransfer, change name to channel.ChannelSendLockedTransfer
-
-	lockExpiration := InitGetInitialLockExpiration(blockNumber, channelState.RevealTimeout)
-
-	lockedTransferEvent := SendLockedTransfer {
-		SendMessageEvent: SendMessageEvent{
-			Recipient: common.Address(channelState.PartnerState.Address),
-			ChannelId: channelState.Identifier,
-			MessageId: messageId,
-		},
-		Transfer: LockedTransferUnsignedState{
-			PaymentId:transferDescription.PaymentId,
-			Token: channelState.TokenAddress,
-			BalanceProof: transferDescription,
-			Lock: transferDescription,
-			Initiator: transferDescription.Initiator,
-			Target: transferDescription.Target,
-		},
-
-		channelState,
-		transferDescription.Initiator,
-		transferDescription.Target,
-		transferDescription.Amount,
-
-
-		lockExpiration,
-		transferDescription.SecretHash,
-	}
-
-
-	return lockedTransferEvent
-}
-*/
 func HandleSecretRequest(initiatorState *InitiatorTransferState, stateChange *ReceiveSecretRequest,
 	channelState *NettingChannelState) *TransitionResult {
 	var iteration *TransitionResult
@@ -351,9 +311,7 @@ func InitHandleOnChainSecretReveal(initiatorState *InitiatorTransferState,
 	var events []Event
 	var iteration *TransitionResult
 	if isValidSecret && isChannelOpen && !isLockExpired {
-		events = InitEventsForUnlockLock(initiatorState, channelState, stateChange.Secret,
-			stateChange.SecretHash)
-
+		events = InitEventsForUnlockLock(initiatorState, channelState, stateChange.Secret, stateChange.SecretHash)
 		iteration = &TransitionResult{NewState: nil, Events: events}
 	} else {
 		iteration = &TransitionResult{NewState: initiatorState, Events: events}

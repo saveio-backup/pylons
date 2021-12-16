@@ -84,8 +84,6 @@ func (self *WriteAheadLog) DeepCopy() *transfer.ChainState {
 	} else {
 		return result.(*transfer.ChainState)
 	}
-
-	return nil
 }
 
 func (self *WriteAheadLog) LogAndDispatch(stateChange transfer.StateChange, selfAddr common.Address) []transfer.Event {

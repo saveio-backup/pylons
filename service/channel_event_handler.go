@@ -146,7 +146,7 @@ func (self ChannelEventHandler) HandleSendProcessed(channel *ChannelService, pro
 			return
 		}
 		queueId := &transfer.QueueId{
-			Recipient: common.Address(processedEvent.Recipient),
+			Recipient: processedEvent.Recipient,
 			ChannelId: processedEvent.ChannelId,
 		}
 
@@ -175,7 +175,7 @@ func (self ChannelEventHandler) HandlePaymentSentSuccess(channel *ChannelService
 }
 
 func (self ChannelEventHandler) HandlePaymentSentFailed(channel *ChannelService, paymentSentFailedEvent *transfer.EventPaymentSentFailed) {
-	target := common.Address(paymentSentFailedEvent.Target)
+	target := paymentSentFailedEvent.Target
 	identifier := paymentSentFailedEvent.Identifier
 
 	paymentStatus, exist := channel.GetPaymentStatus(target, identifier)
@@ -337,6 +337,7 @@ func (self ChannelEventHandler) HandleContractSendChannelSettle(channel *Channel
 	log.Debugf("[ChannelSettle] ourBP : %v, partnerBP : %v", ourBalanceProof, partnerBalanceProof)
 	log.Debugf("[ChannelSettle] our: tA = %d, lA : %d, locksroot : %v, partner: tA : %d, lA : %d, locksroot : %v ", ourTransferredAmount, ourLockedAmount, ourLocksroot,
 		partnerTransferredAmount, partnerLockedAmount, partnerLocksroot)
+
 	channelProxy.Settle(
 		ourTransferredAmount, ourLockedAmount, ourLocksroot,
 		partnerTransferredAmount, partnerLockedAmount, partnerLocksroot)
@@ -633,7 +634,7 @@ func (self ChannelEventHandler) HandleSendCooperativeSettle(channel *ChannelServ
 			return
 		}
 		queueId := &transfer.QueueId{
-			Recipient: common.Address(cooperativeSettleEvent.Recipient),
+			Recipient: cooperativeSettleEvent.Recipient,
 			ChannelId: cooperativeSettleEvent.ChannelId,
 		}
 		channel.Transport.SendAsync(queueId, cooperativeSettleMessage)

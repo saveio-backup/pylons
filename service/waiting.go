@@ -83,8 +83,7 @@ func WaitForPaymentBalance(channel *ChannelService, paymentNetworkId common.Paym
 
 	chainState := channel.StateFromChannel()
 	var channelState *transfer.NettingChannelState
-	channelState = transfer.GetChannelStateFor(chainState, paymentNetworkId, tokenAddress,
-		partnerAddress)
+	channelState = transfer.GetChannelStateFor(chainState, paymentNetworkId, tokenAddress, partnerAddress)
 
 	for {
 		if channelState == nil {

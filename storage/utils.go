@@ -252,7 +252,6 @@ func GetEventWithBalanceProofByLocksroot(
 		}
 	}
 	return nil
-
 }
 
 func GetEventWithTargetAndPaymentId(storage *SQLiteStorage, target common.Address, identifier common.PaymentID) *EventRecord {

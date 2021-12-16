@@ -134,7 +134,7 @@ func MdIsSendTransferAlmostEqual(send *LockedTransferUnsignedState, received *Lo
 		send.Lock.Expiration == received.Lock.Expiration &&
 		send.Lock.SecretHash == received.Lock.SecretHash &&
 		send.Initiator == received.Initiator &&
-		common.Address(send.Target) == received.Target
+		send.Target == received.Target
 	return ret
 }
 

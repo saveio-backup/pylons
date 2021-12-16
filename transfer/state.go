@@ -105,29 +105,6 @@ func (self *ChainState) AdjustChainState() {
 }
 
 func DeepCopy(src State) *ChainState {
-	//var result *ChainState
-	//
-	//if src == nil {
-	//	return nil
-	//} else if chainState, ok := src.(*ChainState); ok {
-	//	serializedData, err := jsonext.Marshal(chainState)
-	//	if err != nil {
-	//		log.Error("[DeepCopy] jsonext.Marshal Error: ", err.Error())
-	//	}
-	//	if serializedData == nil {
-	//		log.Error("[DeepCopy] jsonext.Marshal Error: serializedData is nil.")
-	//	}
-	//
-	//	result = NewChainState()
-	//	_, err = jsonext.UnmarshalExt(serializedData, &result, CreateObjectByClassId)
-	//	if err != nil {
-	//		log.Error("[DeepCopy] jsonext.UnmarshalExt Error: ", err.Error())
-	//	}
-	//	result.AdjustChainState()
-	//}
-	//
-	//return result
-
 	if src == nil {
 		return nil
 	} else if chainState, ok := src.(*ChainState); ok {
@@ -368,7 +345,6 @@ func (self *TokenNetworkState) AdjustTokenNetworkState() {
 		}
 		self.PartnerAddressesToChannels[v.PartnerState.Address][v.Identifier] = v
 	}
-
 	return
 }
 

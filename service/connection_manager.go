@@ -198,7 +198,7 @@ func (self *ConnectionManager) openChannels() bool {
 		return false
 	}
 
-	if nonfundedChannels == nil && (possibleNewPartners == nil || possibleNewPartners.Len() == 0) {
+	if nonfundedChannels == nil {
 		return false
 	}
 
@@ -209,7 +209,6 @@ func (self *ConnectionManager) openChannels() bool {
 		channelEndState := channelState.GetChannelEndState(1)
 		partnerAddress := channelEndState.GetAddress()
 		nonfundedPartners.PushBack(partnerAddress)
-
 	}
 
 	joinPartners := list.New()
