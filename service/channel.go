@@ -5,7 +5,6 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
-	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -606,12 +605,6 @@ func (self *ChannelService) CloseAndSettle() {
 	return
 }
 
-func CreateDefaultId() common.PaymentID {
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-	num := r.Uint64()
-	return common.PaymentID(num)
-}
-
 func (self *ChannelService) StateFromChannel() *transfer.ChainState {
 	var result *transfer.ChainState
 
@@ -1017,12 +1010,18 @@ func (self *ChannelService) CanTransfer(target common.Address, amount common.Tok
 }
 
 func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, target common.Address,
-	identifier common.PaymentID) (chan bool, error) {
+	paymentId common.PaymentID) (chan bool, error) {
+
 	var err error
 	if target == common.EmptyAddress {
 		log.Error("target address is invalid:", target)
 		return nil, fmt.Errorf("target address is invalid")
 	}
+	if paymentId == common.PaymentID(0) {
+		log.Error("payment id cannot zero", paymentId)
+		return nil, errors.New("payment id cannot zero")
+	}
+
 	chainState := self.StateFromChannel()
 	tokenAddress := common.TokenAddress(usdt.USDT_CONTRACT_ADDRESS)
 	paymentNetworkId := common.PaymentNetworkID(self.microAddress)
@@ -1033,37 +1032,26 @@ func (self *ChannelService) DirectTransferAsync(amount common.TokenAmount, targe
 		return nil, err
 	}
 
-	if identifier == common.PaymentID(0) {
-		identifier = CreateDefaultId()
-	}
-
-	paymentStatus, exist := self.GetPaymentStatus(target, identifier)
+	paymentStatus, exist := self.GetPaymentStatus(target, paymentId)
 	if exist {
 		if !paymentStatus.Match(common.PAYMENT_DIRECT, TokenNetworkId, amount) {
-			return nil, errors.New("Another payment with same id is in flight. ")
+			return nil, errors.New("another payment with same id is in flight")
 		}
-		log.Warn("payment already existed:")
-		return paymentStatus.paymentDone, errors.New("Payment already existed.")
+		log.Warn("payment already existed:", paymentId)
+		return paymentStatus.paymentDone, errors.New("payment already existed")
 	}
 
 	directTransfer := &transfer.ActionTransferDirect{
 		TokenNetworkId:  TokenNetworkId,
 		ReceiverAddress: target,
-		PaymentId:       identifier,
+		PaymentId:       paymentId,
 		Amount:          amount,
 	}
 
-	paymentStatus = self.RegisterPaymentStatus(target, identifier, common.PAYMENT_DIRECT, amount, TokenNetworkId)
+	paymentStatus = self.RegisterPaymentStatus(target, paymentId, common.PAYMENT_DIRECT, amount, TokenNetworkId)
 
 	self.HandleStateChange(directTransfer)
 	return paymentStatus.paymentDone, nil
-}
-
-func (self *ChannelService) CheckPayRoute(mediaAddr common.Address, targetAddr common.Address) (bool, error) {
-	if state := self.Transport.GetNodeNetworkState(mediaAddr); state != transfer.NetworkReachable {
-		return false, fmt.Errorf("[CheckPayRoute] MediaNetworkState(%s) status is not reachable", common.ToBase58(mediaAddr))
-	}
-	return true, nil
 }
 
 func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkID, tokenAddress common.TokenAddress,
@@ -1076,7 +1064,11 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 	}
 	if amount <= 0 {
 		log.Error("amount negative:", amount)
-		return nil, fmt.Errorf("amount negative ")
+		return nil, fmt.Errorf("amount negative")
+	}
+	if paymentId == common.PaymentID(0) {
+		log.Error("payment id cannot zero", paymentId)
+		return nil, errors.New("payment id cannot zero")
 	}
 
 	chainState := self.StateFromChannel()
@@ -1096,10 +1088,6 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 		return nil, fmt.Errorf("SecretHash %v has been registerd onchain", secretHashHex)
 	}
 
-	if paymentId == common.PaymentID(0) {
-		paymentId = CreateDefaultId()
-	}
-
 	//with self.payment_identifier_lock:
 	paymentStatus, exist := self.GetPaymentStatus(target, paymentId)
 	if exist {
@@ -1116,6 +1104,7 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 		return nil, fmt.Errorf("encrypt secret error: %s", err.Error())
 	}
 
+	// give amount a margin
 	amount = common.TokenAmount(calculateSafeAmountWithFee(common.PaymentAmount(amount)))
 
 	var actionInitiator *transfer.ActionInitInitiator
@@ -1130,9 +1119,10 @@ func (self *ChannelService) MediaTransfer(registryAddress common.PaymentNetworkI
 		return nil, err
 	}
 
-	if ok, err := self.CheckPayRoute(actionInitiator.Routes[0].NodeAddress, target); !ok && err != nil {
-		log.Errorf("CheckPayRoute error: %s", err.Error())
-		return nil, err
+	mediaAddr := actionInitiator.Routes[0].NodeAddress
+	networkState := self.Transport.GetNodeNetworkState(mediaAddr)
+	if networkState != transfer.NetworkReachable {
+		return nil, fmt.Errorf("CheckPayRoute error: mediator %s is not reachable", common.ToBase58(mediaAddr))
 	}
 
 	asyncDone := make(chan bool)

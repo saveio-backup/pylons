@@ -120,7 +120,7 @@ func TgHandleOffChainSecretReveal(targetState *TargetTransferState, stateChange 
 		messageId := common.GetMsgID()
 		reveal := &SendSecretReveal{
 			SendMessageEvent: SendMessageEvent{
-				Recipient: common.Address(route.NodeAddress),
+				Recipient: route.NodeAddress,
 				//check route channelId
 				ChannelId: route.ChannelId,
 				MessageId: messageId,
