@@ -437,9 +437,9 @@ type NettingChannelEndState struct {
 	Address                            common.Address
 	ContractBalance                    common.TokenAmount
 	TotalWithdraw                      common.TokenAmount
-	SecretHashesToLockedLocks          SecretHashToLock
-	SecretHashesToUnLockedLocks        SecretHashToPartialUnlockProof
-	SecretHashesToOnChainUnLockedLocks SecretHashToPartialUnlockProof
+	SecretHashesToLockedLocks          sync.Map // map[common.SecretHash]*HashTimeLockState
+	SecretHashesToUnLockedLocks        SecretHashToPartialUnlockProof // map[common.SecretHash]*UnlockPartialProofState
+	SecretHashesToOnChainUnLockedLocks SecretHashToPartialUnlockProof // map[common.SecretHash]*UnlockPartialProofState
 	MerkleTree                         *MerkleTreeState
 	BalanceProof                       *BalanceProofSignedState
 }
@@ -478,7 +478,7 @@ func (self *NettingChannelEndState) GetAddress() common.Address {
 func NewNettingChannelEndState() *NettingChannelEndState {
 	result := new(NettingChannelEndState)
 
-	result.SecretHashesToLockedLocks = make(SecretHashToLock)
+	result.SecretHashesToLockedLocks = sync.Map{}
 	result.SecretHashesToUnLockedLocks = make(SecretHashToPartialUnlockProof)
 	result.SecretHashesToOnChainUnLockedLocks = make(SecretHashToPartialUnlockProof)
 

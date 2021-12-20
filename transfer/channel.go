@@ -5,12 +5,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/saveio/themis-go-sdk/usdt"
-	"math"
-	"sync"
-
 	"github.com/saveio/pylons/common"
+	"github.com/saveio/themis-go-sdk/usdt"
 	"github.com/saveio/themis/common/log"
+	"math"
 )
 
 func Min(x, y uint64) uint64 {
@@ -35,19 +33,20 @@ type BalanceProofData struct {
 }
 
 func IsLockPending(endState *NettingChannelEndState, secretHash common.SecretHash) bool {
-	if _, exist := endState.SecretHashesToLockedLocks[secretHash]; exist {
+	_, ok := endState.SecretHashesToLockedLocks.Load(secretHash)
+	if ok {
 		return true
 	} else if _, exist := endState.SecretHashesToUnLockedLocks[secretHash]; exist {
 		return true
 	} else if _, exist := endState.SecretHashesToOnChainUnLockedLocks[secretHash]; exist {
 		return true
 	}
-
 	return false
 }
 
 func IsLockLocked(endState *NettingChannelEndState, secretHash common.SecretHash) bool {
-	if _, exist := endState.SecretHashesToLockedLocks[secretHash]; exist {
+	_, ok := endState.SecretHashesToLockedLocks.Load(secretHash)
+	if ok {
 		return true
 	}
 	return false
@@ -116,7 +115,7 @@ func GetSecret(endState *NettingChannelEndState, secretHash common.SecretHash) c
 }
 
 func GetLock(endState *NettingChannelEndState, secretHash common.SecretHash) *HashTimeLockState {
-	lock, exist := endState.SecretHashesToLockedLocks[secretHash]
+	lock, exist := endState.SecretHashesToLockedLocks.Load(secretHash)
 	if !exist {
 		partialUnlock, exist := endState.SecretHashesToUnLockedLocks[secretHash]
 		if !exist {
@@ -126,7 +125,7 @@ func GetLock(endState *NettingChannelEndState, secretHash common.SecretHash) *Ha
 			lock = partialUnlock.Lock
 		}
 	}
-	return lock
+	return lock.(*HashTimeLockState)
 }
 
 func LockExistsInEitherChannelSide(channelState *NettingChannelState, secretHash common.SecretHash) bool {
@@ -141,10 +140,10 @@ func LockExistsInEitherChannelSide(channelState *NettingChannelState, secretHash
 }
 
 func DelUnclaimedLock(endState *NettingChannelEndState, secretHash common.SecretHash) {
-	if _, exist := endState.SecretHashesToLockedLocks[secretHash]; exist {
-		delete(endState.SecretHashesToLockedLocks, secretHash)
+	_, ok := endState.SecretHashesToLockedLocks.Load(secretHash)
+	if ok {
+		endState.SecretHashesToLockedLocks.Delete(secretHash)
 	}
-
 	if _, exist := endState.SecretHashesToUnLockedLocks[secretHash]; exist {
 		delete(endState.SecretHashesToUnLockedLocks, secretHash)
 	}
@@ -166,10 +165,12 @@ func DelLock(endState *NettingChannelEndState, secretHash common.SecretHash) {
 
 func RegisterSecretEndState(endState *NettingChannelEndState, secret common.Secret, secretHash common.SecretHash) {
 	if IsLockLocked(endState, secretHash) == true {
-		pendingLock := endState.SecretHashesToLockedLocks[secretHash]
-		delete(endState.SecretHashesToLockedLocks, secretHash)
-
-		endState.SecretHashesToUnLockedLocks[secretHash] = &UnlockPartialProofState{Lock: pendingLock, Secret: secret}
+		pendingLock,_ := endState.SecretHashesToLockedLocks.Load(secretHash)
+		endState.SecretHashesToLockedLocks.Delete(secretHash)
+		endState.SecretHashesToUnLockedLocks[secretHash] = &UnlockPartialProofState{
+			Lock: pendingLock.(*HashTimeLockState),
+			Secret: secret,
+		}
 	}
 	return
 }
@@ -181,7 +182,8 @@ func RegisterOnChainSecretEndState(endState *NettingChannelEndState, secret comm
 	var pendingLock *HashTimeLockState
 
 	if IsLockLocked(endState, secretHash) == true {
-		pendingLock = endState.SecretHashesToLockedLocks[secretHash]
+		load, _ := endState.SecretHashesToLockedLocks.Load(secretHash)
+		pendingLock = load.(*HashTimeLockState)
 	}
 
 	if v, exist := endState.SecretHashesToUnLockedLocks[secretHash]; exist {
@@ -439,7 +441,10 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 
 	secretHash := stateChange.SecretHash
 	receivedBalanceProof := stateChange.BalanceProof
-	lock := channelState.PartnerState.SecretHashesToLockedLocks[secretHash]
+
+	var lock *HashTimeLockState
+	load, _ := channelState.PartnerState.SecretHashesToLockedLocks.Load(secretHash)
+	lock = load.(*HashTimeLockState)
 
 	//# If the lock was not found in locked locks, this means that we've received
 	//# the secret for the locked transfer but we haven't unlocked it yet. Lock
@@ -577,35 +582,27 @@ func ValidLockedTransferCheck(channelState *NettingChannelState, senderState *Ne
 	}
 }
 
-var nonceLock sync.Mutex
-
 func getAmountLocked(endState *NettingChannelEndState) common.Balance {
 	var totalPending, totalUnclaimed, totalUnclaimedOnChain common.TokenAmount
-	nonceLock.Lock()
-	defer nonceLock.Unlock()
 
-	for _, lock := range endState.SecretHashesToLockedLocks {
-		totalPending = totalPending + lock.Amount
-	}
+	endState.SecretHashesToLockedLocks.Range(func(key, value interface{}) bool {
+		v := value.(*HashTimeLockState)
+		totalPending = totalPending + v.Amount
+		return true
+	})
 	log.Debug("[getAmountLocked] totalPending: ", totalPending)
 	for _, unLock := range endState.SecretHashesToUnLockedLocks {
 		totalUnclaimed = totalUnclaimed + unLock.Lock.Amount
 	}
 	log.Debug("[getAmountLocked] totalUnclaimed: ", totalUnclaimed)
-	totalUnclaimedOnChain = getAmountUnClaimedOnChain(endState)
+	for _, unLock := range endState.SecretHashesToOnChainUnLockedLocks {
+		totalUnclaimedOnChain = totalUnclaimedOnChain + unLock.Lock.Amount
+	}
 	log.Debug("[getAmountLocked] totalUnclaimedOnChain: ", totalUnclaimedOnChain)
 	lockedAmount := (common.Balance)(totalPending + totalUnclaimed + totalUnclaimedOnChain)
 	log.Debug("[getAmountLocked] lockedAmount: ", lockedAmount)
 
 	return lockedAmount
-}
-
-func getAmountUnClaimedOnChain(endState *NettingChannelEndState) common.TokenAmount {
-	var totalUnclaimedOnChain common.TokenAmount
-	for _, unLock := range endState.SecretHashesToOnChainUnLockedLocks {
-		totalUnclaimedOnChain = totalUnclaimedOnChain + unLock.Lock.Amount
-	}
-	return totalUnclaimedOnChain
 }
 
 func getBalance(sender *NettingChannelEndState, receiver *NettingChannelEndState) common.Balance {
@@ -691,9 +688,11 @@ func GetBatchUnlock(endState *NettingChannelEndState) []*HashTimeLockState {
 
 	lockhashesToLocks := make(map[common.LockHash]*HashTimeLockState)
 
-	for _, lock := range endState.SecretHashesToLockedLocks {
-		lockhashesToLocks[lock.LockHash] = lock
-	}
+	endState.SecretHashesToLockedLocks.Range(func(key, value interface{}) bool {
+		v := value.(*HashTimeLockState)
+		lockhashesToLocks[v.LockHash] = v
+		return true
+	})
 
 	for _, unlock := range endState.SecretHashesToUnLockedLocks {
 		lockhashesToLocks[unlock.Lock.LockHash] = unlock.Lock
@@ -1117,7 +1116,7 @@ func sendLockedTransfer(channelState *NettingChannelState, initiator common.Addr
 
 	hashHex := common.SecretHashHex(common.SecretHash(lock.SecretHash))
 	log.Debugf("[SendLockedTransfer] Add SecretHash %s To LockedLocks", hashHex)
-	channelState.OurState.SecretHashesToLockedLocks[common.SecretHash(lock.SecretHash)] = lock
+	channelState.OurState.SecretHashesToLockedLocks.Store(common.SecretHash(lock.SecretHash), lock)
 
 	return sendLockedTransferEvent
 }
@@ -1127,7 +1126,8 @@ func sendRefundTransfer(channelState *NettingChannelState, initiator common.Addr
 	paymentId common.PaymentID, expiration common.BlockExpiration,
 	encSecret common.EncSecret, secretHash common.SecretHash) (*SendRefundTransfer, error) {
 
-	if _, ok := channelState.PartnerState.SecretHashesToLockedLocks[secretHash]; !ok {
+	_, ok := channelState.PartnerState.SecretHashesToLockedLocks.Load(secretHash)
+	if !ok {
 		return nil, fmt.Errorf("Refunds are only valid for *known and pending* transfers ")
 	}
 
@@ -1153,7 +1153,7 @@ func sendRefundTransfer(channelState *NettingChannelState, initiator common.Addr
 		BalanceHash:       mediatedTransfer.BalanceProof.BalanceHash,
 	}
 	channelState.OurState.MerkleTree = merkleTree
-	channelState.OurState.SecretHashesToLockedLocks[common.SecretHash(lock.SecretHash)] = lock
+	channelState.OurState.SecretHashesToLockedLocks.Store(common.SecretHash(lock.SecretHash), lock)
 
 	refundTransfer := RefundFromSendmediated(sendMediatedTransfer)
 	return refundTransfer, nil
@@ -1853,7 +1853,7 @@ func handleRefundTransfer(receivedTransfer *LockedTransferUnsignedState, channel
 		channelState.PartnerState.MerkleTree = merkleTree
 
 		lock := refund.Transfer.Lock
-		channelState.PartnerState.SecretHashesToLockedLocks[common.SecretHash(lock.SecretHash)] = lock
+		channelState.PartnerState.SecretHashesToLockedLocks.Store(common.SecretHash(lock.SecretHash), lock)
 
 		sendProcessed := &SendProcessed{
 			SendMessageEvent: SendMessageEvent{
@@ -1924,7 +1924,7 @@ func HandleReceiveLockedTransfer(channelState *NettingChannelState,
 		channelState.PartnerState.MerkleTree = merkleTree
 
 		lock := mediatedTransfer.Lock
-		channelState.PartnerState.SecretHashesToLockedLocks[common.SecretHash(lock.SecretHash)] = lock
+		channelState.PartnerState.SecretHashesToLockedLocks.Store(common.SecretHash(lock.SecretHash), lock)
 
 		sendProcessed := &SendProcessed{SendMessageEvent: SendMessageEvent{
 			Recipient: mediatedTransfer.BalanceProof.Sender,

@@ -973,11 +973,13 @@ func eventsToRemoveExpiredLocks(mediatorState *MediatorTransferState,
 
 		flag1 := false
 		flag2 := false
-		for _, secretHashTmp := range channelState.OurState.SecretHashesToLockedLocks {
-			if secretHash == common.SecretHash(secretHashTmp.SecretHash) {
+		channelState.OurState.SecretHashesToLockedLocks.Range(func(key, value interface{}) bool {
+			v := value.(*HashTimeLockState)
+			if secretHash == common.SecretHash(v.SecretHash) {
 				flag1 = true
 			}
-		}
+			return true
+		})
 		for secretHashTmp := range channelState.OurState.SecretHashesToUnLockedLocks {
 			if secretHash == secretHashTmp {
 				flag2 = true
@@ -988,7 +990,8 @@ func eventsToRemoveExpiredLocks(mediatorState *MediatorTransferState,
 			if flag2 {
 				return nil, fmt.Errorf("secrethash not in OurState SecretHashesToUnLockedLocks")
 			}
-			lock = channelState.OurState.SecretHashesToLockedLocks[secretHash]
+			load, _ := channelState.OurState.SecretHashesToLockedLocks.Load(secretHash)
+			lock = load.(*HashTimeLockState)
 		} else if flag2 {
 			lock = channelState.OurState.SecretHashesToUnLockedLocks[secretHash].Lock
 		}

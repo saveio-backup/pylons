@@ -43,9 +43,10 @@ func InitHandleBlock(initiatorState *InitiatorTransferState, stateChange *Block,
 	channelState *NettingChannelState) *TransitionResult {
 
 	secretHash := common.SecretHash(initiatorState.Transfer.Lock.SecretHash)
-	lockedLock, exist1 := channelState.OurState.SecretHashesToLockedLocks[secretHash]
+	load, exist1 := channelState.OurState.SecretHashesToLockedLocks.Load(secretHash)
+	lockedLock := load.(*HashTimeLockState)
 	if exist1 == false {
-		_, exist2 := channelState.PartnerState.SecretHashesToLockedLocks[secretHash]
+		_, exist2 := channelState.PartnerState.SecretHashesToLockedLocks.Load(secretHash)
 		if exist2 {
 			return &TransitionResult{NewState: initiatorState, Events: nil}
 		} else {
