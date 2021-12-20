@@ -33,12 +33,11 @@ type BalanceProofData struct {
 }
 
 func IsLockPending(endState *NettingChannelEndState, secretHash common.SecretHash) bool {
-	_, ok := endState.SecretHashesToLockedLocks.Load(secretHash)
-	if ok {
+	if _, exist := endState.SecretHashesToLockedLocks.Load(secretHash); exist {
 		return true
-	} else if _, exist := endState.SecretHashesToUnLockedLocks[secretHash]; exist {
+	} else if _, exist := endState.SecretHashesToUnLockedLocks.Load(secretHash); exist {
 		return true
-	} else if _, exist := endState.SecretHashesToOnChainUnLockedLocks[secretHash]; exist {
+	} else if _, exist := endState.SecretHashesToOnChainUnLockedLocks.Load(secretHash); exist {
 		return true
 	}
 	return false
@@ -56,7 +55,7 @@ func IsLockExpired(endState *NettingChannelEndState, lock *HashTimeLockState,
 	blockNumber common.BlockHeight, lockExpirationThreshold common.BlockHeight) (bool, error) {
 
 	secretHash := common.SecretHash(lock.SecretHash)
-	if _, exist := endState.SecretHashesToOnChainUnLockedLocks[secretHash]; exist {
+	if _, exist := endState.SecretHashesToOnChainUnLockedLocks.Load(secretHash); exist {
 		return false, errors.New("lock has been unlocked on-chain")
 	}
 
@@ -76,24 +75,23 @@ func TransferExpired(transfer *LockedTransferSignedState, affectedChannel *Netti
 }
 
 func IsSecretKnown(endState *NettingChannelEndState, secretHash common.SecretHash) bool {
-	if _, exist := endState.SecretHashesToUnLockedLocks[secretHash]; exist {
+	if _, exist := endState.SecretHashesToUnLockedLocks.Load(secretHash); exist {
 		return true
-	} else if _, exist := endState.SecretHashesToOnChainUnLockedLocks[secretHash]; exist {
+	} else if _, exist := endState.SecretHashesToOnChainUnLockedLocks.Load(secretHash); exist {
 		return true
 	}
-
 	return false
 }
 
 func IsSecretKnownOffChain(endState *NettingChannelEndState, secretHash common.SecretHash) bool {
-	if _, exist := endState.SecretHashesToUnLockedLocks[secretHash]; exist {
+	if _, exist := endState.SecretHashesToUnLockedLocks.Load(secretHash); exist {
 		return true
 	}
 	return false
 }
 
 func IsSecretKnownOnChain(endState *NettingChannelEndState, secretHash common.SecretHash) bool {
-	if _, exist := endState.SecretHashesToOnChainUnLockedLocks[secretHash]; exist {
+	if _, exist := endState.SecretHashesToOnChainUnLockedLocks.Load(secretHash); exist {
 		return true
 	}
 	return false
@@ -101,14 +99,13 @@ func IsSecretKnownOnChain(endState *NettingChannelEndState, secretHash common.Se
 
 //[NOTE] may use *common.Secret as return value?
 func GetSecret(endState *NettingChannelEndState, secretHash common.SecretHash) common.Secret {
-	if IsSecretKnown(endState, secretHash) == true {
-		var partialUnlockProof *UnlockPartialProofState
-
-		if _, exist := endState.SecretHashesToUnLockedLocks[secretHash]; exist {
-			partialUnlockProof = endState.SecretHashesToUnLockedLocks[secretHash]
-		} else if _, exist := endState.SecretHashesToOnChainUnLockedLocks[secretHash]; exist {
-			partialUnlockProof = endState.SecretHashesToOnChainUnLockedLocks[secretHash]
-		}
+	var partialUnlockProof *UnlockPartialProofState
+	if v, exist := endState.SecretHashesToUnLockedLocks.Load(secretHash); exist {
+		partialUnlockProof = v.(*UnlockPartialProofState)
+		return partialUnlockProof.Secret
+	}
+	if v, exist := endState.SecretHashesToOnChainUnLockedLocks.Load(secretHash); exist {
+		partialUnlockProof = v.(*UnlockPartialProofState)
 		return partialUnlockProof.Secret
 	}
 	return common.Secret{}
@@ -116,16 +113,18 @@ func GetSecret(endState *NettingChannelEndState, secretHash common.SecretHash) c
 
 func GetLock(endState *NettingChannelEndState, secretHash common.SecretHash) *HashTimeLockState {
 	lock, exist := endState.SecretHashesToLockedLocks.Load(secretHash)
-	if !exist {
-		partialUnlock, exist := endState.SecretHashesToUnLockedLocks[secretHash]
-		if !exist {
-			partialUnlock, exist = endState.SecretHashesToOnChainUnLockedLocks[secretHash]
-		}
-		if exist {
-			lock = partialUnlock.Lock
-		}
+	if exist {
+		return lock.(*HashTimeLockState)
 	}
-	return lock.(*HashTimeLockState)
+	partialUnlock, exist := endState.SecretHashesToUnLockedLocks.Load(secretHash)
+	if exist {
+		return partialUnlock.(*UnlockPartialProofState).Lock
+	}
+	partialUnlock, exist = endState.SecretHashesToOnChainUnLockedLocks.Load(secretHash)
+	if exist {
+		return partialUnlock.(*UnlockPartialProofState).Lock
+	}
+	return nil
 }
 
 func LockExistsInEitherChannelSide(channelState *NettingChannelState, secretHash common.SecretHash) bool {
@@ -140,12 +139,11 @@ func LockExistsInEitherChannelSide(channelState *NettingChannelState, secretHash
 }
 
 func DelUnclaimedLock(endState *NettingChannelEndState, secretHash common.SecretHash) {
-	_, ok := endState.SecretHashesToLockedLocks.Load(secretHash)
-	if ok {
+	if _, exist := endState.SecretHashesToLockedLocks.Load(secretHash); exist {
 		endState.SecretHashesToLockedLocks.Delete(secretHash)
 	}
-	if _, exist := endState.SecretHashesToUnLockedLocks[secretHash]; exist {
-		delete(endState.SecretHashesToUnLockedLocks, secretHash)
+	if _, exist := endState.SecretHashesToUnLockedLocks.Load(secretHash); exist {
+		endState.SecretHashesToUnLockedLocks.Delete(secretHash)
 	}
 	return
 }
@@ -155,22 +153,21 @@ func DelLock(endState *NettingChannelEndState, secretHash common.SecretHash) {
 		log.Debug("[DelLock] IsLockPending == false")
 		return
 	}
-
 	DelUnclaimedLock(endState, secretHash)
-	if _, exist := endState.SecretHashesToOnChainUnLockedLocks[secretHash]; exist {
-		delete(endState.SecretHashesToOnChainUnLockedLocks, secretHash)
+	if _, exist := endState.SecretHashesToOnChainUnLockedLocks.Load(secretHash); exist {
+		endState.SecretHashesToOnChainUnLockedLocks.Delete(secretHash)
 	}
 	return
 }
 
 func RegisterSecretEndState(endState *NettingChannelEndState, secret common.Secret, secretHash common.SecretHash) {
-	if IsLockLocked(endState, secretHash) == true {
+	if IsLockLocked(endState, secretHash) {
 		pendingLock,_ := endState.SecretHashesToLockedLocks.Load(secretHash)
 		endState.SecretHashesToLockedLocks.Delete(secretHash)
-		endState.SecretHashesToUnLockedLocks[secretHash] = &UnlockPartialProofState{
+		endState.SecretHashesToUnLockedLocks.Store(secretHash, &UnlockPartialProofState{
 			Lock: pendingLock.(*HashTimeLockState),
 			Secret: secret,
-		}
+		})
 	}
 	return
 }
@@ -186,8 +183,8 @@ func RegisterOnChainSecretEndState(endState *NettingChannelEndState, secret comm
 		pendingLock = load.(*HashTimeLockState)
 	}
 
-	if v, exist := endState.SecretHashesToUnLockedLocks[secretHash]; exist {
-		pendingLock = v.Lock
+	if v, exist := endState.SecretHashesToUnLockedLocks.Load(secretHash); exist {
+		pendingLock = v.(*UnlockPartialProofState).Lock
 	}
 
 	if pendingLock != nil {
@@ -201,10 +198,10 @@ func RegisterOnChainSecretEndState(endState *NettingChannelEndState, secret comm
 		}
 
 		log.Debugf("[RegisterOnChainSecretEndState] register on chain unlock for : %v", secretHash)
-		endState.SecretHashesToOnChainUnLockedLocks[secretHash] = &UnlockPartialProofState{
+		endState.SecretHashesToOnChainUnLockedLocks.Store(secretHash, &UnlockPartialProofState{
 			Lock:   pendingLock,
 			Secret: secret,
-		}
+		})
 	}
 	return
 }
@@ -451,14 +448,14 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 	//# expiry in this case could still happen which means that we have to make
 	//# sure that we check for "unclaimed" locks in our check.
 	if lock == nil {
-		value, exist := channelState.PartnerState.SecretHashesToUnLockedLocks[secretHash]
-		if exist && value != nil {
-			lock = value.Lock
+		value, exist := channelState.PartnerState.SecretHashesToUnLockedLocks.Load(secretHash)
+		if exist {
+			lock = value.(*UnlockPartialProofState).Lock
 		}
 	}
 
 	lockRegisteredOnChain := false
-	if _, exist := channelState.OurState.SecretHashesToOnChainUnLockedLocks[secretHash]; exist {
+	if _, exist := channelState.OurState.SecretHashesToOnChainUnLockedLocks.Load(secretHash); exist {
 		lockRegisteredOnChain = true
 	}
 
@@ -591,17 +588,21 @@ func getAmountLocked(endState *NettingChannelEndState) common.Balance {
 		return true
 	})
 	log.Debug("[getAmountLocked] totalPending: ", totalPending)
-	for _, unLock := range endState.SecretHashesToUnLockedLocks {
-		totalUnclaimed = totalUnclaimed + unLock.Lock.Amount
-	}
+	endState.SecretHashesToUnLockedLocks.Range(func(key, value interface{}) bool {
+		v := value.(*UnlockPartialProofState)
+		totalUnclaimed = totalUnclaimed + v.Lock.Amount
+		return true
+	})
 	log.Debug("[getAmountLocked] totalUnclaimed: ", totalUnclaimed)
-	for _, unLock := range endState.SecretHashesToOnChainUnLockedLocks {
-		totalUnclaimedOnChain = totalUnclaimedOnChain + unLock.Lock.Amount
-	}
+	endState.SecretHashesToOnChainUnLockedLocks.Range(func(key, value interface{}) bool {
+		v := value.(*UnlockPartialProofState)
+		totalUnclaimedOnChain = totalUnclaimedOnChain + v.Lock.Amount
+		return true
+	})
 	log.Debug("[getAmountLocked] totalUnclaimedOnChain: ", totalUnclaimedOnChain)
+
 	lockedAmount := (common.Balance)(totalPending + totalUnclaimed + totalUnclaimedOnChain)
 	log.Debug("[getAmountLocked] lockedAmount: ", lockedAmount)
-
 	return lockedAmount
 }
 
@@ -680,34 +681,33 @@ func getNextNonce(endState *NettingChannelEndState) common.Nonce {
 }
 
 func GetBatchUnlock(endState *NettingChannelEndState) []*HashTimeLockState {
-	var orderedLocks []*HashTimeLockState
-
 	if len(endState.MerkleTree.Layers) == 0 {
 		return nil
 	}
 
-	lockhashesToLocks := make(map[common.LockHash]*HashTimeLockState)
-
+	lockHashesToLocks := make(map[common.LockHash]*HashTimeLockState)
 	endState.SecretHashesToLockedLocks.Range(func(key, value interface{}) bool {
 		v := value.(*HashTimeLockState)
-		lockhashesToLocks[v.LockHash] = v
+		lockHashesToLocks[v.LockHash] = v
+		return true
+	})
+	endState.SecretHashesToUnLockedLocks.Range(func(key, value interface{}) bool {
+		v := value.(*UnlockPartialProofState)
+		lockHashesToLocks[v.Lock.LockHash] = v.Lock
+		return true
+	})
+	endState.SecretHashesToOnChainUnLockedLocks.Range(func(key, value interface{}) bool {
+		v := value.(*UnlockPartialProofState)
+		lockHashesToLocks[v.Lock.LockHash] = v.Lock
 		return true
 	})
 
-	for _, unlock := range endState.SecretHashesToUnLockedLocks {
-		lockhashesToLocks[unlock.Lock.LockHash] = unlock.Lock
-	}
-
-	for _, unlock := range endState.SecretHashesToOnChainUnLockedLocks {
-		lockhashesToLocks[unlock.Lock.LockHash] = unlock.Lock
-	}
-
+	var orderedLocks []*HashTimeLockState
 	for _, lockHash := range endState.MerkleTree.Layers[0] {
-		if lock, exist := lockhashesToLocks[common.LockHash(lockHash)]; exist {
+		if lock, exist := lockHashesToLocks[common.LockHash(lockHash)]; exist {
 			orderedLocks = append(orderedLocks, lock)
 		}
 	}
-
 	return orderedLocks
 }
 

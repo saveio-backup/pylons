@@ -783,7 +783,7 @@ func updateQueues(iteration *TransitionResult, stateChange StateChange) {
 	for _, e := range iteration.Events {
 		event := GetSenderMessageEvent(e)
 		if event != nil {
-			queueId := QueueId{common.Address(event.Recipient), event.ChannelId}
+			queueId := QueueId{event.Recipient, event.ChannelId}
 			events = chainState.QueueIdsToQueues[queueId]
 			events = append(events, e)
 			chainState.QueueIdsToQueues[queueId] = events

@@ -44,8 +44,7 @@ func InitHandleBlock(initiatorState *InitiatorTransferState, stateChange *Block,
 
 	secretHash := common.SecretHash(initiatorState.Transfer.Lock.SecretHash)
 	load, exist1 := channelState.OurState.SecretHashesToLockedLocks.Load(secretHash)
-	lockedLock := load.(*HashTimeLockState)
-	if exist1 == false {
+	if !exist1 {
 		_, exist2 := channelState.PartnerState.SecretHashesToLockedLocks.Load(secretHash)
 		if exist2 {
 			return &TransitionResult{NewState: initiatorState, Events: nil}
@@ -54,6 +53,7 @@ func InitHandleBlock(initiatorState *InitiatorTransferState, stateChange *Block,
 		}
 	}
 
+	lockedLock := load.(*HashTimeLockState)
 	lockExpirationThreshold := lockedLock.Expiration + common.BlockHeight(common.Config.ConfirmBlockCount)*2
 	lockHasExpired, _ := IsLockExpired(channelState.OurState, lockedLock, stateChange.BlockHeight, lockExpirationThreshold)
 

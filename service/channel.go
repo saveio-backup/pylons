@@ -452,7 +452,7 @@ func (self *ChannelService) CallbackNewBlock() {
 		return
 	}
 	if chainBlockHeight <= self.lastFilterBlock {
-		log.Errorf("[CallbackNewBlock] chain block <= last filter block, %d, %d", chainBlockHeight, self.lastFilterBlock)
+		log.Warnf("[CallbackNewBlock] chain block <= last filter block, %d, %d", chainBlockHeight, self.lastFilterBlock)
 		return
 	}
 

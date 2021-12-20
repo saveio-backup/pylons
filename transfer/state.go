@@ -14,8 +14,6 @@ import (
 	"github.com/saveio/themis/common/log"
 )
 
-type SecretHashToLock map[common.SecretHash]*HashTimeLockState
-type SecretHashToPartialUnlockProof map[common.SecretHash]*UnlockPartialProofState
 type QueueIdsToQueuesType map[QueueId][]Event
 
 const ChannelStateClosed string = "closed"
@@ -438,8 +436,8 @@ type NettingChannelEndState struct {
 	ContractBalance                    common.TokenAmount
 	TotalWithdraw                      common.TokenAmount
 	SecretHashesToLockedLocks          sync.Map // map[common.SecretHash]*HashTimeLockState
-	SecretHashesToUnLockedLocks        SecretHashToPartialUnlockProof // map[common.SecretHash]*UnlockPartialProofState
-	SecretHashesToOnChainUnLockedLocks SecretHashToPartialUnlockProof // map[common.SecretHash]*UnlockPartialProofState
+	SecretHashesToUnLockedLocks        sync.Map // map[common.SecretHash]*UnlockPartialProofState
+	SecretHashesToOnChainUnLockedLocks sync.Map // map[common.SecretHash]*UnlockPartialProofState
 	MerkleTree                         *MerkleTreeState
 	BalanceProof                       *BalanceProofSignedState
 }
@@ -479,8 +477,8 @@ func NewNettingChannelEndState() *NettingChannelEndState {
 	result := new(NettingChannelEndState)
 
 	result.SecretHashesToLockedLocks = sync.Map{}
-	result.SecretHashesToUnLockedLocks = make(SecretHashToPartialUnlockProof)
-	result.SecretHashesToOnChainUnLockedLocks = make(SecretHashToPartialUnlockProof)
+	result.SecretHashesToUnLockedLocks = sync.Map{}
+	result.SecretHashesToOnChainUnLockedLocks = sync.Map{}
 
 	//Construct empty merkle tree with No leaves and empty root!
 	result.MerkleTree = new(MerkleTreeState)

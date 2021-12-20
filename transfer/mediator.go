@@ -970,31 +970,13 @@ func eventsToRemoveExpiredLocks(mediatorState *MediatorTransferState,
 
 		secretHash := mediatorState.SecretHash
 		var lock *HashTimeLockState
-
-		flag1 := false
-		flag2 := false
-		channelState.OurState.SecretHashesToLockedLocks.Range(func(key, value interface{}) bool {
-			v := value.(*HashTimeLockState)
-			if secretHash == common.SecretHash(v.SecretHash) {
-				flag1 = true
-			}
-			return true
-		})
-		for secretHashTmp := range channelState.OurState.SecretHashesToUnLockedLocks {
-			if secretHash == secretHashTmp {
-				flag2 = true
-			}
-		}
-
-		if flag1 {
-			if flag2 {
-				return nil, fmt.Errorf("secrethash not in OurState SecretHashesToUnLockedLocks")
-			}
-			load, _ := channelState.OurState.SecretHashesToLockedLocks.Load(secretHash)
+		if load, ok := channelState.OurState.SecretHashesToLockedLocks.Load(secretHash); ok {
 			lock = load.(*HashTimeLockState)
-		} else if flag2 {
-			lock = channelState.OurState.SecretHashesToUnLockedLocks[secretHash].Lock
 		}
+		if load, ok := channelState.OurState.SecretHashesToUnLockedLocks.Load(secretHash); ok {
+			lock = load.(*UnlockPartialProofState).Lock
+		}
+
 		if lock != nil {
 			lockExpirationThreshold := lock.Expiration + common.BlockHeight(common.Config.ConfirmBlockCount)*2
 			hasLockExpired, _ := IsLockExpired(channelState.OurState, lock, blockNumber, lockExpirationThreshold)
