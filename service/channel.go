@@ -456,7 +456,8 @@ func (self *ChannelService) CallbackNewBlock() {
 		return
 	}
 
-	if self.firstRun || chainBlockHeight-self.lastFilterBlock > 10 {
+	if self.firstRun || chainBlockHeight-self.lastFilterBlock > 30 {
+		log.Debugf("[CallbackNewBlock] start first run by20")
 		for {
 			bgnBlockHeight := self.lastFilterBlock + 1
 			endBlockHeight, err := self.chain.BlockHeight()
@@ -465,7 +466,7 @@ func (self *ChannelService) CallbackNewBlock() {
 				time.Sleep(3 * time.Second)
 				continue
 			}
-			if endBlockHeight-self.lastFilterBlock < 3 {
+			if endBlockHeight-self.lastFilterBlock < 20 {
 				log.Infof("[CallbackNewBlock] FastSync done. LastFilterBlock(%d) ChainBlockHeight(%d)",
 					self.lastFilterBlock, endBlockHeight)
 				break
@@ -526,6 +527,7 @@ func (self *ChannelService) CallbackNewBlock() {
 			}
 			log.Infof("[CallbackNewBlock] FastSync end, From: %d, To: %d", bgnBlockHeight, endBlockHeight)
 		}
+		log.Debugf("[CallbackNewBlock] end first run ")
 		if self.firstRun == false {
 			self.UpdateRouteMap()
 		}
@@ -1182,8 +1184,8 @@ func (self *ChannelService) InitiatorInit(paymentId common.PaymentID, transferAm
 }
 
 func (self *ChannelService) InitiatorInitBySpecifiedMedia(paymentId common.PaymentID, media common.Address,
-	transferAmount common.TokenAmount, secret common.Secret, secretHash common.SecretHash,encSecret common.EncSecret,
-	TokenNetworkId common.TokenNetworkID, targetAddress common.Address,) (*transfer.ActionInitInitiator, error) {
+	transferAmount common.TokenAmount, secret common.Secret, secretHash common.SecretHash, encSecret common.EncSecret,
+	TokenNetworkId common.TokenNetworkID, targetAddress common.Address) (*transfer.ActionInitInitiator, error) {
 
 	if 0 == bytes.Compare(secret, common.EmptySecretHash[:]) {
 		return nil, fmt.Errorf("Should never end up initiating transfer with Secret 0x0 ")
@@ -1323,7 +1325,7 @@ func (self *ChannelService) Withdraw(tokenAddress common.TokenAddress, partnerAd
 
 type WithdrawStatus struct {
 	Result bool
-	Err error
+	Err    error
 }
 
 func (self *ChannelService) RegisterWithdrawStatus(channelId common.ChannelID) chan WithdrawStatus {
