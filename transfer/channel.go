@@ -162,10 +162,10 @@ func DelLock(endState *NettingChannelEndState, secretHash common.SecretHash) {
 
 func RegisterSecretEndState(endState *NettingChannelEndState, secret common.Secret, secretHash common.SecretHash) {
 	if IsLockLocked(endState, secretHash) {
-		pendingLock,_ := endState.SecretHashesToLockedLocks.Load(secretHash)
+		pendingLock, _ := endState.SecretHashesToLockedLocks.Load(secretHash)
 		endState.SecretHashesToLockedLocks.Delete(secretHash)
 		endState.SecretHashesToUnLockedLocks.Store(secretHash, &UnlockPartialProofState{
-			Lock: pendingLock.(*HashTimeLockState),
+			Lock:   pendingLock.(*HashTimeLockState),
 			Secret: secret,
 		})
 	}
@@ -441,6 +441,9 @@ func IsValidLockExpired(stateChange *ReceiveLockExpired, channelState *NettingCh
 
 	var lock *HashTimeLockState
 	load, _ := channelState.PartnerState.SecretHashesToLockedLocks.Load(secretHash)
+	if load == nil {
+		return nil, fmt.Errorf("secretHash not found in channel partner's secretHashesToLockedLocks")
+	}
 	lock = load.(*HashTimeLockState)
 
 	//# If the lock was not found in locked locks, this means that we've received
@@ -1419,7 +1422,7 @@ func isValidWithdrawAmount(participant *NettingChannelEndState, partner *Netting
 	bothDeposit := participant.GetContractBalance() + partner.GetContractBalance()
 	bothWithdraw := totalWithdraw + partner.GetTotalWithdraw()
 	if bothWithdraw > bothDeposit {
-		return false, fmt.Errorf("we total withdraw %d, partner total withdraw %d, " +
+		return false, fmt.Errorf("we total withdraw %d, partner total withdraw %d, "+
 			"both side total withdraw %d large than both side total deposit %d",
 			totalWithdraw, partner.GetTotalWithdraw(), bothWithdraw, bothDeposit)
 	}
