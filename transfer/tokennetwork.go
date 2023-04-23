@@ -109,7 +109,7 @@ func GetSenderMessageEvent(event Event) *SendMessageEvent {
 		result.MessageId = v.MessageId
 	case *SendBalanceProof:
 		v, ok := event.(*SendBalanceProof)
-		if !ok {
+		if !ok || v == nil {
 			return nil
 		}
 		result.Recipient = v.Recipient
