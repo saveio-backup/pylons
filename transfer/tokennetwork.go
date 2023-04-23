@@ -108,7 +108,10 @@ func GetSenderMessageEvent(event Event) *SendMessageEvent {
 		result.ChannelId = v.ChannelId
 		result.MessageId = v.MessageId
 	case *SendBalanceProof:
-		v, _ := event.(*SendBalanceProof)
+		v, ok := event.(*SendBalanceProof)
+		if !ok {
+			return nil
+		}
 		result.Recipient = v.Recipient
 		result.ChannelId = v.ChannelId
 		result.MessageId = v.MessageId
