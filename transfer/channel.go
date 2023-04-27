@@ -652,6 +652,7 @@ func GetDistributable(sender *NettingChannelEndState, receiver *NettingChannelEn
 	balanceProofData, err := getCurrentBalanceProof(sender)
 	if err != nil || balanceProofData == nil {
 		log.Error("[GetDistributable] error: ", err.Error())
+		return 0
 	}
 	transferredAmount := balanceProofData.transferredAmount
 	lockedAmount := balanceProofData.lockedAmount

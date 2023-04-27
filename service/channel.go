@@ -1008,6 +1008,10 @@ func (self *ChannelService) CanTransfer(target common.Address, amount common.Tok
 	if channelState.OurState.GetGasBalance() < amount {
 		return false
 	}
+	status := transfer.GetStatus(channelState)
+	if status == transfer.ChannelStateClosed || status == transfer.ChannelStateSettled || status == transfer.ChannelStateSettling {
+		return false
+	}
 	return true
 }
 
