@@ -15,3 +15,9 @@ require (
 	github.com/saveio/themis-go-sdk v0.0.0-20230314033227-3033a22d3bcd
 	github.com/tjfoc/gmsm v1.2.3 // indirect
 )
+
+replace (
+	github.com/saveio/carrier => ../carrier
+	github.com/saveio/themis => ../themis
+	github.com/saveio/themis-go-sdk => ../themis-go-sdk
+)
